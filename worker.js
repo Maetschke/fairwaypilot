@@ -49,7 +49,7 @@ async function handleResearch(request, env) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 1000,
+        max_tokens: 4000,
         tools: [{ type: "web_search_20250305", name: "web_search" }],
         messages: [{ role: "user", content: prompt }]
       })
@@ -64,7 +64,8 @@ async function handleResearch(request, env) {
     const jsonStart = txt.indexOf("{");
     const jsonEnd = txt.lastIndexOf("}");
     if (jsonStart < 0 || jsonEnd < 0) {
-      return new Response(JSON.stringify({ error: "Konnte keine strukturierten Platzdaten aus der Antwort lesen." }), { status: 502, headers: cors });
+      const stopInfo = data.stop_reason === "max_tokens" ? " (Antwort wurde wegen Token-Limit abgeschnitten)" : (data.stop_reason ? " (stop_reason: " + data.stop_reason + ")" : "");
+      return new Response(JSON.stringify({ error: "Konnte keine strukturierten Platzdaten aus der Antwort lesen." + stopInfo }), { status: 502, headers: cors });
     }
     const parsed = JSON.parse(txt.slice(jsonStart, jsonEnd + 1));
     return new Response(JSON.stringify({ result: parsed }), { headers: cors });

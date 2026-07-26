@@ -39,7 +39,7 @@ async function handleResearch(request, env) {
     return new Response(JSON.stringify({ error: "Server ist nicht fuer die Recherche konfiguriert (kein API-Key hinterlegt)." }), { status: 500, headers: cors });
   }
   try {
-    const prompt = 'Recherchiere die offiziellen Platzdaten des Golfplatzes "' + name + '": Par je Loch in Spielreihenfolge, HCP/Stroke-Index je Loch, sowie die Abschlaege (Tees) mit Course Rating (CR) und Slope fuer die uebliche 18-Loch- bzw. 9-Loch-Runde. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt ohne Markdown, ohne Erklaerung: {"name":"...","holes":9 oder 18,"par":[Zahlen],"si":[Zahlen oder leeres Array falls unbekannt],"tees":[{"name":"z.B. Gelb","cr":Zahl,"slope":Zahl}]} . Das par-Array MUSS GENAU so viele Zahlen enthalten wie im Feld holes angegeben (9 oder 18) - findest du fuer ein einzelnes Loch keinen gesicherten Wert, schaetze anhand der Bahnlaenge einen plausiblen Par-Wert (3, 4 oder 5) statt das Loch im Array wegzulassen; das Array darf niemals kuerzer als holes sein. Das si-Array darf dagegen komplett leer [] bleiben, wenn keine verlaesslichen Stroke-Index-Werte auffindbar sind.';
+    const prompt = 'Recherchiere die offiziellen Platzdaten des Golfplatzes "' + name + '": Par je Loch in Spielreihenfolge, HCP/Stroke-Index je Loch, sowie die Abschlaege (Tees) mit Course Rating (CR) und Slope fuer die uebliche 18-Loch- bzw. 9-Loch-Runde. Fuehre dazu mehrere Suchen durch: zunaechst eine allgemeine Suche zum Platz, danach falls noetig eine gezielte zweite (und ggf. dritte) Suche speziell nach der offiziellen Scorecard bzw. HCP-/Stroke-Index-Tabelle, z.B. mit Suchbegriffen wie "Scorecard ' + name + '", "HCP Tabelle ' + name + '" oder "Stroke Index ' + name + '". Gib erst auf, wenn mehrere solcher gezielten Suchen erfolglos blieben. Antworte AUSSCHLIESSLICH mit einem JSON-Objekt ohne Markdown, ohne Erklaerung: {"name":"...","holes":9 oder 18,"par":[Zahlen],"si":[Zahlen oder leeres Array falls unbekannt],"tees":[{"name":"z.B. Gelb","cr":Zahl,"slope":Zahl}]} . Das par-Array MUSS GENAU so viele Zahlen enthalten wie im Feld holes angegeben (9 oder 18) - findest du fuer ein einzelnes Loch keinen gesicherten Wert, schaetze anhand der Bahnlaenge einen plausiblen Par-Wert (3, 4 oder 5) statt das Loch im Array wegzulassen; das Array darf niemals kuerzer als holes sein. Das si-Array soll nur dann komplett leer [] bleiben, wenn du nach mehreren gezielten Suchen wirklich keine verlaesslichen Stroke-Index-Werte findest.';
     const anthResp = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -49,8 +49,8 @@ async function handleResearch(request, env) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 4000,
-        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        max_tokens: 6000,
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 6 }],
         messages: [{ role: "user", content: prompt }]
       })
     });

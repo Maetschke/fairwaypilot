@@ -1,0 +1,18 @@
+{
+  "name": "fairwaypilot-capacitor",
+  "version": "1.0.0",
+  "description": "Capacitor-Wrapper um die bestehende FairwayPilot-Web-App (worker.js) fuer iOS/Android App-Store-Einreichung.",
+  "private": true,
+  "scripts": {
+    "build:www": "node scripts/build-www.js",
+    "sync": "npm run build:www && npx cap sync",
+    "open:ios": "npx cap open ios",
+    "open:android": "npx cap open android"
+  },
+  "author": "M\u00e4tschke Media & Consulting GmbH",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
+  }
+}

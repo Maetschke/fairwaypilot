@@ -5,14 +5,18 @@
   "private": true,
   "scripts": {
     "build:www": "node scripts/build-www.js",
-    "sync": "npm run build:www && npx cap sync",
+    "sync": "npm run build:www && npx cap sync && npm run patch:native",
     "open:ios": "npx cap open ios",
-    "open:android": "npx cap open android"
+    "open:android": "npx cap open android",
+    "patch:native": "node scripts/patch-native.js"
   },
-  "author": "M\u00e4tschke Media & Consulting GmbH",
+  "author": "Mätschke Media & Consulting GmbH",
   "license": "UNLICENSED",
   "dependencies": {
+    "@capacitor/android": "^8.5.0",
     "@capacitor/cli": "^8.5.0",
-    "@capacitor/core": "^8.5.0"
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/geolocation": "^8.2.1",
+    "@capacitor/ios": "^8.5.0"
   }
 }

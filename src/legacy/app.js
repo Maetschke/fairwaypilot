@@ -2365,6 +2365,7 @@ async function RT_initHoleFullMap(){
  setTimeout(function(){
   try{map.invalidateSize();}catch(e){}
   if(RT_state.grabberOn&&RT_state.grabberOn[RT_holeMapKey(rd,c)]) RT_setupFullGrabber();
+  if(RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,c)]){ RT_radarAttach(map); RT_wxFetch(false); }
  },80);
 }
 /* Die Birdiekarten-Quellbilder liegen im Querformat vor und werden in der Vollbild-
@@ -3588,63 +3589,42 @@ function RT_wxCell(lbl,val){
 }
 function RT_wxDivider(){ return '<div style="width:1px;background:rgba(255,255,255,.12);margin:2px 0;"></div>'; }
 
-function RT_openRadar(){
- if(document.getElementById('rt-radar')) return;
- var o=document.createElement('div');
- o.id='rt-radar';
- o.style.cssText='position:fixed;inset:0;z-index:3000;background:#0b160f;display:flex;flex-direction:column;';
- o.innerHTML=
-  '<div style="padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px;background:#0e1e15;box-shadow:0 2px 10px rgba(0,0,0,.4);">'
-   +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;">'
-     +'<div style="font-size:18px;font-weight:800;color:#fff;">Wetterradar</div>'
-     +'<button onclick="RT_closeRadar()" aria-label="Schließen" style="border:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer;">✕</button>'
-   +'</div>'
-   +'<div id="rt-wx-body"></div>'
-  +'</div>'
-  +'<div style="position:relative;flex:1;min-height:0;">'
-   +'<div id="rt-radar-map" style="position:absolute;inset:0;background:#dfe6df;"></div>'
-   +'<div id="rt-radar-time" style="position:absolute;left:12px;top:12px;z-index:600;background:rgba(8,20,13,.78);color:#fff;font-size:12px;font-weight:700;border-radius:100px;padding:6px 12px;pointer-events:none;">Radar lädt…</div>'
-   +'<button id="rt-radar-play" onclick="RT_radarToggle()" style="position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:600;border:none;width:52px;height:52px;border-radius:50%;background:#1F8A4D;color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;">'+RT_radarPlayIcon(true)+'</button>'
-   +'<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:600;display:flex;align-items:center;gap:7px;background:rgba(8,20,13,.7);border-radius:100px;padding:5px 11px;pointer-events:none;">'
-     +'<span style="font-size:10.5px;color:#cfe0d4;">leicht</span>'
-     +'<span style="width:52px;height:7px;border-radius:4px;background:linear-gradient(90deg,#8fd1ff,#3a86ff,#33d17a,#f6d32d,#e01b24);display:inline-block;"></span>'
-     +'<span style="font-size:10.5px;color:#cfe0d4;">stark</span>'
-   +'</div>'
-  +'</div>';
- document.body.appendChild(o);
- RT_wxFetch(false);
- setTimeout(RT_radarInit,60);
+function RT_toggleRadarHole(){
+ var rd=RT_round; if(!rd) return;
+ var key=RT_holeMapKey(rd,rd.cur);
+ if(!RT_state.radarOn) RT_state.radarOn={};
+ RT_state.radarOn[key]=!RT_state.radarOn[key];
+ var on=!!RT_state.radarOn[key];
+ var b=document.getElementById('rt-wxr-toggle'); if(b) b.style.opacity=on?'1':'0.5';
+ var ui=document.getElementById('rt-wxradar-ui'); if(ui) ui.style.display=on?'block':'none';
+ if(on){ RT_wxFetch(false); RT_radarAttach(RT_holeFullMapInst); }
+ else { RT_radarDetach(); }
 }
 function RT_radarPlayIcon(playing){
  return playing
-  ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
-  : '<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M7 4l13 8-13 8z"/></svg>';
+  ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+  : '<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M7 4l13 8-13 8z"/></svg>';
 }
-function RT_closeRadar(){
+function RT_radarAttach(map){
+ RT_radarDetach();
+ if(!map||typeof L==='undefined') return;
+ RT_RADAR.map=map;
+ if(!map.getPane('wxradar')){ var p=map.createPane('wxradar'); if(p){ p.style.zIndex=350; p.style.pointerEvents='none'; } }
+ RT_radarLoad();
+}
+function RT_radarDetach(){
  if(RT_RADAR.timer){ clearInterval(RT_RADAR.timer); RT_RADAR.timer=null; }
  RT_RADAR.playing=false;
- if(RT_RADAR.map){ try{RT_RADAR.map.remove();}catch(e){} RT_RADAR.map=null; }
- RT_RADAR.layers=[]; RT_RADAR.frames=[]; RT_RADAR.idx=0;
- var o=document.getElementById('rt-radar'); if(o&&o.parentNode) o.parentNode.removeChild(o);
-}
-function RT_radarInit(){
- var el=document.getElementById('rt-radar-map'); if(!el) return;
- if(typeof L==='undefined'){ var tc=document.getElementById('rt-radar-time'); if(tc) tc.textContent='Karte nicht verfügbar'; return; }
- var c=RT_radarCenter();
- var map=L.map('rt-radar-map',{zoomControl:false,attributionControl:false,zoom:8,center:[c.lat,c.lng]});
- RT_RADAR.map=map;
- if(!map.getPane('rradar')){ var p1=map.createPane('rradar'); p1.style.zIndex=350; p1.style.pointerEvents='none'; }
- if(!map.getPane('rlabels')){ var p2=map.createPane('rlabels'); p2.style.zIndex=450; p2.style.pointerEvents='none'; }
- L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:16}).addTo(map);
- L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,pane:'rlabels'}).addTo(map);
- L.marker([c.lat,c.lng],{interactive:false,icon:L.divIcon({className:'',iconSize:[26,34],iconAnchor:[13,32],
-  html:'<svg width="26" height="34" viewBox="0 0 26 34"><path d="M13 0C6 0 0.5 5.4 0.5 12.3 0.5 21 13 34 13 34s12.5-13 12.5-21.7C25.5 5.4 20 0 13 0z" fill="#1F8A4D" stroke="#fff" stroke-width="2"/><circle cx="13" cy="12" r="4.4" fill="#fff"/></svg>'})}).addTo(map);
- RT_radarLoad();
+ if(RT_RADAR.map&&RT_RADAR.layers&&RT_RADAR.layers.length){
+  RT_RADAR.layers.forEach(function(l){ try{ RT_RADAR.map.removeLayer(l); }catch(e){} });
+ }
+ RT_RADAR.layers=[]; RT_RADAR.frames=[]; RT_RADAR.idx=0; RT_RADAR.map=null;
 }
 function RT_radarLoad(){
  fetch('https://api.rainviewer.com/public/weather-maps.json')
   .then(function(r){ return r.json(); })
   .then(function(j){
+   if(!RT_RADAR.map) return;
    var host=j&&j.host?j.host:'https://tilecache.rainviewer.com';
    var past=(j&&j.radar&&j.radar.past)?j.radar.past:[];
    var now=(j&&j.radar&&j.radar.nowcast)?j.radar.nowcast:[];
@@ -3652,20 +3632,19 @@ function RT_radarLoad(){
    if(!all.length){ var tc=document.getElementById('rt-radar-time'); if(tc) tc.textContent='Kein Radarbild'; return; }
    RT_RADAR.frames=all.map(function(f){ return {path:host+f.path,time:f.time}; });
    RT_RADAR.layers=RT_RADAR.frames.map(function(f){
-    return L.tileLayer(f.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:0,pane:'rradar',tileSize:256,maxZoom:16});
+    return L.tileLayer(f.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:0,pane:'wxradar',tileSize:256,maxNativeZoom:10,maxZoom:20});
    });
-   if(!RT_RADAR.map) return;
    RT_RADAR.layers.forEach(function(l){ l.addTo(RT_RADAR.map); });
    RT_RADAR.idx=Math.max(0,Math.min(RT_RADAR.frames.length-1,past.slice(-8).length-1));
    RT_radarShow(RT_RADAR.idx);
-   RT_radarToggle();
+   RT_RADAR.playing=false; RT_radarToggle();
   })
   .catch(function(){ var tc=document.getElementById('rt-radar-time'); if(tc) tc.textContent='Radar nicht verfügbar'; });
 }
 function RT_radarShow(i){
  if(!RT_RADAR.layers.length) return;
  RT_RADAR.idx=(i+RT_RADAR.frames.length)%RT_RADAR.frames.length;
- RT_RADAR.layers.forEach(function(l,k){ try{ l.setOpacity(k===RT_RADAR.idx?0.82:0); }catch(e){} });
+ RT_RADAR.layers.forEach(function(l,k){ try{ l.setOpacity(k===RT_RADAR.idx?0.75:0); }catch(e){} });
  var f=RT_RADAR.frames[RT_RADAR.idx];
  var tc=document.getElementById('rt-radar-time');
  if(tc&&f){
@@ -3706,7 +3685,142 @@ function RT_hvToast(msg){
  setTimeout(function(){ if(d&&d.parentNode) d.parentNode.removeChild(d); },2200);
 }
 function RT_openShotPlan(){ RT_hvToast('Shot-Analyse folgt als Nächstes.'); }
-function RT_openFlagRadar(){ RT_hvToast('Fahnenradar kommt in Kürze.'); }
+/* ============================================================
+   Fahnenradar (Bahnkarte, rechte Toolbar) - "Blind Shot"
+   Kompassrose, die mit dem Geraetekompass dreht; die Fahne sitzt auf dem echten
+   Peilwinkel vom eigenen Standort (GPS) zum Gruen. Dreht man sich, bis die Fahne oben
+   steht, zeigt man aufs Gruen. Dazu Distanz + Schlaeger-Empfehlung.
+   Kompass: iOS braucht eine Freigabe (Button); Heading aus webkitCompassHeading bzw. alpha.
+   ============================================================ */
+var RT_FR={origin:null,pin:null,brg:0,dist:0,heading:null,listening:false,got:false,handler:null};
+
+function RT_frPx(angle,r){ var t=angle*Math.PI/180; return [150+r*Math.sin(t),150-r*Math.cos(t)]; }
+function RT_frRoseSvg(brg){
+ var parts=[];
+ parts.push('<circle cx="150" cy="150" r="140" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.22)" stroke-width="2"/>');
+ parts.push('<circle cx="150" cy="150" r="112" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1"/>');
+ for(var a=0;a<360;a+=15){
+  var major=(a%90===0);
+  var p1=RT_frPx(a,140), p2=RT_frPx(a,major?120:130);
+  parts.push('<line x1="'+p1[0].toFixed(1)+'" y1="'+p1[1].toFixed(1)+'" x2="'+p2[0].toFixed(1)+'" y2="'+p2[1].toFixed(1)+'" stroke="rgba(255,255,255,'+(major?'.7':'.32')+')" stroke-width="'+(major?'2.4':'1.4')+'"/>');
+ }
+ var letters=[['N',0],['O',90],['S',180],['W',270]];
+ letters.forEach(function(L){
+  var p=RT_frPx(L[1],96);
+  parts.push('<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+5).toFixed(1)+'" text-anchor="middle" font-size="20" font-weight="800" fill="'+(L[0]==='N'?'#ff6b5e':'rgba(255,255,255,.85)')+'" font-family="Inter,sans-serif">'+L[0]+'</text>');
+ });
+ var fp=RT_frPx(brg,118);
+ parts.push('<line x1="150" y1="150" x2="'+fp[0].toFixed(1)+'" y2="'+fp[1].toFixed(1)+'" stroke="#8FE1A9" stroke-width="3.5" stroke-linecap="round"/>');
+ parts.push('<circle cx="'+fp[0].toFixed(1)+'" cy="'+fp[1].toFixed(1)+'" r="6" fill="#1F8A4D" stroke="#fff" stroke-width="2"/>');
+ var f1=RT_frPx(brg,132), f2=RT_frPx(brg+7,124), f3=RT_frPx(brg,116);
+ parts.push('<path d="M'+f1[0].toFixed(1)+' '+f1[1].toFixed(1)+'L'+f2[0].toFixed(1)+' '+f2[1].toFixed(1)+'L'+f3[0].toFixed(1)+' '+f3[1].toFixed(1)+'Z" fill="#ffd24a"/>');
+ return '<svg viewBox="0 0 300 300" style="width:100%;height:100%;display:block;">'+parts.join('')+'</svg>';
+}
+function RT_openFlagRadar(){
+ if(document.getElementById('rt-fr')) return;
+ var rd=RT_round;
+ var origin=(RT_curPos&&RT_curPos.lat!=null)?{lat:RT_curPos.lat,lng:RT_curPos.lng,src:'gps'}:null;
+ if(!origin&&rd){ var lb=RT_lastBallPos(rd,rd.cur); if(lb) origin={lat:lb.lat,lng:lb.lng,src:'ball'}; }
+ if(!origin&&rd){ var tp=RT_grabberTeePoint(rd,rd.cur); if(tp) origin={lat:tp.lat,lng:tp.lng,src:'tee'}; }
+ var ref=rd?RT_refFor(rd,rd.cur):null;
+ var pin=(ref&&ref.pin&&ref.pin.lat!=null)?{lat:ref.pin.lat,lng:ref.pin.lng}:null;
+ RT_FR.origin=origin; RT_FR.pin=pin; RT_FR.heading=null; RT_FR.got=false;
+ RT_FR.brg=(origin&&pin)?RT_grabBearing(origin,pin):0;
+ RT_FR.dist=(origin&&pin)?RT_haversineM(origin.lat,origin.lng,pin.lat,pin.lng):0;
+ var o=document.createElement('div'); o.id='rt-fr';
+ o.style.cssText='position:fixed;inset:0;z-index:3000;background:radial-gradient(circle at 50% 40%,#12331f,#081410);display:flex;flex-direction:column;';
+ var canDo=!!(origin&&pin);
+ var rec=canDo?RT_dkiRecommend(Math.round(RT_FR.dist)):{empty:true};
+ var srcNote=origin?(origin.src==='gps'?'':(origin.src==='ball'?'Standort: letzte Balllage (kein GPS)':'Standort: Abschlag (kein GPS)')):'';
+ o.innerHTML=
+  '<div style="padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 11px;display:flex;align-items:center;justify-content:space-between;">'
+   +'<div style="font-size:18px;font-weight:800;color:#fff;">Fahnenradar</div>'
+   +'<button onclick="RT_closeFlagRadar()" aria-label="Schließen" style="border:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer;">✕</button>'
+  +'</div>';
+ if(!canDo){
+  o.innerHTML+='<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:#cfe0d4;font-size:14px;line-height:1.5;">'
+    +(pin?'Warte auf GPS-Signal … öffne das Fahnenradar auf der Bahn im Freien.':'Für diese Bahn ist keine Fahnenposition hinterlegt.')+'</div>';
+  document.body.appendChild(o);
+  return;
+ }
+ o.innerHTML+=
+  '<div style="text-align:center;color:#9fb3a4;font-size:12px;padding:0 20px 6px;">Dreh dich, bis die Fahne oben am Pfeil steht – dann zeigst du aufs Grün.</div>'
+  +'<div style="position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px 20px 0;">'
+   +'<div style="position:relative;width:min(86vw,340px);aspect-ratio:1/1;">'
+     +'<div style="position:absolute;left:50%;top:-2px;transform:translateX(-50%);z-index:3;color:#fff;font-size:20px;line-height:1;">▼</div>'
+     +'<div id="rt-fr-rose" style="position:absolute;inset:0;transition:transform .12s linear;">'+RT_frRoseSvg(RT_FR.brg)+'</div>'
+     +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">'
+       +'<div id="rt-fr-aim" style="font-size:11px;font-weight:800;letter-spacing:.5px;color:#8FE1A9;height:14px;"></div>'
+       +'<div style="font-size:40px;font-weight:800;color:#fff;line-height:1;">'+RT_fmtDist(RT_FR.dist)+'</div>'
+       +'<div style="font-size:12px;color:#9fb3a4;margin-top:2px;">zur Fahne</div>'
+       +(rec.empty?'':'<div style="margin-top:9px;background:rgba(31,138,77,.9);color:#fff;font-size:13px;font-weight:700;border-radius:100px;padding:5px 14px;">'+rec.best.l+' · Ø '+rec.best.d+' m</div>')
+     +'</div>'
+   +'</div>'
+  +'</div>'
+  +'<div style="padding:6px 20px calc(env(safe-area-inset-bottom,0px) + 18px);text-align:center;">'
+   +(srcNote?'<div style="font-size:11px;color:#7f948a;margin-bottom:8px;">'+srcNote+'</div>':'')
+   +'<button id="rt-fr-act" onclick="RT_frStart()" style="border:none;background:#1F8A4D;color:#fff;font-size:15px;font-weight:700;font-family:inherit;border-radius:100px;padding:12px 26px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.35);">Kompass aktivieren</button>'
+   +'<div id="rt-fr-msg" style="font-size:11.5px;color:#7f948a;margin-top:9px;"></div>'
+  +'</div>';
+ document.body.appendChild(o);
+ if(!(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function')){
+  RT_frStart();
+ }
+}
+function RT_closeFlagRadar(){
+ RT_frStop();
+ var o=document.getElementById('rt-fr'); if(o&&o.parentNode) o.parentNode.removeChild(o);
+}
+function RT_frStop(){
+ if(RT_FR.handler){
+  window.removeEventListener('deviceorientationabsolute',RT_FR.handler,true);
+  window.removeEventListener('deviceorientation',RT_FR.handler,true);
+  RT_FR.handler=null;
+ }
+ RT_FR.listening=false;
+}
+function RT_frStart(){
+ var msg=document.getElementById('rt-fr-msg');
+ if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'){
+  DeviceOrientationEvent.requestPermission().then(function(res){
+   if(res==='granted'){ RT_frListen(); }
+   else { if(msg) msg.textContent='Kompass-Zugriff abgelehnt. In den iOS-Einstellungen für Safari „Bewegung & Ausrichtung" erlauben.'; }
+  }).catch(function(){ if(msg) msg.textContent='Kompass konnte nicht aktiviert werden.'; });
+ } else {
+  RT_frListen();
+ }
+}
+function RT_frListen(){
+ if(RT_FR.listening) return;
+ RT_FR.listening=true;
+ RT_FR.handler=RT_frOnOrient;
+ window.addEventListener('deviceorientationabsolute',RT_FR.handler,true);
+ window.addEventListener('deviceorientation',RT_FR.handler,true);
+ var act=document.getElementById('rt-fr-act'); if(act) act.style.display='none';
+ var msg=document.getElementById('rt-fr-msg'); if(msg) msg.textContent='Kompass aktiv. Bei Ungenauigkeit das Gerät in einer 8 bewegen.';
+ setTimeout(function(){
+  if(!RT_FR.got){ var m=document.getElementById('rt-fr-msg'); if(m) m.textContent='Kein Kompass-Signal. Nordausrichtung ggf. ungenau.'; }
+ },2500);
+}
+function RT_frOnOrient(e){
+ var h=null;
+ if(e.webkitCompassHeading!=null&&!isNaN(e.webkitCompassHeading)) h=e.webkitCompassHeading;
+ else if(e.alpha!=null&&!isNaN(e.alpha)) h=(360-e.alpha)%360;
+ if(h==null) return;
+ RT_FR.heading=h; RT_FR.got=true;
+ RT_frUpdate();
+}
+function RT_frUpdate(){
+ var rose=document.getElementById('rt-fr-rose');
+ if(rose&&RT_FR.heading!=null) rose.style.transform='rotate('+(-RT_FR.heading)+'deg)';
+ var aim=document.getElementById('rt-fr-aim');
+ if(aim&&RT_FR.heading!=null){
+  var diff=((RT_FR.brg-RT_FR.heading+540)%360)-180;
+  if(Math.abs(diff)<=7) aim.textContent='▲ AUF KURS';
+  else aim.textContent=(diff>0?'→ '+Math.round(Math.abs(diff))+'° nach rechts':'← '+Math.round(Math.abs(diff))+'° nach links');
+ }
+}
+/* ===== Ende Fahnenradar ===== */
 /* ============================================================
    Entfernung & KI (Bahnkarte, rechte Toolbar)
    Zwei ziehbare Punkte (Standort + Ziel) auf der Satellitenkarte. Zeigt Luftlinie,
@@ -3874,6 +3988,7 @@ function RT_grabberOverlayHtml(){
  var key=RT_holeMapKey(rd,rd.cur);
  var on=!!(RT_state.grabberOn&&RT_state.grabberOn[key]);
  var windOn=!!(RT_state.windOn&&RT_state.windOn[key]);
+ var radarOn=!!(RT_state.radarOn&&RT_state.radarOn[key]);
  var lbl='position:absolute;left:0;background:#12261B;color:#fff;padding:7px 14px 7px 12px;'+
    'border-radius:0 10px 10px 0;font-size:26px;font-weight:800;line-height:1;'+
    'box-shadow:0 2px 8px rgba(0,0,0,.4);display:'+(on?'block':'none')+';';
@@ -3882,13 +3997,32 @@ function RT_grabberOverlayHtml(){
  return '<div id="rt-grab-ui" style="position:absolute;inset:0;pointer-events:none;z-index:1150;">'+
   '<div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;">'+
    RT_hvBtn('wind','Wind','RT_toggleWind()',windOn,'rt-wind-toggle')+
-   RT_hvBtn('wetterradar','Wetterradar','RT_openRadar()',false)+
+   RT_hvBtn('wetterradar','Wetterradar','RT_toggleRadarHole()',radarOn,'rt-wxr-toggle')+
    RT_hvBtn('shotanalyse','Shot-Analyse','RT_openShotPlan()',false)+
    RT_hvBtn('fahnenradar','Fahnenradar','RT_openFlagRadar()',false)+
    RT_hvBtn('entfernungki','Entfernung & KI','RT_openDistKI()',false)+
    RT_hvBtn('entfernung','Entfernung','RT_toggleGrabber()',on,'rt-grab-toggle')+
   '</div>'+
   '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
+  '<div id="rt-wxradar-ui" style="position:absolute;inset:0;pointer-events:none;z-index:1160;display:'+(radarOn?'block':'none')+';">'+
+   '<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 58px);left:10px;right:10px;pointer-events:auto;background:rgba(10,22,15,.93);border-radius:16px;padding:11px 13px;box-shadow:0 4px 16px rgba(0,0,0,.5);">'+
+     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">'+
+       '<div style="font-size:14px;font-weight:800;color:#fff;">Wetterradar</div>'+
+       '<button onclick="RT_toggleRadarHole()" aria-label="Schließen" style="border:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:13px;cursor:pointer;">✕</button>'+
+     '</div>'+
+     '<div id="rt-wx-body"></div>'+
+   '</div>'+
+   '<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);pointer-events:none;display:flex;align-items:center;gap:7px;background:rgba(8,20,13,.72);border-radius:100px;padding:5px 11px;">'+
+     '<span style="font-size:10.5px;color:#cfe0d4;">leicht</span>'+
+     '<span style="width:46px;height:7px;border-radius:4px;background:linear-gradient(90deg,#8fd1ff,#3a86ff,#33d17a,#f6d32d,#e01b24);display:inline-block;"></span>'+
+     '<span style="font-size:10.5px;color:#cfe0d4;">stark</span>'+
+   '</div>'+
+   '<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);pointer-events:auto;display:flex;align-items:center;gap:8px;">'+
+     '<button id="rt-radar-play" onclick="RT_radarToggle()" style="border:none;width:44px;height:44px;border-radius:50%;background:#1F8A4D;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;">'+RT_radarPlayIcon(true)+'</button>'+
+     '<span id="rt-radar-time" style="background:rgba(8,20,13,.78);color:#fff;font-size:12px;font-weight:700;border-radius:100px;padding:6px 12px;">–</span>'+
+   '</div>'+
+  '</div>'+
+
   '<div id="rt-grab-far" style="'+lbl+'top:32%;">–</div>'+
   '<div id="rt-grab-near" style="'+lbl+'top:60%;">–</div>'+
  '</div>';

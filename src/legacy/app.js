@@ -3628,6 +3628,7 @@ function RT_radarAttach(map){
  if(!map||typeof L==='undefined') return;
  RT_RADAR.map=map;
  if(!map.getPane('wxradar')){ var p=map.createPane('wxradar'); if(p){ p.style.zIndex=350; p.style.pointerEvents='none'; } }
+ if(!map.getPane('wxclouds')){ var pc=map.createPane('wxclouds'); if(pc){ pc.style.zIndex=340; pc.style.pointerEvents='none'; } }
  RT_radarLoad();
 }
 function RT_radarDetach(){
@@ -3636,6 +3637,7 @@ function RT_radarDetach(){
  if(RT_RADAR.map&&RT_RADAR.layers&&RT_RADAR.layers.length){
   RT_RADAR.layers.forEach(function(l){ try{ RT_RADAR.map.removeLayer(l); }catch(e){} });
  }
+ if(RT_RADAR.cloudLayer&&RT_RADAR.map){ try{ RT_RADAR.map.removeLayer(RT_RADAR.cloudLayer); }catch(e){} } RT_RADAR.cloudLayer=null;
  RT_RADAR.layers=[]; RT_RADAR.frames=[]; RT_RADAR.idx=0; RT_RADAR.map=null;
 }
 function RT_radarLoad(){
@@ -3653,6 +3655,8 @@ function RT_radarLoad(){
     return L.tileLayer(f.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:0,pane:'wxradar',tileSize:256,maxNativeZoom:10,maxZoom:20,noWrap:true,errorTileUrl:RT_TRANSPX});
    });
    RT_RADAR.layers.forEach(function(l){ l.addTo(RT_RADAR.map); });
+   var sat=(j&&j.satellite&&j.satellite.infrared)?j.satellite.infrared:[];
+   if(sat.length){ var sf=sat[sat.length-1]; RT_RADAR.cloudLayer=L.tileLayer(host+sf.path+'/256/{z}/{x}/{y}/0/0_0.png',{opacity:0.5,pane:'wxclouds',tileSize:256,maxNativeZoom:10,maxZoom:20,noWrap:true,errorTileUrl:RT_TRANSPX}); try{ RT_RADAR.cloudLayer.addTo(RT_RADAR.map); }catch(e){} }
    RT_RADAR.idx=Math.max(0,Math.min(RT_RADAR.frames.length-1,past.slice(-8).length-1));
    RT_radarShow(RT_RADAR.idx);
    RT_RADAR.playing=false; RT_radarToggle();
@@ -3720,6 +3724,7 @@ function RT_ovCloseOthers(keep){
  if(keep!=='sp'&&document.getElementById('rt-sp')) RT_closeShotPlan();
  if(keep!=='fr'&&document.getElementById('rt-fr')) RT_closeFlagRadar();
  if(keep!=='dki'&&document.getElementById('rt-dki')) RT_closeDistKI();
+ if(keep!=='gv'&&document.getElementById('rt-gv')) RT_closeGreenView();
  if(keep!=='radar'){ var rd=RT_round; if(rd&&RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,rd.cur)]) RT_toggleRadarHole(); }
 }
 var RT_SP={layer:null};
@@ -4065,6 +4070,152 @@ function RT_closeDistKI(){
  var o=document.getElementById('rt-dki'); if(o&&o.parentNode) o.parentNode.removeChild(o);
 }
 /* ===== Ende Entfernung & KI ===== */
+/* ============================================================
+   M9a/b · Grün-Ansicht (Overlay auf der Bahnkarte)
+   Echtes 1-m-Geländerelief (DGM1, Geobasis NRW) rund um die Fahne: Höhenlinien +
+   schattiertes Relief über der Satelliten-Grünansicht, plus Falllinie und Putt-Distanz.
+   Datenweg: Worker /api/dgm (WGS84→UTM32, WCS-GeoTIFF) → geotiff.js (CDN) parst im Client.
+   Ehrlich: 1-m-DGM zeigt das Geländerelief, KEINE cm-genaue Grün-Vermessung. Nur NRW-Plätze.
+   ============================================================ */
+var RT_GV={map:null,pin:null,ball:null,size:64};
+
+function RT_gvPinBall(){
+ var rd=RT_round; var ref=rd?RT_refFor(rd,rd.cur):null;
+ var pin=(ref&&ref.pin&&ref.pin.lat!=null)?{lat:ref.pin.lat,lng:ref.pin.lng}:null;
+ var ball=null; if(rd){ var lb=RT_lastBallPos(rd,rd.cur); if(lb&&lb.lat!=null) ball={lat:lb.lat,lng:lb.lng}; }
+ return {pin:pin,ball:ball};
+}
+function RT_openGreenView(){
+ var host=document.getElementById('hole-full'); if(!host) return;
+ if(document.getElementById('rt-gv')){ RT_closeGreenView(); return; }
+ RT_ovCloseOthers('gv'); RT_tileOp('rt-tile-gv',true);
+ var pb=RT_gvPinBall();
+ var o=document.createElement('div'); o.id='rt-gv';
+ o.style.cssText='position:absolute;inset:0;z-index:2600;background:#0b160f;display:flex;flex-direction:column;';
+ o.innerHTML=RT_hvPanel('Grün-Ansicht','RT_closeGreenView()')
+  +'<div style="position:relative;flex:1;min-height:0;"><div id="gv-map" style="position:absolute;inset:0;background:#12261B;"></div>'
+  +'<div id="gv-status" style="position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:600;background:rgba(8,20,13,.82);color:#fff;font-size:12px;border-radius:100px;padding:6px 12px;pointer-events:none;">Höhenmodell wird geladen…</div></div>'
+  +'<div id="gv-card" style="background:#0e1e15;padding:12px 15px calc(env(safe-area-inset-bottom,0px) + 14px);box-shadow:0 -3px 12px rgba(0,0,0,.4);"></div>';
+ host.appendChild(o);
+ RT_GV.pin=pb.pin; RT_GV.ball=pb.ball;
+ if(!pb.pin){ RT_gvStatus('Keine Fahnenposition'); RT_gvCard('<div style="color:#cfe0d4;font-size:13px;">Für diese Bahn ist keine Fahnenposition hinterlegt – die Grün-Ansicht braucht sie als Mittelpunkt.</div>'); return; }
+ setTimeout(RT_gvInit,60);
+}
+function RT_closeGreenView(){
+ RT_tileOp('rt-tile-gv',false);
+ if(RT_GV.map){ try{RT_GV.map.remove();}catch(e){} RT_GV.map=null; }
+ var o=document.getElementById('rt-gv'); if(o&&o.parentNode) o.parentNode.removeChild(o);
+}
+function RT_gvStatus(t){ var s=document.getElementById('gv-status'); if(s){ s.style.display=t?'block':'none'; s.textContent=t||''; } }
+function RT_gvCard(html){ var c=document.getElementById('gv-card'); if(c) c.innerHTML=html; }
+function RT_gvErrCard(msg){ return '<div style="color:#cfe0d4;font-size:13px;line-height:1.5;">'+msg+'</div><div style="font-size:11px;color:#7f948a;margin-top:8px;">Die Grün-Ansicht nutzt das 1-m-Geländemodell (DGM1) von Geobasis NRW – aktuell nur für NRW-Plätze.</div>'; }
+function RT_gvInit(){
+ var el=document.getElementById('gv-map'); if(!el||typeof L==='undefined'){ RT_gvStatus('Karte nicht verfügbar'); return; }
+ var p=RT_GV.pin;
+ var map=L.map('gv-map',{zoomControl:false,attributionControl:false}).setView([p.lat,p.lng],19);
+ RT_GV.map=map;
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:21,maxNativeZoom:19}).addTo(map);
+ map.createPane('gvrelief'); map.getPane('gvrelief').style.zIndex=350; map.getPane('gvrelief').style.pointerEvents='none';
+ L.marker([p.lat,p.lng],{interactive:false,zIndexOffset:1000,icon:L.divIcon({className:'',iconSize:[26,34],iconAnchor:[6,32],html:'<svg width="26" height="34" viewBox="0 0 26 34"><line x1="6" y1="2" x2="6" y2="32" stroke="#fff" stroke-width="3"/><path d="M6 2h16l-4 5 4 5H6z" fill="#ffd24a" stroke="#c99700" stroke-width="1"/></svg>'})}).addTo(map);
+ if(RT_GV.ball){ L.marker([RT_GV.ball.lat,RT_GV.ball.lng],{interactive:false,icon:L.divIcon({className:'',iconSize:[18,18],iconAnchor:[9,9],html:'<div style="width:14px;height:14px;border-radius:50%;background:#2f6df6;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);"></div>'})}).addTo(map); }
+ RT_gvLoad();
+}
+function RT_gvLoadGeotiff(cb){
+ if(window.GeoTIFF){ cb(null); return; }
+ var sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/geotiff/2.1.3/dist-browser/geotiff.min.js';
+ sc.onload=function(){ cb(window.GeoTIFF?null:'no_global'); };
+ sc.onerror=function(){
+  var s2=document.createElement('script'); s2.src='https://cdnjs.cloudflare.com/ajax/libs/geotiff/2.1.3/geotiff.min.js';
+  s2.onload=function(){ cb(window.GeoTIFF?null:'no_global'); }; s2.onerror=function(){ cb('load_fail'); };
+  document.head.appendChild(s2);
+ };
+ document.head.appendChild(sc);
+}
+function RT_gvLoad(){
+ var p=RT_GV.pin, size=RT_GV.size;
+ fetch('/api/dgm?lat='+p.lat+'&lng='+p.lng+'&size='+size).then(function(r){
+  var ct=r.headers.get('content-type')||'';
+  if(ct.indexOf('json')>=0){ return r.json().then(function(j){ throw {diag:j}; }); }
+  return r.arrayBuffer();
+ }).then(function(buf){
+  RT_gvStatus('Relief wird berechnet…');
+  RT_gvLoadGeotiff(function(err){
+   if(err){ RT_gvStatus('geotiff.js fehlt'); RT_gvCard(RT_gvErrCard('Konnte die GeoTIFF-Bibliothek nicht laden ('+err+').')); return; }
+   try{
+    window.GeoTIFF.fromArrayBuffer(buf).then(function(tif){ return tif.getImage(); }).then(function(img){
+     return img.readRasters().then(function(ras){ RT_gvRender(ras[0],img.getWidth(),img.getHeight()); });
+    }).catch(function(e){ RT_gvStatus('GeoTIFF-Fehler'); RT_gvCard(RT_gvErrCard('GeoTIFF konnte nicht gelesen werden: '+(e&&e.message||e))); });
+   }catch(e){ RT_gvStatus('GeoTIFF-Fehler'); RT_gvCard(RT_gvErrCard('GeoTIFF-Parsing fehlgeschlagen.')); }
+  });
+ }).catch(function(e){
+  if(e&&e.diag){ var j=e.diag; var out=(j.error==='out_of_nrw');
+   RT_gvStatus(out?'Außerhalb NRW':'DGM nicht verfügbar');
+   RT_gvCard(RT_gvErrCard(out?'DGM1 gibt es nur für NRW-Plätze. Diese Bahn liegt außerhalb Nordrhein-Westfalens.':('Geodienst-Antwort: '+(j.error||'unbekannt')+(j.detail?(' – '+String(j.detail).slice(0,160)):''))));
+  } else { RT_gvStatus('DGM nicht erreichbar'); RT_gvCard(RT_gvErrCard('Höhenmodell konnte nicht geladen werden.')); }
+ });
+}
+function RT_gvRender(band,W,H){
+ if(!band||!W||!H){ RT_gvStatus('Leeres Höhenmodell'); RT_gvCard(RT_gvErrCard('Das Höhenmodell kam leer zurück.')); return; }
+ var g=function(r,c){ var v=band[r*W+c]; return (v>-1000&&v<9000&&!isNaN(v))?v:NaN; };
+ var mn=Infinity,mx=-Infinity,cnt=0;
+ for(var i=0;i<band.length;i++){ var v=band[i]; if(v>-1000&&v<9000&&!isNaN(v)){ if(v<mn)mn=v; if(v>mx)mx=v; cnt++; } }
+ if(!cnt){ RT_gvStatus('Keine gültigen Höhen'); RT_gvCard(RT_gvErrCard('Keine gültigen Höhenwerte im Ausschnitt.')); return; }
+ var range=mx-mn;
+ var cell=6, cv=document.createElement('canvas'); cv.width=W*cell; cv.height=H*cell; var ctx=cv.getContext('2d');
+ // schattiertes Relief (Farbverlauf nach Höhe)
+ for(var r=0;r<H;r++){ for(var c=0;c<W;c++){ var h=g(r,c); if(isNaN(h))continue; var t=range>0.01?(h-mn)/range:0.5; var hue=210-210*t; ctx.fillStyle='hsla('+hue+',80%,52%,.5)'; ctx.fillRect(c*cell,r*cell,cell,cell); } }
+ // Höhenlinien-Intervall
+ var iv=range<1.5?0.25:(range<4?0.5:1);
+ ctx.lineCap='round';
+ function march(level,major){
+  ctx.strokeStyle=major?'rgba(255,255,255,.95)':'rgba(255,255,255,.6)'; ctx.lineWidth=major?2:1.2;
+  for(var rr=0;rr<H-1;rr++){ for(var cc=0;cc<W-1;cc++){
+   var tl=g(rr,cc),tr=g(rr,cc+1),br=g(rr+1,cc+1),bl=g(rr+1,cc);
+   if(isNaN(tl)||isNaN(tr)||isNaN(br)||isNaN(bl))continue;
+   var pts=[];
+   if((tl<level)!=(tr<level)) pts.push([cc+(level-tl)/(tr-tl),rr]);
+   if((tr<level)!=(br<level)) pts.push([cc+1,rr+(level-tr)/(br-tr)]);
+   if((bl<level)!=(br<level)) pts.push([cc+(level-bl)/(br-bl),rr+1]);
+   if((tl<level)!=(bl<level)) pts.push([cc,rr+(level-tl)/(bl-tl)]);
+   if(pts.length>=2){ ctx.beginPath(); ctx.moveTo(pts[0][0]*cell,pts[0][1]*cell); ctx.lineTo(pts[1][0]*cell,pts[1][1]*cell); ctx.stroke(); if(pts.length>=4){ ctx.beginPath(); ctx.moveTo(pts[2][0]*cell,pts[2][1]*cell); ctx.lineTo(pts[3][0]*cell,pts[3][1]*cell); ctx.stroke(); } }
+  }}
+ }
+ var lvl=Math.ceil(mn/iv)*iv, k=0;
+ for(; lvl<mx; lvl+=iv, k++){ march(lvl, (Math.round(lvl/iv)%4===0)); }
+ // Overlay geo-platzieren
+ var p=RT_GV.pin, size=RT_GV.size;
+ var dLat=(size/2)/111320, dLng=(size/2)/(111320*Math.cos(p.lat*Math.PI/180));
+ var bounds=[[p.lat-dLat,p.lng-dLng],[p.lat+dLat,p.lng+dLng]];
+ try{ L.imageOverlay(cv.toDataURL('image/png'),bounds,{opacity:0.55,pane:'gvrelief',interactive:false}).addTo(RT_GV.map); }catch(e){}
+ // Falllinie am Loch (Gradient in der Mitte)
+ var ci=Math.floor(W/2), ri=Math.floor(H/2);
+ var hE=g(ri,Math.min(W-1,ci+1)),hW=g(ri,Math.max(0,ci-1)),hN=g(Math.max(0,ri-1),ci),hS=g(Math.min(H-1,ri+1),ci);
+ var slopeTxt='', fallBrg=null, slopePct=null;
+ if(!isNaN(hE)&&!isNaN(hW)&&!isNaN(hN)&&!isNaN(hS)){
+  var gx=(hE-hW)/2;           // Anstieg pro m nach Osten
+  var gnorth=(hN-hS)/2;       // Anstieg pro m nach Norden
+  var dE=-gx, dN=-gnorth;     // bergab
+  slopePct=Math.round(Math.hypot(gx,gnorth)*1000)/10;
+  if(Math.hypot(dE,dN)>1e-4){ fallBrg=(Math.atan2(dE,dN)*180/Math.PI+360)%360;
+   var end=[p.lat+(dN*8)/111320, p.lng+(dE*8)/(111320*Math.cos(p.lat*Math.PI/180))];
+   try{ L.polyline([[p.lat,p.lng],end],{color:'#ffd24a',weight:4,opacity:.95}).addTo(RT_GV.map);
+    L.marker(end,{interactive:false,icon:L.divIcon({className:'',iconSize:[16,16],iconAnchor:[8,8],html:'<div style="width:11px;height:11px;border-radius:50%;background:#ffd24a;border:2px solid #0b160f;"></div>'})}).addTo(RT_GV.map); }catch(e){}
+  }
+ }
+ RT_gvStatus('');
+ var comp=(fallBrg==null)?'':(['N','NO','O','SO','S','SW','W','NW'][Math.round((fallBrg%360)/45)%8]);
+ var putt=(RT_GV.ball)?RT_haversineM(p.lat,p.lng,RT_GV.ball.lat,RT_GV.ball.lng):null;
+ var cells='<div style="display:flex;gap:0;background:rgba(0,0,0,.30);border-radius:13px;padding:10px 4px;">'
+  +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Gefälle</div><div style="font-size:18px;font-weight:800;color:#fff;">'+(slopePct!=null?slopePct+' %':'–')+'</div></div>'
+  +'<div style="width:1px;background:rgba(255,255,255,.12);"></div>'
+  +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Falllinie</div><div style="font-size:18px;font-weight:800;color:#ffd24a;">'+(comp||'–')+'</div><div style="font-size:9.5px;color:#7f948a;">bergab</div></div>'
+  +'<div style="width:1px;background:rgba(255,255,255,.12);"></div>'
+  +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Putt</div><div style="font-size:18px;font-weight:800;color:#fff;">'+(putt!=null?RT_fmtDist(putt):'–')+'</div></div>'
+ +'</div>';
+ RT_gvCard(cells+'<div style="font-size:11px;color:#7f948a;margin-top:9px;line-height:1.5;">Höhenlinien alle '+String(iv).replace('.',',')+' m · 1-m-Geländemodell (DGM1, Geobasis NRW). Zeigt das Geländerelief, keine cm-genaue Grün-Vermessung.</div>');
+}
+/* ===== Ende Grün-Ansicht ===== */
+
 function RT_grabberOverlayHtml(){
  var rd=RT_round; if(!rd) return '';
  var key=RT_holeMapKey(rd,rd.cur);
@@ -4083,6 +4234,7 @@ function RT_grabberOverlayHtml(){
    RT_hvBtn('shotanalyse','Shot-Analyse','RT_openShotPlan()',!!document.getElementById('rt-sp'),'rt-tile-sp')+
    RT_hvBtn('fahnenradar','Fahnenradar','RT_openFlagRadar()',!!document.getElementById('rt-fr'),'rt-tile-fr')+
    RT_hvBtn('entfernungki','Entfernung & KI','RT_openDistKI()',!!document.getElementById('rt-dki'),'rt-tile-dki')+
+   RT_hvBtn('gruen','Grün-Ansicht','RT_openGreenView()',!!document.getElementById('rt-gv'),'rt-tile-gv')+
    RT_hvBtn('entfernung','Entfernung','RT_toggleGrabber()',on,'rt-grab-toggle')+
   '</div>'+
   '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
@@ -6991,13 +7143,24 @@ function RT_mcRemove(ref,kind){
 /* ===== Ende Platzsuche ===== */
 
 /* ============================================================
-   M5 · Shot-Tracer v1 (Analyse-Tab)
-   Video importieren/aufnehmen, 3 Marker, Flugbahn-Overlay, Wiedergabe.
-   Kein externer Dienst; alles lokal im Browser. Speicher: keiner (Session).
+   M5 · Shot-Tracer (Analyse-Tab) — "Realistischer Umbau"
+   Video importieren/aufnehmen; nur 2 Taps: Ball + Landung. Ein ziehbarer Bogen-Punkt
+   traced die tatsaechliche Flugkurve (quadratische Bezier). Die App KLASSIFIZIERT den
+   Ballflug automatisch (Gerade/Draw/Fade/Hook/Slice) und gibt einen Coaching-Tipp.
+   Ehrlich: Ballgeschwindigkeit/Apex/echte Distanz kommen NICHT aus dem Video (nur mit
+   Launch-Monitor bzw. GPS beim Start aus der Bahn). Alles lokal im Browser.
    ============================================================ */
 var RT_TRC={panel:'tab-analyse',video:null,canvas:null,url:null,fps:30,
-  marks:{ball:null,impact:null,land:null},mode:null,shape:'gerade',
-  height:0.30,showTraj:true,dpr:1,rec:null,recChunks:null,stream:null,built:false};
+  marks:{ball:null,land:null},apex:null,mode:null,handed:'r',dpr:1,drag:false,
+  rec:null,recChunks:null,stream:null,built:false};
+
+var RT_TRC_SHAPES={
+ 'Gerade':{col:'#1F8A4D',good:true,tip:'Ziellinie und Schlagfläche standen quadratisch – sauber getroffen.',opp:'Für einen kontrollierten Draw: Stand minimal geschlossen, Schwung etwas von innen.'},
+ 'Draw':{col:'#1F8A4D',good:true,tip:'Kontrollierter Draw – der Ball dreht sauber ein. Gut für Länge und Wind von der Seite.',opp:'Für einen Fade: Stand leicht offen, Schlagfläche zum Ziel, etwas von außen anschwingen.'},
+ 'Fade':{col:'#1F8A4D',good:true,tip:'Kontrollierter Fade – verlässlich und gut zu steuern, ideal für Präzision.',opp:'Für einen Draw: Stand leicht geschlossen, von innen anschwingen, Hände aktiver durch den Treffmoment.'},
+ 'Hook':{col:'#E08A1E',good:false,tip:'Deutlicher Hook. Meist zu geschlossene Schlagfläche oder zu starker Griff.',opp:'Gegenmittel: Griff neutraler, Schlagfläche im Treffmoment nicht überdrehen, Körperrotation mitnehmen.'},
+ 'Slice':{col:'#E08A1E',good:false,tip:'Deutlicher Slice. Meist offene Schlagfläche oder Schwungbahn von außen.',opp:'Gegenmittel: Griff etwas stärker, von innen anschwingen, Schlagfläche früher schließen.'}
+};
 
 function RT_TRC_esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -7020,7 +7183,6 @@ function RT_TRC_ensureStyle(){
   +'.trcb.set{border-color:#1F8A4D;color:#1F8A4D;}'
   +'.trcb.ic{padding:8px 10px;font-size:16px;line-height:1;}'
   +'.trchint{font-size:12.5px;color:#5d7060;line-height:1.5;margin-top:6px;}'
-  +'.trcseg{display:flex;gap:6px;flex-wrap:wrap;}'
   +'.trcslab{font-size:12px;color:#5d7060;min-width:74px;}'
   +'.trcscrub{flex:1;min-width:120px;accent-color:#1F8A4D;}'
   +'.trctime{font-size:12px;color:#5d7060;font-variant-numeric:tabular-nums;min-width:78px;text-align:right;}';
@@ -7042,10 +7204,9 @@ function RT_TRC_render(){
    +'<canvas id="trc-canvas" style="display:none;"></canvas>'
    +'<div id="trc-empty" style="padding:40px 20px;text-align:center;color:#b9c8bd;">'
      +'<div style="font-size:40px;line-height:1;margin-bottom:8px;">🎥</div>'
-     +'<div style="font-size:14px;color:#5d7060;line-height:1.5;">Video importieren oder aufnehmen,<br>dann Ball, Treffer und Landung markieren.</div>'
+     +'<div style="font-size:14px;color:#5d7060;line-height:1.5;">Video importieren oder aufnehmen,<br>dann nur Ball und Landung antippen.</div>'
    +'</div>'
    +'</div>'
-   // playback controls (hidden until video)
    +'<div id="trc-controls" style="display:none;">'
      +'<div class="trcrow">'
        +'<button class="trcb pri" id="trc-play" onclick="RT_TRC_togglePlay()">▶︎ Play</button>'
@@ -7057,32 +7218,19 @@ function RT_TRC_render(){
        +'<input class="trcscrub" id="trc-scrub" type="range" min="0" max="1000" value="0" oninput="RT_TRC_scrub(this.value)"></div>'
    +'</div>'
    +'</div>'
-   // marking
    +'<div class="trccard" id="trc-mark" style="display:none;">'
-     +'<div style="font-weight:700;color:#143522;margin-bottom:2px;">Markieren</div>'
-     +'<div class="trchint">Passendes Bild ansteuern (⏮/⏭), dann Marker wählen und ins Video tippen.</div>'
+     +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+       +'<div style="font-weight:700;color:#143522;">Markieren</div>'
+       +'<button class="trcb" id="trc-hand" onclick="RT_TRC_toggleHand()" style="padding:6px 10px;font-size:12px;">Rechtshänder</button>'
+     +'</div>'
+     +'<div class="trchint">Passendes Bild ansteuern (⏮/⏭). Erst <b>Ball</b>, dann <b>Landung</b> ins Video tippen. Danach den <span style="color:#E0A000;">gelben Bogen-Punkt</span> auf die tatsächliche Flugkurve ziehen – die App erkennt den Ballflug automatisch.</div>'
      +'<div class="trcrow">'
-       +'<button class="trcb" id="trc-mb-ball" onclick="RT_TRC_setMode(\'ball\')">● Ball</button>'
-       +'<button class="trcb" id="trc-mb-impact" onclick="RT_TRC_setMode(\'impact\')">● Treffer</button>'
-       +'<button class="trcb" id="trc-mb-land" onclick="RT_TRC_setMode(\'land\')">● Landung</button>'
+       +'<button class="trcb" id="trc-mb-ball" onclick="RT_TRC_setMode(\'ball\')">① Ball</button>'
+       +'<button class="trcb" id="trc-mb-land" onclick="RT_TRC_setMode(\'land\')">② Landung</button>'
        +'<button class="trcb" onclick="RT_TRC_clearMarks()">Zurücksetzen</button>'
      +'</div>'
-     +'<div style="font-weight:700;color:#143522;margin:12px 0 2px;">Ballflug</div>'
-     +'<div class="trcrow trcseg" id="trc-shapes">'
-       +'<button class="trcb" data-s="gerade" onclick="RT_TRC_setShape(\'gerade\')">Gerade</button>'
-       +'<button class="trcb" data-s="fade" onclick="RT_TRC_setShape(\'fade\')">Fade</button>'
-       +'<button class="trcb" data-s="draw" onclick="RT_TRC_setShape(\'draw\')">Draw</button>'
-       +'<button class="trcb" data-s="slice" onclick="RT_TRC_setShape(\'slice\')">Slice</button>'
-       +'<button class="trcb" data-s="hook" onclick="RT_TRC_setShape(\'hook\')">Hook</button>'
-     +'</div>'
-     +'<div class="trcrow"><span class="trcslab">Bogenhöhe</span>'
-       +'<input class="trcscrub" type="range" min="5" max="60" value="30" oninput="RT_TRC_setHeight(this.value)"></div>'
-     +'<div class="trcrow">'
-       +'<button class="trcb" id="trc-toggle" onclick="RT_TRC_toggleTraj()">Flugbahn verbergen</button>'
-       +'<button class="trcb pri" onclick="RT_TRC_playTraj()">▶︎ Flugbahn abspielen</button>'
-     +'</div>'
+     +'<div id="trc-analysis" style="margin-top:12px;"></div>'
    +'</div>'
-   // source
    +'<div class="trccard">'
      +'<div class="trcrow">'
        +'<label class="trcb pri" style="display:inline-block;">Video importieren'
@@ -7103,7 +7251,7 @@ function RT_TRC_render(){
   RT_TRC.built=true;
   RT_TRC_bind();
   RT_TRC_syncButtons();
-  // restore a previously chosen video within the session
+  RT_TRC_renderAnalysis();
   if(RT_TRC.url){ RT_TRC_attachSrc(RT_TRC.url); }
 }
 
@@ -7115,7 +7263,10 @@ function RT_TRC_bind(){
   v.addEventListener('play',RT_TRC_syncPlay);
   v.addEventListener('pause',RT_TRC_syncPlay);
   v.addEventListener('ended',RT_TRC_syncPlay);
-  c.addEventListener('click',RT_TRC_canvasTap);
+  c.addEventListener('pointerdown',RT_TRC_ptrDown);
+  c.addEventListener('pointermove',RT_TRC_ptrMove);
+  c.addEventListener('pointerup',RT_TRC_ptrUp);
+  c.addEventListener('pointercancel',RT_TRC_ptrUp);
   if(!RT_TRC._resizeBound){ window.addEventListener('resize',function(){RT_TRC_sizeOverlay();}); RT_TRC._resizeBound=true; }
 }
 
@@ -7128,14 +7279,12 @@ function RT_TRC_pickFile(inp){
   RT_TRC.url=URL.createObjectURL(f);
   RT_TRC_attachSrc(RT_TRC.url);
 }
-
 function RT_TRC_attachSrc(url){
   var v=RT_TRC.video;if(!v)return;
   v.src=url;v.style.display='block';
   var em=document.getElementById('trc-empty');if(em)em.style.display='none';
   try{v.load();}catch(e){}
 }
-
 function RT_TRC_onLoaded(){
   var v=RT_TRC.video;if(!v)return;
   document.getElementById('trc-controls').style.display='block';
@@ -7144,7 +7293,6 @@ function RT_TRC_onLoaded(){
   RT_TRC_sizeOverlay();
   RT_TRC_onTime();
 }
-
 function RT_TRC_sizeOverlay(){
   var v=RT_TRC.video,c=RT_TRC.canvas;if(!v||!c||!v.videoWidth)return;
   var w=v.clientWidth,hh=v.clientHeight;if(!w||!hh)return;
@@ -7153,7 +7301,6 @@ function RT_TRC_sizeOverlay(){
   c.style.width=w+'px';c.style.height=hh+'px';
   RT_TRC_draw();
 }
-
 function RT_TRC_fmt(t){t=t||0;return t.toFixed(2);}
 function RT_TRC_onTime(){
   var v=RT_TRC.video;if(!v)return;
@@ -7161,7 +7308,6 @@ function RT_TRC_onTime(){
   var t=document.getElementById('trc-t');if(t)t.textContent=RT_TRC_fmt(cur)+' / '+RT_TRC_fmt(d)+' s';
   var s=document.getElementById('trc-scrub');if(s&&d)s.value=Math.round(cur/d*1000);
 }
-
 function RT_TRC_togglePlay(){var v=RT_TRC.video;if(!v)return;if(v.paused)v.play();else v.pause();}
 function RT_TRC_syncPlay(){var v=RT_TRC.video,b=document.getElementById('trc-play');if(!v||!b)return;b.innerHTML=v.paused?'▶︎ Play':'❚❚ Pause';}
 function RT_TRC_slow(){
@@ -7178,49 +7324,91 @@ function RT_TRC_frame(dir){
   var tt=(nf+0.5)/fps;
   v.currentTime=Math.min(v.duration-1e-3,Math.max(0,tt));
 }
-
+function RT_TRC_toggleHand(){
+  RT_TRC.handed=(RT_TRC.handed==='l')?'r':'l';
+  var b=document.getElementById('trc-hand');if(b)b.textContent=(RT_TRC.handed==='l')?'Linkshänder':'Rechtshänder';
+  RT_TRC_renderAnalysis();
+}
 function RT_TRC_setMode(which){
   RT_TRC.mode=(RT_TRC.mode===which)?null:which;
   RT_TRC_syncButtons();
 }
-function RT_TRC_canvasTap(ev){
-  if(!RT_TRC.mode)return;
-  var c=RT_TRC.canvas,v=RT_TRC.video;if(!c)return;
-  var rect=c.getBoundingClientRect();
+function RT_TRC_evtXY(ev){
+  var c=RT_TRC.canvas;var rect=c.getBoundingClientRect();
   var cx=(ev.clientX!=null?ev.clientX:0)-rect.left;
   var cy=(ev.clientY!=null?ev.clientY:0)-rect.top;
-  var x=Math.max(0,Math.min(1,cx/rect.width));
-  var y=Math.max(0,Math.min(1,cy/rect.height));
-  RT_TRC.marks[RT_TRC.mode]={x:x,y:y,t:v?v.currentTime:0};
-  if(RT_TRC.mode==='ball'||RT_TRC.mode==='land')RT_TRC.showTraj=true;
-  RT_TRC.mode=null;
-  RT_TRC_syncButtons();RT_TRC_draw();
+  return {x:Math.max(0,Math.min(1,cx/rect.width)),y:Math.max(0,Math.min(1,cy/rect.height)),rw:rect.width,rh:rect.height};
 }
-function RT_TRC_clearMarks(silent){
-  RT_TRC.marks={ball:null,impact:null,land:null};RT_TRC.mode=null;
-  if(!silent){RT_TRC_syncButtons();RT_TRC_draw();}
+function RT_TRC_ptrDown(ev){
+  var v=RT_TRC.video;var p=RT_TRC_evtXY(ev);
+  if(RT_TRC.mode==='ball'||RT_TRC.mode==='land'){
+    ev.preventDefault();
+    RT_TRC.marks[RT_TRC.mode]={x:p.x,y:p.y,t:v?v.currentTime:0};
+    RT_TRC.mode=null;
+    if(RT_TRC.marks.ball&&RT_TRC.marks.land&&!RT_TRC.apex){
+      RT_TRC.apex={x:(RT_TRC.marks.ball.x+RT_TRC.marks.land.x)/2,y:(RT_TRC.marks.ball.y+RT_TRC.marks.land.y)/2};
+    }
+    RT_TRC_syncButtons();RT_TRC_draw();RT_TRC_renderAnalysis();return;
+  }
+  if(RT_TRC.marks.ball&&RT_TRC.marks.land&&RT_TRC.apex){
+    var dx=(p.x-RT_TRC.apex.x)*p.rw, dy=(p.y-RT_TRC.apex.y)*p.rh;
+    if(Math.hypot(dx,dy)<34){ ev.preventDefault(); RT_TRC.drag=true; try{RT_TRC.canvas.setPointerCapture(ev.pointerId);}catch(e){} }
+  }
 }
-function RT_TRC_setShape(s){RT_TRC.shape=s;RT_TRC_syncButtons();RT_TRC_draw();}
-function RT_TRC_setHeight(v){RT_TRC.height=(parseFloat(v)||30)/100;RT_TRC_draw();}
-function RT_TRC_toggleTraj(){RT_TRC.showTraj=!RT_TRC.showTraj;var b=document.getElementById('trc-toggle');if(b)b.textContent=RT_TRC.showTraj?'Flugbahn verbergen':'Flugbahn zeigen';RT_TRC_draw();}
+function RT_TRC_ptrMove(ev){
+  if(!RT_TRC.drag)return; ev.preventDefault();
+  var p=RT_TRC_evtXY(ev); RT_TRC.apex={x:p.x,y:p.y};
+  RT_TRC_draw(); RT_TRC_renderAnalysis();
+}
+function RT_TRC_ptrUp(ev){ if(RT_TRC.drag){ RT_TRC.drag=false; RT_TRC_renderAnalysis(); } }
 
+function RT_TRC_clearMarks(silent){
+  RT_TRC.marks={ball:null,land:null};RT_TRC.apex=null;RT_TRC.mode=null;RT_TRC.drag=false;
+  if(!silent){RT_TRC_syncButtons();RT_TRC_draw();RT_TRC_renderAnalysis();}
+}
 function RT_TRC_syncButtons(){
-  ['ball','impact','land'].forEach(function(k){
+  ['ball','land'].forEach(function(k){
     var b=document.getElementById('trc-mb-'+k);if(!b)return;
     var active=(RT_TRC.mode===k),set=!!RT_TRC.marks[k];
     b.className='trcb'+(active?' on':(set?' set':''));
   });
-  var shapes=document.getElementById('trc-shapes');
-  if(shapes){var bs=shapes.querySelectorAll('button');for(var i=0;i<bs.length;i++){bs[i].className='trcb'+(bs[i].getAttribute('data-s')===RT_TRC.shape?' pri':'');}}
 }
-
+function RT_TRC_classify(){
+  var m=RT_TRC.marks,a=RT_TRC.apex; if(!m.ball||!m.land||!a) return null;
+  var dx=m.land.x-m.ball.x, dy=m.land.y-m.ball.y; var len=Math.hypot(dx,dy)||1e-6;
+  var ax=a.x-m.ball.x, ay=a.y-m.ball.y;
+  var cross=dx*ay-dy*ax;
+  var ratio=Math.abs(cross/(len*len));
+  var rh=(RT_TRC.handed!=='l');
+  var curveRight=(cross>0);
+  var shape;
+  if(ratio<0.045) shape='Gerade';
+  else{ var strong=ratio>=0.14; var toRight=rh?curveRight:!curveRight; shape=toRight?(strong?'Slice':'Fade'):(strong?'Hook':'Draw'); }
+  return {shape:shape, dir:(curveRight?'rechts':'links'), ratio:ratio};
+}
+function RT_TRC_renderAnalysis(){
+  var host=document.getElementById('trc-analysis'); if(!host) return;
+  var m=RT_TRC.marks;
+  if(!m.ball){ host.innerHTML='<div class="trchint" style="margin-top:0;">Tippe <b>① Ball</b> an und markiere die Startlage im Video.</div>'; return; }
+  if(!m.land){ host.innerHTML='<div class="trchint" style="margin-top:0;">Tippe <b>② Landung</b> an und markiere, wo der Ball aufkommt.</div>'; return; }
+  var r=RT_TRC_classify(); if(!r){ host.innerHTML=''; return; }
+  var info=RT_TRC_SHAPES[r.shape]||RT_TRC_SHAPES['Gerade'];
+  var sub=(r.shape==='Gerade')?'gerader Ballflug':('dreht nach '+r.dir);
+  host.innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px;">'
+     +'<div style="flex:none;padding:7px 13px;border-radius:100px;background:'+info.col+';color:#fff;font-size:16px;font-weight:800;">'+r.shape+'</div>'
+     +'<div style="font-size:12.5px;color:#5d7060;">'+sub+'</div>'
+    +'</div>'
+    +'<div style="font-size:13px;color:#143522;line-height:1.5;margin-top:9px;">'+info.tip+'</div>'
+    +'<div style="font-size:12.5px;color:#3C5546;line-height:1.5;margin-top:7px;background:#f3f7f3;border-radius:10px;padding:9px 11px;">💡 '+info.opp+'</div>'
+    +'<div class="trcrow"><button class="trcb pri" onclick="RT_TRC_playTraj()">▶︎ Flugbahn abspielen</button></div>'
+    +'<div style="font-size:11px;color:#8A9C8E;margin-top:8px;">Ballgeschwindigkeit, Apex-Höhe und exakte Distanz kommen nicht aus dem Video (nur Launch-Monitor bzw. GPS beim Start aus der Bahn).</div>';
+}
 function RT_TRC_path(t){
-  var m=RT_TRC.marks,b=m.ball,l=m.land;if(!b||!l)return{x:0,y:0};
-  var bend={gerade:0,fade:0.06,slice:0.13,draw:-0.06,hook:-0.13}[RT_TRC.shape]||0;
-  var x=b.x+(l.x-b.x)*t+bend*Math.sin(Math.PI*t);
-  var line=b.y+(l.y-b.y)*t;
-  var arc=4*RT_TRC.height*t*(1-t);
-  return{x:x,y:line-arc};
+  var m=RT_TRC.marks,a=RT_TRC.apex;var b=m.ball,l=m.land;
+  if(!b||!l||!a)return{x:0,y:0};
+  var u=1-t;
+  return{x:u*u*b.x+2*u*t*a.x+t*t*l.x, y:u*u*b.y+2*u*t*a.y+t*t*l.y};
 }
 function RT_TRC_draw(prog){
   var c=RT_TRC.canvas;if(!c||!c.getContext)return;
@@ -7229,24 +7417,27 @@ function RT_TRC_draw(prog){
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,c.width,c.height);
   ctx.scale(dpr,dpr);
   var m=RT_TRC.marks;
-  if(RT_TRC.showTraj&&m.ball&&m.land){
+  if(m.ball&&m.land&&RT_TRC.apex){
     var pr=(prog==null)?1:Math.max(0,Math.min(1,prog));
-    ctx.lineWidth=3;ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle='rgba(246,195,90,.95)';
+    ctx.lineWidth=3.4;ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle='rgba(246,195,90,.97)';
     ctx.beginPath();var N=64,started=false;
     for(var i=0;i<=N;i++){var t=i/N;if(t>pr)break;var p=RT_TRC_path(t);var X=p.x*w,Y=p.y*h;if(!started){ctx.moveTo(X,Y);started=true;}else ctx.lineTo(X,Y);}
     ctx.stroke();
     var ph=RT_TRC_path(pr);ctx.fillStyle='#fff';ctx.strokeStyle='rgba(0,0,0,.45)';ctx.lineWidth=1.5;
     ctx.beginPath();ctx.arc(ph.x*w,ph.y*h,5,0,6.29);ctx.fill();ctx.stroke();
+    if(prog==null){
+      var A=RT_TRC.apex;ctx.fillStyle='rgba(224,160,0,.28)';ctx.strokeStyle='#E0A000';ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.arc(A.x*w,A.y*h,12,0,6.29);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#E0A000';ctx.beginPath();ctx.arc(A.x*w,A.y*h,3.5,0,6.29);ctx.fill();
+    }
   }
   function dot(pt,col,lab){if(!pt)return;var X=pt.x*w,Y=pt.y*h;ctx.fillStyle=col;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(X,Y,6,0,6.29);ctx.fill();ctx.stroke();ctx.font='bold 11px Inter,sans-serif';var lx=X+9;ctx.textAlign='left';if(X>w*0.72){lx=X-9;ctx.textAlign='right';}var ly=Y-7;if(Y<16)ly=Y+16;ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.55)';ctx.strokeText(lab,lx,ly);ctx.fillStyle='#fff';ctx.fillText(lab,lx,ly);ctx.textAlign='left';}
-  dot(m.ball,'#1F8A4D','Ball');dot(m.impact,'#E08A1E','Treffer');dot(m.land,'#B03A3A','Landung');
+  dot(m.ball,'#1F8A4D','Ball');dot(m.land,'#B03A3A','Landung');
 }
-
 function RT_TRC_playTraj(){
   var m=RT_TRC.marks;if(!m.ball||!m.land){RT_TRC_toast('Bitte zuerst Ball und Landung markieren.');return;}
-  RT_TRC.showTraj=true;
   var start=null,dur=1500;
-  function step(ts){if(start==null)start=ts;var p=Math.min(1,(ts-start)/dur);RT_TRC_draw(p);if(p<1)requestAnimationFrame(step);}
+  function step(ts){if(start==null)start=ts;var p=Math.min(1,(ts-start)/dur);RT_TRC_draw(p);if(p<1)requestAnimationFrame(step);else RT_TRC_draw();}
   requestAnimationFrame(step);
 }
 function RT_TRC_toast(msg){
@@ -7255,8 +7446,6 @@ function RT_TRC_toast(msg){
   t.textContent=msg;document.body.appendChild(t);
   setTimeout(function(){t.style.transition='opacity .4s';t.style.opacity='0';setTimeout(function(){try{t.remove();}catch(e){}},400);},2200);
 }
-
-/* --- Aufnahme (nur am Gerät) --- */
 function RT_TRC_toggleRec(){
   if(RT_TRC.rec&&RT_TRC.rec.state==='recording'){try{RT_TRC.rec.stop();}catch(e){}return;}
   if(!navigator.mediaDevices||!window.MediaRecorder){RT_TRC_toast('Aufnahme wird auf diesem Gerät nicht unterstützt.');return;}

@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, cpSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -47,3 +47,9 @@ cpIcon('icon-512.png', ['icon-512.png']);
 cpIcon('icon-32.png', ['favicon.png', 'favicon.ico', 'icon-32.png']);
 cpIcon('logo-mark.png', ['logo-mark.png']);
 console.log('public/ mit statischen Icons erzeugt.');
+
+// Bahnkarten-Icons, Rundenbilder und Platzbilder nach public/ (Cloudflare Static Assets)
+cpSync(r('assets/hv'), resolve(pub, 'hv'), { recursive: true });
+cpSync(r('assets/round-bg'), resolve(pub, 'round-bg'), { recursive: true });
+cpSync(r('assets/course-images'), resolve(pub, 'course-images'), { recursive: true });
+console.log('public/ mit Icons, Rundenbildern und Platzbildern erzeugt.');

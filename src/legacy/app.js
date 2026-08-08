@@ -2324,7 +2324,7 @@ async function RT_initHoleFullMap(){
  var rotF=((((basePos.rot||0)+RT_FULL_IMG_ROT)%360)+360)%360;
  el.style.transform='rotate('+rotF+'deg)';
  RT_sizeRotatedMap(el,rotF);
- var map=L.map('hole-full-map',{zoomControl:true,attributionControl:true,zoomSnap:0.1}).setView([basePos.lat,basePos.lng],basePos.zoom);
+ var map=L.map('hole-full-map',{zoomControl:false,attributionControl:true,zoomSnap:0.1}).setView([basePos.lat,basePos.lng],basePos.zoom);
  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,attribution:'Tiles \u00a9 Esri'}).addTo(map);
  RT_holeFullMapInst=map;
  /* Leaflets eigenes Dragging MUSS hier ausgeschaltet werden: die Vollbildkarte laeuft ohne
@@ -3431,44 +3431,47 @@ function RT_teePinFit(rd,c,el){
  var wrap=(el&&el.parentElement)?el.parentElement:null;
  var H=(wrap&&wrap.clientHeight)||(el&&el.clientHeight)||520;
  var mLat=(center.lat+pin.lat)/2, mLng=(center.lng+pin.lng)/2;
- var mpp=d/(H*0.86);
+ var mpp=d/(H*0.70);
  var z=Math.log(156543.03392*Math.cos(mLat*Math.PI/180)/mpp)/Math.LN2;
  if(!isFinite(z)) return null;
- z=Math.max(14,Math.min(20,Math.round(z*10)/10));
+ z=Math.max(14,Math.min(19,Math.round(z*10)/10));
  return {lat:mLat,lng:mLng,zoom:z};
 }
 function RT_windRoseSvg(d,spd){
  var col=(spd>=25)?'#FF6B6B':(spd>=12?'#F6C35A':'#7FE0A6');
+ function pt(a,l,w){ var rad=a*Math.PI/180; return {tx:22+l*Math.sin(rad),ty:22-l*Math.cos(rad),b1x:22+w*Math.cos(rad),b1y:22+w*Math.sin(rad),b2x:22-w*Math.cos(rad),b2y:22-w*Math.sin(rad)}; }
+ function star(a,l,fa,fb){ var p=pt(a,l,3.2); return '<path d="M'+p.tx.toFixed(1)+' '+p.ty.toFixed(1)+' L22 22 L'+p.b1x.toFixed(1)+' '+p.b1y.toFixed(1)+' Z" fill="'+fa+'"/><path d="M'+p.tx.toFixed(1)+' '+p.ty.toFixed(1)+' L22 22 L'+p.b2x.toFixed(1)+' '+p.b2y.toFixed(1)+' Z" fill="'+fb+'"/>'; }
+ var g='<svg viewBox="0 0 44 44" width="46" height="46" style="flex:none;">';
+ g+='<circle cx="22" cy="22" r="20" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1"/>';
+ for(var i=0;i<24;i++){ var a=i*15*Math.PI/180, r1=(i%6===0)?16.5:18; g+='<line x1="'+(22+r1*Math.sin(a)).toFixed(1)+'" y1="'+(22-r1*Math.cos(a)).toFixed(1)+'" x2="'+(22+19.5*Math.sin(a)).toFixed(1)+'" y2="'+(22-19.5*Math.cos(a)).toFixed(1)+'" stroke="rgba(255,255,255,.4)" stroke-width="'+(i%6===0?1.3:0.8)+'"/>'; }
+ [45,135,225,315].forEach(function(a){ g+=star(a,9,'rgba(255,255,255,.55)','rgba(255,255,255,.85)'); });
+ [0,90,180,270].forEach(function(a){ g+=star(a,15,'rgba(255,255,255,.75)','#ffffff'); });
+ g+='<circle cx="22" cy="22" r="2.4" fill="#fff"/>';
  var rot=(d===null?0:d);
- return '<svg viewBox="0 0 44 44" width="40" height="40" style="flex:none;">'+
-  '<circle cx="22" cy="22" r="19" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.4)" stroke-width="1.2"/>'+
-  '<g stroke="rgba(255,255,255,.5)" stroke-width="1.3" stroke-linecap="round">'+
-   '<line x1="22" y1="6" x2="22" y2="9.5"/><line x1="38" y1="22" x2="34.5" y2="22"/>'+
-   '<line x1="22" y1="38" x2="22" y2="34.5"/><line x1="6" y1="22" x2="9.5" y2="22"/></g>'+
-  '<path d="M22 2.5 L19.6 7 L24.4 7 Z" fill="rgba(255,255,255,.9)"/>'+
-  '<g transform="rotate('+rot.toFixed(1)+' 22 22)">'+
-   '<line x1="22" y1="32" x2="22" y2="15" stroke="'+col+'" stroke-width="3" stroke-linecap="round"/>'+
-   '<path d="M22 11.5 L16.8 19 L27.2 19 Z" fill="'+col+'"/></g></svg>';
+ g+='<g transform="rotate('+rot.toFixed(1)+' 22 22)"><line x1="22" y1="30" x2="22" y2="14" stroke="'+col+'" stroke-width="2.6" stroke-linecap="round"/><path d="M22 11 L18 17 L26 17 Z" fill="'+col+'"/></g>';
+ g+='</svg>'; return g;
 }
-function RT_thermoSvg(){
- return '<svg viewBox="0 0 16 16" width="10" height="12" style="flex:none;"><path d="M8 2.4a1.6 1.6 0 00-1.6 1.6v5a2.5 2.5 0 103.2 0V4A1.6 1.6 0 008 2.4z" fill="none" stroke="#cfe4d4" stroke-width="1.2"/><circle cx="8" cy="11.3" r="1.4" fill="#cfe4d4"/></svg>';
+function RT_thermoSvg(t){
+ var col=(t!==undefined&&t!==null)?((t<=4)?'#7FB6FF':(t>=24?'#FF8A5B':'#eaf2ea')):'#eaf2ea';
+ return '<svg viewBox="0 0 24 24" width="12" height="14" style="flex:none;"><path d="M13 13.5V5a2.2 2.2 0 10-4.4 0v8.5a3.6 3.6 0 104.4 0z" fill="none" stroke="'+col+'" stroke-width="1.7"/><rect x="10.1" y="7" width="1.8" height="6.6" rx="0.9" fill="'+col+'"/><circle cx="11" cy="17.3" r="2.2" fill="'+col+'"/></svg>';
 }
 function RT_windGlyphSvg(sz,col){
- col=col||'#fff';
+ col=col||'#eaf2ea';
  return '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" style="flex:none;"><g fill="none" stroke="'+col+'" stroke-width="1.7" stroke-linecap="round"><path d="M3 8h8.2a2.1 2.1 0 10-2.1-2.1"/><path d="M3 12h12.5a2.3 2.3 0 11-2.3 2.3"/><path d="M3 16h6.5"/></g></svg>';
 }
 function RT_windOverlayContent(rd,c){
  var w=RT_wind.data;
- if(!w){ return '<span style="font-size:12px;color:#fff;padding:2px 6px;">Wind nicht verfügbar</span>'; }
+ if(!w){ return '<span style="font-size:12px;color:#fff;padding:2px 8px;white-space:nowrap;">Wind nicht verfügbar</span>'; }
  var spd=Math.round(w.spd);
  var d=RT_windRelDeg(rd,c);
  var dir=(d===null?'Wind':RT_windLabel(d));
- var l2='<span style="font-weight:700;">'+spd+'</span> km/h';
- if(w.temp!==undefined&&w.temp!==null) l2+='<span style="opacity:.45;padding:0 5px;">·</span>'+RT_thermoSvg()+'<span style="font-weight:700;">'+Math.round(w.temp)+'°</span>';
- return RT_windRoseSvg(d,spd)+
-  '<div style="display:flex;flex-direction:column;gap:1px;min-width:0;line-height:1.2;">'+
+ var hasT=(w.temp!==undefined&&w.temp!==null);
+ var l2=RT_windGlyphSvg(14,'#eaf2ea')+'<span style="font-weight:700;">'+spd+'</span> km/h';
+ if(hasT) l2+='<span style="opacity:.4;padding:0 2px;">·</span>'+RT_thermoSvg(w.temp)+'<span style="font-weight:700;">'+Math.round(w.temp)+'°</span>';
+ return '<div style="width:58px;height:58px;border-radius:14px;background:rgba(8,20,13,.66);display:flex;align-items:center;justify-content:center;flex:none;">'+RT_windRoseSvg(d,spd)+'</div>'+
+  '<div style="display:flex;flex-direction:column;gap:3px;min-width:0;line-height:1.2;">'+
    '<div style="font-size:12.5px;font-weight:700;color:#fff;white-space:nowrap;">'+dir+'</div>'+
-   '<div style="font-size:11px;color:#dfeada;display:flex;align-items:center;gap:2px;white-space:nowrap;">'+l2+'</div>'+
+   '<div style="font-size:11.5px;color:#e8f0e6;display:flex;align-items:center;gap:4px;white-space:nowrap;">'+l2+'</div>'+
   '</div>';
 }
 function RT_grabberOverlayHtml(){
@@ -3486,7 +3489,7 @@ function RT_grabberOverlayHtml(){
    '<button id="rt-wind-toggle" onclick="RT_toggleWind()" style="'+btn+'opacity:'+(windOn?'1':'0.45')+';"><img src="'+RT_IC_WIND+'" style="width:34px;height:34px;display:block;"></button>'+
    '<button id="rt-grab-toggle" onclick="RT_toggleGrabber()" style="'+btn+'opacity:'+(on?'1':'0.45')+';"><img src="'+RT_IC_ENTF+'" style="width:34px;height:34px;display:block;"></button>'+
   '</div>'+
-  '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 66px);left:50%;transform:translateX(-50%);max-width:calc(100% - 24px);box-sizing:border-box;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:center;gap:8px;background:rgba(18,38,27,.85);border-radius:14px;padding:5px 13px 5px 6px;box-shadow:0 2px 8px rgba(0,0,0,.4);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
+  '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:center;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
   '<div id="rt-grab-far" style="'+lbl+'top:32%;">–</div>'+
   '<div id="rt-grab-near" style="'+lbl+'top:60%;">–</div>'+
  '</div>';

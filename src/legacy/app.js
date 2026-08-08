@@ -2627,7 +2627,7 @@ function RT_hidePreset(key){
 /* Platz-Presets. CR/SL sind Startwerte und im Setup je Spieler editierbar. */
 var RT_COURSES={
  georg:{name:'Georghausen', address:'Georghausen 8, 51789 Lindlar',
-  photoUrl:'https://raw.githubusercontent.com/Maetschke/fairwaypilot/main/assets/course-images/georghausen/cover.jpg',
+  photoUrl:'/course-images/georghausen/cover.jpg',
   nines:{
    F:{lbl:'Front 9 (1\u20139)', nums:[1,2,3,4,5,6,7,8,9], par:[4,4,5,4,3,4,4,4,5], si:[2,7,1,4,8,6,3,9,5], si18:[3,9,1,7,15,13,5,17,11]},
    B:{lbl:'Back 9 (10\u201318)', nums:[10,11,12,13,14,15,16,17,18], par:[3,5,4,4,3,4,3,5,4], si:[8,6,5,4,7,3,9,2,1], si18:[16,10,14,8,12,6,18,4,2]}
@@ -3479,6 +3479,396 @@ function RT_windOverlayContent(rd,c){
    '<div style="font-size:11.5px;color:#e8f0e6;display:flex;align-items:center;gap:4px;white-space:nowrap;">'+l2+'</div>'+
   '</div>';
 }
+/* ============================================================
+   Wetterradar (Bahnkarte, rechte Toolbar)
+   - Aktuelles Wetter + Stunden-Vorschau ueber /api/wx (Open-Meteo, serverseitig)
+   - Niederschlagsradar von RainViewer als animierter Kachel-Layer ueber heller
+     Esri-Basiskarte (Light Gray Canvas). RainViewer laedt clientseitig, weil
+     Kachel-Requests zwingend die Client-IP brauchen.
+   ============================================================ */
+var RT_wxState={data:null,ts:0,loading:false,err:null,key:''};
+var RT_RADAR={map:null,layers:[],frames:[],idx:0,timer:null,playing:false};
+
+function RT_radarCenter(){
+ var rd=RT_round;
+ if(rd){
+  var ref=RT_refFor(rd,rd.cur);
+  if(ref&&ref.pin&&ref.pin.lat!=null) return {lat:ref.pin.lat,lng:ref.pin.lng};
+  var ctr=RT_grabberCenter(rd,rd.cur);
+  if(ctr&&ctr.lat!=null) return {lat:ctr.lat,lng:ctr.lng};
+ }
+ if(RT_curPos&&RT_curPos.lat!=null) return {lat:RT_curPos.lat,lng:RT_curPos.lng};
+ return {lat:51.05,lng:6.9};
+}
+function RT_wxCompass(dir){
+ if(dir==null) return '';
+ var names=['N','NO','O','SO','S','SW','W','NW'];
+ return names[Math.round(((dir%360)/45))%8];
+}
+function RT_wxCode(code){
+ var c=(code==null)?-1:code;
+ if(c===0) return {e:'☀️',t:'Klar'};
+ if(c===1) return {e:'🌤️',t:'Heiter'};
+ if(c===2) return {e:'⛅',t:'Wolkig'};
+ if(c===3) return {e:'☁️',t:'Bedeckt'};
+ if(c===45||c===48) return {e:'🌫️',t:'Nebel'};
+ if(c>=51&&c<=57) return {e:'🌦️',t:'Niesel'};
+ if(c>=61&&c<=67) return {e:'🌧️',t:'Regen'};
+ if(c>=71&&c<=77) return {e:'🌨️',t:'Schnee'};
+ if(c>=80&&c<=82) return {e:'🌦️',t:'Schauer'};
+ if(c>=85&&c<=86) return {e:'🌨️',t:'Schneeschauer'};
+ if(c>=95) return {e:'⛈️',t:'Gewitter'};
+ return {e:'🌥️',t:''};
+}
+function RT_wxHourLabel(iso){
+ var t=(iso||'').slice(11,16); return t||'';
+}
+function RT_wxFetch(force){
+ var p=RT_radarCenter();
+ var key=p.lat.toFixed(3)+','+p.lng.toFixed(3);
+ var fresh=(RT_wxState.key===key)&&RT_wxState.data&&((Date.now()-RT_wxState.ts)<600000);
+ if(RT_wxState.loading||(fresh&&!force)){ RT_wxRenderBody(); return; }
+ RT_wxState.loading=true; RT_wxState.err=null; RT_wxRenderBody();
+ fetch('/api/wx?lat='+encodeURIComponent(p.lat)+'&lng='+encodeURIComponent(p.lng))
+  .then(function(r){ return r.json(); })
+  .then(function(j){
+   RT_wxState.loading=false;
+   if(!j||j.error||j.temp===undefined){ RT_wxState.err='nicht verfügbar'; }
+   else { RT_wxState.data=j; RT_wxState.ts=Date.now(); RT_wxState.key=key; }
+   RT_wxRenderBody();
+  })
+  .catch(function(){ RT_wxState.loading=false; RT_wxState.err='nicht verfügbar'; RT_wxRenderBody(); });
+}
+function RT_wxRenderBody(){
+ var host=document.getElementById('rt-wx-body'); if(!host) return;
+ if(RT_wxState.loading&&!RT_wxState.data){ host.innerHTML='<div style="color:#9fb3a4;font-size:12.5px;padding:6px 2px;">Wetter wird geladen…</div>'; return; }
+ if(!RT_wxState.data){
+  host.innerHTML='<div style="display:flex;align-items:center;gap:10px;color:#cfe0d4;font-size:12.5px;padding:4px 2px;">Wetter '+(RT_wxState.err||'nicht verfügbar')+'<button onclick="RT_wxFetch(true)" style="border:none;background:rgba(255,255,255,.14);color:#fff;border-radius:8px;padding:4px 10px;font-size:11px;font-family:inherit;cursor:pointer;">Erneut</button></div>';
+  return;
+ }
+ var w=RT_wxState.data;
+ var comp=RT_wxCompass(w.dir);
+ var arrowRot=(w.dir==null)?0:((w.dir+180)%360);
+ var updated=RT_wxHourLabel(w.at);
+ var cur='<div style="display:flex;align-items:stretch;gap:0;background:rgba(0,0,0,.34);border-radius:14px;padding:11px 6px;">'
+  +RT_wxCell('Temp',(w.temp!=null?Math.round(w.temp)+'°':'–'))
+  +RT_wxDivider()
+  +RT_wxCell('Feuchte',(w.hum!=null?Math.round(w.hum)+'%':'–'))
+  +RT_wxDivider()
+  +'<div style="flex:1.3;text-align:center;padding:0 4px;min-width:0;">'
+    +'<div style="font-size:11px;color:#9fb3a4;margin-bottom:2px;">Wind</div>'
+    +'<div style="display:flex;align-items:center;justify-content:center;gap:6px;">'
+      +'<span style="font-size:18px;font-weight:800;color:#fff;">'+(w.spd!=null?Math.round(w.spd):'–')+'</span>'
+      +'<span style="font-size:11px;color:#cfe0d4;">km/h</span>'
+      +(w.dir!=null?('<span style="display:inline-flex;align-items:center;gap:2px;margin-left:2px;"><svg width="15" height="15" viewBox="0 0 24 24" style="transform:rotate('+arrowRot+'deg);"><path d="M12 3l0 18M12 3l-5 6M12 3l5 6" fill="none" stroke="#8FE1A9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:12px;font-weight:700;color:#8FE1A9;">'+comp+'</span></span>'):'')
+    +'</div>'
+  +'</div>'
+ +'</div>';
+ var upd=updated?('<div style="font-size:11px;color:#7f948a;text-align:center;margin-top:7px;">Zuletzt aktualisiert: '+updated+' Uhr</div>'):'';
+ var hrs='';
+ if(w.hours&&w.hours.length){
+  var cells=w.hours.slice(0,5).map(function(h){
+   var ic=RT_wxCode(h.code);
+   var pop=(h.pop!=null&&h.pop>0)?('<div style="font-size:10px;color:#63b3ff;font-weight:700;">'+Math.round(h.pop)+'%</div>'):'<div style="font-size:10px;color:transparent;">0%</div>';
+   return '<div style="flex:1;text-align:center;">'
+     +'<div style="font-size:19px;line-height:1.1;">'+ic.e+'</div>'
+     +pop
+     +'<div style="font-size:13px;font-weight:800;color:#fff;margin-top:2px;">'+(h.temp!=null?Math.round(h.temp)+'°':'–')+'</div>'
+     +'<div style="font-size:10.5px;color:#9fb3a4;margin-top:2px;">'+RT_wxHourLabel(h.t)+'</div>'
+   +'</div>';
+  }).join('<div style="width:1px;background:rgba(255,255,255,.09);margin:6px 0;"></div>');
+  hrs='<div style="display:flex;align-items:flex-start;margin-top:11px;padding-top:2px;">'+cells+'</div>';
+ }
+ host.innerHTML=cur+upd+hrs;
+}
+function RT_wxCell(lbl,val){
+ return '<div style="flex:1;text-align:center;padding:0 4px;min-width:0;">'
+  +'<div style="font-size:11px;color:#9fb3a4;margin-bottom:2px;">'+lbl+'</div>'
+  +'<div style="font-size:18px;font-weight:800;color:#fff;">'+val+'</div></div>';
+}
+function RT_wxDivider(){ return '<div style="width:1px;background:rgba(255,255,255,.12);margin:2px 0;"></div>'; }
+
+function RT_openRadar(){
+ if(document.getElementById('rt-radar')) return;
+ var o=document.createElement('div');
+ o.id='rt-radar';
+ o.style.cssText='position:fixed;inset:0;z-index:3000;background:#0b160f;display:flex;flex-direction:column;';
+ o.innerHTML=
+  '<div style="padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px;background:#0e1e15;box-shadow:0 2px 10px rgba(0,0,0,.4);">'
+   +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;">'
+     +'<div style="font-size:18px;font-weight:800;color:#fff;">Wetterradar</div>'
+     +'<button onclick="RT_closeRadar()" aria-label="Schließen" style="border:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer;">✕</button>'
+   +'</div>'
+   +'<div id="rt-wx-body"></div>'
+  +'</div>'
+  +'<div style="position:relative;flex:1;min-height:0;">'
+   +'<div id="rt-radar-map" style="position:absolute;inset:0;background:#dfe6df;"></div>'
+   +'<div id="rt-radar-time" style="position:absolute;left:12px;top:12px;z-index:600;background:rgba(8,20,13,.78);color:#fff;font-size:12px;font-weight:700;border-radius:100px;padding:6px 12px;pointer-events:none;">Radar lädt…</div>'
+   +'<button id="rt-radar-play" onclick="RT_radarToggle()" style="position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:600;border:none;width:52px;height:52px;border-radius:50%;background:#1F8A4D;color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;">'+RT_radarPlayIcon(true)+'</button>'
+   +'<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:600;display:flex;align-items:center;gap:7px;background:rgba(8,20,13,.7);border-radius:100px;padding:5px 11px;pointer-events:none;">'
+     +'<span style="font-size:10.5px;color:#cfe0d4;">leicht</span>'
+     +'<span style="width:52px;height:7px;border-radius:4px;background:linear-gradient(90deg,#8fd1ff,#3a86ff,#33d17a,#f6d32d,#e01b24);display:inline-block;"></span>'
+     +'<span style="font-size:10.5px;color:#cfe0d4;">stark</span>'
+   +'</div>'
+  +'</div>';
+ document.body.appendChild(o);
+ RT_wxFetch(false);
+ setTimeout(RT_radarInit,60);
+}
+function RT_radarPlayIcon(playing){
+ return playing
+  ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+  : '<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M7 4l13 8-13 8z"/></svg>';
+}
+function RT_closeRadar(){
+ if(RT_RADAR.timer){ clearInterval(RT_RADAR.timer); RT_RADAR.timer=null; }
+ RT_RADAR.playing=false;
+ if(RT_RADAR.map){ try{RT_RADAR.map.remove();}catch(e){} RT_RADAR.map=null; }
+ RT_RADAR.layers=[]; RT_RADAR.frames=[]; RT_RADAR.idx=0;
+ var o=document.getElementById('rt-radar'); if(o&&o.parentNode) o.parentNode.removeChild(o);
+}
+function RT_radarInit(){
+ var el=document.getElementById('rt-radar-map'); if(!el) return;
+ if(typeof L==='undefined'){ var tc=document.getElementById('rt-radar-time'); if(tc) tc.textContent='Karte nicht verfügbar'; return; }
+ var c=RT_radarCenter();
+ var map=L.map('rt-radar-map',{zoomControl:false,attributionControl:false,zoom:8,center:[c.lat,c.lng]});
+ RT_RADAR.map=map;
+ if(!map.getPane('rradar')){ var p1=map.createPane('rradar'); p1.style.zIndex=350; p1.style.pointerEvents='none'; }
+ if(!map.getPane('rlabels')){ var p2=map.createPane('rlabels'); p2.style.zIndex=450; p2.style.pointerEvents='none'; }
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:16}).addTo(map);
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,pane:'rlabels'}).addTo(map);
+ L.marker([c.lat,c.lng],{interactive:false,icon:L.divIcon({className:'',iconSize:[26,34],iconAnchor:[13,32],
+  html:'<svg width="26" height="34" viewBox="0 0 26 34"><path d="M13 0C6 0 0.5 5.4 0.5 12.3 0.5 21 13 34 13 34s12.5-13 12.5-21.7C25.5 5.4 20 0 13 0z" fill="#1F8A4D" stroke="#fff" stroke-width="2"/><circle cx="13" cy="12" r="4.4" fill="#fff"/></svg>'})}).addTo(map);
+ RT_radarLoad();
+}
+function RT_radarLoad(){
+ fetch('https://api.rainviewer.com/public/weather-maps.json')
+  .then(function(r){ return r.json(); })
+  .then(function(j){
+   var host=j&&j.host?j.host:'https://tilecache.rainviewer.com';
+   var past=(j&&j.radar&&j.radar.past)?j.radar.past:[];
+   var now=(j&&j.radar&&j.radar.nowcast)?j.radar.nowcast:[];
+   var all=past.slice(-8).concat(now);
+   if(!all.length){ var tc=document.getElementById('rt-radar-time'); if(tc) tc.textContent='Kein Radarbild'; return; }
+   RT_RADAR.frames=all.map(function(f){ return {path:host+f.path,time:f.time}; });
+   RT_RADAR.layers=RT_RADAR.frames.map(function(f){
+    return L.tileLayer(f.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:0,pane:'rradar',tileSize:256,maxZoom:16});
+   });
+   if(!RT_RADAR.map) return;
+   RT_RADAR.layers.forEach(function(l){ l.addTo(RT_RADAR.map); });
+   RT_RADAR.idx=Math.max(0,Math.min(RT_RADAR.frames.length-1,past.slice(-8).length-1));
+   RT_radarShow(RT_RADAR.idx);
+   RT_radarToggle();
+  })
+  .catch(function(){ var tc=document.getElementById('rt-radar-time'); if(tc) tc.textContent='Radar nicht verfügbar'; });
+}
+function RT_radarShow(i){
+ if(!RT_RADAR.layers.length) return;
+ RT_RADAR.idx=(i+RT_RADAR.frames.length)%RT_RADAR.frames.length;
+ RT_RADAR.layers.forEach(function(l,k){ try{ l.setOpacity(k===RT_RADAR.idx?0.82:0); }catch(e){} });
+ var f=RT_RADAR.frames[RT_RADAR.idx];
+ var tc=document.getElementById('rt-radar-time');
+ if(tc&&f){
+  var d=new Date(f.time*1000);
+  var hh=('0'+d.getHours()).slice(-2), mm=('0'+d.getMinutes()).slice(-2);
+  var past=(f.time*1000)<=Date.now();
+  tc.textContent=(past?'':'Vorhersage ')+hh+':'+mm+' Uhr';
+ }
+}
+function RT_radarToggle(){
+ var btn=document.getElementById('rt-radar-play');
+ if(RT_RADAR.playing){
+  if(RT_RADAR.timer){ clearInterval(RT_RADAR.timer); RT_RADAR.timer=null; }
+  RT_RADAR.playing=false;
+  if(btn) btn.innerHTML=RT_radarPlayIcon(false);
+  return;
+ }
+ if(!RT_RADAR.frames.length) return;
+ RT_RADAR.playing=true;
+ if(btn) btn.innerHTML=RT_radarPlayIcon(true);
+ RT_RADAR.timer=setInterval(function(){
+  var next=RT_RADAR.idx+1;
+  if(next>=RT_RADAR.frames.length){ next=0; }
+  RT_radarShow(next);
+ },700);
+}
+/* ===== Ende Wetterradar ===== */
+
+function RT_hvBtn(name,label,onclick,active,id){
+ var op=id?(active?'1':'0.5'):'1';
+ return '<button '+(id?('id="'+id+'" '):'')+'onclick="'+onclick+'" aria-label="'+label+'" style="pointer-events:auto;border:none;background:transparent;padding:0;cursor:pointer;display:block;opacity:'+op+';"><img src="/hv/'+name+'.png" alt="'+label+'" style="width:50px;height:50px;display:block;filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));"></button>';
+}
+function RT_hvToast(msg){
+ var ex=document.getElementById('rt-hv-toast'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
+ var d=document.createElement('div'); d.id='rt-hv-toast';
+ d.style.cssText='position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);transform:translateX(-50%);z-index:4000;background:rgba(14,30,21,.94);color:#fff;font-size:13px;font-weight:600;padding:11px 18px;border-radius:100px;box-shadow:0 4px 16px rgba(0,0,0,.4);max-width:82%;text-align:center;';
+ d.textContent=msg; document.body.appendChild(d);
+ setTimeout(function(){ if(d&&d.parentNode) d.parentNode.removeChild(d); },2200);
+}
+function RT_openShotPlan(){ RT_hvToast('Shot-Analyse folgt als Nächstes.'); }
+function RT_openFlagRadar(){ RT_hvToast('Fahnenradar kommt in Kürze.'); }
+/* ============================================================
+   Entfernung & KI (Bahnkarte, rechte Toolbar)
+   Zwei ziehbare Punkte (Standort + Ziel) auf der Satellitenkarte. Zeigt Luftlinie,
+   Hoehendifferenz (Open-Meteo Elevation ueber /api/elev) und die "Plays-like"-Distanz,
+   dazu eine Schlaeger-Empfehlung aus den Bag-Distanzen sowie einen Strategie-Hinweis.
+   ============================================================ */
+var RT_DKI={map:null,mA:null,mB:null,line:null,pin:null,elev:{a:null,b:null},seq:0,err:false};
+
+function RT_dkiShortClub(id){
+ var c=null; for(var i=0;i<RT_BAG_CLUBS.length;i++){ if(RT_BAG_CLUBS[i].id===id){ c=RT_BAG_CLUBS[i]; break; } }
+ if(!c) return id;
+ var m=c.l.match(/\(([^)]+)\)/);
+ return m?m[1]:c.l;
+}
+function RT_dkiClubs(){
+ var b=RT_bagData(); var out=[];
+ RT_BAG_CLUBS.forEach(function(c){
+  if(c.id==='putter') return;
+  var e=b[c.id];
+  if(e&&e.d!=null&&!isNaN(e.d)&&e.d>0) out.push({id:c.id,l:RT_dkiShortClub(c.id),d:e.d});
+ });
+ out.sort(function(a,b){ return a.d-b.d; });
+ return out;
+}
+function RT_dkiRecommend(pl){
+ var clubs=RT_dkiClubs();
+ if(!clubs.length) return {empty:true};
+ var best=clubs[0], bd=Math.abs(clubs[0].d-pl);
+ clubs.forEach(function(c){ var dd=Math.abs(c.d-pl); if(dd<bd){ bd=dd; best=c; } });
+ var maxC=clubs[clubs.length-1];
+ var diff=Math.round(pl-best.d);
+ var conf=Math.max(45,Math.min(92,Math.round(92-Math.abs(diff)*3.2)));
+ var fit;
+ if(Math.abs(diff)<=4) fit='passt genau';
+ else if(diff>0) fit='ca. '+Math.abs(diff)+' m mehr als dein Schnitt';
+ else fit='ca. '+Math.abs(diff)+' m weniger als dein Schnitt';
+ var over=(pl>maxC.d+6);
+ return {empty:false,best:best,maxC:maxC,conf:conf,fit:fit,over:over,diff:diff};
+}
+function RT_openDistKI(){
+ if(document.getElementById('rt-dki')) return;
+ var rd=RT_round;
+ var A=rd?RT_grabberCenter(rd,rd.cur):null;
+ var ref=rd?RT_refFor(rd,rd.cur):null;
+ var B=(ref&&ref.pin&&ref.pin.lat!=null)?{lat:ref.pin.lat,lng:ref.pin.lng}:null;
+ if(!A&&RT_curPos) A={lat:RT_curPos.lat,lng:RT_curPos.lng};
+ if(A&&!B){ B={lat:A.lat+0.0012,lng:A.lng}; }
+ if(!A&&B){ A={lat:B.lat-0.0012,lng:B.lng}; }
+ RT_DKI.pin=(ref&&ref.pin&&ref.pin.lat!=null)?{lat:ref.pin.lat,lng:ref.pin.lng}:null;
+ RT_DKI.elev={a:null,b:null}; RT_DKI.err=false; RT_DKI.seq++;
+ var o=document.createElement('div'); o.id='rt-dki';
+ o.style.cssText='position:fixed;inset:0;z-index:3000;background:#0b160f;display:flex;flex-direction:column;';
+ o.innerHTML=
+  '<div style="padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 11px;background:#0e1e15;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.4);">'
+   +'<div style="font-size:18px;font-weight:800;color:#fff;">Entfernung & KI</div>'
+   +'<button onclick="RT_closeDistKI()" aria-label="Schließen" style="border:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer;">✕</button>'
+  +'</div>'
+  +'<div style="position:relative;flex:1;min-height:0;">'
+   +'<div id="rt-dki-map" style="position:absolute;inset:0;background:#12261B;"></div>'
+   +'<div style="position:absolute;left:12px;top:12px;z-index:600;background:rgba(8,20,13,.72);color:#cfe0d4;font-size:11.5px;border-radius:100px;padding:6px 12px;pointer-events:none;">Punkte ziehen: <b style="color:#8FE1A9;">Standort</b> &amp; <b style="color:#ffd24a;">Ziel</b></div>'
+  +'</div>'
+  +'<div id="rt-dki-card" style="background:#0e1e15;padding:13px 15px calc(env(safe-area-inset-bottom,0px) + 15px);box-shadow:0 -3px 12px rgba(0,0,0,.4);"></div>';
+ document.body.appendChild(o);
+ RT_DKI._A=A; RT_DKI._B=B;
+ setTimeout(RT_dkiInit,60);
+ RT_dkiRenderCard(A&&B?RT_haversineM(A.lat,A.lng,B.lat,B.lng):null,null,true);
+}
+function RT_closeDistKI(){
+ RT_DKI.seq++;
+ if(RT_DKI.map){ try{RT_DKI.map.remove();}catch(e){} RT_DKI.map=null; }
+ RT_DKI.mA=RT_DKI.mB=RT_DKI.line=null;
+ var o=document.getElementById('rt-dki'); if(o&&o.parentNode) o.parentNode.removeChild(o);
+}
+function RT_dkiInit(){
+ var el=document.getElementById('rt-dki-map'); if(!el) return;
+ if(typeof L==='undefined'){ RT_dkiRenderCard(null,null,false,'Karte nicht verfügbar'); return; }
+ var A=RT_DKI._A, B=RT_DKI._B;
+ if(!A||!B){ RT_dkiRenderCard(null,null,false,'Keine Bahn-Position vorhanden. Öffne die Funktion auf einer Bahn.'); return; }
+ var map=L.map('rt-dki-map',{zoomControl:false,attributionControl:false});
+ RT_DKI.map=map;
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19}).addTo(map);
+ map.fitBounds(L.latLngBounds([[A.lat,A.lng],[B.lat,B.lng]]).pad(0.55));
+ var icA=L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],html:'<div style="width:26px;height:26px;border-radius:50%;background:#1F8A4D;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5);"></div>'});
+ var icB=L.divIcon({className:'',iconSize:[30,38],iconAnchor:[15,36],html:'<svg width="30" height="38" viewBox="0 0 30 38"><line x1="7" y1="4" x2="7" y2="36" stroke="#fff" stroke-width="3"/><path d="M7 4h16l-4 5 4 5H7z" fill="#ffd24a" stroke="#c99700" stroke-width="1"/></svg>'});
+ RT_DKI.mA=L.marker([A.lat,A.lng],{draggable:true,icon:icA}).addTo(map);
+ RT_DKI.mB=L.marker([B.lat,B.lng],{draggable:true,icon:icB}).addTo(map);
+ RT_DKI.line=L.polyline([[A.lat,A.lng],[B.lat,B.lng]],{color:'#fff',weight:3,opacity:.9,dashArray:'2 7'}).addTo(map);
+ function onDrag(){ RT_dkiUpdateLine(); }
+ function onEnd(){ RT_dkiUpdateLine(); RT_dkiFetchElev(); }
+ RT_DKI.mA.on('drag',onDrag).on('dragend',onEnd);
+ RT_DKI.mB.on('drag',onDrag).on('dragend',onEnd);
+ RT_dkiFetchElev();
+}
+function RT_dkiUpdateLine(){
+ if(!RT_DKI.mA||!RT_DKI.mB||!RT_DKI.line) return;
+ var a=RT_DKI.mA.getLatLng(), b=RT_DKI.mB.getLatLng();
+ RT_DKI.line.setLatLngs([a,b]);
+ var d=RT_haversineM(a.lat,a.lng,b.lat,b.lng);
+ var live=document.getElementById('rt-dki-live');
+ if(live) live.textContent=RT_fmtDist(d);
+}
+function RT_dkiFetchElev(){
+ if(!RT_DKI.mA||!RT_DKI.mB) return;
+ var a=RT_DKI.mA.getLatLng(), b=RT_DKI.mB.getLatLng();
+ var d=RT_haversineM(a.lat,a.lng,b.lat,b.lng);
+ var my=++RT_DKI.seq;
+ RT_dkiRenderCard(d,null,true);
+ fetch('/api/elev?lat1='+a.lat+'&lng1='+a.lng+'&lat2='+b.lat+'&lng2='+b.lng)
+  .then(function(r){ return r.json(); })
+  .then(function(j){
+   if(my!==RT_DKI.seq) return;
+   if(!j||j.error||j.a==null||j.b==null){ RT_DKI.err=true; RT_dkiRenderCard(d,null,false); return; }
+   RT_DKI.err=false; RT_DKI.elev={a:j.a,b:j.b};
+   RT_dkiRenderCard(d,(j.b-j.a),false);
+  })
+  .catch(function(){ if(my!==RT_DKI.seq) return; RT_DKI.err=true; RT_dkiRenderCard(d,null,false); });
+}
+function RT_dkiRenderCard(d,dh,loading,msg){
+ var host=document.getElementById('rt-dki-card'); if(!host) return;
+ if(msg){ host.innerHTML='<div style="color:#cfe0d4;font-size:13px;padding:6px 2px;">'+msg+'</div>'; return; }
+ if(d==null){ host.innerHTML='<div style="color:#9fb3a4;font-size:13px;">Ziehe die Punkte auf die gewünschten Lagen.</div>'; return; }
+ var pl=(dh!=null)?Math.round(d+dh):Math.round(d);
+ var hLabel,hVal;
+ if(dh==null){ hLabel=RT_DKI.err?'Höhe n.v.':'Höhe …'; hVal='–'; }
+ else{ var up=dh>=0; hVal=(up?'+':'−')+Math.round(Math.abs(dh))+' m'; hLabel=(Math.abs(dh)<1)?'eben':(up?'bergauf':'bergab'); }
+ var head='<div style="display:flex;gap:0;background:rgba(0,0,0,.30);border-radius:13px;padding:10px 4px;margin-bottom:11px;">'
+  +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Luftlinie</div><div id="rt-dki-live" style="font-size:19px;font-weight:800;color:#fff;">'+RT_fmtDist(d)+'</div></div>'
+  +'<div style="width:1px;background:rgba(255,255,255,.12);"></div>'
+  +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Höhe</div><div style="font-size:19px;font-weight:800;color:#fff;">'+hVal+'</div><div style="font-size:9.5px;color:#7f948a;margin-top:-1px;">'+hLabel+'</div></div>'
+  +'<div style="width:1px;background:rgba(255,255,255,.12);"></div>'
+  +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#8FE1A9;">Spielt wie</div><div style="font-size:19px;font-weight:800;color:#8FE1A9;">'+RT_fmtDist(pl)+'</div></div>'
+ +'</div>';
+ var rec=RT_dkiRecommend(pl);
+ var body;
+ if(rec.empty){
+  body='<div style="font-size:12.5px;color:#cfe0d4;line-height:1.45;">Trage deine durchschnittlichen Schlaglängen im <b>Golfbag</b> ein – dann bekommst du hier eine passende Schläger-Empfehlung.</div>';
+ }else{
+  var strat;
+  if(rec.over){
+   var over=pl-rec.maxC.d;
+   var rem=RT_dkiRecommend(over);
+   strat='Über deiner längsten Länge ('+RT_fmtDist(rec.maxC.d)+'). Lege mit <b>'+rec.maxC.l+'</b> vor – danach bleiben ~'+RT_fmtDist(over)+(rem.empty?'':' (≈ <b>'+rem.best.l+'</b>)')+'.';
+  }else{
+   var remPin=RT_DKI.pin?RT_haversineM(RT_DKI.mB.getLatLng().lat,RT_DKI.mB.getLatLng().lng,RT_DKI.pin.lat,RT_DKI.pin.lng):null;
+   if(remPin!=null&&remPin>12) strat='In einem Schlag erreichbar. Von dort noch ~'+RT_fmtDist(remPin)+' zum Grün.';
+   else strat='Direkt aufs Grün spielbar – triffst du die Länge, bist du zum Putt.';
+  }
+  body='<div style="display:flex;align-items:center;gap:11px;">'
+    +'<div style="flex:none;width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#1F8A4D,#0f5c31);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;">'
+      +'<div style="font-size:17px;font-weight:800;line-height:1;">'+rec.best.l+'</div><div style="font-size:9px;opacity:.8;margin-top:2px;">Ø '+rec.best.d+'</div></div>'
+    +'<div style="flex:1;min-width:0;">'
+      +'<div style="font-size:13.5px;color:#fff;font-weight:700;">Empfehlung: '+rec.best.l+' <span style="font-weight:500;color:#9fb3a4;">('+rec.fit+')</span></div>'
+      +'<div style="font-size:12px;color:#cfe0d4;line-height:1.4;margin-top:3px;">'+strat+'</div>'
+    +'</div>'
+  +'</div>';
+  if(!RT_DKI.err&&dh!=null){
+   body+='<div style="font-size:10.5px;color:#6f857a;margin-top:9px;">Plays-like nach Höhe berechnet · ohne Windkorrektur</div>';
+  }
+ }
+ host.innerHTML=head+body;
+}
+/* ===== Ende Entfernung & KI ===== */
 function RT_grabberOverlayHtml(){
  var rd=RT_round; if(!rd) return '';
  var key=RT_holeMapKey(rd,rd.cur);
@@ -3490,9 +3880,13 @@ function RT_grabberOverlayHtml(){
  var btn='pointer-events:auto;width:48px;height:48px;border:none;border-radius:15px;cursor:pointer;'+
    'box-shadow:0 2px 8px rgba(0,0,0,.45);background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;';
  return '<div id="rt-grab-ui" style="position:absolute;inset:0;pointer-events:none;z-index:1150;">'+
-  '<div style="position:absolute;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px;">'+
-   '<button id="rt-wind-toggle" onclick="RT_toggleWind()" style="'+btn+'opacity:'+(windOn?'1':'0.45')+';"><img src="'+RT_IC_WIND+'" style="width:34px;height:34px;display:block;"></button>'+
-   '<button id="rt-grab-toggle" onclick="RT_toggleGrabber()" style="'+btn+'opacity:'+(on?'1':'0.45')+';"><img src="'+RT_IC_ENTF+'" style="width:34px;height:34px;display:block;"></button>'+
+  '<div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;">'+
+   RT_hvBtn('wind','Wind','RT_toggleWind()',windOn,'rt-wind-toggle')+
+   RT_hvBtn('wetterradar','Wetterradar','RT_openRadar()',false)+
+   RT_hvBtn('shotanalyse','Shot-Analyse','RT_openShotPlan()',false)+
+   RT_hvBtn('fahnenradar','Fahnenradar','RT_openFlagRadar()',false)+
+   RT_hvBtn('entfernungki','Entfernung & KI','RT_openDistKI()',false)+
+   RT_hvBtn('entfernung','Entfernung','RT_toggleGrabber()',on,'rt-grab-toggle')+
   '</div>'+
   '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
   '<div id="rt-grab-far" style="'+lbl+'top:32%;">–</div>'+
@@ -4556,7 +4950,7 @@ function RT_applyAddrOverrides(){
    sondern deterministisch aus dem Platz abgeleitet - sonst wechselte das Bild bei jedem
    Scrollen. Damit sieht ein Platz ohne eigenes Foto immer gleich aus, verschiedene
    Plaetze aber unterschiedlich. */
-var RT_BG_BASE='https://raw.githubusercontent.com/Maetschke/fairwaypilot/main/assets/round-bg/';
+var RT_BG_BASE='/round-bg/';
 var RT_BG_POOL=['course-1.jpg','course-2.jpg','course-3.jpg','course-4.jpg','course-5.jpg'];
 function RT_bgForKey(key,fallbackName){
  var co=key?RT_COURSES[key]:null;

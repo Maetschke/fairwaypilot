@@ -2365,7 +2365,7 @@ async function RT_initHoleFullMap(){
  setTimeout(function(){
   try{map.invalidateSize();}catch(e){}
   if(RT_state.grabberOn&&RT_state.grabberOn[RT_holeMapKey(rd,c)]) RT_setupFullGrabber();
-  if(RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,c)]){ RT_radarAttach(map); RT_wxFetch(false); }
+  if(RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,c)]){ RT_radarBuildOverlay(); RT_radarAttach(map); RT_wxFetch(false); }
  },80);
 }
 /* Die Birdiekarten-Quellbilder liegen im Querformat vor und werden in der Vollbild-
@@ -3590,6 +3590,24 @@ function RT_wxCell(lbl,val){
 }
 function RT_wxDivider(){ return '<div style="width:1px;background:rgba(255,255,255,.12);margin:2px 0;"></div>'; }
 
+function RT_radarBuildOverlay(){
+ var host=document.getElementById('hole-full'); if(!host) return;
+ var ex=document.getElementById('rt-wxradar-ui'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
+ var o=document.createElement('div'); o.id='rt-wxradar-ui';
+ o.style.cssText='position:absolute;inset:0;z-index:2400;pointer-events:none;';
+ o.innerHTML=RT_hvPanel('Wetterradar','RT_toggleRadarHole()','<div id="rt-wx-body"></div>')
+  +'<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);pointer-events:none;display:flex;align-items:center;gap:7px;background:rgba(8,20,13,.72);border-radius:100px;padding:5px 11px;">'
+    +'<span style="font-size:10.5px;color:#cfe0d4;">leicht</span>'
+    +'<span style="width:46px;height:7px;border-radius:4px;background:linear-gradient(90deg,#8fd1ff,#3a86ff,#33d17a,#f6d32d,#e01b24);display:inline-block;"></span>'
+    +'<span style="font-size:10.5px;color:#cfe0d4;">stark</span>'
+  +'</div>'
+  +'<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);pointer-events:auto;display:flex;align-items:center;gap:8px;">'
+    +'<button id="rt-radar-play" onclick="RT_radarToggle()" style="border:none;width:44px;height:44px;border-radius:50%;background:#1F8A4D;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;">'+RT_radarPlayIcon(true)+'</button>'
+    +'<span id="rt-radar-time" style="background:rgba(8,20,13,.78);color:#fff;font-size:12px;font-weight:700;border-radius:100px;padding:6px 12px;">–</span>'
+  +'</div>';
+ host.appendChild(o);
+}
+function RT_radarRemoveOverlay(){ var o=document.getElementById('rt-wxradar-ui'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
 function RT_toggleRadarHole(){
  var rd=RT_round; if(!rd) return;
  var key=RT_holeMapKey(rd,rd.cur);
@@ -3597,9 +3615,8 @@ function RT_toggleRadarHole(){
  RT_state.radarOn[key]=!RT_state.radarOn[key];
  var on=!!RT_state.radarOn[key];
  var b=document.getElementById('rt-wxr-toggle'); if(b) b.style.opacity=on?'1':'0.5';
- var ui=document.getElementById('rt-wxradar-ui'); if(ui) ui.style.display=on?'block':'none';
- if(on){ RT_wxFetch(false); RT_radarAttach(RT_holeFullMapInst); }
- else { RT_radarDetach(); }
+ if(on){ RT_radarBuildOverlay(); RT_wxFetch(false); RT_radarAttach(RT_holeFullMapInst); }
+ else { RT_radarRemoveOverlay(); RT_radarDetach(); }
 }
 function RT_radarPlayIcon(playing){
  return playing
@@ -3820,9 +3837,10 @@ function RT_frRoseSvg(brg){
  });
  var fp=RT_frPx(brg,118);
  parts.push('<line x1="150" y1="150" x2="'+fp[0].toFixed(1)+'" y2="'+fp[1].toFixed(1)+'" stroke="#8FE1A9" stroke-width="3.5" stroke-linecap="round"/>');
- parts.push('<circle cx="'+fp[0].toFixed(1)+'" cy="'+fp[1].toFixed(1)+'" r="6" fill="#1F8A4D" stroke="#fff" stroke-width="2"/>');
+ parts.push('<circle cx="'+fp[0].toFixed(1)+'" cy="'+fp[1].toFixed(1)+'" r="5" fill="#ffd24a" stroke="#0b160f" stroke-width="1.5"/>');
  var f1=RT_frPx(brg,132), f2=RT_frPx(brg+7,124), f3=RT_frPx(brg,116);
  parts.push('<path d="M'+f1[0].toFixed(1)+' '+f1[1].toFixed(1)+'L'+f2[0].toFixed(1)+' '+f2[1].toFixed(1)+'L'+f3[0].toFixed(1)+' '+f3[1].toFixed(1)+'Z" fill="#ffd24a"/>');
+ parts.push('<circle cx="150" cy="150" r="8" fill="#1F8A4D" stroke="#fff" stroke-width="2.5"/>');
  return '<svg viewBox="0 0 300 300" style="width:100%;height:100%;display:block;">'+parts.join('')+'</svg>';
 }
 function RT_openFlagRadar(){
@@ -3953,7 +3971,7 @@ function RT_openDistKI(){
  RT_DKI.pin=pin; RT_DKI.map=map; RT_DKI.mA=null; RT_DKI.mB=null; RT_DKI.err=false; RT_DKI.seq++;
  var o=document.createElement('div'); o.id='rt-dki';
  o.style.cssText='position:absolute;inset:0;z-index:2500;pointer-events:none;';
- o.innerHTML=RT_hvPanel('Entfernung & KI','RT_closeDistKI()','<div style="font-size:11.5px;color:#9fb3a4;">Ziehe den gelben Zielpunkt auf die gewünschte Lage.</div>')
+ o.innerHTML=RT_hvPanel('Entfernung & KI','RT_closeDistKI()','<div style="font-size:11.5px;color:#9fb3a4;">Standort &amp; Ziel per Touch verschieben – nur zur Info.</div>')
    +'<div id="rt-dki-card" style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:12px 15px calc(env(safe-area-inset-bottom,0px) + 14px);box-shadow:0 -3px 12px rgba(0,0,0,.4);"></div>';
  host.appendChild(o);
  if(!map||typeof L==='undefined'||!A||!B){ RT_dkiRenderCard(null,null,false,'Karte/Position nicht verfügbar. Öffne die Funktion auf der Bahn (Satellitenkarte).'); return; }
@@ -3965,19 +3983,20 @@ function RT_dkiAttach(map,A,B){
  if(RT_DKI.layer){ try{map.removeLayer(RT_DKI.layer);}catch(e){} RT_DKI.layer=null; }
  if(!map.getPane('dkigrab')){ var p=map.createPane('dkigrab'); if(p){ p.style.zIndex=655; } }
  var lg=L.layerGroup().addTo(map); RT_DKI.layer=lg;
- RT_DKI.mA=L.marker([A.lat,A.lng],{pane:'dkigrab',interactive:false,icon:L.divIcon({className:'',iconSize:[26,26],iconAnchor:[13,13],html:'<div style="width:22px;height:22px;border-radius:50%;background:#1F8A4D;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5);"></div>'})}).addTo(lg);
+ RT_DKI.mA=L.marker([A.lat,A.lng],{pane:'dkigrab',icon:L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],html:'<div style="width:24px;height:24px;border-radius:50%;background:#1F8A4D;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.55);"></div>'})}).addTo(lg);
  RT_DKI.mB=L.marker([B.lat,B.lng],{pane:'dkigrab',icon:L.divIcon({className:'',iconSize:[46,46],iconAnchor:[23,23],html:'<div style="width:40px;height:40px;border-radius:50%;border:3px solid #ffd24a;background:rgba(255,210,74,.18);box-shadow:0 1px 6px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border-radius:50%;background:#ffd24a;"></div></div>'})}).addTo(lg);
- var el=map._el||document.getElementById('hole-full-map');
- var rotF=map._rotF||0;
- var gEl=RT_DKI.mB.getElement();
- if(gEl&&el){
-  gEl.style.touchAction='none'; gEl.style.cursor='grab';
-  var st=null;
-  gEl.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); try{gEl.setPointerCapture(ev.pointerId);}catch(e){} var p0=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); var mp=RT_DKI.mB.getLatLng(); st=p0?{dLat:mp.lat-p0.lat,dLng:mp.lng-p0.lng}:{dLat:0,dLng:0}; });
-  gEl.addEventListener('pointermove',function(ev){ if(!st) return; ev.preventDefault(); ev.stopPropagation(); var p=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); if(!p) return; RT_DKI.mB.setLatLng([p.lat+st.dLat,p.lng+st.dLng]); RT_dkiLive(); });
-  var endD=function(ev){ if(!st) return; st=null; if(ev&&ev.stopPropagation) ev.stopPropagation(); RT_dkiFetchElev(); };
-  gEl.addEventListener('pointerup',endD); gEl.addEventListener('pointercancel',endD);
- }
+ RT_dkiDrag(RT_DKI.mA); RT_dkiDrag(RT_DKI.mB);
+}
+function RT_dkiDrag(marker){
+ var map=RT_DKI.map; if(!map||!marker) return;
+ var el=map._el||document.getElementById('hole-full-map'); var rotF=map._rotF||0;
+ var gEl=marker.getElement(); if(!gEl||!el) return;
+ gEl.style.touchAction='none'; gEl.style.cursor='grab';
+ var st=null;
+ gEl.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); try{gEl.setPointerCapture(ev.pointerId);}catch(e){} var p0=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); var mp=marker.getLatLng(); st=p0?{dLat:mp.lat-p0.lat,dLng:mp.lng-p0.lng}:{dLat:0,dLng:0}; });
+ gEl.addEventListener('pointermove',function(ev){ if(!st) return; ev.preventDefault(); ev.stopPropagation(); var p=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); if(!p) return; marker.setLatLng([p.lat+st.dLat,p.lng+st.dLng]); RT_dkiLive(); });
+ var endD=function(ev){ if(!st) return; st=null; if(ev&&ev.stopPropagation) ev.stopPropagation(); RT_dkiFetchElev(); };
+ gEl.addEventListener('pointerup',endD); gEl.addEventListener('pointercancel',endD);
 }
 function RT_dkiLive(){
  if(!RT_DKI.mA||!RT_DKI.mB) return;
@@ -4057,25 +4076,6 @@ function RT_grabberOverlayHtml(){
    RT_hvBtn('entfernung','Entfernung','RT_toggleGrabber()',on,'rt-grab-toggle')+
   '</div>'+
   '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
-  '<div id="rt-wxradar-ui" style="position:absolute;inset:0;pointer-events:none;z-index:1160;display:'+(radarOn?'block':'none')+';">'+
-   '<div style="position:absolute;top:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 18px;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px 9px;box-shadow:0 5px 16px rgba(0,0,0,.55);">'+
-     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">'+
-       '<div style="font-size:14px;font-weight:800;color:#fff;">Wetterradar</div>'+
-       '<button onclick="RT_toggleRadarHole()" aria-label="Schließen" style="border:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:13px;cursor:pointer;">✕</button>'+
-     '</div>'+
-     '<div id="rt-wx-body"></div>'+
-   '</div>'+
-   '<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);pointer-events:none;display:flex;align-items:center;gap:7px;background:rgba(8,20,13,.72);border-radius:100px;padding:5px 11px;">'+
-     '<span style="font-size:10.5px;color:#cfe0d4;">leicht</span>'+
-     '<span style="width:46px;height:7px;border-radius:4px;background:linear-gradient(90deg,#8fd1ff,#3a86ff,#33d17a,#f6d32d,#e01b24);display:inline-block;"></span>'+
-     '<span style="font-size:10.5px;color:#cfe0d4;">stark</span>'+
-   '</div>'+
-   '<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);pointer-events:auto;display:flex;align-items:center;gap:8px;">'+
-     '<button id="rt-radar-play" onclick="RT_radarToggle()" style="border:none;width:44px;height:44px;border-radius:50%;background:#1F8A4D;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;">'+RT_radarPlayIcon(true)+'</button>'+
-     '<span id="rt-radar-time" style="background:rgba(8,20,13,.78);color:#fff;font-size:12px;font-weight:700;border-radius:100px;padding:6px 12px;">–</span>'+
-   '</div>'+
-  '</div>'+
-
   '<div id="rt-grab-far" style="'+lbl+'top:32%;">–</div>'+
   '<div id="rt-grab-near" style="'+lbl+'top:60%;">–</div>'+
  '</div>';

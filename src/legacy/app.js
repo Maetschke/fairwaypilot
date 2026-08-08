@@ -3662,7 +3662,7 @@ function RT_radarLoad(){
 function RT_radarShow(i){
  if(!RT_RADAR.layers.length) return;
  RT_RADAR.idx=(i+RT_RADAR.frames.length)%RT_RADAR.frames.length;
- RT_RADAR.layers.forEach(function(l,k){ try{ l.setOpacity(k===RT_RADAR.idx?0.75:0); }catch(e){} });
+ RT_RADAR.layers.forEach(function(l,k){ try{ l.setOpacity(k===RT_RADAR.idx?0.88:0); }catch(e){} });
  var f=RT_RADAR.frames[RT_RADAR.idx];
  var tc=document.getElementById('rt-radar-time');
  if(tc&&f){
@@ -6798,7 +6798,7 @@ function RT_cmInit(){
  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20}).addTo(map);
  RT_CM.map=map; RT_CM.layer=L.layerGroup().addTo(map); RT_CM.labels=L.layerGroup().addTo(map); RT_CM.mk={};
  map.on('moveend zoomend',RT_cmMarkers);
- map.on('click',function(){ RT_cmCloseSheet(); });
+ map.on('click',function(){ if(RT_CM._selAt&&(+new Date()-RT_CM._selAt)<450) return; RT_cmCloseSheet(); });
  // Standort des Nutzers
  try{ if(navigator.geolocation){ navigator.geolocation.getCurrentPosition(function(p){
    RT_CM.userLL={lat:p.coords.latitude,lng:p.coords.longitude};
@@ -6847,7 +6847,7 @@ function RT_cmMarkers(){
   if(bnds&&!bnds.contains([c.lat,c.lon])) continue;
   var st=(RT_CM.lists||{})[c.ref]||{}; var col=st.home?'#1F8A4D':(st.saved||st.bucket?'#e0913a':'#B03A3A');
   var m=L.circleMarker([c.lat,c.lon],{radius:7,color:'#fff',weight:2,fillColor:col,fillOpacity:.98});
-  (function(cc){ m.on('click',function(e){ if(e&&e.originalEvent) e.originalEvent.stopPropagation(); RT_cmSelect(cc); }); })(c);
+  (function(cc){ m.on('click',function(e){ if(e&&e.originalEvent) e.originalEvent.stopPropagation(); RT_CM._selAt=+new Date(); RT_cmSelect(cc); }); })(c);
   m.addTo(RT_CM.layer); RT_CM.mk[c.ref]=m;
   if(++n>=400) break;
  }

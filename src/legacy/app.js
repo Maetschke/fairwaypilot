@@ -3686,12 +3686,19 @@ function RT_hvToast(msg){
  setTimeout(function(){ if(d&&d.parentNode) d.parentNode.removeChild(d); },2200);
 }
 /* ============================================================
-   Shot-Analyse / Shot-Planer (Bahnkarte, rechte Toolbar)
-   Wertet die getrackten Abschlaege dieser Bahn ueber ALLE Runden aus: seitliche
-   Abweichung des ersten Schlags zur Tee->Gruen-Linie -> Links/Mitte/Rechts. Zeigt die
-   Verteilung als Schema + Prozentwerte und eine regelbasierte Handlungsempfehlung.
-   Kein LLM: die Empfehlung ist deterministisch (funktioniert offline auf dem Platz).
+   Shot-Analyse (Overlay auf der Bahnkarte)
+   Plottet die getrackten Abschlaege dieser Bahn (erster Schlag je Runde) direkt als Punkte
+   auf die Satelliten-Bahnkarte. Kopf-Panel (wie Wetterradar) zeigt Links/Mitte/Rechts,
+   darunter eine regelbasierte Empfehlung. Verteilung: seitliche Abweichung Tee->Gruen.
    ============================================================ */
+function RT_hvPanel(title,closeFn,extra){
+ return '<div style="position:absolute;top:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 18px;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px 9px;box-shadow:0 5px 16px rgba(0,0,0,.55);z-index:6;">'
+  +'<div style="display:flex;align-items:center;justify-content:space-between;'+(extra?'margin-bottom:8px;':'')+'">'
+    +'<div style="font-size:15px;font-weight:800;color:#fff;">'+title+'</div>'
+    +'<button onclick="'+closeFn+'" aria-label="Schließen" style="border:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:14px;cursor:pointer;">✕</button>'
+  +'</div>'+(extra||'')+'</div>';
+}
+var RT_SP={layer:null};
 function RT_spTee(rd,ref){
  var tp=RT_grabberTeePoint(rd,rd.cur); if(tp&&tp.lat!=null) return {lat:tp.lat,lng:tp.lng};
  if(ref&&ref.tees){ var ks=Object.keys(ref.tees); for(var i=0;i<ks.length;i++){ var t=ref.tees[ks[i]]; if(t&&t.lat!=null) return {lat:t.lat,lng:t.lng}; } }
@@ -3729,13 +3736,11 @@ function RT_spData(){
   var along=s.x*ux+s.y*uy;
   var offR=-(ux*s.y-uy*s.x);
   if(along<15) return;
-  shots.push({along:along,off:offR,frac:Math.max(0,Math.min(1.05,along/len)),date:r.date||''});
+  shots.push({lat:first.lat,lng:first.lng,along:along,off:offR,frac:Math.max(0,Math.min(1.05,along/len)),date:r.date||''});
  });
- var TH=12;
- var L=0,M=0,R=0;
+ var TH=12, L=0,M=0,R=0;
  shots.forEach(function(s){ if(s.off>TH) R++; else if(s.off<-TH) L++; else M++; });
- var n=shots.length;
- var avgLen=0; if(n){ shots.forEach(function(s){ avgLen+=s.along; }); avgLen=Math.round(avgLen/n); }
+ var n=shots.length, avgLen=0; if(n){ shots.forEach(function(s){ avgLen+=s.along; }); avgLen=Math.round(avgLen/n); }
  return {noRef:false,tee:tee,pin:pin,len:len,shots:shots,n:n,L:L,M:M,R:R,avgLen:avgLen,TH:TH,num:num};
 }
 function RT_spPct(x,n){ return n?Math.round(x*100/n):0; }
@@ -3747,91 +3752,71 @@ function RT_spAdvice(d){
  var dom=(R>=L)?'rechts':'links', other=(R>=L)?'links':'rechts', domPct=Math.max(R,L);
  return {tone:'warn',txt:'Du schlägst hier auffällig oft nach '+dom+' ('+domPct+' %). Ziele bewusst weiter '+other+' bzw. auf die '+other+'e Fairwayhälfte, um in der Mitte zu landen.'};
 }
-function RT_spSchema(d){
- var W=300,H=380, cx=W/2, tY=H-26, pY=26;
- function px(off){ return Math.max(16,Math.min(W-16,cx+off*3)); }
- function py(frac){ return tY-frac*(tY-pY); }
- var midL=px(-d.TH), midR=px(d.TH);
- var parts=[];
- parts.push('<rect x="'+px(-40)+'" y="'+pY+'" width="'+(px(40)-px(-40))+'" height="'+(tY-pY)+'" rx="26" fill="#33502f" opacity=".55"/>');
- parts.push('<rect x="'+midL+'" y="'+pY+'" width="'+(midR-midL)+'" height="'+(tY-pY)+'" fill="#2f7d4b" opacity=".45"/>');
- parts.push('<line x1="'+cx+'" y1="'+pY+'" x2="'+cx+'" y2="'+tY+'" stroke="rgba(255,255,255,.5)" stroke-width="1.5" stroke-dasharray="3 6"/>');
- d.shots.forEach(function(s){
-  var col=(s.off>d.TH||s.off<-d.TH)?'#ffce45':'#48e08a';
-  parts.push('<circle cx="'+px(s.off).toFixed(1)+'" cy="'+py(s.frac).toFixed(1)+'" r="5.5" fill="'+col+'" fill-opacity=".85" stroke="#0b160f" stroke-width="1"/>');
- });
- parts.push('<circle cx="'+cx+'" cy="'+tY+'" r="6" fill="#fff"/>');
- parts.push('<text x="'+cx+'" y="'+(tY+18)+'" text-anchor="middle" font-size="11" fill="#9fb3a4" font-family="Inter,sans-serif">Abschlag</text>');
- parts.push('<g transform="translate('+cx+','+pY+')"><line x1="0" y1="-8" x2="0" y2="12" stroke="#fff" stroke-width="2.5"/><path d="M0 -8h13l-3 4 3 4H0z" fill="#ffd24a"/></g>');
- var L=RT_spPct(d.L,d.n),M=RT_spPct(d.M,d.n),R=RT_spPct(d.R,d.n);
- return {svg:'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:100%;display:block;">'+parts.join('')+'</svg>',L:L,M:M,R:R};
-}
 function RT_openShotPlan(){
+ var host=document.getElementById('hole-full'); if(!host) return;
  if(document.getElementById('rt-sp')) return;
  var d=RT_spData();
  var o=document.createElement('div'); o.id='rt-sp';
- o.style.cssText='position:fixed;inset:0;z-index:3000;background:#0b160f;display:flex;flex-direction:column;';
- var head='<div style="padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 11px;display:flex;align-items:center;justify-content:space-between;">'
-   +'<div style="font-size:18px;font-weight:800;color:#fff;">Shot-Analyse'+(d&&!d.noRef?' · Bahn '+d.num:'')+'</div>'
-   +'<button onclick="RT_closeShotPlan()" aria-label="Schließen" style="border:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer;">✕</button>'
-  +'</div>';
+ o.style.cssText='position:absolute;inset:0;z-index:2500;pointer-events:none;';
  if(!d||d.noRef){
-  o.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:#cfe0d4;font-size:14px;line-height:1.5;">Für diese Bahn fehlen die Referenzpunkte (Abschlag/Grün), um die Schläge auszuwerten.</div>';
-  document.body.appendChild(o); return;
+  o.innerHTML=RT_hvPanel('Shot-Analyse','RT_closeShotPlan()')+'<div style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#cfe0d4;font-size:13px;line-height:1.5;">Für diese Bahn fehlen die Referenzpunkte (Abschlag/Grün), um die Schläge auszuwerten.</div>';
+  host.appendChild(o); return;
  }
- var sc=RT_spSchema(d);
+ var Lp=RT_spPct(d.L,d.n),Mp=RT_spPct(d.M,d.n),Rp=RT_spPct(d.R,d.n);
+ var extra='<div style="display:flex;gap:8px;">'
+   +[['Links',Lp,'#ffce45'],['Mitte',Mp,'#48e08a'],['Rechts',Rp,'#ff8a5c']].map(function(c){ return '<div style="flex:1;text-align:center;"><div style="font-size:19px;font-weight:800;color:'+c[2]+';">'+c[1]+'<span style="font-size:11px;"> %</span></div><div style="font-size:10.5px;color:#9fb3a4;">'+c[0]+'</div></div>'; }).join('')
+ +'</div>';
  var adv=RT_spAdvice(d);
- var advBg=adv.tone==='good'?'rgba(31,138,77,.16)':(adv.tone==='warn'?'rgba(224,140,27,.16)':'rgba(255,255,255,.07)');
- var advBd=adv.tone==='good'?'#1F8A4D':(adv.tone==='warn'?'#E08C1B':'rgba(255,255,255,.2)');
+ var advBg=adv.tone==='good'?'rgba(31,138,77,.18)':(adv.tone==='warn'?'rgba(224,140,27,.18)':'rgba(255,255,255,.08)');
+ var advBd=adv.tone==='good'?'#1F8A4D':(adv.tone==='warn'?'#E08C1B':'rgba(255,255,255,.22)');
  var advIc=adv.tone==='good'?'✓':(adv.tone==='warn'?'⚠':'ℹ');
- var bars='';
- if(d.n>0){
-  var cells=[['Links',sc.L,'#ffce45'],['Mitte',sc.M,'#48e08a'],['Rechts',sc.R,'#ff8a5c']];
-  bars='<div style="display:flex;gap:8px;margin:2px 4px 0;">'+cells.map(function(c){
-   return '<div style="flex:1;text-align:center;">'
-     +'<div style="font-size:22px;font-weight:800;color:'+c[2]+';">'+c[1]+'<span style="font-size:12px;"> %</span></div>'
-     +'<div style="font-size:11.5px;color:#9fb3a4;margin-top:1px;">'+c[0]+'</div>'
-   +'</div>';
-  }).join('')+'</div>';
- }
- o.innerHTML=head
-  +'<div style="flex:1;min-height:0;overflow-y:auto;padding:2px 16px calc(env(safe-area-inset-bottom,0px) + 18px);">'
-   +'<div style="height:min(46vh,360px);margin:0 auto;max-width:340px;">'+sc.svg+'</div>'
-   +bars
-   +'<div style="margin-top:14px;background:'+advBg+';border:1px solid '+advBd+';border-radius:14px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start;">'
-     +'<div style="font-size:17px;line-height:1.2;">'+advIc+'</div>'
-     +'<div style="flex:1;"><div style="font-size:12px;font-weight:800;letter-spacing:.4px;color:#9fb3a4;margin-bottom:3px;">EMPFEHLUNG</div>'
-       +'<div style="font-size:13.5px;color:#fff;line-height:1.5;">'+adv.txt+'</div></div>'
+ var card='<div style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:13px 15px calc(env(safe-area-inset-bottom,0px) + 15px);box-shadow:0 -3px 12px rgba(0,0,0,.4);">'
+   +'<div style="background:'+advBg+';border:1px solid '+advBd+';border-radius:13px;padding:12px 13px;display:flex;gap:10px;align-items:flex-start;">'
+     +'<div style="font-size:16px;">'+advIc+'</div>'
+     +'<div style="flex:1;"><div style="font-size:11.5px;font-weight:800;letter-spacing:.4px;color:#9fb3a4;margin-bottom:3px;">EMPFEHLUNG</div><div style="font-size:13px;color:#fff;line-height:1.5;">'+adv.txt+'</div></div>'
    +'</div>'
-   +'<div style="font-size:11px;color:#6f857a;text-align:center;margin-top:12px;">Basis: '+d.n+' erfasste'+(d.n===1?'r Abschlag':' Abschläge')+' auf dieser Bahn'+(d.avgLen?' · Ø '+RT_fmtDist(d.avgLen):'')+'</div>'
-  +'</div>';
- document.body.appendChild(o);
+   +'<div style="font-size:10.5px;color:#6f857a;text-align:center;margin-top:9px;">Basis: '+d.n+' erfasste'+(d.n===1?'r Abschlag':' Abschläge')+' auf dieser Bahn'+(d.avgLen?' · Ø '+RT_fmtDist(d.avgLen):'')+'</div>'
+ +'</div>';
+ o.innerHTML=RT_hvPanel('Shot-Analyse · Bahn '+d.num,'RT_closeShotPlan()',extra)+card;
+ host.appendChild(o);
+ RT_spPlot(d);
 }
-function RT_closeShotPlan(){ var o=document.getElementById('rt-sp'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
+function RT_spPlot(d){
+ var map=RT_holeFullMapInst; if(!map||typeof L==='undefined') return;
+ if(RT_SP.layer){ try{map.removeLayer(RT_SP.layer);}catch(e){} RT_SP.layer=null; }
+ if(!map.getPane('spdots')){ var p=map.createPane('spdots'); if(p){ p.style.zIndex=635; p.style.pointerEvents='none'; } }
+ var lg=L.layerGroup().addTo(map); RT_SP.layer=lg;
+ d.shots.forEach(function(s){
+  if(s.lat==null) return;
+  var mid=(s.off<=d.TH&&s.off>=-d.TH), col=mid?'#48e08a':'#ffce45';
+  L.marker([s.lat,s.lng],{pane:'spdots',interactive:false,icon:L.divIcon({className:'',iconSize:[16,16],iconAnchor:[8,8],html:'<div style="width:13px;height:13px;border-radius:50%;background:'+col+';border:2px solid #0b160f;box-shadow:0 1px 3px rgba(0,0,0,.6);"></div>'})}).addTo(lg);
+ });
+}
+function RT_closeShotPlan(){
+ if(RT_SP.layer&&RT_holeFullMapInst){ try{RT_holeFullMapInst.removeLayer(RT_SP.layer);}catch(e){} }
+ RT_SP.layer=null;
+ var o=document.getElementById('rt-sp'); if(o&&o.parentNode) o.parentNode.removeChild(o);
+}
 /* ===== Ende Shot-Analyse ===== */
 /* ============================================================
-   Fahnenradar (Bahnkarte, rechte Toolbar) - "Blind Shot"
-   Kompassrose, die mit dem Geraetekompass dreht; die Fahne sitzt auf dem echten
-   Peilwinkel vom eigenen Standort (GPS) zum Gruen. Dreht man sich, bis die Fahne oben
-   steht, zeigt man aufs Gruen. Dazu Distanz + Schlaeger-Empfehlung.
-   Kompass: iOS braucht eine Freigabe (Button); Heading aus webkitCompassHeading bzw. alpha.
+   Fahnenradar (Overlay auf der Bahnkarte) - "Blind Shot"
+   Kompassrose ueber der Bahnkarte, dreht mit dem Geraetekompass; Fahne auf dem echten
+   Peilwinkel GPS->Gruen. Kopf-Panel wie Wetterradar. iOS-Permission per Button.
    ============================================================ */
 var RT_FR={origin:null,pin:null,brg:0,dist:0,heading:null,listening:false,got:false,handler:null};
-
 function RT_frPx(angle,r){ var t=angle*Math.PI/180; return [150+r*Math.sin(t),150-r*Math.cos(t)]; }
 function RT_frRoseSvg(brg){
  var parts=[];
- parts.push('<circle cx="150" cy="150" r="140" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.22)" stroke-width="2"/>');
- parts.push('<circle cx="150" cy="150" r="112" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1"/>');
+ parts.push('<circle cx="150" cy="150" r="140" fill="rgba(8,20,13,.35)" stroke="rgba(255,255,255,.28)" stroke-width="2"/>');
+ parts.push('<circle cx="150" cy="150" r="112" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1"/>');
  for(var a=0;a<360;a+=15){
   var major=(a%90===0);
   var p1=RT_frPx(a,140), p2=RT_frPx(a,major?120:130);
-  parts.push('<line x1="'+p1[0].toFixed(1)+'" y1="'+p1[1].toFixed(1)+'" x2="'+p2[0].toFixed(1)+'" y2="'+p2[1].toFixed(1)+'" stroke="rgba(255,255,255,'+(major?'.7':'.32')+')" stroke-width="'+(major?'2.4':'1.4')+'"/>');
+  parts.push('<line x1="'+p1[0].toFixed(1)+'" y1="'+p1[1].toFixed(1)+'" x2="'+p2[0].toFixed(1)+'" y2="'+p2[1].toFixed(1)+'" stroke="rgba(255,255,255,'+(major?'.8':'.4')+')" stroke-width="'+(major?'2.4':'1.4')+'"/>');
  }
- var letters=[['N',0],['O',90],['S',180],['W',270]];
- letters.forEach(function(L){
-  var p=RT_frPx(L[1],96);
-  parts.push('<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+5).toFixed(1)+'" text-anchor="middle" font-size="20" font-weight="800" fill="'+(L[0]==='N'?'#ff6b5e':'rgba(255,255,255,.85)')+'" font-family="Inter,sans-serif">'+L[0]+'</text>');
+ [['N',0],['O',90],['S',180],['W',270]].forEach(function(Ln){
+  var p=RT_frPx(Ln[1],96);
+  parts.push('<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+5).toFixed(1)+'" text-anchor="middle" font-size="20" font-weight="800" fill="'+(Ln[0]==='N'?'#ff6b5e':'#ffffff')+'" font-family="Inter,sans-serif">'+Ln[0]+'</text>');
  });
  var fp=RT_frPx(brg,118);
  parts.push('<line x1="150" y1="150" x2="'+fp[0].toFixed(1)+'" y2="'+fp[1].toFixed(1)+'" stroke="#8FE1A9" stroke-width="3.5" stroke-linecap="round"/>');
@@ -3841,6 +3826,7 @@ function RT_frRoseSvg(brg){
  return '<svg viewBox="0 0 300 300" style="width:100%;height:100%;display:block;">'+parts.join('')+'</svg>';
 }
 function RT_openFlagRadar(){
+ var host=document.getElementById('hole-full'); if(!host) return;
  if(document.getElementById('rt-fr')) return;
  var rd=RT_round;
  var origin=(RT_curPos&&RT_curPos.lat!=null)?{lat:RT_curPos.lat,lng:RT_curPos.lng,src:'gps'}:null;
@@ -3852,55 +3838,38 @@ function RT_openFlagRadar(){
  RT_FR.brg=(origin&&pin)?RT_grabBearing(origin,pin):0;
  RT_FR.dist=(origin&&pin)?RT_haversineM(origin.lat,origin.lng,pin.lat,pin.lng):0;
  var o=document.createElement('div'); o.id='rt-fr';
- o.style.cssText='position:fixed;inset:0;z-index:3000;background:radial-gradient(circle at 50% 40%,#12331f,#081410);display:flex;flex-direction:column;';
+ o.style.cssText='position:absolute;inset:0;z-index:2500;pointer-events:none;';
  var canDo=!!(origin&&pin);
- var rec=canDo?RT_dkiRecommend(Math.round(RT_FR.dist)):{empty:true};
- var srcNote=origin?(origin.src==='gps'?'':(origin.src==='ball'?'Standort: letzte Balllage (kein GPS)':'Standort: Abschlag (kein GPS)')):'';
- o.innerHTML=
-  '<div style="padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 11px;display:flex;align-items:center;justify-content:space-between;">'
-   +'<div style="font-size:18px;font-weight:800;color:#fff;">Fahnenradar</div>'
-   +'<button onclick="RT_closeFlagRadar()" aria-label="Schließen" style="border:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer;">✕</button>'
-  +'</div>';
  if(!canDo){
-  o.innerHTML+='<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:#cfe0d4;font-size:14px;line-height:1.5;">'
-    +(pin?'Warte auf GPS-Signal … öffne das Fahnenradar auf der Bahn im Freien.':'Für diese Bahn ist keine Fahnenposition hinterlegt.')+'</div>';
-  document.body.appendChild(o);
-  return;
+  o.innerHTML=RT_hvPanel('Fahnenradar','RT_closeFlagRadar()')+'<div style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#cfe0d4;font-size:13px;line-height:1.5;">'+(pin?'Warte auf GPS-Signal … öffne das Fahnenradar auf der Bahn im Freien.':'Für diese Bahn ist keine Fahnenposition hinterlegt.')+'</div>';
+  host.appendChild(o); return;
  }
- o.innerHTML+=
-  '<div style="text-align:center;color:#9fb3a4;font-size:12px;padding:0 20px 6px;">Dreh dich, bis die Fahne oben am Pfeil steht – dann zeigst du aufs Grün.</div>'
-  +'<div style="position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px 20px 0;">'
-   +'<div style="position:relative;width:min(86vw,340px);aspect-ratio:1/1;">'
-     +'<div style="position:absolute;left:50%;top:-2px;transform:translateX(-50%);z-index:3;color:#fff;font-size:20px;line-height:1;">▼</div>'
+ var rec=RT_dkiRecommend(Math.round(RT_FR.dist));
+ var srcNote=origin?(origin.src==='gps'?'':(origin.src==='ball'?'Standort: letzte Balllage (kein GPS)':'Standort: Abschlag (kein GPS)')):'';
+ var body='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">'
+   +'<div style="position:relative;width:min(80vw,320px);aspect-ratio:1/1;">'
+     +'<div style="position:absolute;left:50%;top:-4px;transform:translateX(-50%);z-index:3;color:#fff;font-size:20px;text-shadow:0 1px 3px #000;">▼</div>'
      +'<div id="rt-fr-rose" style="position:absolute;inset:0;transition:transform .12s linear;">'+RT_frRoseSvg(RT_FR.brg)+'</div>'
-     +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">'
-       +'<div id="rt-fr-aim" style="font-size:11px;font-weight:800;letter-spacing:.5px;color:#8FE1A9;height:14px;"></div>'
-       +'<div style="font-size:40px;font-weight:800;color:#fff;line-height:1;">'+RT_fmtDist(RT_FR.dist)+'</div>'
-       +'<div style="font-size:12px;color:#9fb3a4;margin-top:2px;">zur Fahne</div>'
-       +(rec.empty?'':'<div style="margin-top:9px;background:rgba(31,138,77,.9);color:#fff;font-size:13px;font-weight:700;border-radius:100px;padding:5px 14px;">'+rec.best.l+' · Ø '+rec.best.d+' m</div>')
+     +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">'
+       +'<div id="rt-fr-aim" style="font-size:11px;font-weight:800;color:#8FE1A9;height:14px;text-shadow:0 1px 3px #000;"></div>'
+       +'<div style="font-size:38px;font-weight:800;color:#fff;line-height:1;text-shadow:0 1px 5px rgba(0,0,0,.7);">'+RT_fmtDist(RT_FR.dist)+'</div>'
+       +'<div style="font-size:12px;color:#cfe0d4;text-shadow:0 1px 3px #000;">zur Fahne</div>'
+       +(rec.empty?'':'<div style="margin-top:8px;background:rgba(31,138,77,.92);color:#fff;font-size:13px;font-weight:700;border-radius:100px;padding:5px 13px;">'+rec.best.l+' · Ø '+rec.best.d+' m</div>')
      +'</div>'
    +'</div>'
-  +'</div>'
-  +'<div style="padding:6px 20px calc(env(safe-area-inset-bottom,0px) + 18px);text-align:center;">'
-   +(srcNote?'<div style="font-size:11px;color:#7f948a;margin-bottom:8px;">'+srcNote+'</div>':'')
-   +'<button id="rt-fr-act" onclick="RT_frStart()" style="border:none;background:#1F8A4D;color:#fff;font-size:15px;font-weight:700;font-family:inherit;border-radius:100px;padding:12px 26px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.35);">Kompass aktivieren</button>'
-   +'<div id="rt-fr-msg" style="font-size:11.5px;color:#7f948a;margin-top:9px;"></div>'
-  +'</div>';
- document.body.appendChild(o);
- if(!(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function')){
-  RT_frStart();
- }
+ +'</div>'
+ +'<div style="position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);pointer-events:auto;text-align:center;">'
+   +(srcNote?'<div style="font-size:11px;color:#cfe0d4;margin-bottom:8px;text-shadow:0 1px 3px #000;">'+srcNote+'</div>':'')
+   +'<button id="rt-fr-act" onclick="RT_frStart()" style="border:none;background:#1F8A4D;color:#fff;font-size:15px;font-weight:700;font-family:inherit;border-radius:100px;padding:11px 24px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.4);">Kompass aktivieren</button>'
+   +'<div id="rt-fr-msg" style="font-size:11.5px;color:#cfe0d4;margin-top:8px;text-shadow:0 1px 3px #000;"></div>'
+ +'</div>';
+ o.innerHTML=RT_hvPanel('Fahnenradar','RT_closeFlagRadar()')+body;
+ host.appendChild(o);
+ if(!(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function')) RT_frStart();
 }
-function RT_closeFlagRadar(){
- RT_frStop();
- var o=document.getElementById('rt-fr'); if(o&&o.parentNode) o.parentNode.removeChild(o);
-}
+function RT_closeFlagRadar(){ RT_frStop(); var o=document.getElementById('rt-fr'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
 function RT_frStop(){
- if(RT_FR.handler){
-  window.removeEventListener('deviceorientationabsolute',RT_FR.handler,true);
-  window.removeEventListener('deviceorientation',RT_FR.handler,true);
-  RT_FR.handler=null;
- }
+ if(RT_FR.handler){ window.removeEventListener('deviceorientationabsolute',RT_FR.handler,true); window.removeEventListener('deviceorientation',RT_FR.handler,true); RT_FR.handler=null; }
  RT_FR.listening=false;
 }
 function RT_frStart(){
@@ -3910,29 +3879,24 @@ function RT_frStart(){
    if(res==='granted'){ RT_frListen(); }
    else { if(msg) msg.textContent='Kompass-Zugriff abgelehnt. In den iOS-Einstellungen für Safari „Bewegung & Ausrichtung" erlauben.'; }
   }).catch(function(){ if(msg) msg.textContent='Kompass konnte nicht aktiviert werden.'; });
- } else {
-  RT_frListen();
- }
+ } else { RT_frListen(); }
 }
 function RT_frListen(){
  if(RT_FR.listening) return;
- RT_FR.listening=true;
- RT_FR.handler=RT_frOnOrient;
+ RT_FR.listening=true; RT_FR.handler=RT_frOnOrient;
  window.addEventListener('deviceorientationabsolute',RT_FR.handler,true);
  window.addEventListener('deviceorientation',RT_FR.handler,true);
  var act=document.getElementById('rt-fr-act'); if(act) act.style.display='none';
  var msg=document.getElementById('rt-fr-msg'); if(msg) msg.textContent='Kompass aktiv. Bei Ungenauigkeit das Gerät in einer 8 bewegen.';
- setTimeout(function(){
-  if(!RT_FR.got){ var m=document.getElementById('rt-fr-msg'); if(m) m.textContent='Kein Kompass-Signal. Nordausrichtung ggf. ungenau.'; }
- },2500);
+ setTimeout(function(){ if(!RT_FR.got){ var m=document.getElementById('rt-fr-msg'); if(m) m.textContent='Kein Kompass-Signal. Nordausrichtung ggf. ungenau.'; } },2500);
 }
 function RT_frOnOrient(e){
+ if(!document.getElementById('rt-fr')){ RT_frStop(); return; }
  var h=null;
  if(e.webkitCompassHeading!=null&&!isNaN(e.webkitCompassHeading)) h=e.webkitCompassHeading;
  else if(e.alpha!=null&&!isNaN(e.alpha)) h=(360-e.alpha)%360;
  if(h==null) return;
- RT_FR.heading=h; RT_FR.got=true;
- RT_frUpdate();
+ RT_FR.heading=h; RT_FR.got=true; RT_frUpdate();
 }
 function RT_frUpdate(){
  var rose=document.getElementById('rt-fr-rose');
@@ -3946,26 +3910,22 @@ function RT_frUpdate(){
 }
 /* ===== Ende Fahnenradar ===== */
 /* ============================================================
-   Entfernung & KI (Bahnkarte, rechte Toolbar)
-   Zwei ziehbare Punkte (Standort + Ziel) auf der Satellitenkarte. Zeigt Luftlinie,
-   Hoehendifferenz (Open-Meteo Elevation ueber /api/elev) und die "Plays-like"-Distanz,
-   dazu eine Schlaeger-Empfehlung aus den Bag-Distanzen sowie einen Strategie-Hinweis.
+   Entfernung & KI (Overlay auf der Bahnkarte)
+   Fester Standort (Abschlag/eigene Lage) + ziehbarer Zielpunkt direkt auf der Satelliten-
+   Bahnkarte (rotationskorrigiert wie der Grabber). Zeigt Luftlinie + Hoehendifferenz
+   (Open-Meteo /api/elev) -> "Plays-like"-Distanz, Schlaeger-Empfehlung + Strategie.
+   Kopf-Panel wie Wetterradar. Keine Verbindungslinie (L.polyline auf gedrehter Karte
+   unzuverlaessig) - dafuer der Live-Wert in der Karte.
    ============================================================ */
-var RT_DKI={map:null,mA:null,mB:null,line:null,pin:null,elev:{a:null,b:null},seq:0,err:false};
-
+var RT_DKI={map:null,mA:null,mB:null,layer:null,pin:null,elev:{a:null,b:null},seq:0,err:false};
 function RT_dkiShortClub(id){
  var c=null; for(var i=0;i<RT_BAG_CLUBS.length;i++){ if(RT_BAG_CLUBS[i].id===id){ c=RT_BAG_CLUBS[i]; break; } }
  if(!c) return id;
- var m=c.l.match(/\(([^)]+)\)/);
- return m?m[1]:c.l;
+ var m=c.l.match(/\(([^)]+)\)/); return m?m[1]:c.l;
 }
 function RT_dkiClubs(){
  var b=RT_bagData(); var out=[];
- RT_BAG_CLUBS.forEach(function(c){
-  if(c.id==='putter') return;
-  var e=b[c.id];
-  if(e&&e.d!=null&&!isNaN(e.d)&&e.d>0) out.push({id:c.id,l:RT_dkiShortClub(c.id),d:e.d});
- });
+ RT_BAG_CLUBS.forEach(function(c){ if(c.id==='putter') return; var e=b[c.id]; if(e&&e.d!=null&&!isNaN(e.d)&&e.d>0) out.push({id:c.id,l:RT_dkiShortClub(c.id),d:e.d}); });
  out.sort(function(a,b){ return a.d-b.d; });
  return out;
 }
@@ -3976,75 +3936,53 @@ function RT_dkiRecommend(pl){
  clubs.forEach(function(c){ var dd=Math.abs(c.d-pl); if(dd<bd){ bd=dd; best=c; } });
  var maxC=clubs[clubs.length-1];
  var diff=Math.round(pl-best.d);
- var conf=Math.max(45,Math.min(92,Math.round(92-Math.abs(diff)*3.2)));
- var fit;
- if(Math.abs(diff)<=4) fit='passt genau';
- else if(diff>0) fit='ca. '+Math.abs(diff)+' m mehr als dein Schnitt';
- else fit='ca. '+Math.abs(diff)+' m weniger als dein Schnitt';
+ var fit; if(Math.abs(diff)<=4) fit='passt genau'; else if(diff>0) fit='ca. '+Math.abs(diff)+' m mehr als dein Schnitt'; else fit='ca. '+Math.abs(diff)+' m weniger als dein Schnitt';
  var over=(pl>maxC.d+6);
- return {empty:false,best:best,maxC:maxC,conf:conf,fit:fit,over:over,diff:diff};
+ return {empty:false,best:best,maxC:maxC,fit:fit,over:over,diff:diff};
 }
 function RT_openDistKI(){
+ var host=document.getElementById('hole-full'); if(!host) return;
  if(document.getElementById('rt-dki')) return;
  var rd=RT_round;
+ var map=RT_holeFullMapInst;
  var A=rd?RT_grabberCenter(rd,rd.cur):null;
  var ref=rd?RT_refFor(rd,rd.cur):null;
- var B=(ref&&ref.pin&&ref.pin.lat!=null)?{lat:ref.pin.lat,lng:ref.pin.lng}:null;
+ var pin=(ref&&ref.pin&&ref.pin.lat!=null)?{lat:ref.pin.lat,lng:ref.pin.lng}:null;
  if(!A&&RT_curPos) A={lat:RT_curPos.lat,lng:RT_curPos.lng};
- if(A&&!B){ B={lat:A.lat+0.0012,lng:A.lng}; }
- if(!A&&B){ A={lat:B.lat-0.0012,lng:B.lng}; }
- RT_DKI.pin=(ref&&ref.pin&&ref.pin.lat!=null)?{lat:ref.pin.lat,lng:ref.pin.lng}:null;
- RT_DKI.elev={a:null,b:null}; RT_DKI.err=false; RT_DKI.seq++;
+ var B=pin?{lat:pin.lat,lng:pin.lng}:(A?{lat:A.lat+0.0012,lng:A.lng}:null);
+ RT_DKI.pin=pin; RT_DKI.map=map; RT_DKI.mA=null; RT_DKI.mB=null; RT_DKI.err=false; RT_DKI.seq++;
  var o=document.createElement('div'); o.id='rt-dki';
- o.style.cssText='position:fixed;inset:0;z-index:3000;background:#0b160f;display:flex;flex-direction:column;';
- o.innerHTML=
-  '<div style="padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 11px;background:#0e1e15;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.4);">'
-   +'<div style="font-size:18px;font-weight:800;color:#fff;">Entfernung & KI</div>'
-   +'<button onclick="RT_closeDistKI()" aria-label="Schließen" style="border:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer;">✕</button>'
-  +'</div>'
-  +'<div style="position:relative;flex:1;min-height:0;">'
-   +'<div id="rt-dki-map" style="position:absolute;inset:0;background:#12261B;"></div>'
-   +'<div style="position:absolute;left:12px;top:12px;z-index:600;background:rgba(8,20,13,.72);color:#cfe0d4;font-size:11.5px;border-radius:100px;padding:6px 12px;pointer-events:none;">Punkte ziehen: <b style="color:#8FE1A9;">Standort</b> &amp; <b style="color:#ffd24a;">Ziel</b></div>'
-  +'</div>'
-  +'<div id="rt-dki-card" style="background:#0e1e15;padding:13px 15px calc(env(safe-area-inset-bottom,0px) + 15px);box-shadow:0 -3px 12px rgba(0,0,0,.4);"></div>';
- document.body.appendChild(o);
- RT_DKI._A=A; RT_DKI._B=B;
- setTimeout(RT_dkiInit,60);
- RT_dkiRenderCard(A&&B?RT_haversineM(A.lat,A.lng,B.lat,B.lng):null,null,true);
-}
-function RT_closeDistKI(){
- RT_DKI.seq++;
- if(RT_DKI.map){ try{RT_DKI.map.remove();}catch(e){} RT_DKI.map=null; }
- RT_DKI.mA=RT_DKI.mB=RT_DKI.line=null;
- var o=document.getElementById('rt-dki'); if(o&&o.parentNode) o.parentNode.removeChild(o);
-}
-function RT_dkiInit(){
- var el=document.getElementById('rt-dki-map'); if(!el) return;
- if(typeof L==='undefined'){ RT_dkiRenderCard(null,null,false,'Karte nicht verfügbar'); return; }
- var A=RT_DKI._A, B=RT_DKI._B;
- if(!A||!B){ RT_dkiRenderCard(null,null,false,'Keine Bahn-Position vorhanden. Öffne die Funktion auf einer Bahn.'); return; }
- var map=L.map('rt-dki-map',{zoomControl:false,attributionControl:false});
- RT_DKI.map=map;
- L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19}).addTo(map);
- map.fitBounds(L.latLngBounds([[A.lat,A.lng],[B.lat,B.lng]]).pad(0.55));
- var icA=L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],html:'<div style="width:26px;height:26px;border-radius:50%;background:#1F8A4D;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5);"></div>'});
- var icB=L.divIcon({className:'',iconSize:[30,38],iconAnchor:[15,36],html:'<svg width="30" height="38" viewBox="0 0 30 38"><line x1="7" y1="4" x2="7" y2="36" stroke="#fff" stroke-width="3"/><path d="M7 4h16l-4 5 4 5H7z" fill="#ffd24a" stroke="#c99700" stroke-width="1"/></svg>'});
- RT_DKI.mA=L.marker([A.lat,A.lng],{draggable:true,icon:icA}).addTo(map);
- RT_DKI.mB=L.marker([B.lat,B.lng],{draggable:true,icon:icB}).addTo(map);
- RT_DKI.line=L.polyline([[A.lat,A.lng],[B.lat,B.lng]],{color:'#fff',weight:3,opacity:.9,dashArray:'2 7'}).addTo(map);
- function onDrag(){ RT_dkiUpdateLine(); }
- function onEnd(){ RT_dkiUpdateLine(); RT_dkiFetchElev(); }
- RT_DKI.mA.on('drag',onDrag).on('dragend',onEnd);
- RT_DKI.mB.on('drag',onDrag).on('dragend',onEnd);
+ o.style.cssText='position:absolute;inset:0;z-index:2500;pointer-events:none;';
+ o.innerHTML=RT_hvPanel('Entfernung & KI','RT_closeDistKI()','<div style="font-size:11.5px;color:#9fb3a4;">Ziehe den gelben Zielpunkt auf die gewünschte Lage.</div>')
+   +'<div id="rt-dki-card" style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:12px 15px calc(env(safe-area-inset-bottom,0px) + 14px);box-shadow:0 -3px 12px rgba(0,0,0,.4);"></div>';
+ host.appendChild(o);
+ if(!map||typeof L==='undefined'||!A||!B){ RT_dkiRenderCard(null,null,false,'Karte/Position nicht verfügbar. Öffne die Funktion auf der Bahn (Satellitenkarte).'); return; }
+ RT_dkiAttach(map,A,B);
+ RT_dkiRenderCard(RT_haversineM(A.lat,A.lng,B.lat,B.lng),null,true);
  RT_dkiFetchElev();
 }
-function RT_dkiUpdateLine(){
- if(!RT_DKI.mA||!RT_DKI.mB||!RT_DKI.line) return;
+function RT_dkiAttach(map,A,B){
+ if(RT_DKI.layer){ try{map.removeLayer(RT_DKI.layer);}catch(e){} RT_DKI.layer=null; }
+ if(!map.getPane('dkigrab')){ var p=map.createPane('dkigrab'); if(p){ p.style.zIndex=655; } }
+ var lg=L.layerGroup().addTo(map); RT_DKI.layer=lg;
+ RT_DKI.mA=L.marker([A.lat,A.lng],{pane:'dkigrab',interactive:false,icon:L.divIcon({className:'',iconSize:[26,26],iconAnchor:[13,13],html:'<div style="width:22px;height:22px;border-radius:50%;background:#1F8A4D;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5);"></div>'})}).addTo(lg);
+ RT_DKI.mB=L.marker([B.lat,B.lng],{pane:'dkigrab',icon:L.divIcon({className:'',iconSize:[46,46],iconAnchor:[23,23],html:'<div style="width:40px;height:40px;border-radius:50%;border:3px solid #ffd24a;background:rgba(255,210,74,.18);box-shadow:0 1px 6px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border-radius:50%;background:#ffd24a;"></div></div>'})}).addTo(lg);
+ var el=map._el||document.getElementById('hole-full-map');
+ var rotF=map._rotF||0;
+ var gEl=RT_DKI.mB.getElement();
+ if(gEl&&el){
+  gEl.style.touchAction='none'; gEl.style.cursor='grab';
+  var st=null;
+  gEl.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); try{gEl.setPointerCapture(ev.pointerId);}catch(e){} var p0=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); var mp=RT_DKI.mB.getLatLng(); st=p0?{dLat:mp.lat-p0.lat,dLng:mp.lng-p0.lng}:{dLat:0,dLng:0}; });
+  gEl.addEventListener('pointermove',function(ev){ if(!st) return; ev.preventDefault(); ev.stopPropagation(); var p=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); if(!p) return; RT_DKI.mB.setLatLng([p.lat+st.dLat,p.lng+st.dLng]); RT_dkiLive(); });
+  var endD=function(ev){ if(!st) return; st=null; if(ev&&ev.stopPropagation) ev.stopPropagation(); RT_dkiFetchElev(); };
+  gEl.addEventListener('pointerup',endD); gEl.addEventListener('pointercancel',endD);
+ }
+}
+function RT_dkiLive(){
+ if(!RT_DKI.mA||!RT_DKI.mB) return;
  var a=RT_DKI.mA.getLatLng(), b=RT_DKI.mB.getLatLng();
- RT_DKI.line.setLatLngs([a,b]);
- var d=RT_haversineM(a.lat,a.lng,b.lat,b.lng);
- var live=document.getElementById('rt-dki-live');
- if(live) live.textContent=RT_fmtDist(d);
+ var live=document.getElementById('rt-dki-live'); if(live) live.textContent=RT_fmtDist(RT_haversineM(a.lat,a.lng,b.lat,b.lng));
 }
 function RT_dkiFetchElev(){
  if(!RT_DKI.mA||!RT_DKI.mB) return;
@@ -4057,54 +3995,45 @@ function RT_dkiFetchElev(){
   .then(function(j){
    if(my!==RT_DKI.seq) return;
    if(!j||j.error||j.a==null||j.b==null){ RT_DKI.err=true; RT_dkiRenderCard(d,null,false); return; }
-   RT_DKI.err=false; RT_DKI.elev={a:j.a,b:j.b};
-   RT_dkiRenderCard(d,(j.b-j.a),false);
+   RT_DKI.err=false; RT_DKI.elev={a:j.a,b:j.b}; RT_dkiRenderCard(d,(j.b-j.a),false);
   })
   .catch(function(){ if(my!==RT_DKI.seq) return; RT_DKI.err=true; RT_dkiRenderCard(d,null,false); });
 }
 function RT_dkiRenderCard(d,dh,loading,msg){
  var host=document.getElementById('rt-dki-card'); if(!host) return;
- if(msg){ host.innerHTML='<div style="color:#cfe0d4;font-size:13px;padding:6px 2px;">'+msg+'</div>'; return; }
- if(d==null){ host.innerHTML='<div style="color:#9fb3a4;font-size:13px;">Ziehe die Punkte auf die gewünschten Lagen.</div>'; return; }
+ if(msg){ host.innerHTML='<div style="color:#cfe0d4;font-size:13px;padding:4px 2px;">'+msg+'</div>'; return; }
+ if(d==null){ host.innerHTML='<div style="color:#9fb3a4;font-size:13px;">Ziehe den Zielpunkt auf die gewünschte Lage.</div>'; return; }
  var pl=(dh!=null)?Math.round(d+dh):Math.round(d);
  var hLabel,hVal;
  if(dh==null){ hLabel=RT_DKI.err?'Höhe n.v.':'Höhe …'; hVal='–'; }
  else{ var up=dh>=0; hVal=(up?'+':'−')+Math.round(Math.abs(dh))+' m'; hLabel=(Math.abs(dh)<1)?'eben':(up?'bergauf':'bergab'); }
- var head='<div style="display:flex;gap:0;background:rgba(0,0,0,.30);border-radius:13px;padding:10px 4px;margin-bottom:11px;">'
+ var head='<div style="display:flex;gap:0;background:rgba(0,0,0,.30);border-radius:13px;padding:9px 4px;margin-bottom:10px;">'
   +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Luftlinie</div><div id="rt-dki-live" style="font-size:19px;font-weight:800;color:#fff;">'+RT_fmtDist(d)+'</div></div>'
   +'<div style="width:1px;background:rgba(255,255,255,.12);"></div>'
   +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Höhe</div><div style="font-size:19px;font-weight:800;color:#fff;">'+hVal+'</div><div style="font-size:9.5px;color:#7f948a;margin-top:-1px;">'+hLabel+'</div></div>'
   +'<div style="width:1px;background:rgba(255,255,255,.12);"></div>'
   +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#8FE1A9;">Spielt wie</div><div style="font-size:19px;font-weight:800;color:#8FE1A9;">'+RT_fmtDist(pl)+'</div></div>'
  +'</div>';
- var rec=RT_dkiRecommend(pl);
- var body;
+ var rec=RT_dkiRecommend(pl), body;
  if(rec.empty){
   body='<div style="font-size:12.5px;color:#cfe0d4;line-height:1.45;">Trage deine durchschnittlichen Schlaglängen im <b>Golfbag</b> ein – dann bekommst du hier eine passende Schläger-Empfehlung.</div>';
  }else{
   var strat;
-  if(rec.over){
-   var over=pl-rec.maxC.d;
-   var rem=RT_dkiRecommend(over);
-   strat='Über deiner längsten Länge ('+RT_fmtDist(rec.maxC.d)+'). Lege mit <b>'+rec.maxC.l+'</b> vor – danach bleiben ~'+RT_fmtDist(over)+(rem.empty?'':' (≈ <b>'+rem.best.l+'</b>)')+'.';
-  }else{
-   var remPin=RT_DKI.pin?RT_haversineM(RT_DKI.mB.getLatLng().lat,RT_DKI.mB.getLatLng().lng,RT_DKI.pin.lat,RT_DKI.pin.lng):null;
-   if(remPin!=null&&remPin>12) strat='In einem Schlag erreichbar. Von dort noch ~'+RT_fmtDist(remPin)+' zum Grün.';
-   else strat='Direkt aufs Grün spielbar – triffst du die Länge, bist du zum Putt.';
-  }
+  if(rec.over){ var over=pl-rec.maxC.d; var rem=RT_dkiRecommend(over); strat='Über deiner längsten Länge ('+RT_fmtDist(rec.maxC.d)+'). Lege mit <b>'+rec.maxC.l+'</b> vor – danach bleiben ~'+RT_fmtDist(over)+(rem.empty?'':' (≈ <b>'+rem.best.l+'</b>)')+'.'; }
+  else{ var remPin=RT_DKI.pin?RT_haversineM(RT_DKI.mB.getLatLng().lat,RT_DKI.mB.getLatLng().lng,RT_DKI.pin.lat,RT_DKI.pin.lng):null; if(remPin!=null&&remPin>12) strat='In einem Schlag erreichbar. Von dort noch ~'+RT_fmtDist(remPin)+' zum Grün.'; else strat='Direkt aufs Grün spielbar – triffst du die Länge, bist du zum Putt.'; }
   body='<div style="display:flex;align-items:center;gap:11px;">'
-    +'<div style="flex:none;width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#1F8A4D,#0f5c31);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;">'
-      +'<div style="font-size:17px;font-weight:800;line-height:1;">'+rec.best.l+'</div><div style="font-size:9px;opacity:.8;margin-top:2px;">Ø '+rec.best.d+'</div></div>'
-    +'<div style="flex:1;min-width:0;">'
-      +'<div style="font-size:13.5px;color:#fff;font-weight:700;">Empfehlung: '+rec.best.l+' <span style="font-weight:500;color:#9fb3a4;">('+rec.fit+')</span></div>'
-      +'<div style="font-size:12px;color:#cfe0d4;line-height:1.4;margin-top:3px;">'+strat+'</div>'
-    +'</div>'
+    +'<div style="flex:none;width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,#1F8A4D,#0f5c31);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;"><div style="font-size:16px;font-weight:800;line-height:1;">'+rec.best.l+'</div><div style="font-size:9px;opacity:.8;margin-top:2px;">Ø '+rec.best.d+'</div></div>'
+    +'<div style="flex:1;min-width:0;"><div style="font-size:13px;color:#fff;font-weight:700;">Empfehlung: '+rec.best.l+' <span style="font-weight:500;color:#9fb3a4;">('+rec.fit+')</span></div><div style="font-size:12px;color:#cfe0d4;line-height:1.4;margin-top:3px;">'+strat+'</div></div>'
   +'</div>';
-  if(!RT_DKI.err&&dh!=null){
-   body+='<div style="font-size:10.5px;color:#6f857a;margin-top:9px;">Plays-like nach Höhe berechnet · ohne Windkorrektur</div>';
-  }
+  if(!RT_DKI.err&&dh!=null) body+='<div style="font-size:10.5px;color:#6f857a;margin-top:8px;">Plays-like nach Höhe berechnet · ohne Windkorrektur</div>';
  }
  host.innerHTML=head+body;
+}
+function RT_closeDistKI(){
+ RT_DKI.seq++;
+ if(RT_DKI.layer&&RT_DKI.map){ try{RT_DKI.map.removeLayer(RT_DKI.layer);}catch(e){} }
+ RT_DKI.layer=null; RT_DKI.mA=null; RT_DKI.mB=null;
+ var o=document.getElementById('rt-dki'); if(o&&o.parentNode) o.parentNode.removeChild(o);
 }
 /* ===== Ende Entfernung & KI ===== */
 function RT_grabberOverlayHtml(){

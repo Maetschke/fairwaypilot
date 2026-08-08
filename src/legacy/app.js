@@ -5807,7 +5807,7 @@ function RT_LRN_go(view,a,b){
 function RT_LRN_rubrikCard(view,ic,titel,sub,pct,col){
   return '<button class="lrnrubrik" onclick="RT_LRN_go(\''+view+'\')">'
     + RT_LRN_ring(pct,52,col,pct+'%')
-    + '<div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:800;color:#1d3324;">'+ic+' '+RT_LRN_esc(titel)+'</div>'
+    + '<div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:800;color:#1d3324;display:flex;align-items:center;gap:7px;"><img src="/learning/rubrik/'+view+'.png" alt="" style="width:26px;height:26px;object-fit:contain;flex:none;">'+RT_LRN_esc(titel)+'</div>'
     + '<div style="font-size:12.5px;color:#5d7060;margin-top:3px;line-height:1.35;">'+RT_LRN_esc(sub)+'</div></div>'
     + '<span style="font-size:22px;color:#c3d0c5;">›</span></button>';
 }
@@ -6202,6 +6202,7 @@ function RT_rCourseMap(){
 function RT_cmInit(){
  if(typeof L==='undefined'){ return; }
  var el=document.getElementById('cm-map'); if(!el) return;
+ if(!document.getElementById('cm-style')){ var _st=document.createElement('style'); _st.id='cm-style'; _st.textContent='#cm-map{background:#2e3b30;}#cm-map .leaflet-tile{width:256.5px !important;height:256.5px !important;}'; document.head.appendChild(_st); }
  var map=L.map('cm-map',{zoomControl:false,attributionControl:false}).setView([51.2,10.4],6);
  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20}).addTo(map);
  RT_CM.map=map; RT_CM.layer=L.layerGroup().addTo(map); RT_CM.labels=L.layerGroup().addTo(map); RT_CM.mk={};
@@ -6210,7 +6211,7 @@ function RT_cmInit(){
  // Standort des Nutzers
  try{ if(navigator.geolocation){ navigator.geolocation.getCurrentPosition(function(p){
    RT_CM.userLL={lat:p.coords.latitude,lng:p.coords.longitude};
-   try{ RT_cmUserDot(); map.setView([RT_CM.userLL.lat,RT_CM.userLL.lng],11); }catch(e){}
+   try{ RT_cmUserDot(); map.setView([RT_CM.userLL.lat,RT_CM.userLL.lng],13); }catch(e){}
    if(RT_CM.sel) RT_cmSheet(RT_CM.sel);
  },function(){},{enableHighAccuracy:false,timeout:6000,maximumAge:600000}); } }catch(e){}
  RT_cmLoadLists();

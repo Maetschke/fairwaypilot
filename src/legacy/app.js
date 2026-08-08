@@ -6202,7 +6202,7 @@ function RT_rCourseMap(){
 function RT_cmInit(){
  if(typeof L==='undefined'){ return; }
  var el=document.getElementById('cm-map'); if(!el) return;
- if(!document.getElementById('cm-style2')){ var _s2=document.createElement('style'); _s2.id='cm-style2'; _s2.textContent='#cm-map .leaflet-container{background:#5f6e50;}'; document.head.appendChild(_s2); }
+ if(!document.getElementById('cm-style2')){ var _s2=document.createElement('style'); _s2.id='cm-style2'; _s2.textContent='#cm-map .leaflet-container{background:#6b7a5c;}#cm-map .leaflet-tile{filter:brightness(1.14) saturate(1.03);}'; document.head.appendChild(_s2); }
  var map=L.map('cm-map',{zoomControl:false,attributionControl:false,preferCanvas:true}).setView([51.2,10.4],6);
  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20}).addTo(map);
  RT_CM.map=map; RT_CM.layer=L.layerGroup().addTo(map); RT_CM.labels=L.layerGroup().addTo(map); RT_CM.mk={};
@@ -6290,29 +6290,52 @@ function RT_cmSheet(c){
  var host=document.getElementById('cm-sheet'); if(!host) return;
  var st=(RT_CM.lists||{})[c.ref]||{}; var ag=RT_CM.agg[c.ref]||null; var mine=RT_CM.myR[c.ref]||{};
  var dist=RT_cmDistTxt(c);
- var holes=(c.holes!=null)?(c.holes+' Löcher'):'Löcher —';
- var ratingTxt=(ag&&ag.cnt>0)?('★ '+String(ag.avg_stars).replace('.',',')+' ('+ag.cnt+')'):'noch keine Bewertung';
- var diffTxt=(ag&&ag.avg_diff!=null)?RT_CM_DIFF[Math.round(ag.avg_diff)]:'—';
- var meta=[holes]; if(dist) meta.push(dist); meta.push('★ '+((ag&&ag.cnt>0)?String(ag.avg_stars).replace('.',','):'–')); meta.push('Schwierigkeit: '+diffTxt);
+ var holesTxt=(c.holes!=null)?(c.holes+' Löcher'):null;
+ var meta=[]; if(holesTxt) meta.push(holesTxt); if(dist) meta.push(dist);
+ if(ag&&ag.avg_diff!=null) meta.push('Schwierigkeit: '+RT_CM_DIFF[Math.round(ag.avg_diff)]);
+ var ratingChip=(ag&&ag.cnt>0)?('★ '+String(ag.avg_stars).replace('.',',')+' ('+ag.cnt+')'):'Ohne Bewertung';
+ var inList=!!(st.saved||st.bucket||st.home);
  var loggedIn=!!(sbReady()&&sb&&sbUser);
- var actBtn=function(kind,label,ic){ var on=!!st[kind]; return '<button onclick="RT_cmToggle(\''+c.ref+'\',\''+kind+'\')" style="flex:1;border:none;border-radius:12px;padding:10px 6px;cursor:pointer;font-family:Inter,sans-serif;font-size:12px;font-weight:700;background:'+(on?'#1F8A4D':'#eef3ee')+';color:'+(on?'#fff':'#2d4a34')+';">'+ic+'<br>'+label+'</button>'; };
- var h='<div style="pointer-events:auto;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.18);padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);max-width:520px;margin:0 auto;">'
-  +'<div style="display:flex;align-items:flex-start;gap:8px;"><div style="flex:1;"><div style="font-size:17px;font-weight:800;color:#143522;line-height:1.25;">'+RT_cmEsc(c.name)+'</div>'
-  +'<div style="font-size:12.5px;color:#5d7060;margin-top:4px;">'+meta.join(' · ')+'</div></div>'
-  +'<button onclick="RT_cmCloseSheet()" style="border:none;background:#eef3ee;border-radius:50%;width:30px;height:30px;font-size:15px;cursor:pointer;color:#2d4a34;flex:none;">&#10005;</button></div>';
+ var bmCol=inList?'#fff':'#143522';
+ var bm='<svg width="19" height="19" viewBox="0 0 24 24" fill="'+bmCol+'"><path d="M6 2h12a2 2 0 0 1 2 2v18l-8-4-8 4V4a2 2 0 0 1 2-2z"/></svg>';
+ var h='<div style="pointer-events:auto;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.22);max-width:520px;margin:0 auto;overflow:hidden;">'
+  +'<div style="position:relative;height:92px;background:linear-gradient(135deg,#2E7D4F,#143522);">'
+    +'<div style="position:absolute;left:50%;top:8px;transform:translateX(-50%);width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);"></div>'
+    +'<div style="position:absolute;left:14px;bottom:12px;background:rgba(255,255,255,.94);border-radius:100px;padding:5px 11px;font-size:12px;font-weight:800;color:#143522;">'+ratingChip+'</div>'
+    +'<button onclick="RT_cmActions(\''+c.ref+'\')" aria-label="Merken" style="position:absolute;right:12px;bottom:10px;border:none;width:42px;height:42px;border-radius:50%;background:'+(inList?'#1F8A4D':'rgba(255,255,255,.94)')+';cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;">'+bm+'</button>'
+    +'<button onclick="RT_cmCloseSheet()" aria-label="Schliessen" style="position:absolute;right:62px;bottom:12px;border:none;background:rgba(255,255,255,.9);border-radius:50%;width:38px;height:38px;font-size:15px;color:#143522;cursor:pointer;">✕</button>'
+  +'</div>'
+  +'<div style="padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 16px);">'
+    +'<div style="font-size:18px;font-weight:800;color:#143522;line-height:1.25;">'+RT_cmEsc(c.name)+'</div>'
+    +(meta.length?'<div style="font-size:13px;color:#5d7060;margin-top:5px;">'+meta.join(' · ')+'</div>':'');
  if(loggedIn){
-  h+='<div style="display:flex;gap:8px;margin-top:12px;">'+actBtn('saved','Speichern','🔖')+actBtn('bucket','Bucket-Liste','📋')+actBtn('home','Heimatplatz','🏠')+'</div>';
-  h+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid #eef1ee;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">'
-    +'<div><div style="font-size:12px;color:#5d7060;margin-bottom:2px;">Deine Bewertung</div><div>'+RT_cmStars(c.ref,mine.stars||0)+'</div></div>'
+  h+='<div style="margin-top:13px;padding-top:12px;border-top:1px solid #eef1ee;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">'
+    +'<div><div style="font-size:12px;color:#5d7060;margin-bottom:2px;">Deine Bewertung</div>'+RT_cmStars(c.ref,mine.stars||0)+'</div>'
     +'<div style="text-align:right;"><div style="font-size:12px;color:#5d7060;margin-bottom:3px;">Schwierigkeit</div>'
-    +'<select onchange="RT_cmDiff(\''+c.ref+'\',this.value)" style="border:1.5px solid #DCE7D4;border-radius:10px;padding:7px 9px;font-size:13px;font-family:Inter,sans-serif;">'
-    +'<option value="">—</option>'+[1,2,3,4,5].map(function(i){ return '<option value="'+i+'"'+((mine.difficulty==i)?' selected':'')+'>'+RT_CM_DIFF[i]+'</option>'; }).join('')+'</select></div></div>';
+    +'<select onchange="RT_cmDiff(\''+c.ref+'\',this.value)" style="border:1.5px solid #DCE7D4;border-radius:10px;padding:7px 9px;font-size:13px;font-family:Inter,sans-serif;"><option value="">—</option>'
+    +[1,2,3,4,5].map(function(i){ return '<option value="'+i+'"'+((mine.difficulty==i)?' selected':'')+'>'+RT_CM_DIFF[i]+'</option>'; }).join('')+'</select></div></div>';
  } else {
-  h+='<div style="margin-top:12px;padding:11px 13px;background:#f3f7f3;border-radius:12px;font-size:12.5px;color:#3a4a3e;">Zum Speichern, für Listen/Heimatplatz und zum Bewerten bitte im Konto anmelden.</div>';
+  h+='<div style="margin-top:12px;padding:11px 13px;background:#f3f7f3;border-radius:12px;font-size:12.5px;color:#3a4a3e;">Zum Merken, für Listen/Heimatplatz und zum Bewerten bitte im Konto anmelden.</div>';
  }
- h+='</div>';
+ h+='</div></div>';
  host.innerHTML=h;
 }
+function RT_cmActions(ref){
+ if(!(sbReady()&&sb&&sbUser)){ if(RT_CM.sel) RT_cmSheet(RT_CM.sel); return; }
+ var st=(RT_CM.lists||{})[ref]||{};
+ var row=function(kind,label,ic){ var on=!!st[kind]; return '<button onclick="RT_cmActPick(\''+ref+'\',\''+kind+'\')" style="display:flex;align-items:center;gap:12px;width:100%;border:none;background:#fff;padding:16px 18px;font-size:15.5px;font-weight:600;color:#143522;font-family:Inter,sans-serif;cursor:pointer;text-align:left;"><span style="font-size:18px;width:22px;text-align:center;">'+ic+'</span><span style="flex:1;">'+label+'</span>'+(on?'<span style="color:#1F8A4D;font-weight:800;">✓</span>':'')+'</button>'; };
+ var dv='<div style="height:1px;background:#eef1ee;margin:0 18px;"></div>';
+ var o=document.createElement('div'); o.id='cm-act';
+ o.style.cssText='position:fixed;inset:0;z-index:1010;background:rgba(10,20,12,.35);display:flex;flex-direction:column;justify-content:flex-end;';
+ o.addEventListener('click',function(e){ if(e.target===o) RT_cmActClose(); });
+ o.innerHTML='<div style="max-width:520px;width:100%;margin:0 auto;padding:0 8px calc(env(safe-area-inset-bottom,0px) + 10px);">'
+   +'<div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:8px;">'+row('saved','Zu gespeicherten Plätzen','🔖')+dv+row('bucket','Zur Bucket-Liste','📋')+dv+row('home','Als Heimatplatz','🏠')+'</div>'
+   +'<button onclick="RT_cmActClose()" style="width:100%;border:none;background:#fff;border-radius:16px;padding:16px;font-size:16px;font-weight:800;color:#143522;font-family:Inter,sans-serif;cursor:pointer;">Abbrechen</button>'
+ +'</div>';
+ document.body.appendChild(o);
+}
+function RT_cmActPick(ref,kind){ RT_cmToggle(ref,kind); RT_cmActClose(); }
+function RT_cmActClose(){ var o=document.getElementById('cm-act'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
 function RT_cmToggle(ref,kind){
  if(!(sbReady()&&sb&&sbUser)){ return; }
  var c=RT_CM.sel; if(!c||c.ref!==ref){ for(var i=0;i<(RT_CM.courses||[]).length;i++){ if(RT_CM.courses[i].ref===ref){ c=RT_CM.courses[i]; break; } } }

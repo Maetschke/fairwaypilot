@@ -2060,8 +2060,9 @@ function RT_markShot(pi){
   }
   var pins=RT_pinsOf(rd,pi,c);
   pins.push({lat:la,lng:ln,shot:(holed?'P':RT_ballShotSuggest(rd,c,pi))});
+  RT_scAdjust(pi,1);
   /* Backlog A2: Markieren setzt AUSSCHLIESSLICH die Position. Der Schlagzaehler wird hier
-     bewusst NICHT mehr erhoeht - das passiert allein ueber die +/- Stepper. Die fruehere
+     jetzt gekoppelt: +1 pro Balllage. Die +/- Stepper zaehlen weiter nur die Zahl. Die fruehere
      Kopplung erzeugte gefuehlte Phantomschlaege, sobald nur eine Balllage markiert wurde.
      Die Marker-Nummerierung haengt an RT_ballShotSuggest() und damit an den vorhandenen
      Pins, nicht an p.sc - sie bleibt deshalb unveraendert korrekt. */
@@ -3198,9 +3199,10 @@ async function RT_initHoleMaps(){
     ll=e.latlng;
    }
    p.pins[c].push({lat:ll.lat, lng:ll.lng});
+   RT_scAdjust(pi,1);
    rtSet(RT_ACT,RT_round);
-   RT_redrawPins(pi);
-   RT_updPinHint(pi);
+   RT_syncActiveToSaved();
+   setTimeout(function(){ RT_render(); },0);
   });
  });
 }
@@ -3218,10 +3220,12 @@ function RT_redrawPins(pi){
   m.on('click', function(ev){
    if(ev.originalEvent)L.DomEvent.stopPropagation(ev.originalEvent);
    RT_pageConfirm('Wollen Sie diese Lage wirklich löschen?', function(){
+    var _rm=pins[idx]||{}; var _wasBall=(!_rm.type||_rm.type==='shot');
     pins.splice(idx,1);
+    if(_wasBall) RT_scAdjust(pi,-1);
     rtSet(RT_ACT,RT_round);
-    RT_redrawPins(pi);
-    RT_updPinHint(pi);
+    RT_syncActiveToSaved();
+    RT_render();
    });
   });
  });
@@ -3673,7 +3677,7 @@ function RT_updPinHint(pi){
  var p=rd.players[pi], c=rd.cur;
  var n=(p.pins&&p.pins[c])?p.pins[c].length:0;
  var hintEl=document.getElementById('pin-hint-'+pi);
- if(hintEl) hintEl.textContent='Karte antippen = Lage setzen \u00b7 Markierung antippen = entfernen';
+ if(hintEl) hintEl.textContent='Karte antippen = Lage + Schlag \u00b7 Markierung antippen = entfernt beides';
  var btn=document.getElementById('pin-reset-'+pi);
  if(btn) btn.style.display = n? 'inline-block':'none';
 }
@@ -4903,7 +4907,7 @@ function RT_rPlay(){
   }else{
    h+='<div class="rt-holemap" style="position:relative;"><div class="rt-holemap-inner" id="hole-map-'+pi+'"></div>'+(rtImg?'<div class="rt-holemap-tap" style="z-index:1200;pointer-events:auto;" onclick="event.stopPropagation();RT_openHoleFull(\''+rtImg.url+'\',\'Bahn '+rd.nums[c]+'\','+pi+')">&#8599;</div>':'')+'</div>';
    h+='<div id="map-ctrl-'+pi+'">'+RT_mapCtrlHtml(pi)+'</div>';
-   h+='<div id="pin-hint-'+pi+'" style="font-size:9.5px;color:#8A9C8E;margin-top:4px;">Karte antippen = Lage setzen &middot; Markierung antippen = entfernen</div>';
+   h+='<div id="pin-hint-'+pi+'" style="font-size:9.5px;color:#8A9C8E;margin-top:4px;">Karte antippen = Lage + Schlag &middot; Markierung antippen = entfernt beides</div>';
   }
   /* Ein Button je Spieler, links unter der Karte: setzt die naechste Markierung an der
      aktuellen GPS-Position und zaehlt zugleich einen Schlag hoch (A, dann 2..n, am Loch
@@ -5043,12 +5047,12 @@ function RT_removeLastTrackedPoint(type,pi){
   if(t===type){ pins.splice(i,1); break; }
  }
 }
+function RT_scAdjust(pi,d){ var p=RT_round.players[pi],c=RT_round.cur; if(p.sc[c]===null){ if(d>0)p.sc[c]=1; } else { var nv=p.sc[c]+d; p.sc[c]=nv<1?null:nv; } }
 function RT_sc(pi,d){
  var p=RT_round.players[pi],c=RT_round.cur;
  if(p.sc[c]===null){p.sc[c]=d>0?1:Math.max(1,RT_round.par[c]-1);}
  else{var nv=p.sc[c]+d;p.sc[c]=nv<1?null:nv;}
- if(d>0){ RT_addTrackedPoint('shot',RT_ballShotSuggest(RT_round,c,pi),pi); }
- else{ RT_removeLastTrackedPoint('shot',pi); }
+ /* Stepper zaehlen bewusst nur die Zahl - keine Balllage (Zwei-Werkzeuge). */
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
 }
 function RT_mini(pi,f,d){

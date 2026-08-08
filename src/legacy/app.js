@@ -3700,6 +3700,8 @@ function RT_render(){
  else if(RT_state.screen==='play'){ r.innerHTML=RT_rPlay(); RT_initHoleMaps(); RT_startGeoWatch(); }
  else if(RT_state.screen==='view')r.innerHTML=RT_rView();
  else if(RT_state.screen==='bag')r.innerHTML=RT_rBag();
+ else if(RT_state.screen==='courseMap'){ r.innerHTML=RT_rCourseMap(); RT_cmInit(); }
+ else if(RT_state.screen==='myCourses')r.innerHTML=RT_rMyCourses();
  else if(RT_state.screen==='user')r.innerHTML=RT_rUser();
  else r.innerHTML=RT_rHome();
 }
@@ -3805,6 +3807,8 @@ function RT_rCoursePick(){
     '<div style="width:54px;height:54px;border-radius:12px;background:#EAF6EE;display:flex;align-items:center;justify-content:center;font-size:22px;color:#1F8A4D;flex:none;">&#10133;</div>'+
     '<div><div class="rt-ct" style="margin:0;">Anderer Platz</div><div class="rt-cs" style="margin:0;">Platz suchen oder manuell anlegen</div></div>'+
     '</div>';
+   h+='<div class="rtc" style="cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="RT_cmOpen()"><div style="width:54px;height:54px;border-radius:12px;background:#EAF1F6;display:flex;align-items:center;justify-content:center;font-size:22px;flex:none;">🗺️</div><div><div class="rt-ct" style="margin:0;">Auf der Karte suchen</div><div class="rt-cs" style="margin:0;">Alle Golfplätze Deutschlands auf der Karte</div></div></div>';
+   h+='<div class="rtc" style="cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="RT_go(\'myCourses\')"><div style="width:54px;height:54px;border-radius:12px;background:#F3EEFB;display:flex;align-items:center;justify-content:center;font-size:22px;flex:none;">📍</div><div><div class="rt-ct" style="margin:0;">Meine Plätze</div><div class="rt-cs" style="margin:0;">Gespeichert, Bucket-Liste, Heimatplätze</div></div></div>';
    return;
   }
   var c=RT_COURSES[k];
@@ -6243,6 +6247,189 @@ function RT_rBag(){
  return h;
 }
 /* ===== Ende Golfbag ===== */
+
+/* ============================================================
+   Platzsuche auf der Karte (OSM-Golfplaetze DE ueber /api/courses)
+   + persoenliche Listen (gespeichert/bucket/heimat) & Bewertungen (Supabase)
+   ============================================================ */
+var RT_CM={courses:null,map:null,layer:null,labels:null,mk:{},userLL:null,sel:null,lists:{},myR:{},agg:{},loading:false};
+var RT_CM_DIFF=['','sehr leicht','leicht','mittel','schwer','sehr schwer'];
+function RT_cmOpen(){ RT_go('courseMap'); }
+function RT_rCourseMap(){
+ return '<div id="cm-wrap" style="position:fixed;inset:0;z-index:1000;background:#e6edef;">'
+  +'<div id="cm-map" style="position:absolute;inset:0;"></div>'
+  +'<button onclick="RT_go(\'coursePick\')" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;z-index:1002;width:40px;height:40px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25);font-size:20px;color:#143522;cursor:pointer;">&#8249;</button>'
+  +'<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translateX(-50%);z-index:1002;background:#fff;border-radius:100px;padding:8px 15px;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:13px;font-weight:700;color:#143522;">Golfplätze in Deutschland</div>'
+  +'<div id="cm-loading" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 64px);left:50%;transform:translateX(-50%);z-index:1001;background:#fff;border-radius:10px;padding:8px 14px;box-shadow:0 2px 10px rgba(0,0,0,.18);font-size:12.5px;color:#333;">Lädt Plätze …</div>'
+  +'<div id="cm-sheet" style="position:absolute;left:0;right:0;bottom:0;z-index:1003;pointer-events:none;"></div>'
+  +'</div>';
+}
+function RT_cmInit(){
+ if(typeof L==='undefined'){ return; }
+ var el=document.getElementById('cm-map'); if(!el) return;
+ var map=L.map('cm-map',{zoomControl:true,attributionControl:true}).setView([51.2,10.4],6);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+ RT_CM.map=map; RT_CM.layer=L.layerGroup().addTo(map); RT_CM.labels=L.layerGroup().addTo(map); RT_CM.mk={};
+ map.on('moveend zoomend',RT_cmLabels);
+ map.on('click',function(){ RT_cmCloseSheet(); });
+ // Standort des Nutzers
+ try{ if(navigator.geolocation){ navigator.geolocation.getCurrentPosition(function(p){
+   RT_CM.userLL={lat:p.coords.latitude,lng:p.coords.longitude};
+   try{ L.circleMarker([RT_CM.userLL.lat,RT_CM.userLL.lng],{radius:7,color:'#fff',weight:2,fillColor:'#0A84FF',fillOpacity:1}).addTo(RT_CM.layer); map.setView([RT_CM.userLL.lat,RT_CM.userLL.lng],10); }catch(e){}
+   if(RT_CM.sel) RT_cmSheet(RT_CM.sel);
+ },function(){},{enableHighAccuracy:false,timeout:6000,maximumAge:600000}); } }catch(e){}
+ RT_cmLoadLists();
+ RT_cmLoadCourses();
+}
+function RT_cmLoadCourses(){
+ var cached=null; try{ cached=rtGet('fp_cm_courses'); }catch(e){}
+ var now=+new Date();
+ if(cached&&cached.ts&&(now-cached.ts)<7*864e5&&cached.list&&cached.list.length){ RT_CM.courses=cached.list; RT_cmMarkers(); return; }
+ RT_CM.loading=true;
+ fetch('/api/courses').then(function(r){ return r.json(); }).then(function(j){
+  RT_CM.courses=(j&&j.courses)||[]; RT_CM.loading=false;
+  try{ rtSet('fp_cm_courses',{ts:now,list:RT_CM.courses}); }catch(e){}
+  RT_cmMarkers();
+ }).catch(function(){ RT_CM.loading=false; var l=document.getElementById('cm-loading'); if(l) l.textContent='Plätze konnten nicht geladen werden.'; });
+}
+function RT_cmLoadLists(){
+ if(!(sbReady()&&sb&&sbUser)) return;
+ sb.from('course_lists').select('course_ref,kind').then(function(res){ var rows=(res&&res.data)||[]; var m={};
+  rows.forEach(function(x){ if(!m[x.course_ref]) m[x.course_ref]={}; m[x.course_ref][x.kind]=1; }); RT_CM.lists=m;
+  if(RT_CM.courses) RT_cmMarkers(); if(RT_CM.sel) RT_cmSheet(RT_CM.sel);
+ });
+ sb.from('course_ratings').select('course_ref,stars,difficulty').then(function(res){ var rows=(res&&res.data)||[]; var m={};
+  rows.forEach(function(x){ m[x.course_ref]={stars:x.stars,difficulty:x.difficulty}; }); RT_CM.myR=m;
+  if(RT_CM.sel) RT_cmSheet(RT_CM.sel);
+ });
+}
+function RT_cmMarkers(){
+ var map=RT_CM.map; if(!map||!RT_CM.courses) return;
+ var l=document.getElementById('cm-loading'); if(l) l.style.display='none';
+ RT_CM.layer.clearLayers(); RT_CM.mk={};
+ // Standort-Marker erneut, falls vorhanden
+ if(RT_CM.userLL){ try{ L.circleMarker([RT_CM.userLL.lat,RT_CM.userLL.lng],{radius:7,color:'#fff',weight:2,fillColor:'#0A84FF',fillOpacity:1}).addTo(RT_CM.layer); }catch(e){} }
+ RT_CM.courses.forEach(function(c){
+  var st=RT_CM.lists[c.ref]||{}; var col=st.home?'#1F8A4D':(st.saved||st.bucket?'#e0913a':'#B03A3A');
+  var m=L.circleMarker([c.lat,c.lon],{radius:6,color:'#fff',weight:1.5,fillColor:col,fillOpacity:.95});
+  m.on('click',function(e){ if(e&&e.originalEvent) e.originalEvent.stopPropagation(); RT_cmSelect(c); });
+  m.addTo(RT_CM.layer); RT_CM.mk[c.ref]=m;
+ });
+ RT_cmLabels();
+}
+function RT_cmLabels(){
+ var map=RT_CM.map; if(!map||!RT_CM.courses||!RT_CM.labels) return;
+ RT_CM.labels.clearLayers();
+ if(map.getZoom()<9) return;
+ var b=map.getBounds(), n=0;
+ for(var i=0;i<RT_CM.courses.length&&n<80;i++){ var c=RT_CM.courses[i];
+  if(b.contains([c.lat,c.lon])){ n++;
+   L.marker([c.lat,c.lon],{interactive:false,icon:L.divIcon({className:'',iconSize:[0,0],
+    html:'<div style="position:absolute;left:8px;top:-8px;white-space:nowrap;font-size:11px;font-weight:600;color:#143522;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;">'+RT_cmEsc(c.name)+'</div>'})}).addTo(RT_CM.labels);
+  }
+ }
+}
+function RT_cmEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function RT_cmDistTxt(c){ if(!RT_CM.userLL) return null; try{ var m=RT_haversineM(RT_CM.userLL.lat,RT_CM.userLL.lng,c.lat,c.lon); return (m<1000)?(Math.round(m)+' m'):((m/1000).toFixed(m<10000?1:0).replace('.',',')+' km'); }catch(e){ return null; } }
+function RT_cmSelect(c){
+ RT_CM.sel=c;
+ try{ RT_CM.map.panTo([c.lat,c.lon]); }catch(e){}
+ RT_cmSheet(c);
+ if(sbReady()&&sb){ sb.rpc('course_ratings_agg',{refs:[c.ref]}).then(function(res){ var d=(res&&res.data&&res.data[0])||null; RT_CM.agg[c.ref]=d||{cnt:0}; if(RT_CM.sel&&RT_CM.sel.ref===c.ref) RT_cmSheet(c); }); }
+}
+function RT_cmCloseSheet(){ RT_CM.sel=null; var s=document.getElementById('cm-sheet'); if(s) s.innerHTML=''; }
+function RT_cmStars(ref,mine){
+ var out=''; for(var i=1;i<=5;i++){ out+='<span onclick="RT_cmRate(\''+ref+'\','+i+')" style="cursor:pointer;font-size:24px;line-height:1;color:'+(mine>=i?'#F6C35A':'#d6ddd6')+';">&#9733;</span>'; } return out;
+}
+function RT_cmSheet(c){
+ var host=document.getElementById('cm-sheet'); if(!host) return;
+ var st=RT_CM.lists[c.ref]||{}; var ag=RT_CM.agg[c.ref]||null; var mine=RT_CM.myR[c.ref]||{};
+ var dist=RT_cmDistTxt(c);
+ var holes=(c.holes!=null)?(c.holes+' Löcher'):'Löcher —';
+ var ratingTxt=(ag&&ag.cnt>0)?('★ '+String(ag.avg_stars).replace('.',',')+' ('+ag.cnt+')'):'noch keine Bewertung';
+ var diffTxt=(ag&&ag.avg_diff!=null)?RT_CM_DIFF[Math.round(ag.avg_diff)]:'—';
+ var meta=[holes]; if(dist) meta.push(dist); meta.push('★ '+((ag&&ag.cnt>0)?String(ag.avg_stars).replace('.',','):'–')); meta.push('Schwierigkeit: '+diffTxt);
+ var loggedIn=!!(sbReady()&&sb&&sbUser);
+ var actBtn=function(kind,label,ic){ var on=!!st[kind]; return '<button onclick="RT_cmToggle(\''+c.ref+'\',\''+kind+'\')" style="flex:1;border:none;border-radius:12px;padding:10px 6px;cursor:pointer;font-family:Inter,sans-serif;font-size:12px;font-weight:700;background:'+(on?'#1F8A4D':'#eef3ee')+';color:'+(on?'#fff':'#2d4a34')+';">'+ic+'<br>'+label+'</button>'; };
+ var h='<div style="pointer-events:auto;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.18);padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);max-width:520px;margin:0 auto;">'
+  +'<div style="display:flex;align-items:flex-start;gap:8px;"><div style="flex:1;"><div style="font-size:17px;font-weight:800;color:#143522;line-height:1.25;">'+RT_cmEsc(c.name)+'</div>'
+  +'<div style="font-size:12.5px;color:#5d7060;margin-top:4px;">'+meta.join(' · ')+'</div></div>'
+  +'<button onclick="RT_cmCloseSheet()" style="border:none;background:#eef3ee;border-radius:50%;width:30px;height:30px;font-size:15px;cursor:pointer;color:#2d4a34;flex:none;">&#10005;</button></div>';
+ if(loggedIn){
+  h+='<div style="display:flex;gap:8px;margin-top:12px;">'+actBtn('saved','Speichern','🔖')+actBtn('bucket','Bucket-Liste','📋')+actBtn('home','Heimatplatz','🏠')+'</div>';
+  h+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid #eef1ee;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">'
+    +'<div><div style="font-size:12px;color:#5d7060;margin-bottom:2px;">Deine Bewertung</div><div>'+RT_cmStars(c.ref,mine.stars||0)+'</div></div>'
+    +'<div style="text-align:right;"><div style="font-size:12px;color:#5d7060;margin-bottom:3px;">Schwierigkeit</div>'
+    +'<select onchange="RT_cmDiff(\''+c.ref+'\',this.value)" style="border:1.5px solid #DCE7D4;border-radius:10px;padding:7px 9px;font-size:13px;font-family:Inter,sans-serif;">'
+    +'<option value="">—</option>'+[1,2,3,4,5].map(function(i){ return '<option value="'+i+'"'+((mine.difficulty==i)?' selected':'')+'>'+RT_CM_DIFF[i]+'</option>'; }).join('')+'</select></div></div>';
+ } else {
+  h+='<div style="margin-top:12px;padding:11px 13px;background:#f3f7f3;border-radius:12px;font-size:12.5px;color:#3a4a3e;">Zum Speichern, für Listen/Heimatplatz und zum Bewerten bitte im Konto anmelden.</div>';
+ }
+ h+='</div>';
+ host.innerHTML=h;
+}
+function RT_cmToggle(ref,kind){
+ if(!(sbReady()&&sb&&sbUser)){ return; }
+ var c=RT_CM.sel; if(!c||c.ref!==ref){ for(var i=0;i<(RT_CM.courses||[]).length;i++){ if(RT_CM.courses[i].ref===ref){ c=RT_CM.courses[i]; break; } } }
+ var st=RT_CM.lists[ref]||(RT_CM.lists[ref]={});
+ if(st[kind]){
+  delete st[kind];
+  sb.from('course_lists').delete().eq('user_id',sbUser.id).eq('course_ref',ref).eq('kind',kind).then(function(){});
+ } else {
+  st[kind]=1;
+  sb.from('course_lists').upsert({user_id:sbUser.id,course_ref:ref,kind:kind,name:c?c.name:null,lat:c?c.lat:null,lon:c?c.lon:null,holes:c?c.holes:null}).then(function(){});
+ }
+ if(RT_CM.sel&&RT_CM.sel.ref===ref) RT_cmSheet(RT_CM.sel);
+ var mk=RT_CM.mk[ref]; if(mk){ var s2=RT_CM.lists[ref]||{}; mk.setStyle({fillColor:(s2.home?'#1F8A4D':(s2.saved||s2.bucket?'#e0913a':'#B03A3A'))}); }
+}
+function RT_cmRate(ref,stars){
+ if(!(sbReady()&&sb&&sbUser)){ return; }
+ var cur=RT_CM.myR[ref]||{}; cur.stars=stars; RT_CM.myR[ref]=cur;
+ var c=RT_CM.sel;
+ sb.from('course_ratings').upsert({user_id:sbUser.id,course_ref:ref,stars:stars,difficulty:cur.difficulty||null,name:c?c.name:null,updated_at:new Date().toISOString()}).then(function(){
+  if(sb) sb.rpc('course_ratings_agg',{refs:[ref]}).then(function(res){ var d=(res&&res.data&&res.data[0])||null; RT_CM.agg[ref]=d||{cnt:0}; if(RT_CM.sel&&RT_CM.sel.ref===ref) RT_cmSheet(RT_CM.sel); });
+ });
+ if(RT_CM.sel&&RT_CM.sel.ref===ref) RT_cmSheet(RT_CM.sel);
+}
+function RT_cmDiff(ref,val){
+ if(!(sbReady()&&sb&&sbUser)){ return; }
+ var n=parseInt(val,10); var d=(isNaN(n)?null:n);
+ var cur=RT_CM.myR[ref]||{}; cur.difficulty=d; RT_CM.myR[ref]=cur;
+ var c=RT_CM.sel;
+ sb.from('course_ratings').upsert({user_id:sbUser.id,course_ref:ref,stars:cur.stars||null,difficulty:d,name:c?c.name:null,updated_at:new Date().toISOString()}).then(function(){
+  if(sb) sb.rpc('course_ratings_agg',{refs:[ref]}).then(function(res){ var dd=(res&&res.data&&res.data[0])||null; RT_CM.agg[ref]=dd||{cnt:0}; if(RT_CM.sel&&RT_CM.sel.ref===ref) RT_cmSheet(RT_CM.sel); });
+ });
+}
+/* Meine Plaetze (Listen) */
+function RT_rMyCourses(){
+ var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
+  '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'coursePick\')">&#8249;</button>'+
+  '<div class="rt-h1" style="font-size:18px;">Meine Plätze</div></div>';
+ if(!(sbReady()&&sb&&sbUser)){ return h+'<div class="rt-note">Zum Speichern von Plätzen bitte im Konto anmelden.</div>'; }
+ h+='<div id="mc-body"><div class="rt-cs">Lädt …</div></div>';
+ sb.from('course_lists').select('course_ref,kind,name,lat,lon,holes,created_at').order('created_at',{ascending:false}).then(function(res){
+  var rows=(res&&res.data)||[]; var body=document.getElementById('mc-body'); if(!body) return;
+  if(!rows.length){ body.innerHTML='<div class="rtc"><div class="rt-cs" style="margin:0;">Noch keine Plätze gespeichert. Öffne „Auf der Karte suchen" und tippe einen Platz an.</div></div>'; return; }
+  var groups={home:[],saved:[],bucket:[]}; rows.forEach(function(r){ (groups[r.kind]||(groups[r.kind]=[])).push(r); });
+  var titles={home:'🏠 Heimatplätze',saved:'🔖 Gespeichert',bucket:'📋 Bucket-Liste'};
+  var out='';
+  ['home','saved','bucket'].forEach(function(k){ var arr=groups[k]||[]; if(!arr.length) return;
+   out+='<div class="rt-ct" style="margin:14px 2px 8px;">'+titles[k]+' ('+arr.length+')</div>';
+   arr.forEach(function(r){ var dist=RT_CM.userLL?RT_cmDistTxt({lat:r.lat,lon:r.lon}):null;
+    out+='<div class="rtc" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;"><div style="flex:1;"><div style="font-weight:700;color:#143522;">'+RT_cmEsc(r.name||r.course_ref)+'</div>'
+     +'<div class="rt-cs" style="margin:2px 0 0;">'+((r.holes!=null)?(r.holes+' Löcher'):'Löcher —')+(dist?(' · '+dist):'')+'</div></div>'
+     +'<button class="rt-btn3" style="color:#B03A3A;padding:6px 8px;" onclick="RT_mcRemove(\''+r.course_ref+'\',\''+r.kind+'\')">Entfernen</button></div>';
+   });
+  });
+  body.innerHTML=out;
+ });
+ return h;
+}
+function RT_mcRemove(ref,kind){
+ if(!(sbReady()&&sb&&sbUser)) return;
+ sb.from('course_lists').delete().eq('user_id',sbUser.id).eq('course_ref',ref).eq('kind',kind).then(function(){ if(RT_CM.lists[ref]) delete RT_CM.lists[ref][kind]; RT_render(); });
+}
+/* ===== Ende Platzsuche ===== */
 
 function RT_renderTabBar(){
   var nav=document.getElementById('nav-tabs'); if(!nav) return;

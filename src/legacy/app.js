@@ -1468,6 +1468,7 @@ function RT_rUser(){
   '<button class="rt-btn2" onclick="RT_nameSave()">Speichern</button>'+
   (RT_state.nameMsg?'<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(RT_state.nameMsg)+'</div>':'')+
   '</div>';
+  h+='<div class="rtc"><div class="rt-ct">Golfbag</div><div class="rt-cs" style="margin-bottom:8px;">'+(RT_bagCount()?(RT_bagCount()+' Schläger im Bag'):'Noch keine Schläger ausgewählt')+'</div><button class="rt-btn2" onclick="RT_go(\'bag\')">Schlägerauswahl &#8250;</button></div>';
  h+='<div class="rtc"><div class="rt-ct">Eigenes Handicap</div>'+
   '<div class="rt-cs">Wird bei einer neuen Runde als Standard-HI vorbelegt, statt jedes Mal 54 eintragen zu m\u00fcssen.</div>'+
   '<input class="rt-inp" id="usr-hcp" type="number" step="0.1" min="-10" max="54" value="'+rtEsc(RT_ownHandicapStored())+'" placeholder="z.\u2009B. 24.5" style="margin-bottom:8px;">'+
@@ -3698,6 +3699,7 @@ function RT_render(){
  else if(RT_state.screen==='coursePick')r.innerHTML=RT_rCoursePick();
  else if(RT_state.screen==='play'){ r.innerHTML=RT_rPlay(); RT_initHoleMaps(); RT_startGeoWatch(); }
  else if(RT_state.screen==='view')r.innerHTML=RT_rView();
+ else if(RT_state.screen==='bag')r.innerHTML=RT_rBag();
  else if(RT_state.screen==='user')r.innerHTML=RT_rUser();
  else r.innerHTML=RT_rHome();
 }
@@ -6086,10 +6088,66 @@ function RT_LRN_playVideo(ci,vi){
   var d=RT_LRN_data.videoakademie||{}; var v=((d.kategorien||[])[ci]||{}).videos[vi]; if(!v) return;
   RT_LRN_gain(5,'vid:'+v.youtubeId);
   var host=document.getElementById('lrn-vid-'+ci+'-'+vi); if(!host) return;
-  host.innerHTML='<div style="position:relative;width:100%;aspect-ratio:16/9;background:#000;"><iframe src="https://www.youtube-nocookie.com/embed/'+v.youtubeId+'?autoplay=1&rel=0" title="'+RT_LRN_esc(v.titel)+'" allow="accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe></div>'
+  host.innerHTML='<div style="position:relative;width:100%;aspect-ratio:16/9;background:#000;"><iframe src="https://www.youtube-nocookie.com/embed/'+v.youtubeId+'?autoplay=1&playsinline=1&rel=0" title="'+RT_LRN_esc(v.titel)+'" allow="accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe></div>'
     +'<div style="padding:11px 13px;"><div style="font-size:14px;font-weight:700;color:#1d3324;line-height:1.35;">'+RT_LRN_esc(v.titel)+'</div><div style="font-size:12px;color:#5d7060;margin-top:3px;">'+RT_LRN_esc(v.kanal)+'</div></div>';
 }
 /* ===== Ende Lernbereich ===== */
+
+/* ============================================================
+   Golfbag - Schlaegerauswahl (Konto-Bereich)
+   Speicher: localStorage 'fp_bag' = { <clubId>: {d:<meter|null>} }
+   ============================================================ */
+var RT_BAG_CLUBS=[
+ {id:'dr',l:'Driver'},{id:'3w',l:'Holz 3'},{id:'5w',l:'Holz 5'},{id:'7w',l:'Holz 7'},
+ {id:'2h',l:'Hybrid 2'},{id:'3h',l:'Hybrid 3'},{id:'4h',l:'Hybrid 4'},{id:'5h',l:'Hybrid 5'},
+ {id:'3i',l:'Eisen 3'},{id:'4i',l:'Eisen 4'},{id:'5i',l:'Eisen 5'},{id:'6i',l:'Eisen 6'},
+ {id:'7i',l:'Eisen 7'},{id:'8i',l:'Eisen 8'},{id:'9i',l:'Eisen 9'},
+ {id:'pw',l:'Pitching Wedge (PW)'},{id:'gw',l:'Gap Wedge (GW)'},{id:'sw',l:'Sand Wedge (SW)'},{id:'lw',l:'Lob Wedge (LW)'},
+ {id:'putter',l:'Putter'}
+];
+function RT_bagData(){ return rtGet('fp_bag')||{}; }
+function RT_bagSave(b){ rtSet('fp_bag',b); }
+function RT_bagCount(){ var b=RT_bagData(),n=0; for(var k in b){ if(b.hasOwnProperty(k)) n++; } return n; }
+function RT_bagAdd(id){ var b=RT_bagData(); if(!b[id]) b[id]={d:null}; RT_bagSave(b); RT_render(); }
+function RT_bagRemove(id){ var b=RT_bagData(); delete b[id]; RT_bagSave(b); RT_render(); }
+function RT_bagAddAll(){ var b=RT_bagData(); RT_BAG_CLUBS.forEach(function(c){ if(!b[c.id]) b[c.id]={d:null}; }); RT_bagSave(b); RT_render(); }
+function RT_bagDist(id,val){ var b=RT_bagData(); if(!b[id]) b[id]={d:null}; var n=parseInt(val,10); b[id].d=(isNaN(n)?null:n); RT_bagSave(b); }
+function RT_rBag(){
+ var b=RT_bagData();
+ var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
+  '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'user\')">&#8249;</button>'+
+  '<div class="rt-h1" style="font-size:18px;">Golfbag</div></div>';
+ var inBag=RT_BAG_CLUBS.filter(function(c){ return b[c.id]; });
+ h+='<div class="rtc"><div class="rt-ct">Dein Bag ('+inBag.length+')</div>';
+ if(!inBag.length){ h+='<div class="rt-cs" style="margin-bottom:0;">Noch keine Schläger im Bag. Füge unten deine Schläger hinzu.</div>'; }
+ else{
+  h+='<div class="rt-cs">Trage optional deine durchschnittliche Schlaglänge ein.</div>';
+  inBag.forEach(function(c){ var d=(b[c.id]&&b[c.id].d!=null)?b[c.id].d:'';
+   h+='<div class="rt-row" style="align-items:center;gap:8px;margin-top:8px;">'+
+      '<div style="flex:1;font-weight:600;color:#143522;">'+rtEsc(c.l)+'</div>'+
+      '<input class="rt-inp" style="width:74px;margin:0;text-align:right;" inputmode="numeric" placeholder="–" value="'+d+'" onchange="RT_bagDist(\''+c.id+'\',this.value)">'+
+      '<span style="color:#5d7060;font-size:13px;">m</span>'+
+      '<button class="rt-btn3" style="color:#B03A3A;padding:4px 6px;font-size:15px;" onclick="RT_bagRemove(\''+c.id+'\')">&#10005;</button>'+
+      '</div>';
+  });
+ }
+ h+='</div>';
+ var avail=RT_BAG_CLUBS.filter(function(c){ return !b[c.id]; });
+ if(avail.length){
+  h+='<div class="rtc"><div style="display:flex;justify-content:space-between;align-items:center;">'+
+     '<div class="rt-ct" style="margin:0;">Schläger hinzufügen</div>'+
+     '<button class="rt-btn3" style="color:#1F8A4D;font-weight:700;padding:4px 6px;" onclick="RT_bagAddAll()">Alle</button></div>';
+  avail.forEach(function(c){
+   h+='<div class="rt-row" style="align-items:center;gap:8px;margin-top:8px;">'+
+      '<div style="flex:1;color:#143522;">'+rtEsc(c.l)+'</div>'+
+      '<button class="rt-btn2" style="width:auto;padding:6px 16px;" onclick="RT_bagAdd(\''+c.id+'\')">Hinzufügen</button></div>';
+  });
+  h+='</div>';
+ }
+ h+='<div class="rt-cs" style="margin-top:10px;">Deine Schläger und Distanzen bilden die Grundlage für spätere Schlägerempfehlungen auf dem Platz.</div>';
+ return h;
+}
+/* ===== Ende Golfbag ===== */
 
 function RT_renderTabBar(){
   var nav=document.getElementById('nav-tabs'); if(!nav) return;

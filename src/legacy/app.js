@@ -3595,7 +3595,7 @@ function RT_radarBuildOverlay(){
  var ex=document.getElementById('rt-wxradar-ui'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
  var o=document.createElement('div'); o.id='rt-wxradar-ui';
  o.style.cssText='position:absolute;inset:0;z-index:2400;pointer-events:none;';
- o.innerHTML=RT_hvPanel('Wetterradar','RT_toggleRadarHole()','<div id="rt-wx-body"></div>')
+ o.innerHTML=RT_hvPanel('Wetterradar','','<div id="rt-wx-body"></div>')
   +'<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);pointer-events:none;display:flex;align-items:center;gap:7px;background:rgba(8,20,13,.72);border-radius:100px;padding:5px 11px;">'
     +'<span style="font-size:10.5px;color:#cfe0d4;">leicht</span>'
     +'<span style="width:46px;height:7px;border-radius:4px;background:linear-gradient(90deg,#8fd1ff,#3a86ff,#33d17a,#f6d32d,#e01b24);display:inline-block;"></span>'
@@ -3615,7 +3615,7 @@ function RT_toggleRadarHole(){
  RT_state.radarOn[key]=!RT_state.radarOn[key];
  var on=!!RT_state.radarOn[key];
  var b=document.getElementById('rt-wxr-toggle'); if(b) b.style.opacity=on?'1':'0.5';
- if(on){ RT_radarBuildOverlay(); RT_wxFetch(false); RT_radarAttach(RT_holeFullMapInst); }
+ if(on){ RT_ovCloseOthers('radar'); RT_radarBuildOverlay(); RT_wxFetch(false); RT_radarAttach(RT_holeFullMapInst); }
  else { RT_radarRemoveOverlay(); RT_radarDetach(); }
 }
 function RT_radarPlayIcon(playing){
@@ -3709,11 +3709,18 @@ function RT_hvToast(msg){
    darunter eine regelbasierte Empfehlung. Verteilung: seitliche Abweichung Tee->Gruen.
    ============================================================ */
 function RT_hvPanel(title,closeFn,extra){
+ var x=closeFn?('<button onclick="'+closeFn+'" aria-label="Schließen" style="border:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:14px;cursor:pointer;">✕</button>'):'';
  return '<div style="position:absolute;top:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 18px;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px 9px;box-shadow:0 5px 16px rgba(0,0,0,.55);z-index:6;">'
-  +'<div style="display:flex;align-items:center;justify-content:space-between;'+(extra?'margin-bottom:8px;':'')+'">'
-    +'<div style="font-size:15px;font-weight:800;color:#fff;">'+title+'</div>'
-    +'<button onclick="'+closeFn+'" aria-label="Schließen" style="border:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:14px;cursor:pointer;">✕</button>'
+  +'<div style="display:flex;align-items:center;justify-content:space-between;min-height:30px;'+(extra?'margin-bottom:8px;':'')+'">'
+    +'<div style="font-size:15px;font-weight:800;color:#fff;">'+title+'</div>'+x
   +'</div>'+(extra||'')+'</div>';
+}
+function RT_tileOp(id,on){ var b=document.getElementById(id); if(b) b.style.opacity=on?'1':'0.5'; }
+function RT_ovCloseOthers(keep){
+ if(keep!=='sp'&&document.getElementById('rt-sp')) RT_closeShotPlan();
+ if(keep!=='fr'&&document.getElementById('rt-fr')) RT_closeFlagRadar();
+ if(keep!=='dki'&&document.getElementById('rt-dki')) RT_closeDistKI();
+ if(keep!=='radar'){ var rd=RT_round; if(rd&&RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,rd.cur)]) RT_toggleRadarHole(); }
 }
 var RT_SP={layer:null};
 function RT_spTee(rd,ref){
@@ -3771,12 +3778,13 @@ function RT_spAdvice(d){
 }
 function RT_openShotPlan(){
  var host=document.getElementById('hole-full'); if(!host) return;
- if(document.getElementById('rt-sp')) return;
+ if(document.getElementById('rt-sp')){ RT_closeShotPlan(); return; }
+ RT_ovCloseOthers('sp'); RT_tileOp('rt-tile-sp',true);
  var d=RT_spData();
  var o=document.createElement('div'); o.id='rt-sp';
  o.style.cssText='position:absolute;inset:0;z-index:2500;pointer-events:none;';
  if(!d||d.noRef){
-  o.innerHTML=RT_hvPanel('Shot-Analyse','RT_closeShotPlan()')+'<div style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#cfe0d4;font-size:13px;line-height:1.5;">Für diese Bahn fehlen die Referenzpunkte (Abschlag/Grün), um die Schläge auszuwerten.</div>';
+  o.innerHTML=RT_hvPanel('Shot-Analyse','')+'<div style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);color:#cfe0d4;font-size:13px;line-height:1.5;">Für diese Bahn fehlen die Referenzpunkte (Abschlag/Grün), um die Schläge auszuwerten.</div>';
   host.appendChild(o); return;
  }
  var Lp=RT_spPct(d.L,d.n),Mp=RT_spPct(d.M,d.n),Rp=RT_spPct(d.R,d.n);
@@ -3794,7 +3802,7 @@ function RT_openShotPlan(){
    +'</div>'
    +'<div style="font-size:10.5px;color:#6f857a;text-align:center;margin-top:9px;">Basis: '+d.n+' erfasste'+(d.n===1?'r Abschlag':' Abschläge')+' auf dieser Bahn'+(d.avgLen?' · Ø '+RT_fmtDist(d.avgLen):'')+'</div>'
  +'</div>';
- o.innerHTML=RT_hvPanel('Shot-Analyse · Bahn '+d.num,'RT_closeShotPlan()',extra)+card;
+ o.innerHTML=RT_hvPanel('Shot-Analyse · Bahn '+d.num,'',extra)+card;
  host.appendChild(o);
  RT_spPlot(d);
 }
@@ -3811,7 +3819,7 @@ function RT_spPlot(d){
 }
 function RT_closeShotPlan(){
  if(RT_SP.layer&&RT_holeFullMapInst){ try{RT_holeFullMapInst.removeLayer(RT_SP.layer);}catch(e){} }
- RT_SP.layer=null;
+ RT_SP.layer=null; RT_tileOp('rt-tile-sp',false);
  var o=document.getElementById('rt-sp'); if(o&&o.parentNode) o.parentNode.removeChild(o);
 }
 /* ===== Ende Shot-Analyse ===== */
@@ -3845,7 +3853,8 @@ function RT_frRoseSvg(brg){
 }
 function RT_openFlagRadar(){
  var host=document.getElementById('hole-full'); if(!host) return;
- if(document.getElementById('rt-fr')) return;
+ if(document.getElementById('rt-fr')){ RT_closeFlagRadar(); return; }
+ RT_ovCloseOthers('fr'); RT_tileOp('rt-tile-fr',true);
  var rd=RT_round;
  var origin=(RT_curPos&&RT_curPos.lat!=null)?{lat:RT_curPos.lat,lng:RT_curPos.lng,src:'gps'}:null;
  if(!origin&&rd){ var lb=RT_lastBallPos(rd,rd.cur); if(lb) origin={lat:lb.lat,lng:lb.lng,src:'ball'}; }
@@ -3864,7 +3873,7 @@ function RT_openFlagRadar(){
  }
  var rec=RT_dkiRecommend(Math.round(RT_FR.dist));
  var srcNote=origin?(origin.src==='gps'?'':(origin.src==='ball'?'Standort: letzte Balllage (kein GPS)':'Standort: Abschlag (kein GPS)')):'';
- var body='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">'
+ var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 64px);left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);border-radius:18px;background:rgba(6,12,9,.74);pointer-events:auto;"></div>'+'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">'
    +'<div style="position:relative;width:min(80vw,320px);aspect-ratio:1/1;">'
      +'<div style="position:absolute;left:50%;top:-4px;transform:translateX(-50%);z-index:3;color:#fff;font-size:20px;text-shadow:0 1px 3px #000;">▼</div>'
      +'<div id="rt-fr-rose" style="position:absolute;inset:0;transition:transform .12s linear;">'+RT_frRoseSvg(RT_FR.brg)+'</div>'
@@ -3885,7 +3894,7 @@ function RT_openFlagRadar(){
  host.appendChild(o);
  if(!(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function')) RT_frStart();
 }
-function RT_closeFlagRadar(){ RT_frStop(); var o=document.getElementById('rt-fr'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
+function RT_closeFlagRadar(){ RT_frStop(); RT_tileOp('rt-tile-fr',false); var o=document.getElementById('rt-fr'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
 function RT_frStop(){
  if(RT_FR.handler){ window.removeEventListener('deviceorientationabsolute',RT_FR.handler,true); window.removeEventListener('deviceorientation',RT_FR.handler,true); RT_FR.handler=null; }
  RT_FR.listening=false;
@@ -3960,7 +3969,8 @@ function RT_dkiRecommend(pl){
 }
 function RT_openDistKI(){
  var host=document.getElementById('hole-full'); if(!host) return;
- if(document.getElementById('rt-dki')) return;
+ if(document.getElementById('rt-dki')){ RT_closeDistKI(); return; }
+ RT_ovCloseOthers('dki'); RT_tileOp('rt-tile-dki',true);
  var rd=RT_round;
  var map=RT_holeFullMapInst;
  var A=rd?RT_grabberCenter(rd,rd.cur):null;
@@ -3971,7 +3981,7 @@ function RT_openDistKI(){
  RT_DKI.pin=pin; RT_DKI.map=map; RT_DKI.mA=null; RT_DKI.mB=null; RT_DKI.err=false; RT_DKI.seq++;
  var o=document.createElement('div'); o.id='rt-dki';
  o.style.cssText='position:absolute;inset:0;z-index:2500;pointer-events:none;';
- o.innerHTML=RT_hvPanel('Entfernung & KI','RT_closeDistKI()','<div style="font-size:11.5px;color:#9fb3a4;">Standort &amp; Ziel per Touch verschieben – nur zur Info.</div>')
+ o.innerHTML=RT_hvPanel('Entfernung & KI','','<div style="font-size:11.5px;color:#9fb3a4;">Standort &amp; Ziel per Touch verschieben – nur zur Info.</div>')
    +'<div id="rt-dki-card" style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:12px 15px calc(env(safe-area-inset-bottom,0px) + 14px);box-shadow:0 -3px 12px rgba(0,0,0,.4);"></div>';
  host.appendChild(o);
  if(!map||typeof L==='undefined'||!A||!B){ RT_dkiRenderCard(null,null,false,'Karte/Position nicht verfügbar. Öffne die Funktion auf der Bahn (Satellitenkarte).'); return; }
@@ -4051,7 +4061,7 @@ function RT_dkiRenderCard(d,dh,loading,msg){
 function RT_closeDistKI(){
  RT_DKI.seq++;
  if(RT_DKI.layer&&RT_DKI.map){ try{RT_DKI.map.removeLayer(RT_DKI.layer);}catch(e){} }
- RT_DKI.layer=null; RT_DKI.mA=null; RT_DKI.mB=null;
+ RT_DKI.layer=null; RT_DKI.mA=null; RT_DKI.mB=null; RT_tileOp('rt-tile-dki',false);
  var o=document.getElementById('rt-dki'); if(o&&o.parentNode) o.parentNode.removeChild(o);
 }
 /* ===== Ende Entfernung & KI ===== */
@@ -4070,9 +4080,9 @@ function RT_grabberOverlayHtml(){
   '<div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;">'+
    RT_hvBtn('wind','Wind','RT_toggleWind()',windOn,'rt-wind-toggle')+
    RT_hvBtn('wetterradar','Wetterradar','RT_toggleRadarHole()',radarOn,'rt-wxr-toggle')+
-   RT_hvBtn('shotanalyse','Shot-Analyse','RT_openShotPlan()',false)+
-   RT_hvBtn('fahnenradar','Fahnenradar','RT_openFlagRadar()',false)+
-   RT_hvBtn('entfernungki','Entfernung & KI','RT_openDistKI()',false)+
+   RT_hvBtn('shotanalyse','Shot-Analyse','RT_openShotPlan()',!!document.getElementById('rt-sp'),'rt-tile-sp')+
+   RT_hvBtn('fahnenradar','Fahnenradar','RT_openFlagRadar()',!!document.getElementById('rt-fr'),'rt-tile-fr')+
+   RT_hvBtn('entfernungki','Entfernung & KI','RT_openDistKI()',!!document.getElementById('rt-dki'),'rt-tile-dki')+
    RT_hvBtn('entfernung','Entfernung','RT_toggleGrabber()',on,'rt-grab-toggle')+
   '</div>'+
   '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
@@ -4087,7 +4097,7 @@ function RT_toggleWind(){
  RT_state.windOn[key]=!RT_state.windOn[key];
  var on=!!RT_state.windOn[key];
  var b=document.getElementById('rt-wind-toggle');
- if(b) b.style.opacity=on?'1':'0.45';
+ if(b) b.style.opacity=on?'1':'0.5';
  var ov=document.getElementById('rt-wind-ui');
  if(ov){ ov.innerHTML=RT_windOverlayContent(rd,rd.cur); ov.style.display=on?'flex':'none'; }
 }
@@ -4248,7 +4258,7 @@ function RT_toggleGrabber(){
  RT_state.grabberOn[key]=!RT_state.grabberOn[key];
  var on=!!RT_state.grabberOn[key];
  var b=document.getElementById('rt-grab-toggle');
- if(b) b.style.opacity=on?'1':'0.45';
+ if(b) b.style.opacity=on?'1':'0.5';
  /* Bewusst KEIN RT_render(): das Vollbild wuerde neu aufgebaut und die Karte neu
     initialisiert - Ausschnitt und Zoom waeren weg. */
  if(on) RT_setupFullGrabber(); else RT_clearFullGrabber();

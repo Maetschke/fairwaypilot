@@ -3603,6 +3603,8 @@ function RT_userIcon(){
     auch, wenn es auf den Tabs "Handicap" oder "Schlag-Detail" angezeigt wird. */
  return '<button onclick="showTab(\'runde\');RT_go(\'user\')" title="Benutzermen\u00fc" style="flex:none;width:38px;height:38px;border-radius:50%;border:none;background:'+bg+';overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;">'+inner+'</button>';
 }
+var RT_homeLimit=20;
+function RT_homeShowMore(){ RT_homeLimit+=20; RT_render(); }
 function RT_rHome(){
  var saved=rtGet(RT_KEY)||[];
  saved=saved.filter(function(r){return !r.hidden;});
@@ -3635,7 +3637,7 @@ function RT_rHome(){
      rechts, unten Datum/Platz/Loecher und rechts die eigene Schlagzahl mit hochgestellter
      Stableford-Punktzahl. Gezeigt wird die auf Netto-Doppel-Bogey gedeckelte Schlagzahl (t.br), also der handicaprelevante Wert - die Bruttosumme (t.brRaw) steht weiterhin in der Detailansicht unter Gesamtanzahl Schlaege. Gezeigt werden bewusst nur die eigenen Werte (RT_myPlayerIndex),
      nicht die aller Mitspieler. */
-  sortedSaved.forEach(function(rd){
+  sortedSaved.slice(0,RT_homeLimit).forEach(function(rd){
    var mi=(typeof RT_myPlayerIndex==='function')?RT_myPlayerIndex(rd):0;
    var me=rd.players[mi]||rd.players[0];
    var t=RT_totals(me,rd);
@@ -3657,7 +3659,8 @@ function RT_rHome(){
   });
  }
  h+='</div>';
-  return h;
+  if(sortedSaved.length>RT_homeLimit){h+='<div style="text-align:center;margin:8px 0 2px;"><button onclick="RT_homeShowMore()" style="padding:10px 22px;border-radius:var(--fp-radius-md,13px);border:1px solid var(--fp-border,#DFE8DA);background:var(--fp-surface-glass,rgba(255,255,255,.92));color:var(--fp-primary,#1F8A4D);font-weight:600;font-family:var(--fp-font,Inter,sans-serif);font-size:14px;cursor:pointer;">Weitere laden ('+(sortedSaved.length-RT_homeLimit)+')</button></div>';}
+ return h;
 }
 
 function RT_newRound(){RT_su=RT_defSu();RT_su.course=null;RT_editingExisting=false;RT_editSourceRound=null;RT_go('coursePick');}
@@ -5589,3 +5592,6 @@ window.addEventListener('resize',adjustFooterPadding);
 window.addEventListener('load',adjustFooterPadding);
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(adjustFooterPadding);
 setTimeout(adjustFooterPadding,300);
+
+/* Service Worker (M0.5): App-Shell offline, HTML network-first. */
+if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }

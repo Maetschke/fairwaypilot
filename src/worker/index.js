@@ -1,5 +1,4 @@
-import { HTML, LANDING_HTML, IMPRESSUM_HTML, DATENSCHUTZ_HTML, AGB_HTML } from './pages.generated.js';
-import { ICON_180, ICON_192, ICON_512, ICON_32, ICON_MARK, iconResponse } from './icons.js';
+import { HTML, LANDING_HTML, IMPRESSUM_HTML, DATENSCHUTZ_HTML, AGB_HTML, SW_JS } from './pages.generated.js';
 import { handleWind } from './wind.js';
 import { handleResearch } from './research.js';
 import { handleAccountDelete } from './account.js';
@@ -35,6 +34,9 @@ export default {
     if (url.pathname === "/api/wind") {
       return handleWind(url);
     }
+    if (url.pathname === "/sw.js") {
+      return new Response(SW_JS, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-cache" } });
+    }
     if (url.pathname === "/health") {
       return new Response("ok v9-sisync-filter", { headers: { "content-type": "text/plain" } });
     }
@@ -43,21 +45,6 @@ export default {
     }
     if (url.pathname === "/api/account/delete" && request.method === "POST") {
       return handleAccountDelete(request, env);
-    }
-    if (url.pathname === "/apple-touch-icon.png" || url.pathname === "/apple-touch-icon-precomposed.png" || url.pathname === "/icon-180.png") {
-      return iconResponse(ICON_180);
-    }
-    if (url.pathname === "/icon-192.png") {
-      return iconResponse(ICON_192);
-    }
-    if (url.pathname === "/icon-512.png") {
-      return iconResponse(ICON_512);
-    }
-    if (url.pathname === "/favicon.png" || url.pathname === "/favicon.ico" || url.pathname === "/icon-32.png") {
-      return iconResponse(ICON_32);
-    }
-    if (url.pathname === "/logo-mark.png") {
-      return iconResponse(ICON_MARK);
     }
     if (url.pathname === "/manifest.json") {
       return new Response(MANIFEST_JSON, { headers: { "content-type": "application/manifest+json; charset=utf-8" } });

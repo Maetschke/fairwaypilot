@@ -1,0 +1,35 @@
+/* FairwayPilot Design-Tokens (M0.4)
+ * Zentrale, benannte Design-System-Werte als CSS Custom Properties.
+ * Ergaenzt das bestehende :root im App-<style> (--g,--b,--tx,--glb,--blur ...),
+ * das aus Kompatibilitaet unangetastet bleibt. Vollstaendige Konsolidierung: M8.
+ * Wird beim Build vor den App-<style> in den <head> injiziert. */
+:root{
+  /* Marke / Primaerfarbe */
+  --fp-primary:#1F8A4D;
+  --fp-primary-tint:rgba(31,138,77,.12);
+  /* Flaechen & Rahmen */
+  --fp-bg:#F5F8F0;
+  --fp-surface-glass:rgba(255,255,255,.92);
+  --fp-border:#DFE8DA;
+  /* Text */
+  --fp-text:#16301F;
+  --fp-text-muted:rgba(84,104,88,.9);
+  --fp-text-inactive:rgba(93,112,96,.95);
+  /* Radien */
+  --fp-radius-sm:8px;
+  --fp-radius-md:13px;
+  --fp-radius-lg:22px;
+  /* Schatten */
+  --fp-shadow-nav:0 -2px 20px rgba(27,46,32,.14);
+  /* Typografie */
+  --fp-font:'Inter',-apple-system,sans-serif;
+  --fp-label-size:9px;
+  /* Abstaende */
+  --fp-space-1:4px;
+  --fp-space-2:8px;
+  --fp-space-3:12px;
+  --fp-space-4:16px;
+  /* Effekte */
+  --fp-blur:blur(26px) saturate(180%);
+}
+/* Dark Mode: bewusst noch nicht aktiviert - kommt vollstaendig in M8. */

@@ -16,6 +16,7 @@ _m0_4_setup.py
 _m0_5_setup.py
 _m0_6_setup.py
 public/*
+!public/bag/
 !public/learning/
 _f1_setup.py
 _f2_setup.py
@@ -49,3 +50,7 @@ _courses_worker.js
 _coursepick_cards.txt
 fix5_setup.py
 fix5bundle.tgz
+_bagassets
+_bag_photo.js
+fix6_setup.py
+fix6bundle.tgz

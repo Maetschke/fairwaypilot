@@ -6198,28 +6198,28 @@ function RT_rCourseMap(){
 function RT_cmInit(){
  if(typeof L==='undefined'){ return; }
  var el=document.getElementById('cm-map'); if(!el) return;
- var map=L.map('cm-map',{zoomControl:true,attributionControl:true}).setView([51.2,10.4],6);
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+ var map=L.map('cm-map',{zoomControl:false,attributionControl:false}).setView([51.2,10.4],6);
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20}).addTo(map);
  RT_CM.map=map; RT_CM.layer=L.layerGroup().addTo(map); RT_CM.labels=L.layerGroup().addTo(map); RT_CM.mk={};
  map.on('moveend zoomend',RT_cmLabels);
  map.on('click',function(){ RT_cmCloseSheet(); });
  // Standort des Nutzers
  try{ if(navigator.geolocation){ navigator.geolocation.getCurrentPosition(function(p){
    RT_CM.userLL={lat:p.coords.latitude,lng:p.coords.longitude};
-   try{ L.circleMarker([RT_CM.userLL.lat,RT_CM.userLL.lng],{radius:7,color:'#fff',weight:2,fillColor:'#0A84FF',fillOpacity:1}).addTo(RT_CM.layer); map.setView([RT_CM.userLL.lat,RT_CM.userLL.lng],10); }catch(e){}
+   try{ RT_cmUserDot(); map.setView([RT_CM.userLL.lat,RT_CM.userLL.lng],11); }catch(e){}
    if(RT_CM.sel) RT_cmSheet(RT_CM.sel);
  },function(){},{enableHighAccuracy:false,timeout:6000,maximumAge:600000}); } }catch(e){}
  RT_cmLoadLists();
  RT_cmLoadCourses();
 }
 function RT_cmLoadCourses(){
- var cached=null; try{ cached=rtGet('fp_cm_courses'); }catch(e){}
+ var cached=null; try{ cached=rtGet('fp_cm_courses_v2'); }catch(e){}
  var now=+new Date();
- if(cached&&cached.ts&&(now-cached.ts)<7*864e5&&cached.list&&cached.list.length){ RT_CM.courses=cached.list; RT_cmMarkers(); return; }
+ if(cached&&cached.ts&&(now-cached.ts)<7*864e5&&cached.list&&cached.list.length>50){ RT_CM.courses=cached.list; RT_cmMarkers(); return; }
  RT_CM.loading=true;
  fetch('/api/courses').then(function(r){ return r.json(); }).then(function(j){
   RT_CM.courses=(j&&j.courses)||[]; RT_CM.loading=false;
-  try{ rtSet('fp_cm_courses',{ts:now,list:RT_CM.courses}); }catch(e){}
+  try{ rtSet('fp_cm_courses_v2',{ts:now,list:RT_CM.courses}); }catch(e){}
   RT_cmMarkers();
  }).catch(function(){ RT_CM.loading=false; var l=document.getElementById('cm-loading'); if(l) l.textContent='Plätze konnten nicht geladen werden.'; });
 }
@@ -6234,14 +6234,15 @@ function RT_cmLoadLists(){
   if(RT_CM.sel) RT_cmSheet(RT_CM.sel);
  });
 }
+function RT_cmUserDot(){ if(!RT_CM.userLL||!RT_CM.layer||typeof L==='undefined') return; L.marker([RT_CM.userLL.lat,RT_CM.userLL.lng],{interactive:false,keyboard:false,zIndexOffset:1000,icon:L.divIcon({className:'',iconSize:[18,18],iconAnchor:[9,9],html:'<div style="width:14px;height:14px;border-radius:50%;background:#0A84FF;border:2px solid #fff;box-shadow:0 0 0 2px rgba(10,132,255,.35);"></div>'})}).addTo(RT_CM.layer); }
 function RT_cmMarkers(){
  var map=RT_CM.map; if(!map||!RT_CM.courses) return;
  var l=document.getElementById('cm-loading'); if(l) l.style.display='none';
  RT_CM.layer.clearLayers(); RT_CM.mk={};
  // Standort-Marker erneut, falls vorhanden
- if(RT_CM.userLL){ try{ L.circleMarker([RT_CM.userLL.lat,RT_CM.userLL.lng],{radius:7,color:'#fff',weight:2,fillColor:'#0A84FF',fillOpacity:1}).addTo(RT_CM.layer); }catch(e){} }
+ if(RT_CM.userLL){ try{ RT_cmUserDot(); }catch(e){} }
  RT_CM.courses.forEach(function(c){
-  var st=RT_CM.lists[c.ref]||{}; var col=st.home?'#1F8A4D':(st.saved||st.bucket?'#e0913a':'#B03A3A');
+  var st=(RT_CM.lists||{})[c.ref]||{}; var col=st.home?'#1F8A4D':(st.saved||st.bucket?'#e0913a':'#B03A3A');
   var m=L.circleMarker([c.lat,c.lon],{radius:6,color:'#fff',weight:1.5,fillColor:col,fillOpacity:.95});
   m.on('click',function(e){ if(e&&e.originalEvent) e.originalEvent.stopPropagation(); RT_cmSelect(c); });
   m.addTo(RT_CM.layer); RT_CM.mk[c.ref]=m;
@@ -6274,7 +6275,7 @@ function RT_cmStars(ref,mine){
 }
 function RT_cmSheet(c){
  var host=document.getElementById('cm-sheet'); if(!host) return;
- var st=RT_CM.lists[c.ref]||{}; var ag=RT_CM.agg[c.ref]||null; var mine=RT_CM.myR[c.ref]||{};
+ var st=(RT_CM.lists||{})[c.ref]||{}; var ag=RT_CM.agg[c.ref]||null; var mine=RT_CM.myR[c.ref]||{};
  var dist=RT_cmDistTxt(c);
  var holes=(c.holes!=null)?(c.holes+' Löcher'):'Löcher —';
  var ratingTxt=(ag&&ag.cnt>0)?('★ '+String(ag.avg_stars).replace('.',',')+' ('+ag.cnt+')'):'noch keine Bewertung';
@@ -6362,6 +6363,294 @@ function RT_mcRemove(ref,kind){
 }
 /* ===== Ende Platzsuche ===== */
 
+/* ============================================================
+   M5 · Shot-Tracer v1 (Analyse-Tab)
+   Video importieren/aufnehmen, 3 Marker, Flugbahn-Overlay, Wiedergabe.
+   Kein externer Dienst; alles lokal im Browser. Speicher: keiner (Session).
+   ============================================================ */
+var RT_TRC={panel:'tab-analyse',video:null,canvas:null,url:null,fps:30,
+  marks:{ball:null,impact:null,land:null},mode:null,shape:'gerade',
+  height:0.30,showTraj:true,dpr:1,rec:null,recChunks:null,stream:null,built:false};
+
+function RT_TRC_esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function RT_TRC_ensureStyle(){
+  if(document.getElementById('trc-style'))return;
+  var s=document.createElement('style');s.id='trc-style';
+  s.textContent=
+  '.trcwrap{max-width:640px;margin:0 auto;padding:2px 2px 34px;}'
+  +'.trchead{display:flex;align-items:center;gap:8px;margin-bottom:12px;}'
+  +'.trctitle{font-size:18px;font-weight:800;color:#143522;}'
+  +'.trccard{background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-top:10px;}'
+  +'.trcvid{position:relative;width:100%;background:#0b160f;border-radius:14px;overflow:hidden;line-height:0;}'
+  +'.trcvid video{display:block;width:100%;height:auto;max-height:60vh;margin:0 auto;background:#0b160f;}'
+  +'.trcvid canvas{position:absolute;left:0;top:0;touch-action:none;cursor:crosshair;}'
+  +'.trcrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;}'
+  +'.trcb{border:1px solid #cfe0d2;background:#fff;color:#143522;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;flex:none;}'
+  +'.trcb:active{transform:scale(.97);}'
+  +'.trcb.pri{background:#1F8A4D;border-color:#1F8A4D;color:#fff;}'
+  +'.trcb.on{background:#12261B;border-color:#12261B;color:#fff;}'
+  +'.trcb.set{border-color:#1F8A4D;color:#1F8A4D;}'
+  +'.trcb.ic{padding:8px 10px;font-size:16px;line-height:1;}'
+  +'.trchint{font-size:12.5px;color:#5d7060;line-height:1.5;margin-top:6px;}'
+  +'.trcseg{display:flex;gap:6px;flex-wrap:wrap;}'
+  +'.trcslab{font-size:12px;color:#5d7060;min-width:74px;}'
+  +'.trcscrub{flex:1;min-width:120px;accent-color:#1F8A4D;}'
+  +'.trctime{font-size:12px;color:#5d7060;font-variant-numeric:tabular-nums;min-width:78px;text-align:right;}';
+  document.head.appendChild(s);
+}
+
+function RT_TRC_mount(panelId){
+  RT_TRC.panel=panelId||'tab-analyse';RT_TRC_ensureStyle();
+  RT_TRC_render();
+}
+
+function RT_TRC_render(){
+  var el=document.getElementById(RT_TRC.panel);if(!el)return;
+  var h='<div class="trcwrap">'
+   +'<div class="trchead"><div class="trctitle">Shot-Tracer</div></div>'
+   +'<div class="trccard">'
+   +'<div class="trcvid" id="trc-stage">'
+   +'<video id="trc-video" playsinline preload="metadata" style="display:none;"></video>'
+   +'<canvas id="trc-canvas" style="display:none;"></canvas>'
+   +'<div id="trc-empty" style="padding:40px 20px;text-align:center;color:#b9c8bd;">'
+     +'<div style="font-size:40px;line-height:1;margin-bottom:8px;">🎥</div>'
+     +'<div style="font-size:14px;color:#5d7060;line-height:1.5;">Video importieren oder aufnehmen,<br>dann Ball, Treffer und Landung markieren.</div>'
+   +'</div>'
+   +'</div>'
+   // playback controls (hidden until video)
+   +'<div id="trc-controls" style="display:none;">'
+     +'<div class="trcrow">'
+       +'<button class="trcb pri" id="trc-play" onclick="RT_TRC_togglePlay()">▶︎ Play</button>'
+       +'<button class="trcb ic" onclick="RT_TRC_frame(-1)" title="Ein Bild zurück">⏮</button>'
+       +'<button class="trcb ic" onclick="RT_TRC_frame(1)" title="Ein Bild vor">⏭</button>'
+       +'<button class="trcb" id="trc-slow" onclick="RT_TRC_slow()">Zeitlupe ¼×</button>'
+     +'</div>'
+     +'<div class="trcrow"><span class="trctime" id="trc-t">0.00 / 0.00 s</span>'
+       +'<input class="trcscrub" id="trc-scrub" type="range" min="0" max="1000" value="0" oninput="RT_TRC_scrub(this.value)"></div>'
+   +'</div>'
+   +'</div>'
+   // marking
+   +'<div class="trccard" id="trc-mark" style="display:none;">'
+     +'<div style="font-weight:700;color:#143522;margin-bottom:2px;">Markieren</div>'
+     +'<div class="trchint">Passendes Bild ansteuern (⏮/⏭), dann Marker wählen und ins Video tippen.</div>'
+     +'<div class="trcrow">'
+       +'<button class="trcb" id="trc-mb-ball" onclick="RT_TRC_setMode(\'ball\')">● Ball</button>'
+       +'<button class="trcb" id="trc-mb-impact" onclick="RT_TRC_setMode(\'impact\')">● Treffer</button>'
+       +'<button class="trcb" id="trc-mb-land" onclick="RT_TRC_setMode(\'land\')">● Landung</button>'
+       +'<button class="trcb" onclick="RT_TRC_clearMarks()">Zurücksetzen</button>'
+     +'</div>'
+     +'<div style="font-weight:700;color:#143522;margin:12px 0 2px;">Ballflug</div>'
+     +'<div class="trcrow trcseg" id="trc-shapes">'
+       +'<button class="trcb" data-s="gerade" onclick="RT_TRC_setShape(\'gerade\')">Gerade</button>'
+       +'<button class="trcb" data-s="fade" onclick="RT_TRC_setShape(\'fade\')">Fade</button>'
+       +'<button class="trcb" data-s="draw" onclick="RT_TRC_setShape(\'draw\')">Draw</button>'
+       +'<button class="trcb" data-s="slice" onclick="RT_TRC_setShape(\'slice\')">Slice</button>'
+       +'<button class="trcb" data-s="hook" onclick="RT_TRC_setShape(\'hook\')">Hook</button>'
+     +'</div>'
+     +'<div class="trcrow"><span class="trcslab">Bogenhöhe</span>'
+       +'<input class="trcscrub" type="range" min="5" max="60" value="30" oninput="RT_TRC_setHeight(this.value)"></div>'
+     +'<div class="trcrow">'
+       +'<button class="trcb" id="trc-toggle" onclick="RT_TRC_toggleTraj()">Flugbahn verbergen</button>'
+       +'<button class="trcb pri" onclick="RT_TRC_playTraj()">▶︎ Flugbahn abspielen</button>'
+     +'</div>'
+   +'</div>'
+   // source
+   +'<div class="trccard">'
+     +'<div class="trcrow">'
+       +'<label class="trcb pri" style="display:inline-block;">Video importieren'
+         +'<input type="file" accept="video/*" style="display:none;" onchange="RT_TRC_pickFile(this)"></label>'
+       +'<button class="trcb" id="trc-rec" onclick="RT_TRC_toggleRec()">● Aufnehmen</button>'
+       +'<span class="trcslab" style="min-width:auto;">Bildrate</span>'
+       +'<select class="trcb" id="trc-fps" onchange="RT_TRC_setFps(this.value)" style="padding:8px;">'
+         +'<option value="24">24</option><option value="25">25</option>'
+         +'<option value="30" selected>30</option><option value="50">50</option>'
+         +'<option value="60">60</option></select>'
+     +'</div>'
+     +'<div class="trchint">Für Zeitlupe/Einzelbild sollte die Bildrate zum Video passen. Aufnahmen laufen nur auf dem Gerät (Kamerafreigabe nötig).</div>'
+   +'</div>'
+   +'</div>';
+  el.innerHTML=h;
+  RT_TRC.video=document.getElementById('trc-video');
+  RT_TRC.canvas=document.getElementById('trc-canvas');
+  RT_TRC.built=true;
+  RT_TRC_bind();
+  RT_TRC_syncButtons();
+  // restore a previously chosen video within the session
+  if(RT_TRC.url){ RT_TRC_attachSrc(RT_TRC.url); }
+}
+
+function RT_TRC_bind(){
+  var v=RT_TRC.video,c=RT_TRC.canvas;if(!v||!c)return;
+  v.addEventListener('loadedmetadata',RT_TRC_onLoaded);
+  v.addEventListener('timeupdate',RT_TRC_onTime);
+  v.addEventListener('seeked',function(){RT_TRC_onTime();RT_TRC_draw();});
+  v.addEventListener('play',RT_TRC_syncPlay);
+  v.addEventListener('pause',RT_TRC_syncPlay);
+  v.addEventListener('ended',RT_TRC_syncPlay);
+  c.addEventListener('click',RT_TRC_canvasTap);
+  if(!RT_TRC._resizeBound){ window.addEventListener('resize',function(){RT_TRC_sizeOverlay();}); RT_TRC._resizeBound=true; }
+}
+
+function RT_TRC_setFps(v){RT_TRC.fps=parseFloat(v)||30;}
+
+function RT_TRC_pickFile(inp){
+  var f=inp&&inp.files&&inp.files[0];if(!f)return;
+  RT_TRC_clearMarks(true);
+  if(RT_TRC.url){try{URL.revokeObjectURL(RT_TRC.url);}catch(e){}}
+  RT_TRC.url=URL.createObjectURL(f);
+  RT_TRC_attachSrc(RT_TRC.url);
+}
+
+function RT_TRC_attachSrc(url){
+  var v=RT_TRC.video;if(!v)return;
+  v.src=url;v.style.display='block';
+  var em=document.getElementById('trc-empty');if(em)em.style.display='none';
+  try{v.load();}catch(e){}
+}
+
+function RT_TRC_onLoaded(){
+  var v=RT_TRC.video;if(!v)return;
+  document.getElementById('trc-controls').style.display='block';
+  document.getElementById('trc-mark').style.display='block';
+  RT_TRC.canvas.style.display='block';
+  RT_TRC_sizeOverlay();
+  RT_TRC_onTime();
+}
+
+function RT_TRC_sizeOverlay(){
+  var v=RT_TRC.video,c=RT_TRC.canvas;if(!v||!c||!v.videoWidth)return;
+  var w=v.clientWidth,hh=v.clientHeight;if(!w||!hh)return;
+  var dpr=Math.min(window.devicePixelRatio||1,2);RT_TRC.dpr=dpr;
+  c.width=Math.round(w*dpr);c.height=Math.round(hh*dpr);
+  c.style.width=w+'px';c.style.height=hh+'px';
+  RT_TRC_draw();
+}
+
+function RT_TRC_fmt(t){t=t||0;return t.toFixed(2);}
+function RT_TRC_onTime(){
+  var v=RT_TRC.video;if(!v)return;
+  var d=v.duration||0,cur=v.currentTime||0;
+  var t=document.getElementById('trc-t');if(t)t.textContent=RT_TRC_fmt(cur)+' / '+RT_TRC_fmt(d)+' s';
+  var s=document.getElementById('trc-scrub');if(s&&d)s.value=Math.round(cur/d*1000);
+}
+
+function RT_TRC_togglePlay(){var v=RT_TRC.video;if(!v)return;if(v.paused)v.play();else v.pause();}
+function RT_TRC_syncPlay(){var v=RT_TRC.video,b=document.getElementById('trc-play');if(!v||!b)return;b.innerHTML=v.paused?'▶︎ Play':'❚❚ Pause';}
+function RT_TRC_slow(){
+  var v=RT_TRC.video;if(!v)return;
+  var slow=v.playbackRate>0.9;v.playbackRate=slow?0.25:1;
+  var b=document.getElementById('trc-slow');if(b){b.className='trcb'+(slow?' on':'');b.textContent=slow?'Normal 1×':'Zeitlupe ¼×';}
+}
+function RT_TRC_scrub(val){var v=RT_TRC.video;if(!v||!v.duration)return;if(!v.paused)v.pause();v.currentTime=(val/1000)*v.duration;}
+function RT_TRC_frame(dir){
+  var v=RT_TRC.video;if(!v||!v.duration)return;if(!v.paused)v.pause();
+  var fps=RT_TRC.fps||30;
+  var frame=Math.round(v.currentTime*fps-0.5);
+  var nf=Math.max(0,frame+dir);
+  var tt=(nf+0.5)/fps;
+  v.currentTime=Math.min(v.duration-1e-3,Math.max(0,tt));
+}
+
+function RT_TRC_setMode(which){
+  RT_TRC.mode=(RT_TRC.mode===which)?null:which;
+  RT_TRC_syncButtons();
+}
+function RT_TRC_canvasTap(ev){
+  if(!RT_TRC.mode)return;
+  var c=RT_TRC.canvas,v=RT_TRC.video;if(!c)return;
+  var rect=c.getBoundingClientRect();
+  var cx=(ev.clientX!=null?ev.clientX:0)-rect.left;
+  var cy=(ev.clientY!=null?ev.clientY:0)-rect.top;
+  var x=Math.max(0,Math.min(1,cx/rect.width));
+  var y=Math.max(0,Math.min(1,cy/rect.height));
+  RT_TRC.marks[RT_TRC.mode]={x:x,y:y,t:v?v.currentTime:0};
+  if(RT_TRC.mode==='ball'||RT_TRC.mode==='land')RT_TRC.showTraj=true;
+  RT_TRC.mode=null;
+  RT_TRC_syncButtons();RT_TRC_draw();
+}
+function RT_TRC_clearMarks(silent){
+  RT_TRC.marks={ball:null,impact:null,land:null};RT_TRC.mode=null;
+  if(!silent){RT_TRC_syncButtons();RT_TRC_draw();}
+}
+function RT_TRC_setShape(s){RT_TRC.shape=s;RT_TRC_syncButtons();RT_TRC_draw();}
+function RT_TRC_setHeight(v){RT_TRC.height=(parseFloat(v)||30)/100;RT_TRC_draw();}
+function RT_TRC_toggleTraj(){RT_TRC.showTraj=!RT_TRC.showTraj;var b=document.getElementById('trc-toggle');if(b)b.textContent=RT_TRC.showTraj?'Flugbahn verbergen':'Flugbahn zeigen';RT_TRC_draw();}
+
+function RT_TRC_syncButtons(){
+  ['ball','impact','land'].forEach(function(k){
+    var b=document.getElementById('trc-mb-'+k);if(!b)return;
+    var active=(RT_TRC.mode===k),set=!!RT_TRC.marks[k];
+    b.className='trcb'+(active?' on':(set?' set':''));
+  });
+  var shapes=document.getElementById('trc-shapes');
+  if(shapes){var bs=shapes.querySelectorAll('button');for(var i=0;i<bs.length;i++){bs[i].className='trcb'+(bs[i].getAttribute('data-s')===RT_TRC.shape?' pri':'');}}
+}
+
+function RT_TRC_path(t){
+  var m=RT_TRC.marks,b=m.ball,l=m.land;if(!b||!l)return{x:0,y:0};
+  var bend={gerade:0,fade:0.06,slice:0.13,draw:-0.06,hook:-0.13}[RT_TRC.shape]||0;
+  var x=b.x+(l.x-b.x)*t+bend*Math.sin(Math.PI*t);
+  var line=b.y+(l.y-b.y)*t;
+  var arc=4*RT_TRC.height*t*(1-t);
+  return{x:x,y:line-arc};
+}
+function RT_TRC_draw(prog){
+  var c=RT_TRC.canvas;if(!c||!c.getContext)return;
+  var ctx=c.getContext('2d');var dpr=RT_TRC.dpr||1;
+  var w=c.width/dpr,h=c.height/dpr;
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,c.width,c.height);
+  ctx.scale(dpr,dpr);
+  var m=RT_TRC.marks;
+  if(RT_TRC.showTraj&&m.ball&&m.land){
+    var pr=(prog==null)?1:Math.max(0,Math.min(1,prog));
+    ctx.lineWidth=3;ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle='rgba(246,195,90,.95)';
+    ctx.beginPath();var N=64,started=false;
+    for(var i=0;i<=N;i++){var t=i/N;if(t>pr)break;var p=RT_TRC_path(t);var X=p.x*w,Y=p.y*h;if(!started){ctx.moveTo(X,Y);started=true;}else ctx.lineTo(X,Y);}
+    ctx.stroke();
+    var ph=RT_TRC_path(pr);ctx.fillStyle='#fff';ctx.strokeStyle='rgba(0,0,0,.45)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(ph.x*w,ph.y*h,5,0,6.29);ctx.fill();ctx.stroke();
+  }
+  function dot(pt,col,lab){if(!pt)return;var X=pt.x*w,Y=pt.y*h;ctx.fillStyle=col;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(X,Y,6,0,6.29);ctx.fill();ctx.stroke();ctx.font='bold 11px Inter,sans-serif';var lx=X+9;ctx.textAlign='left';if(X>w*0.72){lx=X-9;ctx.textAlign='right';}var ly=Y-7;if(Y<16)ly=Y+16;ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.55)';ctx.strokeText(lab,lx,ly);ctx.fillStyle='#fff';ctx.fillText(lab,lx,ly);ctx.textAlign='left';}
+  dot(m.ball,'#1F8A4D','Ball');dot(m.impact,'#E08A1E','Treffer');dot(m.land,'#B03A3A','Landung');
+}
+
+function RT_TRC_playTraj(){
+  var m=RT_TRC.marks;if(!m.ball||!m.land){RT_TRC_toast('Bitte zuerst Ball und Landung markieren.');return;}
+  RT_TRC.showTraj=true;
+  var start=null,dur=1500;
+  function step(ts){if(start==null)start=ts;var p=Math.min(1,(ts-start)/dur);RT_TRC_draw(p);if(p<1)requestAnimationFrame(step);}
+  requestAnimationFrame(step);
+}
+function RT_TRC_toast(msg){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:4000;background:#12261B;color:#fff;border-radius:12px;padding:9px 15px;font:600 13px Inter,sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.35);';
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(function(){t.style.transition='opacity .4s';t.style.opacity='0';setTimeout(function(){try{t.remove();}catch(e){}},400);},2200);
+}
+
+/* --- Aufnahme (nur am Gerät) --- */
+function RT_TRC_toggleRec(){
+  if(RT_TRC.rec&&RT_TRC.rec.state==='recording'){try{RT_TRC.rec.stop();}catch(e){}return;}
+  if(!navigator.mediaDevices||!window.MediaRecorder){RT_TRC_toast('Aufnahme wird auf diesem Gerät nicht unterstützt.');return;}
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}).then(function(stream){
+    RT_TRC.stream=stream;RT_TRC.recChunks=[];
+    var mr=new MediaRecorder(stream);RT_TRC.rec=mr;
+    mr.ondataavailable=function(e){if(e.data&&e.data.size)RT_TRC.recChunks.push(e.data);};
+    mr.onstop=function(){
+      try{stream.getTracks().forEach(function(t){t.stop();});}catch(e){}
+      var blob=new Blob(RT_TRC.recChunks,{type:(RT_TRC.recChunks[0]&&RT_TRC.recChunks[0].type)||'video/mp4'});
+      RT_TRC_clearMarks(true);
+      if(RT_TRC.url){try{URL.revokeObjectURL(RT_TRC.url);}catch(e){}}
+      RT_TRC.url=URL.createObjectURL(blob);RT_TRC_attachSrc(RT_TRC.url);
+      var b=document.getElementById('trc-rec');if(b){b.className='trcb';b.textContent='● Aufnehmen';}
+    };
+    mr.start();
+    var b=document.getElementById('trc-rec');if(b){b.className='trcb on';b.textContent='■ Stopp';}
+  }).catch(function(){RT_TRC_toast('Kamerazugriff nicht möglich.');});
+}
+/* ===== Ende Shot-Tracer ===== */
+
 function RT_renderTabBar(){
   var nav=document.getElementById('nav-tabs'); if(!nav) return;
   nav.innerHTML=RT_TABS.map(function(t){
@@ -6398,7 +6687,7 @@ registerTab({id:'runde',label:'Runde',icon:'<img src="'+RT_IC_RUNDE+'" style="wi
 registerTab({id:'detail',label:'Schläge',icon:'<img src="'+RT_IC_DETAIL+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var detailIcon=document.getElementById('detail-usericon'); if(detailIcon) detailIcon.innerHTML=RT_userIcon(); RD_renderSegButtons(); GD_renderRangeButtons(); GD_renderKPIs(); renderRounds('all'); renderPenChart(); renderFW(); renderSandChart(); renderPuttsChart(); renderMetrics(); renderPerf(); }});
 registerTab({id:'hi',label:'Handicap',icon:'<img src="'+RT_IC_HI+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var hiSub=document.getElementById('hi-subtitle'); if(hiSub) hiSub.textContent='HI-Verlauf '+RT_myDisplayName(); var hiChartSub=document.getElementById('hi-chart-sub'); if(hiChartSub) hiChartSub.textContent='Ungedeckelt · 9L x2 · HI '+rtDe(RT_ownHandicap())+' = eigenes Handicap'; var hiIcon=document.getElementById('hi-usericon'); if(hiIcon) hiIcon.innerHTML=RT_userIcon(); HV_renderLegend(); HV_renderSegButtons(); HV_renderRangeButtons(); HV_renderKPIs(); HV_renderChart(); HV_renderTable(); }});
 registerTab({id:'lernen',label:'Lernen',icon:'<img src="'+RT_IC_LERNEN+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_LRN_mount('tab-lernen'); }});
-registerTab({id:'analyse',label:'Analyse',icon:'<img src="'+RT_IC_ANALYSE+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_mountShell('tab-analyse','Analyse','Video-Analyse von Ballflug und Bewegungsablauf entsteht in den nächsten Schritten.',RT_IC_ANALYSE); }});
+registerTab({id:'analyse',label:'Analyse',icon:'<img src="'+RT_IC_ANALYSE+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_TRC_mount('tab-analyse'); }});
 /* ===== Ende Registry ===== */
 
 RT_hydrateCustomCourses();

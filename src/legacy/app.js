@@ -6125,18 +6125,24 @@ var RT_CLUB_META={
 var RT_BAG_MAP={dr:'dr','3w':'w1','5w':'w2','7w':'w3','2h':'w3','3h':'i1','4h':'i1','5h':'i1','3i':'i1','4i':'i2','5i':'i3','6i':'i4','7i':'i5','8i':'i6','9i':'i7',pw:'i8',gw:'wg',sw:'wg',lw:'wg',putter:'pt'};
 var RT_BAG_LEN={dr:1.0,'3w':.95,'5w':.92,'7w':.90,'2h':.86,'3h':.84,'4h':.82,'5h':.80,'3i':.77,'4i':.75,'5i':.73,'6i':.71,'7i':.69,'8i':.67,'9i':.65,pw:.60,gw:.58,sw:.56,lw:.54,putter:.66};
 function RT_clubHead(id,h){ var lab=RT_BAG_MAP[id]||'i4'; h=h||40; return '<img src="/bag/head_'+lab+'_ic.png" alt="" style="height:'+h+'px;width:auto;display:block;flex:none;">'; }
+var RT_BAG_CAN=['dr','w1','w2','w3','i1','i2','i3','i4','i5','i6','i7','i8','wg','pt'];
 function RT_bagGraphic(inBag,w){
- var ids=(inBag||[]).slice().sort(function(a,b){ return (RT_BAG_LEN[b]||.7)-(RT_BAG_LEN[a]||.7); });
- var BAGY=118, ox=265, oy=75, n=ids.length, clubs='';
- var Lx=ox-52, Rx=ox+46;
- for(var i=0;i<n;i++){ var id=ids[i], lab=RT_BAG_MAP[id]||'i4', lf=RT_BAG_LEN[id]||.7;
-  var t=(n===1)?0.5:i/(n-1); var x=Lx+(Rx-Lx)*t; var row=i%2;
-  var yb=BAGY+oy+(row?16:0)+4; var lean=-7+(x-ox)/50*7+(row?1.5:-1.5); var sc=0.62*(0.8+lf*0.25); var hh=190*sc;
-  clubs+='<img src="/bag/head_'+lab+'.png" alt="" style="position:absolute;left:'+x.toFixed(1)+'px;bottom:'+(300-yb).toFixed(1)+'px;height:'+hh.toFixed(1)+'px;transform:translateX(-50%) rotate('+lean.toFixed(1)+'deg);transform-origin:50% 100%;z-index:'+(row?40:30)+';filter:drop-shadow(0 2px 2px rgba(0,0,0,.28));">';
+ w=w||236; var k=w/360;
+ var ids=(inBag||[]).slice().sort(function(a,b){ var la=RT_BAG_CAN.indexOf(RT_BAG_MAP[a]||'i4'), lb=RT_BAG_CAN.indexOf(RT_BAG_MAP[b]||'i4'); if(la!==lb) return la-lb; return (RT_BAG_LEN[b]||.7)-(RT_BAG_LEN[a]||.7); });
+ var n=ids.length, clubs='';
+ for(var i=0;i<n;i++){ var id=ids[i], lab=RT_BAG_MAP[id]||'i4';
+  var t=(n===1)?0.4:i/(n-1);
+  var x=(172+(248-172)*t)*k, yb=(158+(170-158)*t)*k;
+  var isW=(lab.charAt(0)==='w'||lab==='dr'), isP=(lab==='pt');
+  var L=(isW?160-6*t:(isP?122:146-12*t))*k, ang=-6+22*t;
+  clubs+='<img src="/bag/head_'+lab+'.png" alt="" style="position:absolute;left:'+x.toFixed(1)+'px;top:'+(yb-L).toFixed(1)+'px;height:'+L.toFixed(1)+'px;transform:translateX(-50%) rotate('+ang.toFixed(1)+'deg);transform-origin:50% 100%;z-index:'+(15+i)+';">';
  }
- return '<div style="display:flex;justify-content:center;overflow:hidden;"><div style="position:relative;width:360px;height:300px;">'
-  +'<img src="/bag/bag.png" alt="Golfbag" style="position:absolute;left:0;top:'+BAGY+'px;width:360px;z-index:20;">'
-  +clubs+'</div></div>';
+ var bw=(360*k).toFixed(1), bh=(510*k).toFixed(1);
+ return '<div style="display:flex;justify-content:center;"><div style="position:relative;width:'+bw+'px;height:'+bh+'px;">'
+  +'<img src="/bag/bag_back.png" alt="Golfbag" style="position:absolute;left:0;bottom:0;width:'+bw+'px;z-index:10;">'
+  +clubs
+  +'<img src="/bag/bag_front.png" alt="" style="position:absolute;left:0;bottom:0;width:'+bw+'px;z-index:40;filter:drop-shadow(0 5px 8px rgba(0,0,0,.15));">'
+  +'</div></div>';
 }
 function RT_bagData(){ return rtGet('fp_bag')||{}; }
 function RT_bagSave(b){ rtSet('fp_bag',b); }

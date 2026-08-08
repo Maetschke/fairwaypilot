@@ -5512,55 +5512,65 @@ function RT_suTimePart(part,val){
  RT_render();
 }
 
+/* ===== M0.3: Tab-/View-Registry ===== */
 var RT_curTab='runde';
-function showTab(tab){
- RT_curTab=tab;
-  document.getElementById('tab-hi').style.display      = tab==='hi'     ? 'block' : 'none';
-  document.getElementById('tab-detail').style.display  = tab==='detail' ? 'block' : 'none';
-  document.getElementById('tab-runde').style.display   = tab==='runde'  ? 'block' : 'none';
-  ['hi','detail','runde'].forEach(function(t){
-    var btn=document.getElementById('tbtn-'+t);
-    var lbl=document.getElementById('tlbl-'+t);
-    if(btn){ btn.style.background = t===tab ? 'rgba(31,138,77,.12)' : 'none'; }
-    if(lbl){ lbl.style.color = t===tab ? '#1F8A4D' : 'rgba(93,112,96,.95)'; }
-  });
-  if(tab==='runde'){ RT_render(); }
-  if(tab==='hi'||tab==='detail'){
-    /* Vor jedem Anzeigen von Handicap/Schlag-Detail HV_D/SC komplett neu aus dem
-       aktuellen Stand der gespeicherten Runden aufbauen. Das ist die verlaessliche
-       Absicherung dafuer, dass Aenderungen an einer Runde IMMER ueberall ankommen,
-       unabhaengig davon, ob der Speichervorgang selbst bereits synchronisiert hat. */
-    RT_hydrateHistoricalData();
-  }
-  if(tab==='hi'){
-    var hiSub=document.getElementById('hi-subtitle');
-    if(hiSub) hiSub.textContent='HI-Verlauf '+RT_myDisplayName();
-    var hiChartSub=document.getElementById('hi-chart-sub');
-    if(hiChartSub) hiChartSub.textContent='Ungedeckelt \u00b7 9L x2 \u00b7 HI '+rtDe(RT_ownHandicap())+' = eigenes Handicap';
-    var hiIcon=document.getElementById('hi-usericon');
-    if(hiIcon) hiIcon.innerHTML=RT_userIcon();
-    HV_renderLegend();
-    HV_renderSegButtons();
-    HV_renderRangeButtons();
-    HV_renderKPIs();
-    HV_renderChart();
-    HV_renderTable();
-  }
-  if(tab==='detail'){
-    var detailIcon=document.getElementById('detail-usericon');
-    if(detailIcon) detailIcon.innerHTML=RT_userIcon();
-    RD_renderSegButtons();
-    GD_renderRangeButtons();
-    GD_renderKPIs();
-    renderRounds('all');
-    renderPenChart();
-    renderFW();
-    renderSandChart();
-    renderPuttsChart();
-    renderMetrics();
-    renderPerf();
-  }
+var RT_TABS=[];
+var RT_VIEWS={};
+function registerTab(def){ RT_TABS.push(def); }
+function registerView(def){ RT_VIEWS[def.id]=def; }
+function RT_tabById(id){ for(var i=0;i<RT_TABS.length;i++){ if(RT_TABS[i].id===id) return RT_TABS[i]; } return null; }
+function RT_renderTabBar(){
+  var nav=document.getElementById('nav-tabs');
+  if(!nav) return;
+  nav.innerHTML=RT_TABS.map(function(t){
+    return '<button id="tbtn-'+t.id+'" onclick="showTab(\''+t.id+'\')" '
+      +'style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;border-radius:13px;cursor:pointer;border:none;background:none;flex:1 1 0;min-width:0;">'
+      +'<span style="font-size:20px;line-height:1;">'+t.icon+'</span>'
+      +'<span id="tlbl-'+t.id+'" style="font-size:9px;font-weight:500;color:rgba(84,104,88,.9);font-family:Inter,sans-serif;text-align:center;line-height:1.15;">'+t.label+'</span>'
+      +'</button>';
+  }).join('');
 }
+function showTab(tab){
+  RT_curTab=tab;
+  var _nav=document.getElementById('nav-tabs');
+  if(_nav && !_nav.innerHTML){ RT_renderTabBar(); }
+  RT_TABS.forEach(function(t){
+    var panel=document.getElementById('tab-'+t.id);
+    if(panel){ panel.style.display = (t.id===tab) ? 'block' : 'none'; }
+    var btn=document.getElementById('tbtn-'+t.id);
+    var lbl=document.getElementById('tlbl-'+t.id);
+    if(btn){ btn.style.background = t.id===tab ? 'rgba(31,138,77,.12)' : 'none'; }
+    if(lbl){ lbl.style.color = t.id===tab ? '#1F8A4D' : 'rgba(93,112,96,.95)'; }
+  });
+  var def=RT_tabById(tab);
+  if(def && def.mount){ def.mount(); }
+}
+function RT_mountShell(panelId,title,text){
+  var el=document.getElementById(panelId);
+  if(!el) return;
+  el.innerHTML='<div class="card" style="text-align:center;padding:36px 22px;">'
+    +'<div style="font-size:34px;line-height:1;margin-bottom:12px;">'+(panelId==='tab-lernen'?'📚':'⤴️')+'</div>'
+    +'<div class="ct" style="font-size:17px;">'+title+'</div>'
+    +'<div class="cs" style="margin-top:8px;line-height:1.5;">'+text+'</div>'
+    +'</div>';
+}
+registerTab({id:'runde',label:'Runde',icon:'✏️',mount:function(){ RT_render(); }});
+registerTab({id:'detail',label:'Schlag-Details',icon:'⛳',mount:function(){
+  RT_hydrateHistoricalData();
+  var detailIcon=document.getElementById('detail-usericon'); if(detailIcon) detailIcon.innerHTML=RT_userIcon();
+  RD_renderSegButtons(); GD_renderRangeButtons(); GD_renderKPIs(); renderRounds('all');
+  renderPenChart(); renderFW(); renderSandChart(); renderPuttsChart(); renderMetrics(); renderPerf();
+}});
+registerTab({id:'hi',label:'Handicap',icon:'📈',mount:function(){
+  RT_hydrateHistoricalData();
+  var hiSub=document.getElementById('hi-subtitle'); if(hiSub) hiSub.textContent='HI-Verlauf '+RT_myDisplayName();
+  var hiChartSub=document.getElementById('hi-chart-sub'); if(hiChartSub) hiChartSub.textContent='Ungedeckelt · 9L x2 · HI '+rtDe(RT_ownHandicap())+' = eigenes Handicap';
+  var hiIcon=document.getElementById('hi-usericon'); if(hiIcon) hiIcon.innerHTML=RT_userIcon();
+  HV_renderLegend(); HV_renderSegButtons(); HV_renderRangeButtons(); HV_renderKPIs(); HV_renderChart(); HV_renderTable();
+}});
+registerTab({id:'lernen',label:'Lernen',icon:'📚',mount:function(){ RT_mountShell('tab-lernen','Lernen','Platzreife-Kurs, Golfwissen und Fragenkatalog entstehen in den nächsten Schritten.'); }});
+registerTab({id:'flugbahn',label:'Flugbahn',icon:'⤴️',mount:function(){ RT_mountShell('tab-flugbahn','Flugbahn','Der Shot-Tracer – Ballflugkurve aus Video – entsteht in den nächsten Schritten.'); }});
+/* ===== Ende Registry ===== */
 
 RT_hydrateCustomCourses();
 /* RT_seedHistoricalRounds() NICHT MEHR automatisch bei jedem Laden ausfuehren: das hat
@@ -5578,7 +5588,7 @@ function adjustFooterPadding(){
   var nav=document.getElementById('bottom-nav'); if(!nav) return;
   var h=nav.getBoundingClientRect().height;
   var pad=Math.max(0,Math.ceil(h)-9);
-  ['tab-hi','tab-detail','tab-runde'].forEach(function(id){
+  RT_TABS.map(function(t){return 'tab-'+t.id;}).forEach(function(id){
     var el=document.getElementById(id);
     if(el) el.style.paddingBottom=pad+'px';
   });

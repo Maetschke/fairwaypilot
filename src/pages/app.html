@@ -378,22 +378,15 @@ body{display:flex;flex-direction:column;}
     <div id="rt-root"></div>
   </div>
 
+    <!-- TAB: Lernen (Shell) -->
+  <div id="tab-lernen" style="display:none;"></div>
+
+  <!-- TAB: Flugbahn (Shell) -->
+  <div id="tab-flugbahn" style="display:none;"></div>
+
   <!-- Tab Bar -->
   <div id="bottom-nav" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:60;padding:8px 16px calc(env(safe-area-inset-bottom,0px) + 10px);">
-    <div style="background:rgba(255,255,255,.92);backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);border:1px solid #DFE8DA;border-radius:22px;padding:8px;display:flex;justify-content:space-around;box-shadow:0 -2px 20px rgba(27,46,32,.14);">
-      <button id="tbtn-runde" onclick="showTab('runde')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 16px;border-radius:13px;cursor:pointer;border:none;background:rgba(31,138,77,.12);">
-        <span style="font-size:20px;line-height:1;">&#9999;&#65039;</span>
-        <span id="tlbl-runde" style="font-size:9px;font-weight:500;color:#1F8A4D;font-family:Inter,sans-serif;">Runde</span>
-      </button>
-      <button id="tbtn-detail" onclick="showTab('detail')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 16px;border-radius:13px;cursor:pointer;border:none;background:none;">
-        <span style="font-size:20px;line-height:1;">&#9971;</span>
-        <span id="tlbl-detail" style="font-size:9px;font-weight:500;color:rgba(84,104,88,.9);font-family:Inter,sans-serif;">Schlag-Detail</span>
-      </button>
-      <button id="tbtn-hi" onclick="showTab('hi')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 16px;border-radius:13px;cursor:pointer;border:none;background:none;">
-        <span style="font-size:20px;line-height:1;">&#128200;</span>
-        <span id="tlbl-hi" style="font-size:9px;font-weight:500;color:rgba(84,104,88,.9);font-family:Inter,sans-serif;">Handicap</span>
-      </button>
-    </div>
+    <div id="nav-tabs" style="background:rgba(255,255,255,.92);backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);border:1px solid #DFE8DA;border-radius:22px;padding:8px;display:flex;justify-content:space-around;box-shadow:0 -2px 20px rgba(27,46,32,.14);"></div>
   </div>
 
 </div>

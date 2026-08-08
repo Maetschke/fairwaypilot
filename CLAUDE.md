@@ -12,10 +12,10 @@ Vor jeder inhaltlichen Arbeit die vier Dateien in `docs/` lesen:
 
 | Datei | Inhalt |
 |---|---|
-| `docs/01_Projektkontext.md` | Infrastruktur, Stand der App, Lernpunkte, Validierungspipeline |
-| `docs/02_Offene_Punkte.md` | Backlog mit Status. **Erledigte Punkte nie erneut als offen behandeln.** |
-| `docs/03_Referenzdaten.md` | WHS-Formeln, Platzdaten, Wind, Höhendaten, bereits behobene Datenfehler |
-| `docs/04_Roadmap_Premium.md` | Modulplan M0–M9, getroffene Leitentscheidungen E1–E5 |
+| `docs/01_FairwayPilot_Projektkontext.md` | Infrastruktur, Stand der App, Lernpunkte, Validierungspipeline |
+| `docs/02_FairwayPilot_Offene_Punkte.md` | Backlog mit Status. **Erledigte Punkte nie erneut als offen behandeln.** |
+| `docs/03_FairwayPilot_Referenzdaten.md` | WHS-Formeln, Platzdaten, Wind, Höhendaten, bereits behobene Datenfehler |
+| `docs/04_FairwayPilot_Roadmap_Premium.md` | Modulplan M0–M9, getroffene Leitentscheidungen E1–E5 |
 
 Am Ende jeder Session alle vier aktualisieren.
 

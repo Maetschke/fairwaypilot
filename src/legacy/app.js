@@ -5719,7 +5719,7 @@ function RT_LRN_toastBadge(id){
   if(!b) return;
   var t=document.createElement('div');
   t.style.cssText='position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:4000;background:#12261B;color:#fff;border-radius:14px;padding:10px 16px;box-shadow:0 6px 22px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px;font-family:Inter,sans-serif;';
-  t.innerHTML='<span style="font-size:22px;">'+b.ic+'</span><span><b style="font-size:13px;">Abzeichen freigeschaltet</b><br><span style="font-size:12px;opacity:.85;">'+RT_LRN_esc(b.t)+'</span></span>';
+  t.innerHTML='<img src="/learning/badges/'+b.id+'.png" alt="" style="width:28px;height:28px;object-fit:contain;flex:none;"><span><b style="font-size:13px;">Abzeichen freigeschaltet</b><br><span style="font-size:12px;opacity:.85;">'+RT_LRN_esc(b.t)+'</span></span>';
   document.body.appendChild(t);
   setTimeout(function(){ t.style.transition='opacity .5s'; t.style.opacity='0'; setTimeout(function(){ try{t.remove();}catch(e){} },500); },2600);
 }
@@ -5827,7 +5827,7 @@ function RT_LRN_renderHub(){
     + RT_LRN_rubrikCard('pr','🎓','Platzreife',(pr+' / '+T.platzreife+' Kapitel')+(ex.passed?' · bestanden ✓':(ex.best?(' · Best '+ex.best+'%'):'')),pctOf(pr,T.platzreife),'#8e5bd0')
     + RT_LRN_rubrikCard('video','🎬','Videoakademie',vd+' / '+T.videos+' Videos angesehen',pctOf(vd,T.videos),'#d94a6a');
   var badgeHtml=RT_LRN_BADGES.map(function(b){ var has=badges.indexOf(b.id)>=0;
-    return '<div title="'+RT_LRN_esc(b.d)+'" style="width:60px;text-align:center;opacity:'+(has?'1':'.32')+';filter:'+(has?'none':'grayscale(1)')+';"><div style="font-size:25px;line-height:1;">'+b.ic+'</div><div style="font-size:9px;color:#5d7060;margin-top:3px;line-height:1.1;">'+RT_LRN_esc(b.t)+'</div></div>';
+    return '<div title="'+RT_LRN_esc(b.d)+'" style="width:60px;text-align:center;opacity:'+(has?'1':'.32')+';filter:'+(has?'none':'grayscale(1)')+';"><div style="height:46px;display:flex;align-items:center;justify-content:center;line-height:0;"><img src="/learning/badges/'+b.id+'.png" alt="" style="width:44px;height:44px;object-fit:contain;"></div><div style="font-size:9px;color:#5d7060;margin-top:3px;line-height:1.1;">'+RT_LRN_esc(b.t)+'</div></div>';
   }).join('');
   var badgeSec='<div class="lrncard" style="margin-top:6px;"><div class="lrnsec-h" style="margin-top:0;">Abzeichen ('+badges.length+'/'+RT_LRN_BADGES.length+')</div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:14px 4px;justify-content:space-between;">'+badgeHtml+'</div></div>';

@@ -2,6 +2,7 @@ import { HTML, LANDING_HTML, IMPRESSUM_HTML, DATENSCHUTZ_HTML, AGB_HTML, SW_JS }
 import { handleWind } from './wind.js';
 import { handleWx } from './wx.js';
 import { handleElev } from './elev.js';
+import { handleDgm } from './dgm.js';
 import { handleCourses } from './courses.js';
 import { handleResearch } from './research.js';
 import { handleAccountDelete } from './account.js';
@@ -42,6 +43,9 @@ export default {
     }
     if (url.pathname === "/api/elev") {
       return handleElev(url);
+    }
+    if (url.pathname === "/api/dgm") {
+      return handleDgm(url);
     }
     if (url.pathname === "/api/courses") {
       return handleCourses(url);

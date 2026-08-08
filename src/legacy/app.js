@@ -3431,17 +3431,17 @@ function RT_teePinFit(rd,c,el){
  var wrap=(el&&el.parentElement)?el.parentElement:null;
  var H=(wrap&&wrap.clientHeight)||(el&&el.clientHeight)||520;
  var mLat=(center.lat+pin.lat)/2, mLng=(center.lng+pin.lng)/2;
- var mpp=d/(H*0.70);
+ var mpp=d/(H*0.86);
  var z=Math.log(156543.03392*Math.cos(mLat*Math.PI/180)/mpp)/Math.LN2;
  if(!isFinite(z)) return null;
- z=Math.max(14,Math.min(19,Math.round(z*10)/10));
+ z=Math.max(14,Math.min(17.5,Math.round(z*10)/10));
  return {lat:mLat,lng:mLng,zoom:z};
 }
 function RT_windRoseSvg(d,spd){
  var col=(spd>=25)?'#FF6B6B':(spd>=12?'#F6C35A':'#7FE0A6');
  function pt(a,l,w){ var rad=a*Math.PI/180; return {tx:22+l*Math.sin(rad),ty:22-l*Math.cos(rad),b1x:22+w*Math.cos(rad),b1y:22+w*Math.sin(rad),b2x:22-w*Math.cos(rad),b2y:22-w*Math.sin(rad)}; }
  function star(a,l,fa,fb){ var p=pt(a,l,3.2); return '<path d="M'+p.tx.toFixed(1)+' '+p.ty.toFixed(1)+' L22 22 L'+p.b1x.toFixed(1)+' '+p.b1y.toFixed(1)+' Z" fill="'+fa+'"/><path d="M'+p.tx.toFixed(1)+' '+p.ty.toFixed(1)+' L22 22 L'+p.b2x.toFixed(1)+' '+p.b2y.toFixed(1)+' Z" fill="'+fb+'"/>'; }
- var g='<svg viewBox="0 0 44 44" width="46" height="46" style="flex:none;">';
+ var g='<svg viewBox="0 0 44 44" width="46" height="46" style="flex:none;width:46px;height:46px;display:block;">';
  g+='<circle cx="22" cy="22" r="20" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1"/>';
  for(var i=0;i<24;i++){ var a=i*15*Math.PI/180, r1=(i%6===0)?16.5:18; g+='<line x1="'+(22+r1*Math.sin(a)).toFixed(1)+'" y1="'+(22-r1*Math.cos(a)).toFixed(1)+'" x2="'+(22+19.5*Math.sin(a)).toFixed(1)+'" y2="'+(22-19.5*Math.cos(a)).toFixed(1)+'" stroke="rgba(255,255,255,.4)" stroke-width="'+(i%6===0?1.3:0.8)+'"/>'; }
  [45,135,225,315].forEach(function(a){ g+=star(a,9,'rgba(255,255,255,.55)','rgba(255,255,255,.85)'); });
@@ -3453,11 +3453,11 @@ function RT_windRoseSvg(d,spd){
 }
 function RT_thermoSvg(t){
  var col=(t!==undefined&&t!==null)?((t<=4)?'#7FB6FF':(t>=24?'#FF8A5B':'#eaf2ea')):'#eaf2ea';
- return '<svg viewBox="0 0 24 24" width="12" height="14" style="flex:none;"><path d="M13 13.5V5a2.2 2.2 0 10-4.4 0v8.5a3.6 3.6 0 104.4 0z" fill="none" stroke="'+col+'" stroke-width="1.7"/><rect x="10.1" y="7" width="1.8" height="6.6" rx="0.9" fill="'+col+'"/><circle cx="11" cy="17.3" r="2.2" fill="'+col+'"/></svg>';
+ return '<svg viewBox="0 0 24 24" width="12" height="14" style="flex:none;width:12px;height:14px;display:block;"><path d="M13 13.5V5a2.2 2.2 0 10-4.4 0v8.5a3.6 3.6 0 104.4 0z" fill="none" stroke="'+col+'" stroke-width="1.7"/><rect x="10.1" y="7" width="1.8" height="6.6" rx="0.9" fill="'+col+'"/><circle cx="11" cy="17.3" r="2.2" fill="'+col+'"/></svg>';
 }
 function RT_windGlyphSvg(sz,col){
  col=col||'#eaf2ea';
- return '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" style="flex:none;"><g fill="none" stroke="'+col+'" stroke-width="1.7" stroke-linecap="round"><path d="M3 8h8.2a2.1 2.1 0 10-2.1-2.1"/><path d="M3 12h12.5a2.3 2.3 0 11-2.3 2.3"/><path d="M3 16h6.5"/></g></svg>';
+ return '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" style="flex:none;width:'+sz+'px;height:'+sz+'px;display:block;"><g fill="none" stroke="'+col+'" stroke-width="1.7" stroke-linecap="round"><path d="M3 8h8.2a2.1 2.1 0 10-2.1-2.1"/><path d="M3 12h12.5a2.3 2.3 0 11-2.3 2.3"/><path d="M3 16h6.5"/></g></svg>';
 }
 function RT_windOverlayContent(rd,c){
  var w=RT_wind.data;
@@ -3469,7 +3469,7 @@ function RT_windOverlayContent(rd,c){
  var l2=RT_windGlyphSvg(14,'#eaf2ea')+'<span style="font-weight:700;">'+spd+'</span> km/h';
  if(hasT) l2+='<span style="opacity:.4;padding:0 2px;">·</span>'+RT_thermoSvg(w.temp)+'<span style="font-weight:700;">'+Math.round(w.temp)+'°</span>';
  return '<div style="width:58px;height:58px;border-radius:14px;background:rgba(8,20,13,.66);display:flex;align-items:center;justify-content:center;flex:none;">'+RT_windRoseSvg(d,spd)+'</div>'+
-  '<div style="display:flex;flex-direction:column;gap:3px;min-width:0;line-height:1.2;">'+
+  '<div style="display:flex;flex-direction:column;gap:3px;min-width:0;line-height:1.2;text-align:left;">'+
    '<div style="font-size:12.5px;font-weight:700;color:#fff;white-space:nowrap;">'+dir+'</div>'+
    '<div style="font-size:11.5px;color:#e8f0e6;display:flex;align-items:center;gap:4px;white-space:nowrap;">'+l2+'</div>'+
   '</div>';
@@ -3489,7 +3489,7 @@ function RT_grabberOverlayHtml(){
    '<button id="rt-wind-toggle" onclick="RT_toggleWind()" style="'+btn+'opacity:'+(windOn?'1':'0.45')+';"><img src="'+RT_IC_WIND+'" style="width:34px;height:34px;display:block;"></button>'+
    '<button id="rt-grab-toggle" onclick="RT_toggleGrabber()" style="'+btn+'opacity:'+(on?'1':'0.45')+';"><img src="'+RT_IC_ENTF+'" style="width:34px;height:34px;display:block;"></button>'+
   '</div>'+
-  '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:center;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
+  '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
   '<div id="rt-grab-far" style="'+lbl+'top:32%;">–</div>'+
   '<div id="rt-grab-near" style="'+lbl+'top:60%;">–</div>'+
  '</div>';
@@ -5651,7 +5651,7 @@ var RT_LRN_examTimer=null;
 var RT_LRN_lexQuery='';
 
 function RT_LRN_esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function RT_LRN_set(html){ var el=document.getElementById(RT_LRN_panel); if(!el) return; el.innerHTML='<div class="lrnwrap" style="max-width:640px;margin:0 auto;padding:2px 2px 90px;">'+html+'</div>'; try{ el.scrollTop=0; window.scrollTo(0,0); }catch(e){} }
+function RT_LRN_set(html){ var el=document.getElementById(RT_LRN_panel); if(!el) return; el.innerHTML='<div class="lrnwrap" style="max-width:640px;margin:0 auto;padding:2px 2px 4px;">'+html+'</div>'; try{ el.scrollTop=0; window.scrollTo(0,0); }catch(e){} }
 
 /* ---------- Persistenz / Gamification ---------- */
 function RT_LRN_gxp(){ return rtGet('fp_lrn_xp')||0; }
@@ -5755,7 +5755,7 @@ function RT_LRN_ensureStyle(){
 /* ---------- Ringe / kleine Bausteine ---------- */
 function RT_LRN_ring(pct,size,col,inner){
   pct=Math.max(0,Math.min(100,pct||0)); var r=(size-7)/2, cx=size/2, cir=2*Math.PI*r, off=cir*(1-pct/100);
-  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" style="flex:none;">'
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" style="flex:none;width:'+size+'px;height:'+size+'px;display:block;">'
     +'<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="#e6ece6" stroke-width="5"/>'
     +'<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+cir.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 '+cx+' '+cx+')"/>'
     +(inner?('<text x="'+cx+'" y="'+(cx+4)+'" text-anchor="middle" font-size="'+(size*0.28)+'" font-weight="800" fill="#1d3324" font-family="Inter,sans-serif">'+inner+'</text>'):'')

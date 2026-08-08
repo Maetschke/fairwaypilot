@@ -241,7 +241,7 @@ body{display:flex;flex-direction:column;}
   padding:calc(env(safe-area-inset-top,0px) + 14px) 14px 0;
 }
 #app>div{max-width:402px;margin-left:auto;margin-right:auto;}
-#tab-hi,#tab-detail,#tab-runde{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px);}
+#tab-hi,#tab-detail,#tab-runde,#tab-lernen,#tab-analyse{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px);}
 .rt-mapwrap{border-radius:18px;overflow:hidden;}
 .rt-mapwrap .leaflet-control-attribution{font-size:8px;}
 .rt-rcard{position:relative;width:100%;aspect-ratio:16/10;border-radius:16px;overflow:hidden;margin-bottom:12px;cursor:pointer;background:linear-gradient(160deg,#2E7D4F,#143522);box-shadow:0 2px 10px rgba(20,53,34,.14);}
@@ -258,7 +258,7 @@ body{display:flex;flex-direction:column;}
 .rt-rcard-txt .m{font-size:10.5px;font-weight:700;color:rgba(255,255,255,.86);letter-spacing:.4px;margin-top:5px;text-shadow:0 1px 3px rgba(0,0,0,.5);}
 .rt-rcard-sc{flex:none;font-size:38px;font-weight:800;color:#fff;line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.5);}
 .rt-rcard-sc sup{font-size:15px;font-weight:700;margin-left:2px;top:-.75em;}
-.rt-holemap{width:100%;height:180px;border-radius:14px;overflow:hidden;margin-top:8px;background:radial-gradient(ellipse 78% 78% at center,#E4EEDC 0%,#F1F6EC 42%,#FFFFFF 100%);position:relative;cursor:pointer;}
+.rt-holemap{width:100%;height:180px;border-radius:14px;overflow:hidden;margin-top:8px;background:radial-gradient(ellipse 78% 78% at center,#E4EEDC 0%,#F1F6EC 42%,#FFFFFF 100%);position:relative;z-index:1;cursor:pointer;}
 .rt-holemap-tap{position:absolute;right:8px;bottom:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:13px;color:#3C5546;box-shadow:0 1px 4px rgba(20,53,34,.18);pointer-events:none;z-index:1200;}
 .rt-holefull{display:none;position:fixed;inset:0;z-index:9998;background:radial-gradient(ellipse 92% 92% at center,#E4EEDC 0%,#F1F6EC 40%,#FFFFFF 100%);}
 .rt-holefull-close{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:16px;width:38px;height:38px;border-radius:50%;background:#fff;border:1.5px solid #DCE7D4;font-size:18px;color:#3C5546;display:flex;align-items:center;justify-content:center;z-index:2;}

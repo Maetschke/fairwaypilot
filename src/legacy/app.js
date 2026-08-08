@@ -5929,6 +5929,11 @@ function RT_LRN_renderFkHome(){
   RT_LRN_set(html);
 }
 function RT_LRN_shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function RT_LRN_shufOpt(it){
+ var sh=RT_LRN_shuffle([0,1,2,3]);
+ var opts=sh.map(function(k){ return it.optionen[k]; });
+ return {id:it.id,kapitel:it.kapitel,frage:it.frage,optionen:opts,richtig:sh.indexOf(it.richtig),erklaerung:it.erklaerung,schwierigkeit:it.schwierigkeit};
+}
 function RT_LRN_startQuiz(mode,kapitel){
   var all=RT_LRN_data.fragenkatalog||[]; var pool=[];
   if(mode==='fehler'){ var w=RT_LRN_wrongMap(); pool=all.filter(function(x){ return w[x.id]; }); }
@@ -5937,7 +5942,7 @@ function RT_LRN_startQuiz(mode,kapitel){
   pool=RT_LRN_shuffle(pool);
   if(mode==='zufall') pool=pool.slice(0,15);
   if(!pool.length){ RT_LRN_go('fk'); return; }
-  RT_LRN_quiz={mode:mode,kapitel:kapitel,pool:pool,idx:0,correct:0,answers:[],exam:false,title:(kapitel||({lernen:'Lernen',zufall:'Zufallsquiz',fehler:'Fehlerwiederholung'}[mode]||'Quiz'))};
+  RT_LRN_quiz={mode:mode,kapitel:kapitel,pool:pool.map(RT_LRN_shufOpt),idx:0,correct:0,answers:[],exam:false,title:(kapitel||({lernen:'Lernen',zufall:'Zufallsquiz',fehler:'Fehlerwiederholung'}[mode]||'Quiz'))};
   RT_LRN_renderQuiz();
 }
 function RT_LRN_renderQuiz(){
@@ -6031,7 +6036,7 @@ function RT_LRN_startExam(){
     var all=RT_LRN_data.fragenkatalog||[];
     var pool=cfg.quelle_kapitel?all.filter(function(x){ return cfg.quelle_kapitel.indexOf(x.kapitel)>=0; }):all.slice();
     pool=RT_LRN_shuffle(pool).slice(0,cfg.fragen_anzahl||20);
-    RT_LRN_quiz={mode:'pruefung',exam:true,pool:pool,idx:0,correct:0,answers:[],answered:false,timeLeft:(cfg.zeit_minuten||20)*60,passPct:cfg.bestehen_prozent||75,title:'Prüfung'};
+    RT_LRN_quiz={mode:'pruefung',exam:true,pool:pool.map(RT_LRN_shufOpt),idx:0,correct:0,answers:[],answered:false,timeLeft:(cfg.zeit_minuten||20)*60,passPct:cfg.bestehen_prozent||75,title:'Prüfung'};
     RT_LRN_renderQuiz(); RT_LRN_startExamTimerTick();
   });
 }
@@ -6065,37 +6070,35 @@ function RT_LRN_finishExam(timeUp){
 
 /* ---------- Videoakademie (Zwei-Klick, nocookie) ---------- */
 function RT_LRN_renderVideo(){
-  var d=RT_LRN_data.videoakademie||{}; var cats=d.kategorien||[];
-  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">🎬 Videoakademie</div></div>';
-  html+='<div style="margin:0 2px 12px;padding:11px 13px;background:#fbfaf3;border:1px solid #eee6c8;border-radius:12px;font-size:11.5px;line-height:1.5;color:#6b6444;">🔒 Videos werden erst nach deinem Klick von YouTube (Modus ohne Cookies) geladen.</div>';
-  cats.forEach(function(cat,ci){
-    html+='<div class="lrnsec-h">'+RT_LRN_esc(cat.kategorie)+'</div>';
-    (cat.videos||[]).forEach(function(v,vi){
-      var thumb='https://i.ytimg.com/vi/'+v.youtubeId+'/hqdefault.jpg';
-      html+='<div class="lrncard" style="padding:0;overflow:hidden;margin-bottom:11px;" id="lrn-vid-'+ci+'-'+vi+'">'
-        +'<button onclick="RT_LRN_playVideo('+ci+','+vi+')" style="display:block;width:100%;border:none;background:none;padding:0;cursor:pointer;position:relative;">'
-        +'<div style="position:relative;width:100%;aspect-ratio:16/9;background:#000;"><img src="'+thumb+'" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy">'
-        +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><div style="width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:22px;margin-left:3px;">▶</span></div></div>'
-        +(v.dauer?'<div style="position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.8);color:#fff;font-size:11px;padding:2px 6px;border-radius:5px;">'+RT_LRN_esc(v.dauer)+'</div>':'')+'</div></button>'
-        +'<div style="padding:11px 13px;"><div style="font-size:14px;font-weight:700;color:#1d3324;line-height:1.35;">'+RT_LRN_esc(v.titel)+'</div>'
-        +'<div style="font-size:12px;color:#5d7060;margin-top:3px;">'+RT_LRN_esc(v.kanal)+'</div>'
-        +(v.beschreibung?'<div style="font-size:12.5px;color:#4a5a4e;margin-top:6px;line-height:1.45;">'+RT_LRN_esc(v.beschreibung)+'</div>':'')+'</div></div>';
-    });
+ var d=RT_LRN_data.videoakademie||{}; var cats=d.kategorien||[];
+ var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">🎬 Videoakademie</div></div>';
+ html+='<div style="margin:0 2px 12px;padding:11px 13px;background:#fbfaf3;border:1px solid #eee6c8;border-radius:12px;font-size:11.5px;line-height:1.5;color:#6b6444;">🔒 YouTube im Modus ohne Cookies. Ein Tipp auf das Video startet es direkt.</div>';
+ cats.forEach(function(cat){
+  html+='<div class="lrnsec-h">'+RT_LRN_esc(cat.kategorie)+'</div>';
+  (cat.videos||[]).forEach(function(v){ var seen=RT_LRN_doneMap()['vid:'+v.youtubeId];
+   html+='<div class="lrncard" style="padding:0;overflow:hidden;margin-bottom:11px;">'
+    +'<div style="position:relative;width:100%;aspect-ratio:16/9;background:#000;"><iframe src="https://www.youtube-nocookie.com/embed/'+v.youtubeId+'?rel=0&playsinline=1" title="'+RT_LRN_esc(v.titel)+'" loading="lazy" allow="accelerometer;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe></div>'
+    +'<div style="padding:11px 13px;"><div style="font-size:14px;font-weight:700;color:#1d3324;line-height:1.35;">'+RT_LRN_esc(v.titel)+'</div>'
+    +'<div style="font-size:12px;color:#5d7060;margin-top:3px;">'+RT_LRN_esc(v.kanal)+'</div>'
+    +(v.beschreibung?'<div style="font-size:12.5px;color:#4a5a4e;margin-top:6px;line-height:1.45;">'+RT_LRN_esc(v.beschreibung)+'</div>':'')
+    +'<button class="lrnbtn '+(seen?'lrnbtn-p':'lrnbtn-s')+'" style="margin-top:10px;padding:7px 14px;font-size:13px;" onclick="RT_LRN_markVideo(\''+v.youtubeId+'\')">'+(seen?'✓ Gesehen':'Als gesehen markieren')+'</button>'
+    +'</div></div>';
   });
-  RT_LRN_set(html);
+ });
+ RT_LRN_set(html);
 }
-function RT_LRN_playVideo(ci,vi){
-  var d=RT_LRN_data.videoakademie||{}; var v=((d.kategorien||[])[ci]||{}).videos[vi]; if(!v) return;
-  RT_LRN_gain(5,'vid:'+v.youtubeId);
-  var host=document.getElementById('lrn-vid-'+ci+'-'+vi); if(!host) return;
-  host.innerHTML='<div style="position:relative;width:100%;aspect-ratio:16/9;background:#000;"><iframe src="https://www.youtube-nocookie.com/embed/'+v.youtubeId+'?autoplay=1&playsinline=1&rel=0" title="'+RT_LRN_esc(v.titel)+'" allow="accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe></div>'
-    +'<div style="padding:11px 13px;"><div style="font-size:14px;font-weight:700;color:#1d3324;line-height:1.35;">'+RT_LRN_esc(v.titel)+'</div><div style="font-size:12px;color:#5d7060;margin-top:3px;">'+RT_LRN_esc(v.kanal)+'</div></div>';
+function RT_LRN_markVideo(yid){
+ var d=RT_LRN_doneMap();
+ if(d['vid:'+yid]){ delete d['vid:'+yid]; rtSet('fp_lrn_done',d); }
+ else { RT_LRN_gain(5,'vid:'+yid); }
+ RT_LRN_go('video');
 }
 /* ===== Ende Lernbereich ===== */
 
 /* ============================================================
-   Golfbag - Schlaegerauswahl (Konto-Bereich)
-   Speicher: localStorage 'fp_bag' = { <clubId>: {d:<meter|null>} }
+   Golfbag - Schlaegerauswahl (Konto). Markenneutrale Inline-SVGs:
+   je Schlaeger ein eigener Kopf (Groesse/Loft), dynamisch gefaechert
+   aus dem oberen Bag-Teil. Speicher: localStorage 'fp_bag' = { <id>:{d} }
    ============================================================ */
 var RT_BAG_CLUBS=[
  {id:'dr',l:'Driver'},{id:'3w',l:'Holz 3'},{id:'5w',l:'Holz 5'},{id:'7w',l:'Holz 7'},
@@ -6105,40 +6108,132 @@ var RT_BAG_CLUBS=[
  {id:'pw',l:'Pitching Wedge (PW)'},{id:'gw',l:'Gap Wedge (GW)'},{id:'sw',l:'Sand Wedge (SW)'},{id:'lw',l:'Lob Wedge (LW)'},
  {id:'putter',l:'Putter'}
 ];
+var RT_CLUB_META={
+ dr:{t:'wood',s:1.0},'3w':{t:'wood',s:0.84},'5w':{t:'wood',s:0.78},'7w':{t:'wood',s:0.73},
+ '2h':{t:'hyb',s:0.80},'3h':{t:'hyb',s:0.76},'4h':{t:'hyb',s:0.72},'5h':{t:'hyb',s:0.69},
+ '3i':{t:'iron',lo:18},'4i':{t:'iron',lo:22},'5i':{t:'iron',lo:26},'6i':{t:'iron',lo:30},'7i':{t:'iron',lo:34},'8i':{t:'iron',lo:38},'9i':{t:'iron',lo:42},
+ pw:{t:'wedge',lo:47},gw:{t:'wedge',lo:51},sw:{t:'wedge',lo:56},lw:{t:'wedge',lo:60},
+ putter:{t:'putter'}
+};
+/* Innen-Pfade eines Kopfes im Raum 0..60 x 0..100 (Kopf oben, Schaft nach unten) */
+function RT_clubHeadPaths(id){
+ var m=RT_CLUB_META[id]||{t:'iron',lo:30};
+ var SIL='#cfd4d9',SILD='#9aa1a8',SILH='#eef1f4',EDGE='#7d848b',SH='#b7bcc2';
+ var cx=25, s='';
+ s+='<rect x="'+(cx-1.5)+'" y="40" width="3" height="58" rx="1.5" fill="'+SH+'"/>';
+ s+='<rect x="'+(cx-1.5)+'" y="40" width="1.2" height="58" rx="0.6" fill="'+SILH+'" opacity=".7"/>';
+ if(m.t==='wood'||m.t==='hyb'){
+  var big=(m.t==='wood'); var rx=(big?15:11)*(m.s||1), ry=(big?11:9)*(m.s||1);
+  var cyH=30, cxH=cx+rx*0.55;
+  s+='<rect x="'+(cx-1.6)+'" y="24" width="3.2" height="12" rx="1.6" fill="'+SILD+'"/>';
+  s+='<g transform="rotate(-16 '+cxH+' '+cyH+')">';
+  s+='<ellipse cx="'+cxH+'" cy="'+cyH+'" rx="'+rx+'" ry="'+ry+'" fill="'+SIL+'" stroke="'+EDGE+'" stroke-width="1"/>';
+  s+='<ellipse cx="'+(cxH-rx*0.25)+'" cy="'+(cyH-ry*0.35)+'" rx="'+(rx*0.55)+'" ry="'+(ry*0.4)+'" fill="'+SILH+'" opacity=".75"/>';
+  s+='<line x1="'+(cxH+rx*0.7)+'" y1="'+(cyH-ry*0.5)+'" x2="'+(cxH+rx*0.75)+'" y2="'+(cyH+ry*0.6)+'" stroke="'+SILD+'" stroke-width="1.4"/>';
+  s+='</g>';
+ } else if(m.t==='putter'){
+  s+='<rect x="'+(cx-1.6)+'" y="24" width="3.2" height="14" rx="1.6" fill="'+SILD+'"/>';
+  s+='<rect x="'+(cx-13)+'" y="34" width="34" height="9" rx="3" fill="'+SIL+'" stroke="'+EDGE+'" stroke-width="1"/>';
+  s+='<rect x="'+(cx-11)+'" y="35.5" width="30" height="2.4" rx="1.2" fill="'+SILH+'" opacity=".8"/>';
+  s+='<rect x="'+(cx+3)+'" y="34" width="2" height="9" fill="'+SILD+'" opacity=".6"/>';
+ } else {
+  var lo=m.lo||30, wedge=(m.t==='wedge'); var bw=wedge?17:19, bh=wedge?20:23, topY=18, cyB=topY+bh/2;
+  s+='<rect x="'+(cx-1.6)+'" y="14" width="3.2" height="12" rx="1.6" fill="'+SILD+'"/>';
+  var rot=(lo-30)*0.5;
+  s+='<g transform="rotate('+rot.toFixed(1)+' '+cx+' '+cyB+')">';
+  s+='<path d="M'+(cx-3)+' '+topY+' Q'+(cx-4)+' '+topY+' '+(cx-4)+' '+(topY+3)+' L'+(cx-4)+' '+(topY+bh-4)+' Q'+(cx-4)+' '+(topY+bh)+' '+(cx-1)+' '+(topY+bh)+' L'+(cx+bw-3)+' '+(topY+bh)+' Q'+(cx+bw)+' '+(topY+bh)+' '+(cx+bw)+' '+(topY+bh-4)+' L'+(cx+bw-1)+' '+(topY+4)+' Q'+(cx+bw-2)+' '+topY+' '+(cx+bw-5)+' '+topY+' Z" fill="'+SIL+'" stroke="'+EDGE+'" stroke-width="1"/>';
+  s+='<line x1="'+(cx+bw-2)+'" y1="'+(topY+3)+'" x2="'+(cx+bw-3)+'" y2="'+(topY+bh-2)+'" stroke="'+SILD+'" stroke-width="1.3"/>';
+  for(var g=0;g<4;g++){ var gy=topY+6+g*4; s+='<line x1="'+(cx+2)+'" y1="'+gy+'" x2="'+(cx+bw-4)+'" y2="'+gy+'" stroke="'+SILD+'" stroke-width="0.7" opacity=".55"/>'; }
+  s+='<rect x="'+(cx-2)+'" y="'+(topY+2)+'" width="3" height="'+(bh-4)+'" rx="1" fill="'+SILH+'" opacity=".6"/>';
+  s+='</g>';
+ }
+ return s;
+}
+/* Standalone-Kopf-Icon (Kopf + kurzer Schaft) fuer die Liste */
+function RT_clubHead(id,h){
+ var w=h*0.62;
+ return '<svg viewBox="0 0 60 62" width="'+w+'" height="'+h+'" style="flex:none;width:'+w+'px;height:'+h+'px;display:block;overflow:visible;">'+RT_clubHeadPaths(id)+'</svg>';
+}
+/* Bag (oberer Teil) mit dynamisch gefaecherten Schlaegern */
+function RT_bagGraphic(inBag,w){
+ w=w||236; var vbW=220,vbH=210,h=w*vbH/vbW;
+ var BODY='#20573b',BODY2='#2f6d4a',BAND='#173f2b',RIM='#123521',INNER='#0c2417',TRIM='#e8b45a',DIV='#0f2e1e';
+ var LEN={dr:1.0,'3w':.95,'5w':.92,'7w':.90,'2h':.86,'3h':.84,'4h':.82,'5h':.80,'3i':.77,'4i':.75,'5i':.73,'6i':.71,'7i':.69,'8i':.67,'9i':.65,pw:.60,gw:.58,sw:.56,lw:.54,putter:.68};
+ var cx=110, rimY=150;
+ var s='<svg viewBox="0 0 '+vbW+' '+vbH+'" width="'+w+'" height="'+h+'" style="width:'+w+'px;height:'+h+'px;display:block;overflow:visible;">';
+ var ids=inBag.slice().sort(function(a,b){return (LEN[b]||.7)-(LEN[a]||.7);});
+ var n=ids.length;
+ function place(id,x,pivotY,lean){ var L=LEN[id]||.7, sc=0.9; var yShift=-(L-0.54)*70;
+  return '<g transform="rotate('+lean.toFixed(1)+' '+x+' '+pivotY+') translate('+(x-25*sc)+' '+((pivotY)-100*sc+yShift)+') scale('+sc+')">'+RT_clubHeadPaths(id)+'</g>'; }
+ var backG='',frontG='';
+ if(n>0){
+  var half=Math.ceil(n/2), back=ids.slice(0,half), front=ids.slice(half);
+  var innerL=cx-46, innerR=cx+46;
+  function spread(arr,pivotY){ var g='',m=arr.length;
+   for(var i=0;i<m;i++){ var x=(m===1)?cx:(innerL+(innerR-innerL)*i/(m-1));
+    var lean=(x-cx)/46*8+(i%2?2:-2); g+=place(arr[i],x,pivotY,lean); } return g; }
+  backG=spread(back,rimY-4); frontG=spread(front,rimY+9);
+ }
+ s+='<path d="M46 '+vbH+' L40 122 Q40 106 60 102 L160 102 Q180 106 180 122 L174 '+vbH+' Z" fill="'+BODY+'"/>';
+ s+='<path d="M120 102 Q180 106 180 122 L174 '+vbH+' L150 '+vbH+' L120 102 Z" fill="'+BODY2+'" opacity=".5"/>';
+ s+='<rect x="52" y="158" width="116" height="20" rx="5" fill="'+BAND+'"/>';
+ s+='<circle cx="110" cy="168" r="5.5" fill="none" stroke="'+TRIM+'" stroke-width="2"/>';
+ s+='<ellipse cx="'+cx+'" cy="'+rimY+'" rx="72" ry="20" fill="'+RIM+'"/>';
+ s+='<ellipse cx="'+cx+'" cy="'+(rimY-2)+'" rx="66" ry="16" fill="'+INNER+'"/>';
+ s+='<g stroke="'+DIV+'" stroke-width="1.5" opacity=".9">';
+ s+='<line x1="'+(cx-44)+'" y1="'+(rimY-12)+'" x2="'+(cx-44)+'" y2="'+(rimY+12)+'"/>';
+ s+='<line x1="'+(cx-15)+'" y1="'+(rimY-15)+'" x2="'+(cx-15)+'" y2="'+(rimY+14)+'"/>';
+ s+='<line x1="'+(cx+15)+'" y1="'+(rimY-15)+'" x2="'+(cx+15)+'" y2="'+(rimY+14)+'"/>';
+ s+='<line x1="'+(cx+44)+'" y1="'+(rimY-12)+'" x2="'+(cx+44)+'" y2="'+(rimY+12)+'"/>';
+ s+='<path d="M'+(cx-60)+' '+(rimY-6)+' Q'+cx+' '+(rimY+2)+' '+(cx+60)+' '+(rimY-6)+'" fill="none"/>';
+ s+='<path d="M'+(cx-60)+' '+(rimY+6)+' Q'+cx+' '+(rimY+14)+' '+(cx+60)+' '+(rimY+6)+'" fill="none"/></g>';
+ s+=backG;
+ s+='<path d="M'+(cx-72)+' '+rimY+' A72 20 0 0 0 '+(cx+72)+' '+rimY+' A72 11 0 0 1 '+(cx-72)+' '+rimY+' Z" fill="'+RIM+'"/>';
+ s+='<path d="M'+(cx-72)+' '+rimY+' A72 20 0 0 0 '+(cx+72)+' '+rimY+'" fill="none" stroke="'+TRIM+'" stroke-width="2.4"/>';
+ s+=frontG;
+ s+='</svg>'; return s;
+}
 function RT_bagData(){ return rtGet('fp_bag')||{}; }
 function RT_bagSave(b){ rtSet('fp_bag',b); }
 function RT_bagCount(){ var b=RT_bagData(),n=0; for(var k in b){ if(b.hasOwnProperty(k)) n++; } return n; }
+function RT_bagInOrder(){ var b=RT_bagData(); return RT_BAG_CLUBS.filter(function(c){ return b[c.id]; }); }
 function RT_bagAdd(id){ var b=RT_bagData(); if(!b[id]) b[id]={d:null}; RT_bagSave(b); RT_render(); }
 function RT_bagRemove(id){ var b=RT_bagData(); delete b[id]; RT_bagSave(b); RT_render(); }
 function RT_bagAddAll(){ var b=RT_bagData(); RT_BAG_CLUBS.forEach(function(c){ if(!b[c.id]) b[c.id]={d:null}; }); RT_bagSave(b); RT_render(); }
 function RT_bagDist(id,val){ var b=RT_bagData(); if(!b[id]) b[id]={d:null}; var n=parseInt(val,10); b[id].d=(isNaN(n)?null:n); RT_bagSave(b); }
 function RT_rBag(){
  var b=RT_bagData();
+ var inBag=RT_bagInOrder();
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'user\')">&#8249;</button>'+
   '<div class="rt-h1" style="font-size:18px;">Golfbag</div></div>';
- var inBag=RT_BAG_CLUBS.filter(function(c){ return b[c.id]; });
+ // Bag-Grafik ueber der Box
+ h+='<div style="display:flex;justify-content:center;margin:2px 0 6px;">'+RT_bagGraphic(inBag.map(function(c){return c.id;}),236)+'</div>';
+ // Dein Bag
  h+='<div class="rtc"><div class="rt-ct">Dein Bag ('+inBag.length+')</div>';
- if(!inBag.length){ h+='<div class="rt-cs" style="margin-bottom:0;">Noch keine Schläger im Bag. Füge unten deine Schläger hinzu.</div>'; }
+ if(!inBag.length){ h+='<div class="rt-cs" style="margin-bottom:0;">Noch keine Schläger im Bag. Füge unten deine Schläger hinzu – sie erscheinen dann im Bag oben.</div>'; }
  else{
   h+='<div class="rt-cs">Trage optional deine durchschnittliche Schlaglänge ein.</div>';
   inBag.forEach(function(c){ var d=(b[c.id]&&b[c.id].d!=null)?b[c.id].d:'';
-   h+='<div class="rt-row" style="align-items:center;gap:8px;margin-top:8px;">'+
+   h+='<div class="rt-row" style="align-items:center;gap:9px;margin-top:8px;">'+
+      '<div style="width:26px;display:flex;justify-content:center;flex:none;">'+RT_clubHead(c.id,34)+'</div>'+
       '<div style="flex:1;font-weight:600;color:#143522;">'+rtEsc(c.l)+'</div>'+
-      '<input class="rt-inp" style="width:74px;margin:0;text-align:right;" inputmode="numeric" placeholder="–" value="'+d+'" onchange="RT_bagDist(\''+c.id+'\',this.value)">'+
+      '<input class="rt-inp" style="width:70px;margin:0;text-align:right;" inputmode="numeric" placeholder="–" value="'+d+'" onchange="RT_bagDist(\''+c.id+'\',this.value)">'+
       '<span style="color:#5d7060;font-size:13px;">m</span>'+
       '<button class="rt-btn3" style="color:#B03A3A;padding:4px 6px;font-size:15px;" onclick="RT_bagRemove(\''+c.id+'\')">&#10005;</button>'+
       '</div>';
   });
  }
  h+='</div>';
+ // Hinzufuegen
  var avail=RT_BAG_CLUBS.filter(function(c){ return !b[c.id]; });
  if(avail.length){
   h+='<div class="rtc"><div style="display:flex;justify-content:space-between;align-items:center;">'+
      '<div class="rt-ct" style="margin:0;">Schläger hinzufügen</div>'+
      '<button class="rt-btn3" style="color:#1F8A4D;font-weight:700;padding:4px 6px;" onclick="RT_bagAddAll()">Alle</button></div>';
   avail.forEach(function(c){
-   h+='<div class="rt-row" style="align-items:center;gap:8px;margin-top:8px;">'+
+   h+='<div class="rt-row" style="align-items:center;gap:9px;margin-top:8px;">'+
+      '<div style="width:26px;display:flex;justify-content:center;flex:none;">'+RT_clubHead(c.id,34)+'</div>'+
       '<div style="flex:1;color:#143522;">'+rtEsc(c.l)+'</div>'+
       '<button class="rt-btn2" style="width:auto;padding:6px 16px;" onclick="RT_bagAdd(\''+c.id+'\')">Hinzufügen</button></div>';
   });

@@ -52,4 +52,5 @@ console.log('public/ mit statischen Icons erzeugt.');
 cpSync(r('assets/hv'), resolve(pub, 'hv'), { recursive: true });
 cpSync(r('assets/round-bg'), resolve(pub, 'round-bg'), { recursive: true });
 cpSync(r('assets/course-images'), resolve(pub, 'course-images'), { recursive: true });
+try { cpSync(r('assets/vendor'), resolve(pub, 'vendor'), { recursive: true }); } catch (e) { /* vendor optional */ }
 console.log('public/ mit Icons, Rundenbildern und Platzbildern erzeugt.');

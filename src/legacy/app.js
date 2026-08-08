@@ -1469,6 +1469,7 @@ function RT_rUser(){
   (RT_state.nameMsg?'<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(RT_state.nameMsg)+'</div>':'')+
   '</div>';
   h+='<div class="rtc"><div class="rt-ct">Golfbag</div><div class="rt-cs" style="margin-bottom:8px;">'+(RT_bagCount()?(RT_bagCount()+' Schläger im Bag'):'Noch keine Schläger ausgewählt')+'</div><button class="rt-btn2" onclick="RT_go(\'bag\')">Schlägerauswahl &#8250;</button></div>';
+ h+='<div class="rtc"><div class="rt-ct">Verbundene Dienste</div><div class="rt-cs" style="margin-bottom:8px;">'+RT_svcSummaryLine()+'</div><button class="rt-btn2" onclick="RT_go(\'services\')">Dienste verwalten &#8250;</button></div>';
  h+='<div class="rtc"><div class="rt-ct">Eigenes Handicap</div>'+
   '<div class="rt-cs">Wird bei einer neuen Runde als Standard-HI vorbelegt, statt jedes Mal 54 eintragen zu m\u00fcssen.</div>'+
   '<input class="rt-inp" id="usr-hcp" type="number" step="0.1" min="-10" max="54" value="'+rtEsc(RT_ownHandicapStored())+'" placeholder="z.\u2009B. 24.5" style="margin-bottom:8px;">'+
@@ -4122,14 +4123,9 @@ function RT_gvInit(){
 }
 function RT_gvLoadGeotiff(cb){
  if(window.GeoTIFF){ cb(null); return; }
- var sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/geotiff/2.1.3/dist-browser/geotiff.min.js';
- sc.onload=function(){ cb(window.GeoTIFF?null:'no_global'); };
- sc.onerror=function(){
-  var s2=document.createElement('script'); s2.src='https://cdnjs.cloudflare.com/ajax/libs/geotiff/2.1.3/geotiff.min.js';
-  s2.onload=function(){ cb(window.GeoTIFF?null:'no_global'); }; s2.onerror=function(){ cb('load_fail'); };
-  document.head.appendChild(s2);
- };
- document.head.appendChild(sc);
+ function load(src,next){ var sc=document.createElement('script'); sc.src=src; sc.onload=function(){ if(window.GeoTIFF) cb(null); else next(); }; sc.onerror=next; document.head.appendChild(sc); }
+ // Primär same-origin (kein CDN/CSP-Risiko), Fallback jsDelivr. Datei: dist-browser/geotiff.js (UMD, setzt window.GeoTIFF).
+ load('/vendor/geotiff.js?v=213', function(){ load('https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js', function(){ cb('load_fail'); }); });
 }
 function RT_gvLoad(){
  var p=RT_GV.pin, size=RT_GV.size;
@@ -4450,9 +4446,226 @@ function RT_render(){
  else if(RT_state.screen==='courseMap'){ r.innerHTML=RT_rCourseMap(); RT_cmInit(); }
  else if(RT_state.screen==='myCourses')r.innerHTML=RT_rMyCourses();
  else if(RT_state.screen==='user')r.innerHTML=RT_rUser();
+ else if(RT_state.screen==='services')r.innerHTML=RT_rServices();
  else r.innerHTML=RT_rHome();
 }
 function RT_go(s){if(s!=='play')RT_stopGeoWatch();RT_state.screen=s;RT_state.ask='';RT_render();var _ap=document.getElementById('app');if(_ap)_ap.scrollTop=0;}
+
+/* ============================================================
+   M7 · Verbundene Dienste (Konto)
+   Adapter-Rahmen zum Verbinden/Trennen externer Datenquellen mit ausdrücklicher
+   Einwilligung vor jeder Übertragung. Reihenfolge laut Roadmap: Apple Health → FIT-Import
+   → Garmin Cloud. OAuth-/Cloud-Anbindungen laufen später serverseitig im Worker; hier ist
+   der clientseitige Rahmen + der erste real funktionierende Adapter: FIT-Datei-Import.
+   Ehrlich: Apple Health braucht die native iOS-App (HealthKit, kein Browser-Zugriff);
+   Garmin Connect nimmt aktuell keine Neuanträge (Golf-Premium-API erst nach Store-Launch).
+   FIT-Import läuft komplett lokal auf dem Gerät – die Datei verlässt das Gerät nicht.
+   ============================================================ */
+var RT_SVC_KEY='fp_services_v1';
+function RT_svcState(){ return rtGet(RT_SVC_KEY)||{}; }
+function RT_svcGet(id){ var s=RT_svcState(); return s[id]||{}; }
+function RT_svcSet(id,patch){ var s=RT_svcState(); s[id]=Object.assign({},s[id]||{},patch); rtSet(RT_SVC_KEY,s); }
+
+/* Adapter-Registry. available=false → Karte informativ (noch nicht im Browser nutzbar). */
+var RT_SERVICES=[
+ { id:'applehealth', name:'Apple Health', tint:'#FF4E64', available:false, availLabel:'Nur in der iOS-App',
+   icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="#FF4E64"><path d="M12 21s-7.5-4.6-10-9.3C.3 8.3 2 4.5 5.6 4.5c2 0 3.3 1.2 4.4 2.6 1.1-1.4 2.4-2.6 4.4-2.6 3.6 0 5.3 3.8 3.6 7.2C19.5 16.4 12 21 12 21z"/></svg>',
+   desc:'Aktivitäten, Schritte und Herzfrequenz aus Apple Health – als Kontext zu deinen Runden.',
+   note:'Apple Health ist nur über die native iOS-App (HealthKit) erreichbar, nicht im Browser. Sobald FairwayPilot im App Store ist, kannst du die Verbindung hier mit ausdrücklicher Einwilligung aktivieren.' },
+ { id:'fit', name:'FIT-Datei-Import', tint:'#1F8A4D', available:true, availLabel:'Verfügbar',
+   icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F8A4D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 18v-6"/><path d="M9 15l3 3 3-3"/></svg>',
+   desc:'Runde als .FIT-Datei von einer Garmin-/Kompatibel-Uhr einlesen und die Kennzahlen prüfen. Läuft lokal auf dem Gerät.' },
+ { id:'garmin', name:'Garmin Connect', tint:'#0B7CC1', available:false, availLabel:'Nach Store-Launch',
+   icon:'<svg width="22" height="22" viewBox="0 0 24 24" fill="#0B7CC1"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3.2 2.1 4.4 4.7.6-3.5 3.2 1 4.7L12 15.9 7.7 18.3l1-4.7-3.5-3.2 4.7-.6L12 5.2z"/></svg>',
+   desc:'Runden direkt aus der Garmin-Cloud übernehmen (Golf-Premium-API).',
+   note:'Das Garmin-Connect-Programm nimmt derzeit keine Neuanträge an; die Golf-Premium-API wird erst nach dem Store-Launch freigeschaltet. Die Antragsmail liegt bereit. Bis dahin nutze den FIT-Datei-Import oben.' }
+];
+function RT_svcById(id){ for(var i=0;i<RT_SERVICES.length;i++){ if(RT_SERVICES[i].id===id) return RT_SERVICES[i]; } return null; }
+function RT_svcSummaryLine(){
+ var st=RT_svcState(); var conn=0;
+ for(var i=0;i<RT_SERVICES.length;i++){ if(st[RT_SERVICES[i].id]&&st[RT_SERVICES[i].id].connected) conn++; }
+ var fit=RT_svcGet('fit');
+ if(fit&&fit.last) return 'Zuletzt importiert: '+RT_svcFmtWhen(fit.last.at);
+ if(conn>0) return conn+' Dienst'+(conn===1?'':'e')+' verbunden';
+ return 'Apple Health · FIT-Import · Garmin – noch nichts verbunden';
+}
+function RT_svcFmtWhen(ts){
+ if(!ts) return '–'; var d=new Date(ts);
+ function p(n){ return (n<10?'0':'')+n; }
+ return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+
+/* ---------- Bildschirm ---------- */
+function RT_rServices(){
+ var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
+  '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'user\')">&#8249;</button>'+
+  '<div class="rt-h1" style="font-size:18px;">Verbundene Dienste</div></div>';
+ h+='<div class="rt-cs" style="margin:-4px 2px 12px;">Verbinde externe Datenquellen mit FairwayPilot. Vor jeder Datenübertragung wirst du ausdrücklich um Einwilligung gebeten; du kannst jede Verbindung jederzeit trennen.</div>';
+ for(var i=0;i<RT_SERVICES.length;i++){ h+=RT_svcCard(RT_SERVICES[i]); }
+ h+='<div class="rt-note" style="margin-top:4px;">Deine Daten werden nur mit deiner Einwilligung übertragen. FIT-Dateien werden ausschließlich lokal auf diesem Gerät gelesen und nicht hochgeladen.</div>';
+ return h;
+}
+function RT_svcCard(s){
+ var st=RT_svcGet(s.id);
+ var connected=!!st.connected;
+ var pillBg,pillTx,pillLbl;
+ if(!s.available){ pillBg='rgba(120,132,124,.16)'; pillTx='#6f857a'; pillLbl=s.availLabel; }
+ else if(connected){ pillBg='rgba(31,138,77,.16)'; pillTx='#1F8A4D'; pillLbl='Verbunden'; }
+ else { pillBg='rgba(120,132,124,.14)'; pillTx='#6f857a'; pillLbl='Nicht verbunden'; }
+ var h='<div class="rtc">'+
+  '<div style="display:flex;align-items:center;gap:11px;">'+
+   '<div style="width:40px;height:40px;border-radius:11px;background:'+s.tint+'1a;display:flex;align-items:center;justify-content:center;flex:none;">'+s.icon+'</div>'+
+   '<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:800;color:var(--tx);">'+s.name+'</div>'+
+    '<div style="display:inline-block;margin-top:2px;font-size:11px;font-weight:700;color:'+pillTx+';background:'+pillBg+';border-radius:100px;padding:2px 9px;">'+pillLbl+'</div></div>'+
+  '</div>'+
+  '<div class="rt-cs" style="margin:9px 0 0;">'+s.desc+'</div>';
+
+ if(s.id==='fit'){
+  h+=RT_svcFitBody(st);
+ } else if(!s.available){
+  h+='<div style="font-size:12px;color:#7f948a;line-height:1.5;margin-top:9px;background:rgba(120,132,124,.08);border-radius:11px;padding:10px 12px;">'+s.note+'</div>';
+  if(s.id==='garmin'){
+   h+='<button class="rt-btn2" style="margin-top:10px;" onclick="RT_go(\'user\')">Antragsstatus im Blick behalten</button>';
+  }
+ }
+ h+='</div>';
+ return h;
+}
+function RT_svcFitBody(st){
+ var h='<label class="rt-btn" style="margin-top:11px;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">'+
+   '<span>FIT-Datei wählen</span>'+
+   '<input type="file" accept=".fit,application/octet-stream" style="display:none;" onchange="RT_fitPick(event)"></label>';
+ if(RT_state.fitBusy) h+='<div class="rt-cs" style="margin-top:10px;text-align:center;"><span class="rt-spin"></span>Datei wird gelesen…</div>';
+ if(RT_state.fitErr) h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(RT_state.fitErr)+'</div>';
+ if(st&&st.last){
+  var L=st.last;
+  var rows=[
+   ['Datum', L.date||'–'],
+   ['Sportart', L.sport||'–'],
+   ['Dauer', L.durTxt||'–'],
+   ['Distanz', L.distTxt||'–'],
+   ['GPS-Punkte', (L.pts!=null?String(L.pts):'–')]
+  ];
+  var tbl='';
+  for(var i=0;i<rows.length;i++){
+   tbl+='<div style="display:flex;justify-content:space-between;padding:6px 0;'+(i?'border-top:1px solid var(--ln,#EAF0E7);':'')+'">'+
+    '<span style="font-size:12.5px;color:var(--tx3,#6f857a);">'+rows[i][0]+'</span>'+
+    '<span style="font-size:13px;font-weight:700;color:var(--tx);">'+rtEsc(rows[i][1])+'</span></div>';
+  }
+  h+='<div style="margin-top:11px;background:rgba(31,138,77,.06);border:1px solid rgba(31,138,77,.18);border-radius:12px;padding:8px 13px;">'+
+    '<div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#1F8A4D;margin-bottom:2px;">ZULETZT GELESEN'+(L.golf?' · GOLFRUNDE':'')+'</div>'+
+    tbl+'</div>';
+  h+='<div style="font-size:11px;color:#7f948a;margin-top:8px;line-height:1.5;">'+
+    (L.golf
+      ? 'Als Golfrunde erkannt. Das Übernehmen als vollständige FairwayPilot-Runde (mit Score je Loch) folgt, sobald das genaue Feld­format deiner Uhr abgeglichen ist – schick mir gern eine deiner FIT-Dateien.'
+      : 'Kennzahlen gelesen. FIT enthält je nach Uhr keine Golf-Scores in Standardfeldern; diese lassen sich nicht zuverlässig automatisch übernehmen.')+
+    '</div>';
+  h+='<button class="rt-btn3" style="margin-top:6px;font-size:12px;color:var(--tx3);" onclick="RT_fitClear()">Ergebnis entfernen</button>';
+ }
+ return h;
+}
+function RT_fitClear(){ RT_svcSet('fit',{last:null}); RT_state.fitErr=''; RT_render(); }
+
+/* ---------- FIT-Parser (clientseitig, robust, minimal) ----------
+   Liest Header + Definition-/Data-Messages nach FIT-Spezifikation aus. Extrahiert
+   verlässliche Standardfelder: file_id.time_created, sport, total_distance/elapsed_time
+   (session) und zählt record-Messages mit gültiger GPS-Position. Undokumentierte
+   Golf-Score-Felder werden bewusst NICHT interpretiert. */
+var RT_FIT_SPORT={0:'Allgemein',1:'Laufen',2:'Radfahren',5:'Schwimmen',11:'Gehen',15:'Rudern',17:'Wandern',25:'Golf',37:'SUP',38:'Surfen'};
+var RT_FIT_BASESZ={0:1,1:1,2:1,131:2,132:2,133:4,134:4,7:1,136:4,137:8,10:1,139:2,140:4,13:1,142:8,143:8,144:8};
+function RT_fitPick(ev){
+ var f=ev&&ev.target&&ev.target.files&&ev.target.files[0]; if(!f){ return; }
+ RT_state.fitBusy=true; RT_state.fitErr=''; RT_render();
+ var rd=new FileReader();
+ rd.onerror=function(){ RT_state.fitBusy=false; RT_state.fitErr='Datei konnte nicht gelesen werden.'; RT_render(); };
+ rd.onload=function(){
+  RT_state.fitBusy=false;
+  try{
+   var res=RT_fitParse(rd.result);
+   if(!res.ok){ RT_state.fitErr=res.msg||'Keine gültige FIT-Datei.'; RT_render(); return; }
+   RT_svcSet('fit',{connected:true,last:res.data});
+   RT_state.fitErr='';
+   RT_render();
+  }catch(e){ RT_state.fitErr='FIT-Datei konnte nicht ausgewertet werden.'; RT_render(); }
+ };
+ rd.readAsArrayBuffer(f);
+}
+function RT_fitParse(buf){
+ var dv=new DataView(buf), N=buf.byteLength;
+ if(N<14) return {ok:false,msg:'Datei zu klein für eine FIT-Datei.'};
+ var hdrSize=dv.getUint8(0);
+ if(hdrSize!==12&&hdrSize!==14) return {ok:false,msg:'Kein FIT-Header erkannt.'};
+ var magic=String.fromCharCode(dv.getUint8(8),dv.getUint8(9),dv.getUint8(10),dv.getUint8(11));
+ if(magic!=='.FIT') return {ok:false,msg:'Datei ist keine FIT-Datei (.FIT-Signatur fehlt).'};
+ var dataSize=dv.getUint32(4,true);
+ var pos=hdrSize, end=Math.min(N, hdrSize+dataSize);
+ var defs={}; // localType -> {arch,global,fields:[{num,size,base}], totalSize}
+ var out={time:null,sport:null,dist:null,elapsed:null,start:null,pts:0,golf:false};
+ var guard=0;
+ while(pos<end && guard++<500000){
+  var rh=dv.getUint8(pos++);
+  if(rh&0x80){ // compressed timestamp data message
+   var lt=(rh>>5)&0x03; var d=defs[lt];
+   if(!d){ return {ok:false,msg:'FIT-Struktur unerwartet (fehlende Definition).'}; }
+   RT_fitReadData(dv,pos,d,out); pos+=d.totalSize; continue;
+  }
+  var local=rh&0x0f;
+  if(rh&0x40){ // definition
+   var arch=dv.getUint8(pos+1);
+   var le=(arch===0);
+   var global=dv.getUint16(pos+2,le);
+   var nf=dv.getUint8(pos+4);
+   var p2=pos+5; var fields=[]; var tot=0;
+   for(var i=0;i<nf;i++){ var fn=dv.getUint8(p2), sz=dv.getUint8(p2+1), bt=dv.getUint8(p2+2); fields.push({num:fn,size:sz,base:bt}); tot+=sz; p2+=3; }
+   if(rh&0x20){ var nd=dv.getUint8(p2); p2+=1; for(var j=0;j<nd;j++){ var dsz=dv.getUint8(p2+1); fields.push({num:-1,size:dsz,base:0,dev:true}); tot+=dsz; p2+=3; } }
+   defs[local]={arch:arch,le:le,global:global,fields:fields,totalSize:tot};
+   pos=p2; continue;
+  }
+  // normal data message
+  var def=defs[local];
+  if(!def){ return {ok:false,msg:'FIT-Struktur unerwartet (Datensatz ohne Definition).'}; }
+  RT_fitReadData(dv,pos,def,out); pos+=def.totalSize;
+ }
+ // Ergebnis aufbereiten
+ var data={};
+ var epoch=631065600; // FIT → Unix Sekunden
+ var whenT=(out.time!=null?out.time:(out.start!=null?out.start:null));
+ if(whenT!=null){ var dt=new Date((whenT+epoch)*1000); data.date=RT_fitFmtDate(dt); data.iso=dt.toISOString(); }
+ else data.date='–';
+ data.sport=(out.sport!=null)?(RT_FIT_SPORT[out.sport]||('Sport '+out.sport)):'–';
+ data.golf=(out.sport===25);
+ if(out.dist!=null&&out.dist>0){ var m=out.dist/100; data.distTxt=(m>=1000?(Math.round(m/10)/100+' km'):(Math.round(m)+' m')); }
+ else data.distTxt='–';
+ if(out.elapsed!=null&&out.elapsed>0){ var sec=Math.round(out.elapsed/1000); var hh=Math.floor(sec/3600), mm=Math.floor((sec%3600)/60); data.durTxt=(hh>0?(hh+' h '):'')+mm+' min'; }
+ else data.durTxt='–';
+ data.pts=out.pts;
+ data.at=RT_fitNow();
+ return {ok:true,data:data};
+}
+function RT_fitReadData(dv,pos,def,out){
+ var p=pos, le=def.le;
+ for(var i=0;i<def.fields.length;i++){
+  var f=def.fields[i];
+  if(!f.dev && def.global===0 && f.num===4){ out.time=RT_fitU32(dv,p,le,f); }          // file_id.time_created
+  else if(!f.dev && def.global===12 && f.num===0){ var sv=RT_fitU8(dv,p,f); if(sv!=null) out.sport=sv; } // sport.sport
+  else if(!f.dev && def.global===18){ // session
+   if(f.num===5){ var s2=RT_fitU8(dv,p,f); if(s2!=null&&out.sport==null) out.sport=s2; }
+   else if(f.num===2){ var st=RT_fitU32(dv,p,le,f); if(st!=null) out.start=st; }
+   else if(f.num===7){ var el=RT_fitU32(dv,p,le,f); if(el!=null) out.elapsed=el; }
+   else if(f.num===9){ var ds=RT_fitU32(dv,p,le,f); if(ds!=null) out.dist=ds; }
+  }
+  else if(!f.dev && def.global===20 && (f.num===0||f.num===1)){ // record position
+   var v=RT_fitI32(dv,p,le,f); if(f.num===0 && v!=null && v!==0) out.pts++;
+  }
+  p+=f.size;
+ }
+}
+function RT_fitU8(dv,p,f){ if(f.size<1) return null; var v=dv.getUint8(p); return v===0xFF?null:v; }
+function RT_fitU32(dv,p,le,f){ if(f.size<4) return null; var v=dv.getUint32(p,le); return v===0xFFFFFFFF?null:v; }
+function RT_fitI32(dv,p,le,f){ if(f.size<4) return null; var v=dv.getInt32(p,le); return v===0x7FFFFFFF?null:v; }
+function RT_fitFmtDate(d){ function p(n){ return (n<10?'0':'')+n; } return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear(); }
+function RT_fitNow(){ return (new Date()).getTime(); }
+/* ===== Ende Verbundene Dienste ===== */
 
 function RT_userIcon(){
  var av=sbUser&&sbUser.user_metadata&&sbUser.user_metadata.avatar_url;

@@ -2327,7 +2327,7 @@ async function RT_initHoleFullMap(){
  el.style.transform='rotate('+rotF+'deg)';
  RT_sizeRotatedMap(el,rotF);
  var map=L.map('hole-full-map',{zoomControl:false,attributionControl:true,zoomSnap:0.1}).setView([basePos.lat,basePos.lng],basePos.zoom);
- L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,attribution:'Tiles \u00a9 Esri'}).addTo(map);
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,noWrap:true,errorTileUrl:RT_TRANSPX,attribution:'Tiles \u00a9 Esri'}).addTo(map);
  RT_holeFullMapInst=map;
  /* Leaflets eigenes Dragging MUSS hier ausgeschaltet werden: die Vollbildkarte laeuft ohne
     Kartensperre (RT_applyMapLock gilt nur fuer die kleinen Karten), sonst wuerde Leaflet
@@ -3487,6 +3487,7 @@ function RT_windOverlayContent(rd,c){
      Esri-Basiskarte (Light Gray Canvas). RainViewer laedt clientseitig, weil
      Kachel-Requests zwingend die Client-IP brauchen.
    ============================================================ */
+var RT_TRANSPX='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 var RT_wxState={data:null,ts:0,loading:false,err:null,key:''};
 var RT_RADAR={map:null,layers:[],frames:[],idx:0,timer:null,playing:false};
 
@@ -3551,41 +3552,41 @@ function RT_wxRenderBody(){
  var comp=RT_wxCompass(w.dir);
  var arrowRot=(w.dir==null)?0:((w.dir+180)%360);
  var updated=RT_wxHourLabel(w.at);
- var cur='<div style="display:flex;align-items:stretch;gap:0;background:rgba(0,0,0,.34);border-radius:14px;padding:11px 6px;">'
+ var cur='<div style="display:flex;align-items:stretch;gap:0;background:rgba(0,0,0,.34);border-radius:14px;padding:6px 6px;">'
   +RT_wxCell('Temp',(w.temp!=null?Math.round(w.temp)+'°':'–'))
   +RT_wxDivider()
   +RT_wxCell('Feuchte',(w.hum!=null?Math.round(w.hum)+'%':'–'))
   +RT_wxDivider()
   +'<div style="flex:1.3;text-align:center;padding:0 4px;min-width:0;">'
-    +'<div style="font-size:11px;color:#9fb3a4;margin-bottom:2px;">Wind</div>'
+    +'<div style="font-size:10.5px;color:#9fb3a4;margin-bottom:1px;">Wind</div>'
     +'<div style="display:flex;align-items:center;justify-content:center;gap:6px;">'
-      +'<span style="font-size:18px;font-weight:800;color:#fff;">'+(w.spd!=null?Math.round(w.spd):'–')+'</span>'
+      +'<span style="font-size:16px;font-weight:800;color:#fff;">'+(w.spd!=null?Math.round(w.spd):'–')+'</span>'
       +'<span style="font-size:11px;color:#cfe0d4;">km/h</span>'
       +(w.dir!=null?('<span style="display:inline-flex;align-items:center;gap:2px;margin-left:2px;"><svg width="15" height="15" viewBox="0 0 24 24" style="transform:rotate('+arrowRot+'deg);"><path d="M12 3l0 18M12 3l-5 6M12 3l5 6" fill="none" stroke="#8FE1A9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:12px;font-weight:700;color:#8FE1A9;">'+comp+'</span></span>'):'')
     +'</div>'
   +'</div>'
  +'</div>';
- var upd=updated?('<div style="font-size:11px;color:#7f948a;text-align:center;margin-top:7px;">Zuletzt aktualisiert: '+updated+' Uhr</div>'):'';
+ var upd=updated?('<div style="font-size:11px;color:#7f948a;text-align:center;margin-top:3px;">Aktualisiert '+updated+' Uhr</div>'):'';
  var hrs='';
  if(w.hours&&w.hours.length){
   var cells=w.hours.slice(0,5).map(function(h){
    var ic=RT_wxCode(h.code);
    var pop=(h.pop!=null&&h.pop>0)?('<div style="font-size:10px;color:#63b3ff;font-weight:700;">'+Math.round(h.pop)+'%</div>'):'<div style="font-size:10px;color:transparent;">0%</div>';
    return '<div style="flex:1;text-align:center;">'
-     +'<div style="font-size:19px;line-height:1.1;">'+ic.e+'</div>'
+     +'<div style="font-size:16px;line-height:1.1;">'+ic.e+'</div>'
      +pop
-     +'<div style="font-size:13px;font-weight:800;color:#fff;margin-top:2px;">'+(h.temp!=null?Math.round(h.temp)+'°':'–')+'</div>'
+     +'<div style="font-size:12px;font-weight:800;color:#fff;margin-top:1px;">'+(h.temp!=null?Math.round(h.temp)+'°':'–')+'</div>'
      +'<div style="font-size:10.5px;color:#9fb3a4;margin-top:2px;">'+RT_wxHourLabel(h.t)+'</div>'
    +'</div>';
   }).join('<div style="width:1px;background:rgba(255,255,255,.09);margin:6px 0;"></div>');
-  hrs='<div style="display:flex;align-items:flex-start;margin-top:11px;padding-top:2px;">'+cells+'</div>';
+  hrs='<div style="display:flex;align-items:flex-start;margin-top:6px;">'+cells+'</div>';
  }
  host.innerHTML=cur+upd+hrs;
 }
 function RT_wxCell(lbl,val){
  return '<div style="flex:1;text-align:center;padding:0 4px;min-width:0;">'
   +'<div style="font-size:11px;color:#9fb3a4;margin-bottom:2px;">'+lbl+'</div>'
-  +'<div style="font-size:18px;font-weight:800;color:#fff;">'+val+'</div></div>';
+  +'<div style="font-size:16px;font-weight:800;color:#fff;">'+val+'</div></div>';
 }
 function RT_wxDivider(){ return '<div style="width:1px;background:rgba(255,255,255,.12);margin:2px 0;"></div>'; }
 
@@ -3632,7 +3633,7 @@ function RT_radarLoad(){
    if(!all.length){ var tc=document.getElementById('rt-radar-time'); if(tc) tc.textContent='Kein Radarbild'; return; }
    RT_RADAR.frames=all.map(function(f){ return {path:host+f.path,time:f.time}; });
    RT_RADAR.layers=RT_RADAR.frames.map(function(f){
-    return L.tileLayer(f.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:0,pane:'wxradar',tileSize:256,maxNativeZoom:10,maxZoom:20});
+    return L.tileLayer(f.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:0,pane:'wxradar',tileSize:256,maxNativeZoom:10,maxZoom:20,noWrap:true,errorTileUrl:RT_TRANSPX});
    });
    RT_RADAR.layers.forEach(function(l){ l.addTo(RT_RADAR.map); });
    RT_RADAR.idx=Math.max(0,Math.min(RT_RADAR.frames.length-1,past.slice(-8).length-1));
@@ -3684,7 +3685,130 @@ function RT_hvToast(msg){
  d.textContent=msg; document.body.appendChild(d);
  setTimeout(function(){ if(d&&d.parentNode) d.parentNode.removeChild(d); },2200);
 }
-function RT_openShotPlan(){ RT_hvToast('Shot-Analyse folgt als Nächstes.'); }
+/* ============================================================
+   Shot-Analyse / Shot-Planer (Bahnkarte, rechte Toolbar)
+   Wertet die getrackten Abschlaege dieser Bahn ueber ALLE Runden aus: seitliche
+   Abweichung des ersten Schlags zur Tee->Gruen-Linie -> Links/Mitte/Rechts. Zeigt die
+   Verteilung als Schema + Prozentwerte und eine regelbasierte Handlungsempfehlung.
+   Kein LLM: die Empfehlung ist deterministisch (funktioniert offline auf dem Platz).
+   ============================================================ */
+function RT_spTee(rd,ref){
+ var tp=RT_grabberTeePoint(rd,rd.cur); if(tp&&tp.lat!=null) return {lat:tp.lat,lng:tp.lng};
+ if(ref&&ref.tees){ var ks=Object.keys(ref.tees); for(var i=0;i<ks.length;i++){ var t=ref.tees[ks[i]]; if(t&&t.lat!=null) return {lat:t.lat,lng:t.lng}; } }
+ return null;
+}
+function RT_spData(){
+ var rd=RT_round; if(!rd) return {noRef:true};
+ var ref=RT_refFor(rd,rd.cur);
+ var pin=(ref&&ref.pin&&ref.pin.lat!=null)?{lat:ref.pin.lat,lng:ref.pin.lng}:null;
+ var tee=RT_spTee(rd,ref);
+ if(!pin||!tee) return {noRef:true};
+ var key=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(rd.courseName,rd):null;
+ var num=rd.nums[rd.cur];
+ var COS=Math.cos(tee.lat*Math.PI/180);
+ function xy(p){ return {x:(p.lng-tee.lng)*111320*COS, y:(p.lat-tee.lat)*111320}; }
+ var pinXY=xy(pin); var len=Math.hypot(pinXY.x,pinXY.y);
+ if(len<20) return {noRef:true};
+ var ux=pinXY.x/len, uy=pinXY.y/len;
+ var rounds=(rtGet(RT_KEY)||[]).slice();
+ if(rd&&!rounds.some(function(r){ return r.id===rd.id; })) rounds.push(rd);
+ var shots=[];
+ rounds.forEach(function(r){
+  if(!r||!r.nums) return;
+  var k2=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(r.courseName,r):null;
+  if(key&&k2&&k2!==key) return;
+  if(!key&&r.courseName!==rd.courseName) return;
+  var c2=-1; for(var i=0;i<r.nums.length;i++){ if(r.nums[i]===num){ c2=i; break; } }
+  if(c2<0) return;
+  var pi=(typeof RT_myPlayerIndex==='function')?RT_myPlayerIndex(r):0;
+  var p=r.players&&(r.players[pi]||r.players[0]); if(!p||!p.pins||!p.pins[c2]) return;
+  var pts=p.pins[c2], first=null;
+  for(var m=0;m<pts.length;m++){ var ty=pts[m].type||'shot'; if(ty==='shot'&&pts[m].lat!=null){ first=pts[m]; break; } }
+  if(!first) return;
+  var s=xy(first);
+  var along=s.x*ux+s.y*uy;
+  var offR=-(ux*s.y-uy*s.x);
+  if(along<15) return;
+  shots.push({along:along,off:offR,frac:Math.max(0,Math.min(1.05,along/len)),date:r.date||''});
+ });
+ var TH=12;
+ var L=0,M=0,R=0;
+ shots.forEach(function(s){ if(s.off>TH) R++; else if(s.off<-TH) L++; else M++; });
+ var n=shots.length;
+ var avgLen=0; if(n){ shots.forEach(function(s){ avgLen+=s.along; }); avgLen=Math.round(avgLen/n); }
+ return {noRef:false,tee:tee,pin:pin,len:len,shots:shots,n:n,L:L,M:M,R:R,avgLen:avgLen,TH:TH,num:num};
+}
+function RT_spPct(x,n){ return n?Math.round(x*100/n):0; }
+function RT_spAdvice(d){
+ var n=d.n, L=RT_spPct(d.L,n), M=RT_spPct(d.M,n), R=RT_spPct(d.R,n);
+ if(n<3) return {tone:'info',txt:'Noch zu wenige erfasste Abschläge auf dieser Bahn ('+n+'). Markiere beim Spielen deinen Abschlag – nach ein paar Runden erkenne ich dein Muster.'};
+ if(M>=55) return {tone:'good',txt:'Du triffst hier zuverlässig die Mitte ('+M+' %). Bleib bei deiner Linie – kein Grund, etwas zu ändern.'};
+ if(Math.abs(R-L)<12&&M<50) return {tone:'warn',txt:'Deine Abschläge streuen breit (links '+L+' %, rechts '+R+' %). Nimm hier einen kontrollierteren Schläger und ziele bewusst auf die Fairwaymitte.'};
+ var dom=(R>=L)?'rechts':'links', other=(R>=L)?'links':'rechts', domPct=Math.max(R,L);
+ return {tone:'warn',txt:'Du schlägst hier auffällig oft nach '+dom+' ('+domPct+' %). Ziele bewusst weiter '+other+' bzw. auf die '+other+'e Fairwayhälfte, um in der Mitte zu landen.'};
+}
+function RT_spSchema(d){
+ var W=300,H=380, cx=W/2, tY=H-26, pY=26;
+ function px(off){ return Math.max(16,Math.min(W-16,cx+off*3)); }
+ function py(frac){ return tY-frac*(tY-pY); }
+ var midL=px(-d.TH), midR=px(d.TH);
+ var parts=[];
+ parts.push('<rect x="'+px(-40)+'" y="'+pY+'" width="'+(px(40)-px(-40))+'" height="'+(tY-pY)+'" rx="26" fill="#33502f" opacity=".55"/>');
+ parts.push('<rect x="'+midL+'" y="'+pY+'" width="'+(midR-midL)+'" height="'+(tY-pY)+'" fill="#2f7d4b" opacity=".45"/>');
+ parts.push('<line x1="'+cx+'" y1="'+pY+'" x2="'+cx+'" y2="'+tY+'" stroke="rgba(255,255,255,.5)" stroke-width="1.5" stroke-dasharray="3 6"/>');
+ d.shots.forEach(function(s){
+  var col=(s.off>d.TH||s.off<-d.TH)?'#ffce45':'#48e08a';
+  parts.push('<circle cx="'+px(s.off).toFixed(1)+'" cy="'+py(s.frac).toFixed(1)+'" r="5.5" fill="'+col+'" fill-opacity=".85" stroke="#0b160f" stroke-width="1"/>');
+ });
+ parts.push('<circle cx="'+cx+'" cy="'+tY+'" r="6" fill="#fff"/>');
+ parts.push('<text x="'+cx+'" y="'+(tY+18)+'" text-anchor="middle" font-size="11" fill="#9fb3a4" font-family="Inter,sans-serif">Abschlag</text>');
+ parts.push('<g transform="translate('+cx+','+pY+')"><line x1="0" y1="-8" x2="0" y2="12" stroke="#fff" stroke-width="2.5"/><path d="M0 -8h13l-3 4 3 4H0z" fill="#ffd24a"/></g>');
+ var L=RT_spPct(d.L,d.n),M=RT_spPct(d.M,d.n),R=RT_spPct(d.R,d.n);
+ return {svg:'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:100%;display:block;">'+parts.join('')+'</svg>',L:L,M:M,R:R};
+}
+function RT_openShotPlan(){
+ if(document.getElementById('rt-sp')) return;
+ var d=RT_spData();
+ var o=document.createElement('div'); o.id='rt-sp';
+ o.style.cssText='position:fixed;inset:0;z-index:3000;background:#0b160f;display:flex;flex-direction:column;';
+ var head='<div style="padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 11px;display:flex;align-items:center;justify-content:space-between;">'
+   +'<div style="font-size:18px;font-weight:800;color:#fff;">Shot-Analyse'+(d&&!d.noRef?' · Bahn '+d.num:'')+'</div>'
+   +'<button onclick="RT_closeShotPlan()" aria-label="Schließen" style="border:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer;">✕</button>'
+  +'</div>';
+ if(!d||d.noRef){
+  o.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:#cfe0d4;font-size:14px;line-height:1.5;">Für diese Bahn fehlen die Referenzpunkte (Abschlag/Grün), um die Schläge auszuwerten.</div>';
+  document.body.appendChild(o); return;
+ }
+ var sc=RT_spSchema(d);
+ var adv=RT_spAdvice(d);
+ var advBg=adv.tone==='good'?'rgba(31,138,77,.16)':(adv.tone==='warn'?'rgba(224,140,27,.16)':'rgba(255,255,255,.07)');
+ var advBd=adv.tone==='good'?'#1F8A4D':(adv.tone==='warn'?'#E08C1B':'rgba(255,255,255,.2)');
+ var advIc=adv.tone==='good'?'✓':(adv.tone==='warn'?'⚠':'ℹ');
+ var bars='';
+ if(d.n>0){
+  var cells=[['Links',sc.L,'#ffce45'],['Mitte',sc.M,'#48e08a'],['Rechts',sc.R,'#ff8a5c']];
+  bars='<div style="display:flex;gap:8px;margin:2px 4px 0;">'+cells.map(function(c){
+   return '<div style="flex:1;text-align:center;">'
+     +'<div style="font-size:22px;font-weight:800;color:'+c[2]+';">'+c[1]+'<span style="font-size:12px;"> %</span></div>'
+     +'<div style="font-size:11.5px;color:#9fb3a4;margin-top:1px;">'+c[0]+'</div>'
+   +'</div>';
+  }).join('')+'</div>';
+ }
+ o.innerHTML=head
+  +'<div style="flex:1;min-height:0;overflow-y:auto;padding:2px 16px calc(env(safe-area-inset-bottom,0px) + 18px);">'
+   +'<div style="height:min(46vh,360px);margin:0 auto;max-width:340px;">'+sc.svg+'</div>'
+   +bars
+   +'<div style="margin-top:14px;background:'+advBg+';border:1px solid '+advBd+';border-radius:14px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start;">'
+     +'<div style="font-size:17px;line-height:1.2;">'+advIc+'</div>'
+     +'<div style="flex:1;"><div style="font-size:12px;font-weight:800;letter-spacing:.4px;color:#9fb3a4;margin-bottom:3px;">EMPFEHLUNG</div>'
+       +'<div style="font-size:13.5px;color:#fff;line-height:1.5;">'+adv.txt+'</div></div>'
+   +'</div>'
+   +'<div style="font-size:11px;color:#6f857a;text-align:center;margin-top:12px;">Basis: '+d.n+' erfasste'+(d.n===1?'r Abschlag':' Abschläge')+' auf dieser Bahn'+(d.avgLen?' · Ø '+RT_fmtDist(d.avgLen):'')+'</div>'
+  +'</div>';
+ document.body.appendChild(o);
+}
+function RT_closeShotPlan(){ var o=document.getElementById('rt-sp'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
+/* ===== Ende Shot-Analyse ===== */
 /* ============================================================
    Fahnenradar (Bahnkarte, rechte Toolbar) - "Blind Shot"
    Kompassrose, die mit dem Geraetekompass dreht; die Fahne sitzt auf dem echten
@@ -4005,8 +4129,8 @@ function RT_grabberOverlayHtml(){
   '</div>'+
   '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
   '<div id="rt-wxradar-ui" style="position:absolute;inset:0;pointer-events:none;z-index:1160;display:'+(radarOn?'block':'none')+';">'+
-   '<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 58px);left:10px;right:10px;pointer-events:auto;background:rgba(10,22,15,.93);border-radius:16px;padding:11px 13px;box-shadow:0 4px 16px rgba(0,0,0,.5);">'+
-     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">'+
+   '<div style="position:absolute;top:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 18px;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px 9px;box-shadow:0 5px 16px rgba(0,0,0,.55);">'+
+     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">'+
        '<div style="font-size:14px;font-weight:800;color:#fff;">Wetterradar</div>'+
        '<button onclick="RT_toggleRadarHole()" aria-label="Schließen" style="border:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:13px;cursor:pointer;">✕</button>'+
      '</div>'+

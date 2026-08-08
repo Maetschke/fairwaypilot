@@ -6125,24 +6125,8 @@ var RT_CLUB_META={
 var RT_BAG_MAP={dr:'dr','3w':'w1','5w':'w2','7w':'w3','2h':'w3','3h':'i1','4h':'i1','5h':'i1','3i':'i1','4i':'i2','5i':'i3','6i':'i4','7i':'i5','8i':'i6','9i':'i7',pw:'i8',gw:'wg',sw:'wg',lw:'wg',putter:'pt'};
 var RT_BAG_LEN={dr:1.0,'3w':.95,'5w':.92,'7w':.90,'2h':.86,'3h':.84,'4h':.82,'5h':.80,'3i':.77,'4i':.75,'5i':.73,'6i':.71,'7i':.69,'8i':.67,'9i':.65,pw:.60,gw:.58,sw:.56,lw:.54,putter:.66};
 function RT_clubHead(id,h){ var lab=RT_BAG_MAP[id]||'i4'; h=h||40; return '<img src="/bag/head_'+lab+'_ic.png" alt="" style="height:'+h+'px;width:auto;display:block;flex:none;">'; }
-var RT_BAG_CAN=['dr','w1','w2','w3','i1','i2','i3','i4','i5','i6','i7','i8','wg','pt'];
 function RT_bagGraphic(inBag,w){
- w=w||236; var k=w/360;
- var ids=(inBag||[]).slice().sort(function(a,b){ var la=RT_BAG_CAN.indexOf(RT_BAG_MAP[a]||'i4'), lb=RT_BAG_CAN.indexOf(RT_BAG_MAP[b]||'i4'); if(la!==lb) return la-lb; return (RT_BAG_LEN[b]||.7)-(RT_BAG_LEN[a]||.7); });
- var n=ids.length, clubs='';
- for(var i=0;i<n;i++){ var id=ids[i], lab=RT_BAG_MAP[id]||'i4';
-  var t=(n===1)?0.4:i/(n-1);
-  var x=(172+(248-172)*t)*k, yb=(158+(170-158)*t)*k;
-  var isW=(lab.charAt(0)==='w'||lab==='dr'), isP=(lab==='pt');
-  var L=(isW?160-6*t:(isP?122:146-12*t))*k, ang=-6+22*t;
-  clubs+='<img src="/bag/head_'+lab+'.png" alt="" style="position:absolute;left:'+x.toFixed(1)+'px;top:'+(yb-L).toFixed(1)+'px;height:'+L.toFixed(1)+'px;transform:translateX(-50%) rotate('+ang.toFixed(1)+'deg);transform-origin:50% 100%;z-index:'+(15+i)+';">';
- }
- var bw=(360*k).toFixed(1), bh=(510*k).toFixed(1);
- return '<div style="display:flex;justify-content:center;"><div style="position:relative;width:'+bw+'px;height:'+bh+'px;">'
-  +'<img src="/bag/bag_back.png" alt="Golfbag" style="position:absolute;left:0;bottom:0;width:'+bw+'px;z-index:10;">'
-  +clubs
-  +'<img src="/bag/bag_front.png" alt="" style="position:absolute;left:0;bottom:0;width:'+bw+'px;z-index:40;filter:drop-shadow(0 5px 8px rgba(0,0,0,.15));">'
-  +'</div></div>';
+ return '<img src="/bag/bag_hero.png" alt="Golfbag" style="height:236px;width:auto;display:block;margin:0 auto;filter:drop-shadow(0 5px 9px rgba(0,0,0,.16));">';
 }
 function RT_bagData(){ return rtGet('fp_bag')||{}; }
 function RT_bagSave(b){ rtSet('fp_bag',b); }
@@ -6167,7 +6151,7 @@ function RT_rBag(){
   h+='<div class="rt-cs">Trage optional deine durchschnittliche Schlaglänge ein.</div>';
   inBag.forEach(function(c){ var d=(b[c.id]&&b[c.id].d!=null)?b[c.id].d:'';
    h+='<div class="rt-row" style="align-items:center;gap:9px;margin-top:8px;">'+
-      '<div style="width:26px;display:flex;justify-content:center;flex:none;">'+RT_clubHead(c.id,34)+'</div>'+
+      '<div style="width:38px;display:flex;justify-content:center;flex:none;">'+RT_clubHead(c.id,44)+'</div>'+
       '<div style="flex:1;font-weight:600;color:#143522;">'+rtEsc(c.l)+'</div>'+
       '<input class="rt-inp" style="width:70px;margin:0;text-align:right;" inputmode="numeric" placeholder="–" value="'+d+'" onchange="RT_bagDist(\''+c.id+'\',this.value)">'+
       '<span style="color:#5d7060;font-size:13px;">m</span>'+
@@ -6184,7 +6168,7 @@ function RT_rBag(){
      '<button class="rt-btn3" style="color:#1F8A4D;font-weight:700;padding:4px 6px;" onclick="RT_bagAddAll()">Alle</button></div>';
   avail.forEach(function(c){
    h+='<div class="rt-row" style="align-items:center;gap:9px;margin-top:8px;">'+
-      '<div style="width:26px;display:flex;justify-content:center;flex:none;">'+RT_clubHead(c.id,34)+'</div>'+
+      '<div style="width:38px;display:flex;justify-content:center;flex:none;">'+RT_clubHead(c.id,44)+'</div>'+
       '<div style="flex:1;color:#143522;">'+rtEsc(c.l)+'</div>'+
       '<button class="rt-btn2" style="width:auto;padding:6px 16px;" onclick="RT_bagAdd(\''+c.id+'\')">Hinzufügen</button></div>';
   });

@@ -15,7 +15,8 @@ _m0_31_regblock.js
 _m0_4_setup.py
 _m0_5_setup.py
 _m0_6_setup.py
-public/
+public/*
+!public/learning/
 _f1_setup.py
 _f2_setup.py
 _f3a_setup.py
@@ -25,3 +26,7 @@ _f3c_setup.py
 _f5_setup.py
 _f6_setup.py
 _f7_setup.py
+_lrn_block.js
+stage_setup.py
+_lrn5_setup.py
+bundle.tgz

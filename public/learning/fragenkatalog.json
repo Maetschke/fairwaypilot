@@ -1,0 +1,1598 @@
+[
+{
+"id": "q_regel_001",
+"kapitel": "Golfregeln",
+"frage": "Aus welcher Höhe muss ein Ball seit den Golfregeln 2019/2023 korrekt gedroppt werden?",
+"optionen": [
+"Aus Schulterhöhe mit ausgestrecktem Arm",
+"Aus Kniehöhe",
+"Aus Hüfthöhe",
+"Direkt über dem Boden fallen gelassen"
+],
+"richtig": 1,
+"erklaerung": "Nach Regel 14.3b muss der Ball aus Kniehöhe (Höhe des Knies im aufrechten Stand) fallen gelassen werden, ohne dass er beim Fallen etwas berührt.",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_002",
+"kapitel": "Golfregeln",
+"frage": "Wie lange darf ein Ball höchstens gesucht werden, bevor er als verloren gilt?",
+"optionen": [
+"1 Minute",
+"3 Minuten",
+"5 Minuten",
+"10 Minuten"
+],
+"richtig": 1,
+"erklaerung": "Seit 2019 gilt: Ein Ball ist verloren, wenn er nicht innerhalb von 3 Minuten Suchzeit gefunden wird (Regel 18.2).",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_003",
+"kapitel": "Golfregeln",
+"frage": "Ihr Ball ist verloren oder im Aus. Welches Verfahren müssen Sie anwenden?",
+"optionen": [
+"Straffrei einen neuen Ball an der Fundstelle droppen",
+"Schlag- und Distanzverfahren mit einem Strafschlag vom letzten Spielort",
+"Zwei Schlägerlängen seitlich droppen mit einem Strafschlag",
+"Ohne Strafe am Rand des Platzes weiterspielen"
+],
+"richtig": 1,
+"erklaerung": "Bei verlorenem Ball oder Ball im Aus gilt das Schlag- und Distanzverfahren (Regel 18.2): ein Strafschlag, und es wird vom Ort des vorherigen Schlags erneut gespielt.",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_004",
+"kapitel": "Golfregeln",
+"frage": "Wann müssen Sie einen provisorischen Ball ausdrücklich ankündigen?",
+"optionen": [
+"Erst nachdem Sie den ersten Ball gesucht haben",
+"Bevor Sie den provisorischen Ball spielen und bevor Sie nach vorne zur Suche gehen",
+"Nur wenn ein Mitspieler danach fragt",
+"Eine Ankündigung ist nie nötig"
+],
+"richtig": 1,
+"erklaerung": "Nach Regel 18.3 muss der Spieler das Wort 'provisorischer Ball' verwenden und den Ball spielen, bevor er nach vorne zur Suche geht. Ohne Ankündigung wird der neue Ball automatisch zum Ball im Spiel mit Schlag und Distanz.",
+"schwierigkeit": 2
+},
+{
+"id": "q_regel_005",
+"kapitel": "Golfregeln",
+"frage": "Ihr Ball liegt in einer gelb markierten Penalty Area. Welche Erleichterungsoptionen haben Sie neben dem Spielen wie er liegt?",
+"optionen": [
+"Nur seitliche Erleichterung um zwei Schlägerlängen",
+"Schlag und Distanz ODER Erleichterung auf der Linie zurück (je 1 Strafschlag)",
+"Straffrei zwei Schlägerlängen droppen",
+"Nur Schlag und Distanz ohne Strafe"
+],
+"richtig": 1,
+"erklaerung": "Bei einer gelben Penalty Area gibt es zwei Erleichterungsoptionen mit je einem Strafschlag: Schlag und Distanz oder die Erleichterung auf der Linie zurück (Regel 17.1d). Die seitliche Option gibt es nur bei roten Penalty Areas.",
+"schwierigkeit": 2
+},
+{
+"id": "q_regel_006",
+"kapitel": "Golfregeln",
+"frage": "Ihr Ball liegt in einer rot markierten Penalty Area. Welche zusätzliche Option haben Sie gegenüber einer gelben Penalty Area?",
+"optionen": [
+"Sie dürfen straffrei weiterspielen",
+"Seitliche Erleichterung: zwei Schlägerlängen vom Kreuzungspunkt, nicht näher zum Loch (1 Strafschlag)",
+"Sie dürfen den Ball ohne Strafe reinigen und neu platzieren",
+"Sie dürfen unbegrenzt weit zurück droppen ohne Strafe"
+],
+"richtig": 1,
+"erklaerung": "Bei roter Penalty Area gibt es zusätzlich die seitliche Erleichterung nach Regel 17.1d(3): Droppen innerhalb von zwei Schlägerlängen von dem Punkt, an dem der Ball zuletzt den Rand kreuzte, nicht näher zum Loch, mit einem Strafschlag.",
+"schwierigkeit": 2
+},
+{
+"id": "q_regel_007",
+"kapitel": "Golfregeln",
+"frage": "Dürfen Sie einen Ball, der in einer Penalty Area liegt, spielen wie er liegt?",
+"optionen": [
+"Nein, das ist grundsätzlich verboten",
+"Ja, ohne Strafe darf der Ball wie er liegt gespielt werden",
+"Ja, aber nur mit einem Strafschlag",
+"Nur wenn die Spielleitung es erlaubt"
+],
+"richtig": 1,
+"erklaerung": "Ein Ball in einer Penalty Area darf straffrei wie er liegt gespielt werden (Regel 17.1). Seit 2019 darf man dabei auch den Boden berühren und lose hinderliche Naturstoffe entfernen.",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_008",
+"kapitel": "Golfregeln",
+"frage": "Wer entscheidet, ob ein Ball für unspielbar erklärt wird?",
+"optionen": [
+"Der Spielpartner",
+"Allein der Spieler selbst",
+"Die Spielleitung",
+"Der Platzwart"
+],
+"richtig": 1,
+"erklaerung": "Nach Regel 19.1 darf nur der Spieler selbst entscheiden, seinen Ball für unspielbar zu erklären, und zwar überall auf dem Platz außer in einer Penalty Area.",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_009",
+"kapitel": "Golfregeln",
+"frage": "Wie viele Erleichterungsoptionen haben Sie bei einem unspielbaren Ball außerhalb eines Bunkers?",
+"optionen": [
+"Eine Option",
+"Zwei Optionen",
+"Drei Optionen, jeweils mit einem Strafschlag",
+"Vier Optionen ohne Strafe"
+],
+"richtig": 2,
+"erklaerung": "Bei unspielbarem Ball gibt es drei Optionen mit je einem Strafschlag (Regel 19.2): Schlag und Distanz, Erleichterung auf der Linie zurück oder seitliche Erleichterung um zwei Schlägerlängen.",
+"schwierigkeit": 2
+},
+{
+"id": "q_regel_010",
+"kapitel": "Golfregeln",
+"frage": "Was ist die Grundregel für das Spielen des Balls auf dem Platz?",
+"optionen": [
+"Der Ball darf immer an eine bessere Stelle gelegt werden",
+"Der Ball wird gespielt, wie er liegt",
+"Der Ball darf einmal pro Loch straffrei verbessert werden",
+"Der Ball muss immer aufgeteet werden"
+],
+"richtig": 1,
+"erklaerung": "Regel 9.1 legt den Grundsatz fest: Der Ball wird gespielt, wie er liegt. Verbesserungen der Lage sind grundsätzlich verboten.",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_011",
+"kapitel": "Golfregeln",
+"frage": "Wann ist ein Ball im Aus (Out of Bounds)?",
+"optionen": [
+"Sobald ein Teil des Balls die Grenzlinie berührt",
+"Wenn der ganze Ball außerhalb der Platzgrenze liegt",
+"Wenn der Ball in der Nähe eines weißen Pfahls liegt",
+"Sobald der Ball hinter der Fahne liegt"
+],
+"richtig": 1,
+"erklaerung": "Ein Ball ist nur dann im Aus, wenn er vollständig außerhalb der Platzgrenze liegt. Liegt noch irgendein Teil des Balls im Platz, ist er im Spiel (Definition Aus).",
+"schwierigkeit": 2
+},
+{
+"id": "q_regel_012",
+"kapitel": "Golfregeln",
+"frage": "Womit wird die Aus-Grenze (Out of Bounds) üblicherweise markiert?",
+"optionen": [
+"Rote Pfähle oder Linien",
+"Gelbe Pfähle oder Linien",
+"Weiße Pfähle oder Linien",
+"Blaue Pfähle oder Linien"
+],
+"richtig": 2,
+"erklaerung": "Das Aus wird durch weiße Pfähle oder weiße Linien gekennzeichnet. Rot und Gelb markieren Penalty Areas, Blau kennzeichnet häufig Boden in Ausbesserung.",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_013",
+"kapitel": "Golfregeln",
+"frage": "Was gilt für das Entfernen loser hinderlicher Naturstoffe (z. B. Blätter, Zweige, Steine)?",
+"optionen": [
+"Sie dürfen niemals entfernt werden",
+"Sie dürfen überall auf dem Platz straffrei entfernt werden",
+"Sie dürfen nur auf dem Grün entfernt werden",
+"Sie dürfen nur mit einem Strafschlag entfernt werden"
+],
+"richtig": 1,
+"erklaerung": "Nach Regel 15.1 dürfen lose hinderliche Naturstoffe überall straffrei entfernt werden. Bewegt sich dabei jedoch der Ball (außer auf dem Grün), gibt es einen Strafschlag und der Ball muss zurückgelegt werden.",
+"schwierigkeit": 2
+},
+{
+"id": "q_regel_014",
+"kapitel": "Golfregeln",
+"frage": "Wie viele Schläger dürfen Sie höchstens während einer Runde mit sich führen?",
+"optionen": [
+"12 Schläger",
+"13 Schläger",
+"14 Schläger",
+"16 Schläger"
+],
+"richtig": 2,
+"erklaerung": "Nach Regel 4.1b darf ein Spieler höchstens 14 Schläger während einer Runde mit sich führen.",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_015",
+"kapitel": "Golfregeln",
+"frage": "Ihr Ball auf dem Grün wird versehentlich von Ihnen selbst bewegt. Was ist zu tun?",
+"optionen": [
+"Ball wie er nun liegt weiterspielen",
+"Ein Strafschlag und der Ball wird zurückgelegt",
+"Straffrei den Ball an die ursprüngliche Stelle zurücklegen",
+"Ein Strafschlag und der Ball wird gedroppt"
+],
+"richtig": 2,
+"erklaerung": "Nach Regel 13.1d wird ein auf dem Grün versehentlich bewegter Ball ohne Strafe an die ursprüngliche Stelle zurückgelegt. Das gilt auch, wenn Wind ihn nach dem Markieren bewegt hat.",
+"schwierigkeit": 2
+},
+{
+"id": "q_regel_016",
+"kapitel": "Golfregeln",
+"frage": "Darf der Flaggenstock beim Putten auf dem Grün im Loch stehen bleiben?",
+"optionen": [
+"Nein, das ist immer verboten",
+"Ja, seit 2019 darf er im Loch bleiben, auch wenn der Ball dagegen läuft",
+"Nur bei Windstille",
+"Nur im Lochspiel"
+],
+"richtig": 1,
+"erklaerung": "Seit 2019 (Regel 13.2) darf der Flaggenstock im Loch bleiben. Trifft der geputtete Ball den Flaggenstock, gibt es keine Strafe.",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_017",
+"kapitel": "Golfregeln",
+"frage": "Sie spielen im Zählspiel versehentlich einen falschen Ball. Welche Folge hat das?",
+"optionen": [
+"Keine Strafe, wenn der Fehler unabsichtlich war",
+"Zwei Strafschläge und der Fehler muss mit dem richtigen Ball korrigiert werden",
+"Ein Strafschlag ohne Korrektur",
+"Disqualifikation in jedem Fall"
+],
+"richtig": 1,
+"erklaerung": "Nach Regel 6.3c erhält man im Zählspiel für das Spielen eines falschen Balls zwei Strafschläge und muss den Fehler durch Weiterspielen des richtigen Balls berichtigen.",
+"schwierigkeit": 2
+},
+{
+"id": "q_regel_018",
+"kapitel": "Golfregeln",
+"frage": "Was dürfen Sie mit Ihrem Ball auf dem Grün tun?",
+"optionen": [
+"Nichts, er muss unberührt bleiben",
+"Ihn markieren, aufnehmen und reinigen",
+"Ihn nur reinigen, aber nicht aufnehmen",
+"Ihn nur mit Erlaubnis der Spielleitung markieren"
+],
+"richtig": 1,
+"erklaerung": "Nach Regel 13.1b darf der Ball auf dem Grün markiert, aufgenommen und gereinigt werden. Er muss danach an die exakt gleiche Stelle zurückgelegt werden.",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_019",
+"kapitel": "Golfregeln",
+"frage": "Beim neuen Verfahren 'Erleichterung auf der Linie zurück' (2023): Wo darf der Ball zur Ruhe kommen?",
+"optionen": [
+"An beliebiger Stelle näher zum Loch",
+"Innerhalb einer Schlägerlänge von der Stelle, an der der gedroppte Ball zuerst den Boden berührte",
+"Genau auf dem Punkt, ohne jede Rollbewegung",
+"In einem Halbkreis um den Referenzpunkt"
+],
+"richtig": 1,
+"erklaerung": "Seit 2023 wird der Ball direkt auf der Linie gedroppt; die Stelle, an der er zuerst den Boden berührt, schafft einen Erleichterungsbereich von einer Schlägerlänge in alle Richtungen (nicht näher zum Loch).",
+"schwierigkeit": 3
+},
+{
+"id": "q_regel_020",
+"kapitel": "Golfregeln",
+"frage": "Was gilt für einen beweglichen Hemmnis-Gegenstand (z. B. eine Harke, ein Getränkebecher) in der Nähe Ihres Balls?",
+"optionen": [
+"Er darf niemals entfernt werden",
+"Er darf straffrei entfernt werden",
+"Er darf nur mit einem Strafschlag entfernt werden",
+"Er darf nur außerhalb des Grüns entfernt werden"
+],
+"richtig": 1,
+"erklaerung": "Bewegliche Hemmnisse dürfen nach Regel 15.2 überall straffrei entfernt werden. Bewegt sich der Ball dabei, wird er ohne Strafe zurückgelegt.",
+"schwierigkeit": 2
+},
+{
+"id": "q_regel_021",
+"kapitel": "Golfregeln",
+"frage": "Ihr Ball liegt auf einem falschen Grün (dem Grün eines anderen Lochs). Was müssen Sie tun?",
+"optionen": [
+"Den Ball wie er liegt spielen",
+"Straffreie Erleichterung nehmen und vom nächstgelegenen Punkt vollständiger Erleichterung droppen",
+"Den Ball mit einem Strafschlag droppen",
+"Sofort einen neuen Ball ins Spiel bringen"
+],
+"richtig": 1,
+"erklaerung": "Nach Regel 13.1f ist straffreie Erleichterung von einem falschen Grün verpflichtend. Es darf nicht vom falschen Grün gespielt werden, um dieses zu schonen.",
+"schwierigkeit": 3
+},
+{
+"id": "q_regel_022",
+"kapitel": "Golfregeln",
+"frage": "Ihr Ball liegt in einem Bunker. Was ist beim Schlag verboten?",
+"optionen": [
+"Den Ball wie er liegt zu spielen",
+"Den Sand direkt hinter dem Ball mit dem Schläger zu berühren oder einen Probeschwung im Sand zu machen",
+"Den Bunker an der flachsten Stelle zu betreten",
+"Lose Steine aus dem Bunker zu entfernen"
+],
+"richtig": 1,
+"erklaerung": "Nach Regel 12.2b darf der Sand im Bunker nicht unmittelbar vor oder hinter dem Ball, beim Probeschwung oder im Rückschwung berührt werden. Verstoß: zwei Strafschläge bzw. Lochverlust.",
+"schwierigkeit": 2
+},
+{
+"id": "q_regel_023",
+"kapitel": "Golfregeln",
+"frage": "Ihr aufgeteeter Ball fällt am Abschlag vom Tee, bevor Sie geschlagen haben. Was gilt?",
+"optionen": [
+"Es zählt als Schlag",
+"Ein Strafschlag",
+"Der Ball darf straffrei neu aufgeteet werden",
+"Der Ball muss dort gespielt werden, wo er liegt"
+],
+"richtig": 2,
+"erklaerung": "Fällt der Ball vom Tee (oder wird er heruntergestoßen), bevor ein Schlag ausgeführt wurde, zählt das nicht als Schlag und der Ball darf straffrei neu aufgeteet werden (Regel 6.2b).",
+"schwierigkeit": 1
+},
+{
+"id": "q_regel_024",
+"kapitel": "Golfregeln",
+"frage": "Wie ist das Verhältnis zwischen Schlagzahl und Ergebnis: Was zählt am Ende eines Lochs im Zählspiel?",
+"optionen": [
+"Nur die schönsten Schläge",
+"Alle Schläge plus etwaige Strafschläge",
+"Nur die Schläge auf dem Fairway",
+"Die Schläge minus der Putts"
+],
+"richtig": 1,
+"erklaerung": "Im Zählspiel zählt die Gesamtzahl aller Schläge einschließlich aller Strafschläge, die auf einem Loch benötigt wurden (Regel 3.1c).",
+"schwierigkeit": 1
+},
+{
+"id": "q_etikette_001",
+"kapitel": "Etikette",
+"frage": "Was bedeutet 'Ready Golf'?",
+"optionen": [
+"Der Spieler mit dem besten Ergebnis am letzten Loch schlägt immer zuerst",
+"Wer bereit ist und sicher spielen kann, spielt zuerst, um Zeit zu sparen",
+"Alle Spieler schlagen gleichzeitig ab",
+"Der jüngste Spieler beginnt jedes Loch"
+],
+"richtig": 1,
+"erklaerung": "Ready Golf bedeutet, dass der Spieler, der bereit ist und sicher schlagen kann, zuerst spielt, statt strikt auf die 'Ehre' zu warten. Das beschleunigt das Spiel und wird im Zählspiel ausdrücklich empfohlen.",
+"schwierigkeit": 1
+},
+{
+"id": "q_etikette_002",
+"kapitel": "Etikette",
+"frage": "Wer hat traditionell die 'Ehre', am nächsten Abschlag zuerst zu spielen?",
+"optionen": [
+"Der Spieler mit dem höchsten Handicap",
+"Der Spieler mit dem besten (niedrigsten) Ergebnis am vorherigen Loch",
+"Der älteste Spieler der Gruppe",
+"Der Spieler, dessen Ball am weitesten flog"
+],
+"richtig": 1,
+"erklaerung": "Traditionell hat der Spieler mit dem besten Ergebnis am vorangegangenen Loch die Ehre und schlägt am nächsten Abschlag zuerst. Bei Ready Golf kann davon abgewichen werden.",
+"schwierigkeit": 1
+},
+{
+"id": "q_etikette_003",
+"kapitel": "Etikette",
+"frage": "Wie sollte sich eine langsame Gruppe verhalten, wenn eine schnellere Gruppe aufläuft und ein Loch vor ihr frei ist?",
+"optionen": [
+"Weiterspielen und nicht darauf achten",
+"Die schnellere Gruppe durchspielen lassen",
+"Absichtlich langsamer spielen",
+"Die schnellere Gruppe auffordern, zu warten"
+],
+"richtig": 1,
+"erklaerung": "Eine Gruppe, die den Anschluss verliert und eine schnellere Gruppe hinter sich hat, sollte diese durchspielen lassen. Das ist zentraler Bestandteil eines rücksichtsvollen Spieltempos.",
+"schwierigkeit": 1
+},
+{
+"id": "q_etikette_004",
+"kapitel": "Etikette",
+"frage": "Wie sollten Sie sich verhalten, während ein Mitspieler zum Schlag ausholt?",
+"optionen": [
+"Ruhig und bewegungslos stehen bleiben und nicht sprechen",
+"Ihm Tipps zur Schlagausführung zurufen",
+"Sich in seinem Blickfeld positionieren",
+"Schon zum nächsten Ball vorgehen"
+],
+"richtig": 0,
+"erklaerung": "Während ein Mitspieler schlägt, sollte man ruhig und still stehen, nicht sprechen und sich nicht bewegen, um seine Konzentration nicht zu stören.",
+"schwierigkeit": 1
+},
+{
+"id": "q_etikette_005",
+"kapitel": "Etikette",
+"frage": "Wo sollten Sie stehen, während ein Mitspieler abschlägt?",
+"optionen": [
+"Direkt hinter dem Ball in der Schlaglinie",
+"Außerhalb der direkten Schlag- und Sichtlinie des Spielers",
+"Direkt gegenüber dem Spieler",
+"Unmittelbar neben dem Ball"
+],
+"richtig": 1,
+"erklaerung": "Man sollte stets außerhalb der Schlaglinie und des direkten Blickfelds des Spielers stehen, aus Rücksicht und aus Sicherheitsgründen.",
+"schwierigkeit": 1
+},
+{
+"id": "q_etikette_006",
+"kapitel": "Etikette",
+"frage": "Was ist eine sinnvolle Richtgröße für die Zeit, die ein einzelner Schlag höchstens beanspruchen sollte?",
+"optionen": [
+"Etwa 40 Sekunden",
+"Etwa 3 Minuten",
+"Etwa 5 Sekunden",
+"Es gibt keine zeitliche Empfehlung"
+],
+"richtig": 0,
+"erklaerung": "Als Richtwert für zügiges Spiel gilt, dass ein Schlag in etwa 40 Sekunden ausgeführt werden sollte, sobald man an der Reihe ist (Empfehlung zum Spieltempo).",
+"schwierigkeit": 2
+},
+{
+"id": "q_etikette_007",
+"kapitel": "Etikette",
+"frage": "Wie sollten Sie mit Ihrem Mobiltelefon auf dem Platz umgehen?",
+"optionen": [
+"Es laut klingeln lassen, damit alle es hören",
+"Es stummschalten und Telefonate vermeiden",
+"Beim Schlag der Mitspieler telefonieren",
+"Musik über Lautsprecher abspielen"
+],
+"richtig": 1,
+"erklaerung": "Aus Rücksicht auf die Mitspieler sollte das Handy stummgeschaltet sein und laute Telefonate vermieden werden, um niemanden beim Spiel zu stören.",
+"schwierigkeit": 1
+},
+{
+"id": "q_etikette_008",
+"kapitel": "Etikette",
+"frage": "Wie können Sie das Spiel beschleunigen, während andere noch schlagen?",
+"optionen": [
+"Erst nach dem Schlag der anderen über den nächsten Schlag nachdenken",
+"Schon vorausplanen und bereit sein, wenn Sie an der Reihe sind",
+"So langsam wie möglich zum Ball gehen",
+"Warten, bis die ganze Gruppe zusammensteht"
+],
+"richtig": 1,
+"erklaerung": "Zügiges Spiel gelingt, indem man Entfernung und Schlägerwahl schon vorbereitet, während andere spielen, und ohne Verzögerung schlägt, sobald man an der Reihe ist.",
+"schwierigkeit": 1
+},
+{
+"id": "q_etikette_009",
+"kapitel": "Etikette",
+"frage": "Ihr Schatten fällt auf die Puttlinie eines Mitspielers auf dem Grün. Was tun Sie?",
+"optionen": [
+"Sie bleiben stehen, das stört nicht",
+"Sie treten zur Seite, sodass Ihr Schatten die Puttlinie nicht mehr kreuzt",
+"Sie stellen sich absichtlich davor",
+"Sie legen den Flaggenstock über die Linie"
+],
+"richtig": 1,
+"erklaerung": "Ein Schatten auf der Puttlinie kann den Mitspieler stören. Rücksichtsvolles Verhalten heißt, sich so zu stellen, dass der Schatten die Linie des Puttenden nicht beeinträchtigt.",
+"schwierigkeit": 2
+},
+{
+"id": "q_etikette_010",
+"kapitel": "Etikette",
+"frage": "Was sollten Sie tun, nachdem alle Spieler ein Loch beendet haben?",
+"optionen": [
+"Auf dem Grün stehen bleiben und die Scores notieren",
+"Zügig das Grün verlassen und erst am nächsten Abschlag die Scores eintragen",
+"In Ruhe auf dem Grün einputten üben",
+"Warten, bis die nachfolgende Gruppe da ist"
+],
+"richtig": 1,
+"erklaerung": "Nach dem Einlochen sollte man das Grün zügig verlassen und die Ergebnisse erst am nächsten Abschlag eintragen, um die nachfolgende Gruppe nicht aufzuhalten.",
+"schwierigkeit": 1
+},
+{
+"id": "q_etikette_011",
+"kapitel": "Etikette",
+"frage": "Wie gehen Sie mit Ihren Golfschlägern um, wenn Ihnen ein Schlag misslingt?",
+"optionen": [
+"Den Schläger wütend wegwerfen",
+"Die Fassung bewahren und den Schläger nicht werfen",
+"Den Schläger auf den Boden schlagen",
+"Laut fluchen, damit alle es hören"
+],
+"richtig": 1,
+"erklaerung": "Zur Etikette gehört Selbstbeherrschung: Schläger werfen, den Boden beschädigen oder lautes Fluchen sind unsportlich und können den Platz sowie andere Spieler gefährden oder stören.",
+"schwierigkeit": 1
+},
+{
+"id": "q_etikette_012",
+"kapitel": "Etikette",
+"frage": "Wann sollten Sie eine hinter Ihnen wartende Gruppe spätestens durchspielen lassen, wenn Sie einen Ball suchen?",
+"optionen": [
+"Erst nach den vollen 3 Minuten Suchzeit in jedem Fall",
+"Sobald absehbar ist, dass die Suche die Gruppe aufhält, ohne Verzögerung durchwinken",
+"Nie, die hintere Gruppe muss immer warten",
+"Erst wenn die hintere Gruppe sich beschwert"
+],
+"richtig": 1,
+"erklaerung": "Zeichnet sich ab, dass die Suche die nachfolgende Gruppe aufhält, sollte man diese ohne Verzögerung durchspielen lassen, statt die vollen 3 Minuten auszunutzen.",
+"schwierigkeit": 2
+},
+{
+"id": "q_sicher_001",
+"kapitel": "Sicherheit",
+"frage": "Ihr Ball fliegt unerwartet in Richtung anderer Personen. Wie warnen Sie?",
+"optionen": [
+"Sie rufen laut 'Achtung Ball'",
+"Sie rufen laut und deutlich 'Fore!'",
+"Sie pfeifen einmal",
+"Sie sagen nichts, um niemanden zu erschrecken"
+],
+"richtig": 1,
+"erklaerung": "Der international übliche Warnruf im Golf ist ein lautes, deutliches 'Fore!', sobald ein Ball in Richtung von Personen fliegt. Er warnt sie, sich zu schützen.",
+"schwierigkeit": 1
+},
+{
+"id": "q_sicher_002",
+"kapitel": "Sicherheit",
+"frage": "Sie hören den Warnruf 'Fore!'. Wie reagieren Sie richtig?",
+"optionen": [
+"Sich umdrehen und nach dem Ball suchen, um ihn zu sehen",
+"Den Kopf mit den Armen schützen, sich wegdrehen und ducken",
+"Ruhig stehen bleiben und warten",
+"In Richtung des Rufs laufen"
+],
+"richtig": 1,
+"erklaerung": "Bei 'Fore!' schützt man sofort Kopf und Gesicht mit den Armen und dreht sich weg oder duckt sich. Keinesfalls nach dem Ball schauen, da man dann besonders im Gesicht getroffen werden kann.",
+"schwierigkeit": 1
+},
+{
+"id": "q_sicher_003",
+"kapitel": "Sicherheit",
+"frage": "Wann dürfen Sie Ihren Schlag ausführen, wenn die vorausspielende Gruppe noch in Reichweite ist?",
+"optionen": [
+"Sofort, wenn Sie sich beeilen",
+"Erst, wenn die vorausspielende Gruppe außer Reichweite und sicher ist",
+"Wenn Sie 'Fore' rufen, dürfen Sie sofort schlagen",
+"Sobald ein Spieler der Gruppe zur Seite tritt"
+],
+"richtig": 1,
+"erklaerung": "Ein Schlag darf niemals ausgeführt werden, solange Personen in Reichweite des Balls sind. Man muss warten, bis die vorausspielende Gruppe sicher außer Reichweite ist.",
+"schwierigkeit": 1
+},
+{
+"id": "q_sicher_004",
+"kapitel": "Sicherheit",
+"frage": "Worauf müssen Sie vor einem Übungs- oder Probeschwung achten?",
+"optionen": [
+"Nur auf die Ballposition",
+"Dass sich niemand in der Nähe befindet, der getroffen werden könnte",
+"Dass Sie möglichst kräftig ausholen",
+"Dass Mitspieler zusehen"
+],
+"richtig": 1,
+"erklaerung": "Vor jedem Probeschwung ist sicherzustellen, dass niemand in Reichweite des Schlägers oder aufgewirbelter Gegenstände (Steine, Divots) steht, um Verletzungen zu vermeiden.",
+"schwierigkeit": 1
+},
+{
+"id": "q_sicher_005",
+"kapitel": "Sicherheit",
+"frage": "Ein Gewitter zieht auf und die Spielleitung gibt ein Signal zur Unterbrechung. Was tun Sie?",
+"optionen": [
+"Weiterspielen, bis das Loch beendet ist",
+"Das Spiel sofort unterbrechen und geschützte Bereiche aufsuchen",
+"Unter dem höchsten Baum Schutz suchen",
+"Die Schläger als Blitzableiter aufstellen"
+],
+"richtig": 1,
+"erklaerung": "Bei Gewitter bzw. dem Unterbrechungssignal ist das Spiel sofort einzustellen. Man sucht sichere, tiefliegende Bereiche oder Blitzschutzhütten auf, keinesfalls einzeln stehende Bäume.",
+"schwierigkeit": 1
+},
+{
+"id": "q_sicher_006",
+"kapitel": "Sicherheit",
+"frage": "Warum sind bei Gewitter Golfschläger und aufgespannte Regenschirme mit Metallspitze gefährlich?",
+"optionen": [
+"Sie sind zu schwer zum Tragen",
+"Sie können als Blitzableiter wirken und ziehen Blitze an",
+"Sie behindern die Sicht",
+"Sie machen zu viel Lärm"
+],
+"richtig": 1,
+"erklaerung": "Metallische und hoch aufragende Gegenstände wie Schläger oder Schirme können Blitze anziehen. Bei Gewitter sollte man sie ablegen und sich davon entfernen.",
+"schwierigkeit": 2
+},
+{
+"id": "q_sicher_007",
+"kapitel": "Sicherheit",
+"frage": "Wo sollten Sie bei einem Gewitter auf dem Platz NICHT Schutz suchen?",
+"optionen": [
+"In einer ausgewiesenen Blitzschutzhütte",
+"Unter einem einzeln stehenden hohen Baum",
+"In einem festen Gebäude",
+"In einer tiefen Mulde fernab von hohen Objekten"
+],
+"richtig": 1,
+"erklaerung": "Einzeln stehende hohe Bäume sind besonders blitzgefährdet und dürfen keinesfalls als Unterstand genutzt werden. Sicher sind Blitzschutzhütten oder feste Gebäude.",
+"schwierigkeit": 1
+},
+{
+"id": "q_sicher_008",
+"kapitel": "Sicherheit",
+"frage": "Worauf ist beim Fahren eines Golf-Carts/Buggys besonders zu achten?",
+"optionen": [
+"Möglichst schnell an anderen Spielern vorbeifahren",
+"Ausreichend Sicherheitsabstand zu Personen halten und steile Hänge sowie nasse Böschungen meiden",
+"Immer über das Grün abkürzen",
+"Mit mehr Personen als Sitzplätzen fahren"
+],
+"richtig": 1,
+"erklaerung": "Beim Buggyfahren ist Rücksicht geboten: ausreichend Abstand zu Personen, angepasste Geschwindigkeit und das Meiden steiler oder rutschiger Hänge, um Kipp- und Unfallgefahr zu vermeiden.",
+"schwierigkeit": 1
+},
+{
+"id": "q_sicher_009",
+"kapitel": "Sicherheit",
+"frage": "Sie stehen am Abschlag eines Par-3-Lochs. Die vorausspielende Gruppe ist noch auf dem Grün. Was ist richtig?",
+"optionen": [
+"Abschlagen, weil das Grün ohnehin das Ziel ist",
+"Warten, bis die Gruppe das Grün verlassen hat und außer Reichweite ist",
+"Nur einen kurzen Schlag spielen",
+"'Fore' rufen und dann abschlagen"
+],
+"richtig": 1,
+"erklaerung": "Auch am Par-3 gilt: Man darf erst abschlagen, wenn die vorausspielende Gruppe das Grün geräumt hat und sicher außer Reichweite ist. Das Grün ist bei Par-3 in Schlagweite.",
+"schwierigkeit": 2
+},
+{
+"id": "q_sicher_010",
+"kapitel": "Sicherheit",
+"frage": "Wie verhalten Sie sich, wenn beim Ausholen zum Schlag ein Kind oder Zuschauer plötzlich in Ihre Nähe tritt?",
+"optionen": [
+"Den Schlag trotzdem voll durchziehen",
+"Den Schlag abbrechen und erst schlagen, wenn die Person sicher außerhalb der Reichweite ist",
+"Schneller schlagen, bevor die Person näher kommt",
+"Die Person anschreien und weiterschlagen"
+],
+"richtig": 1,
+"erklaerung": "Sicherheit geht vor: Nähert sich jemand unerwartet, wird der Schlag abgebrochen, bis die Person sicher außer Reichweite von Schläger und Ball ist.",
+"schwierigkeit": 1
+},
+{
+"id": "q_verhalten_001",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Was tun Sie mit einem Divot, das Sie beim Schlag aus dem Fairway herausgeschlagen haben?",
+"optionen": [
+"Es liegen lassen, der Platzwart kümmert sich darum",
+"Das Divot zurücklegen und andrücken oder das Loch mit Sand-Saatgut-Gemisch füllen",
+"Es in den nächsten Bunker werfen",
+"Es mit zum nächsten Loch nehmen"
+],
+"richtig": 1,
+"erklaerung": "Herausgeschlagene Rasenstücke (Divots) sollten zurückgelegt und angedrückt oder, wo vorhanden, mit Sand-Saatgut-Gemisch aufgefüllt werden, damit der Rasen nachwächst.",
+"schwierigkeit": 1
+},
+{
+"id": "q_verhalten_002",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Was ist eine Pitchmark und wie gehen Sie damit um?",
+"optionen": [
+"Ein Ballzeichen; man lässt es liegen",
+"Ein Einschlagloch des Balls auf dem Grün; man bessert es sofort aus",
+"Eine Markierung für das Aus; man beachtet sie nicht",
+"Ein Loch im Bunker; man harkt es zu"
+],
+"richtig": 1,
+"erklaerung": "Eine Pitchmark ist das Einschlagloch, das der Ball beim Landen auf dem Grün hinterlässt. Sie sollte umgehend mit einer Pitchgabel ausgebessert werden, um das Grün zu schonen.",
+"schwierigkeit": 1
+},
+{
+"id": "q_verhalten_003",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Wie bessern Sie eine Pitchmark auf dem Grün korrekt aus?",
+"optionen": [
+"Den Rasen in der Mitte anheben und hochziehen",
+"Mit der Pitchgabel die Ränder zur Mitte drücken und anschließend glatt klopfen",
+"Einfach mit dem Fuß darauftreten",
+"Sand in das Loch streuen"
+],
+"richtig": 1,
+"erklaerung": "Richtig ist, mit der Pitchgabel die Ränder von außen zur Mitte hin zu schieben (nicht den Kern hochhebeln) und die Stelle danach mit dem Putter oder Fuß vorsichtig glatt zu klopfen.",
+"schwierigkeit": 2
+},
+{
+"id": "q_verhalten_004",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Was tun Sie, nachdem Sie aus einem Bunker gespielt haben?",
+"optionen": [
+"Den Bunker so lassen, wie er ist",
+"Ihre Fußspuren und den Schlagbereich mit der Harke glätten",
+"Nur den Ballabdruck ausbessern",
+"Die Harke in den Bunker werfen"
+],
+"richtig": 1,
+"erklaerung": "Nach dem Schlag im Bunker sollten alle Fußspuren und Unebenheiten mit der Harke geglättet werden, damit nachfolgende Spieler eine faire Lage vorfinden.",
+"schwierigkeit": 1
+},
+{
+"id": "q_verhalten_005",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "An welcher Stelle sollten Sie einen Bunker betreten und wieder verlassen?",
+"optionen": [
+"An der steilsten Kante",
+"An der flachsten, tiefstgelegenen Stelle in Ballnähe",
+"Immer genau an der Fahne-zugewandten Seite",
+"Beliebig, das spielt keine Rolle"
+],
+"richtig": 1,
+"erklaerung": "Man betritt und verlässt den Bunker an der flachsten, tiefstgelegenen Stelle möglichst nahe am Ball, um die Bunkerkanten nicht zu beschädigen und wenig Spuren zu hinterlassen.",
+"schwierigkeit": 2
+},
+{
+"id": "q_verhalten_006",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Wie sollten Sie sich auf dem Grün bewegen, um es zu schonen?",
+"optionen": [
+"Mit den Schuhen über den Rasen schleifen und Spikes eindrehen",
+"Nicht schlurfen, nicht auf die Puttlinien anderer treten und den Flaggenstock vorsichtig behandeln",
+"Möglichst oft über die Puttlinien laufen",
+"Auf dem Grün laufen üben"
+],
+"richtig": 1,
+"erklaerung": "Zum Schonen des Grüns gehört: nicht mit den Schuhen schleifen, nicht auf die Puttlinien der Mitspieler treten und den Flaggenstock vorsichtig ablegen, um die empfindliche Grünoberfläche nicht zu beschädigen.",
+"schwierigkeit": 1
+},
+{
+"id": "q_verhalten_007",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Wie legen Sie den herausgenommenen Flaggenstock auf dem Grün ab?",
+"optionen": [
+"Ihn auf das Grün werfen",
+"Ihn vorsichtig auf dem Grün oder am Rand ablegen, um Beschädigungen zu vermeiden",
+"Ihn in das Loch zurückstoßen",
+"Ihn in den nächsten Bunker legen"
+],
+"richtig": 1,
+"erklaerung": "Der Flaggenstock wird vorsichtig abgelegt, nicht geworfen, damit die empfindliche Grünoberfläche keine Dellen oder Kerben bekommt.",
+"schwierigkeit": 1
+},
+{
+"id": "q_verhalten_008",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Wo dürfen Sie einen Trolley oder ein Cart NICHT hinbewegen?",
+"optionen": [
+"Auf dem Fairway",
+"Auf oder über das Grün und den Abschlag",
+"Auf den Wegen",
+"Im Semi-Rough"
+],
+"richtig": 1,
+"erklaerung": "Trolleys und Carts dürfen niemals über Grüns, Vorgrüns oder Abschläge gezogen bzw. gefahren werden, da diese Bereiche besonders empfindlich sind. Häufig gibt es hierfür Abstandsregeln.",
+"schwierigkeit": 1
+},
+{
+"id": "q_verhalten_009",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Sie sehen auf dem Grün eine fremde, nicht ausgebesserte Pitchmark. Was ist gute Praxis?",
+"optionen": [
+"Sie ignorieren, es ist nicht Ihre",
+"Sie ebenfalls ausbessern, um das Grün zu pflegen",
+"Sie der Spielleitung melden",
+"Sie mit einem Pfahl markieren"
+],
+"richtig": 1,
+"erklaerung": "Gute Golf-Praxis ist, neben der eigenen auch fremde Pitchmarks auszubessern. Das erhält die Qualität des Grüns für alle Spieler.",
+"schwierigkeit": 1
+},
+{
+"id": "q_verhalten_010",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Wohin legen Sie die Harke nach dem Glätten eines Bunkers üblicherweise?",
+"optionen": [
+"Mitten in den Bunker",
+"Nach der örtlichen Empfehlung ablegen, meist außerhalb des Bunkers und parallel zur Spielrichtung",
+"In das nächste Grün",
+"Auf den Abschlag des nächsten Lochs"
+],
+"richtig": 1,
+"erklaerung": "Die Harke wird nach der örtlichen Empfehlung abgelegt (oft außerhalb des Bunkers, parallel zur Spielrichtung), sodass sie das Spiel möglichst wenig beeinflusst und der Bunker sauber bleibt.",
+"schwierigkeit": 2
+},
+{
+"id": "q_verhalten_011",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Was tun Sie mit Ihrem Müll (z. B. leere Verpackungen) auf dem Platz?",
+"optionen": [
+"Ins Rough werfen",
+"Mitnehmen und in einen Abfalleimer werfen",
+"Im Bunker vergraben",
+"In der Penalty Area entsorgen"
+],
+"richtig": 1,
+"erklaerung": "Müll wird stets mitgenommen und in dafür vorgesehenen Behältern entsorgt. Ein sauberer Platz ist Teil des respektvollen Umgangs mit der Anlage und der Natur.",
+"schwierigkeit": 1
+},
+{
+"id": "q_verhalten_012",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Warum sollten Sie beim Herausnehmen des Balls aus dem Loch das Lochrand-Gras schonen?",
+"optionen": [
+"Weil beschädigte Lochränder das Einlochen nachfolgender Spieler beeinträchtigen",
+"Weil es Strafschläge gibt",
+"Weil es die Ballgeschwindigkeit erhöht",
+"Weil der Ball sonst schmutzig wird"
+],
+"richtig": 0,
+"erklaerung": "Man sollte den Ball vorsichtig aus dem Loch nehmen und nicht mit dem Putter herausheben, da beschädigte Lochränder das faire Einlochen der nachfolgenden Spieler stören.",
+"schwierigkeit": 2
+},
+{
+"id": "q_verhalten_013",
+"kapitel": "Verhalten auf dem Platz",
+"frage": "Wie sollten Sie sich verhalten, um die Abschläge (Tee-Bereiche) zu schonen?",
+"optionen": [
+"Immer an derselben Stelle abschlagen",
+"Divots zurücklegen bzw. mit Sand füllen und Übungsschwünge nicht auf der Aufsetzfläche machen",
+"Möglichst viele Probeschwünge im Tee-Bereich üben",
+"Den Tee-Marker versetzen"
+],
+"richtig": 1,
+"erklaerung": "Auch am Abschlag sollten herausgeschlagene Divots ausgebessert und Probeschwünge nicht auf der intakten Aufsetzfläche gemacht werden, damit der Abschlag in gutem Zustand bleibt.",
+"schwierigkeit": 2
+},
+{
+"id": "q_spiel_001",
+"kapitel": "Spielablauf",
+"frage": "Wer hat auf dem nächsten Abschlag die Ehre (spielt zuerst ab)?",
+"optionen": [
+"Der Spieler mit dem besten Ergebnis auf dem vorherigen Loch",
+"Der Spieler mit der niedrigsten Handicap-Vorgabe",
+"Der Spieler, dessen Ball am weitesten vom Loch liegt",
+"Immer der jüngste Spieler"
+],
+"richtig": 0,
+"erklaerung": "Die Ehre auf dem Abschlag erhält der Spieler mit dem niedrigsten Score auf dem zuletzt gespielten Loch. Auf dem ersten Loch wird die Reihenfolge z. B. per Los bestimmt.",
+"schwierigkeit": 1
+},
+{
+"id": "q_spiel_002",
+"kapitel": "Spielablauf",
+"frage": "Wie tief ist der Abschlagsbereich (Teeing Area) nach hinten begrenzt?",
+"optionen": [
+"Eine Schlägerlänge",
+"Zwei Schlägerlängen",
+"Drei Schlägerlängen",
+"Fünf Meter"
+],
+"richtig": 1,
+"erklaerung": "Der Abschlagsbereich ist ein Rechteck von zwei Schlägerlängen Tiefe, dessen Front und Seiten durch die beiden Abschlagmarkierungen bestimmt werden.",
+"schwierigkeit": 2
+},
+{
+"id": "q_spiel_003",
+"kapitel": "Spielablauf",
+"frage": "Wer ist nach den Grundregeln beim Spielen der Spielbahn an der Reihe, wenn nicht 'Ready Golf' vereinbart ist?",
+"optionen": [
+"Der Spieler mit dem besten Handicap",
+"Der Spieler, dessen Ball am weitesten vom Loch entfernt liegt",
+"Der Spieler, der am schnellsten bereit ist",
+"Der Spieler mit der Ehre vom Abschlag"
+],
+"richtig": 1,
+"erklaerung": "Grundsätzlich spielt der Ball, der am weitesten vom Loch entfernt liegt, zuerst. Im Zählspiel ist 'Ready Golf' (Spielen, sobald man bereit ist) zur Beschleunigung ausdrücklich erlaubt.",
+"schwierigkeit": 1
+},
+{
+"id": "q_spiel_004",
+"kapitel": "Spielablauf",
+"frage": "Darf der Ball auf dem Grün markiert, aufgenommen und gereinigt werden?",
+"optionen": [
+"Nein, niemals",
+"Ja, er darf markiert, aufgenommen und gereinigt werden",
+"Nur markiert, aber nicht gereinigt",
+"Nur wenn der Flaggenstock entfernt ist"
+],
+"richtig": 1,
+"erklaerung": "Auf dem Grün darf der Ball markiert, aufgenommen und gereinigt werden. Er muss anschließend an dieselbe Stelle zurückgelegt werden.",
+"schwierigkeit": 1
+},
+{
+"id": "q_spiel_005",
+"kapitel": "Spielablauf",
+"frage": "Was gilt seit den Regeln 2019/2023, wenn der Ball beim Putten den im Loch stehenden Flaggenstock trifft?",
+"optionen": [
+"Zwei Strafschläge",
+"Ein Strafschlag",
+"Straflos, der Flaggenstock darf im Loch bleiben",
+"Loch verloren im Lochspiel"
+],
+"richtig": 2,
+"erklaerung": "Seit 2019 darf der Flaggenstock beim Putten im Loch bleiben; trifft der Ball ihn, ist das straflos. Der Spieler entscheidet selbst, ob er den Stock entfernt oder stecken lässt.",
+"schwierigkeit": 1
+},
+{
+"id": "q_spiel_006",
+"kapitel": "Spielablauf",
+"frage": "Wie wird auf dem ersten Abschlag die Spielreihenfolge festgelegt, wenn keine Startliste besteht?",
+"optionen": [
+"Nach dem Alphabet",
+"Durch Los oder Übereinkunft",
+"Nach dem niedrigsten Handicap",
+"Der Gastgeber spielt immer zuerst"
+],
+"richtig": 1,
+"erklaerung": "Auf dem ersten Loch bestimmt üblicherweise die Startliste die Reihenfolge; ohne Startliste wird sie durch Los oder Übereinkunft festgelegt.",
+"schwierigkeit": 2
+},
+{
+"id": "q_spiel_007",
+"kapitel": "Spielablauf",
+"frage": "Ein Spieler schlägt im Zählspiel von außerhalb des Abschlagsbereichs ab. Welche Folge hat das?",
+"optionen": [
+"Kein Nachteil, der Schlag zählt normal",
+"Ein Strafschlag, der Ball wird weitergespielt",
+"Zwei Strafschläge und der Schlag muss aus dem Abschlagsbereich wiederholt werden",
+"Disqualifikation"
+],
+"richtig": 2,
+"erklaerung": "Im Zählspiel führt der Abschlag von außerhalb der Teeing Area zu zwei Strafschlägen; der Fehler muss durch einen Schlag aus dem korrekten Abschlagsbereich korrigiert werden. Der falsche Schlag zählt nicht.",
+"schwierigkeit": 3
+},
+{
+"id": "q_spiel_008",
+"kapitel": "Spielablauf",
+"frage": "Darf ein Ball, der nicht auf dem Grün liegt, grundsätzlich gereinigt werden, nachdem er aufgenommen wurde?",
+"optionen": [
+"Ja, immer",
+"Nein, außerhalb des Grüns gilt das nur eingeschränkt (z. B. bei bestimmten Erleichterungen)",
+"Nur mit Erlaubnis des Zählers",
+"Nur im Lochspiel"
+],
+"richtig": 1,
+"erklaerung": "Außerhalb des Grüns darf ein aufgenommener Ball nicht generell gereinigt werden. In einigen Situationen (z. B. beim Aufnehmen zur Identifizierung) ist Reinigung nur so weit erlaubt, wie zur Identifizierung nötig.",
+"schwierigkeit": 3
+},
+{
+"id": "q_spiel_009",
+"kapitel": "Spielablauf",
+"frage": "Was ist der wesentliche Unterschied zwischen Zählspiel und Lochspiel?",
+"optionen": [
+"Im Zählspiel zählt die Gesamtschlagzahl der Runde, im Lochspiel gewinnt, wer mehr Löcher gewinnt",
+"Im Lochspiel gibt es kein Handicap",
+"Im Zählspiel spielt man nur 9 Löcher",
+"Es gibt keinen Unterschied"
+],
+"richtig": 0,
+"erklaerung": "Im Zählspiel entscheidet die Summe aller Schläge über die Runde. Im Lochspiel wird jedes Loch einzeln gewertet; es gewinnt, wer mehr Löcher für sich entscheidet.",
+"schwierigkeit": 1
+},
+{
+"id": "q_spiel_010",
+"kapitel": "Spielablauf",
+"frage": "Im Lochspiel darf der Gegner einen Schlag oder ein Loch zugestehen ('conceden'). Gilt das auch im Zählspiel?",
+"optionen": [
+"Ja, auch im Zählspiel",
+"Nein, im Zählspiel muss stets eingelocht werden",
+"Nur auf dem Grün",
+"Nur mit Zustimmung der Spielleitung"
+],
+"richtig": 1,
+"erklaerung": "Das Zugestehen (Concede) gibt es nur im Lochspiel. Im Zählspiel muss jeder Spieler jedes Loch zu Ende spielen und den Ball einlochen, sonst droht Disqualifikation.",
+"schwierigkeit": 2
+},
+{
+"id": "q_spiel_011",
+"kapitel": "Spielablauf",
+"frage": "Wie muss der Ball vor dem Aufnehmen auf dem Grün behandelt werden, damit er korrekt zurückgelegt werden kann?",
+"optionen": [
+"Er muss fotografiert werden",
+"Seine Lage muss mit einem Ballmarker markiert werden",
+"Er darf einfach an eine ähnliche Stelle gelegt werden",
+"Er muss zum Zähler gezeigt werden"
+],
+"richtig": 1,
+"erklaerung": "Vor dem Aufnehmen auf dem Grün muss die Lage des Balls markiert werden (z. B. mit einer Münze/Marker), damit er exakt an dieselbe Stelle zurückgelegt werden kann.",
+"schwierigkeit": 1
+},
+{
+"id": "q_spiel_012",
+"kapitel": "Spielablauf",
+"frage": "Ein Ball wird auf dem Grün nach dem Markieren versehentlich bewegt. Was gilt?",
+"optionen": [
+"Zwei Strafschläge",
+"Ein Strafschlag und Ball verbleibt",
+"Straflos, der Ball wird zurückgelegt",
+"Der Ball muss von vorn gespielt werden"
+],
+"richtig": 2,
+"erklaerung": "Wird ein markierter oder bereits aufgenommener Ball auf dem Grün versehentlich bewegt, ist das straflos; der Ball (bzw. Marker) wird an die ursprüngliche Stelle zurückgelegt.",
+"schwierigkeit": 2
+},
+{
+"id": "q_spiel_013",
+"kapitel": "Spielablauf",
+"frage": "Welche Aussage zum Ablauf eines einzelnen Lochs ist korrekt?",
+"optionen": [
+"Man spielt vom Abschlag bis der Ball eingelocht ist",
+"Man spielt nur bis zum Vorgrün",
+"Ein Loch endet, sobald der Ball das Fairway verlässt",
+"Ein Loch endet nach genau vier Schlägen"
+],
+"richtig": 0,
+"erklaerung": "Ein Loch beginnt mit dem Abschlag aus der Teeing Area und endet, wenn der Ball im Loch auf dem Grün eingelocht ist.",
+"schwierigkeit": 1
+},
+{
+"id": "q_spiel_014",
+"kapitel": "Spielablauf",
+"frage": "Darf der Flaggenstock von einer Person betreut (gehalten und gezogen) werden, während gespielt wird?",
+"optionen": [
+"Nein, das ist verboten",
+"Ja, der Flaggenstock darf betreut werden, damit die Lage des Lochs erkennbar bleibt",
+"Nur im Lochspiel",
+"Nur beim Abschlag"
+],
+"richtig": 1,
+"erklaerung": "Der Flaggenstock darf betreut, also gehalten und rechtzeitig herausgezogen werden, um die Lochposition anzuzeigen. Alternativ darf er im Loch belassen werden.",
+"schwierigkeit": 2
+},
+{
+"id": "q_zaehl_001",
+"kapitel": "Zählweisen",
+"frage": "Wie viele Stableford-Nettopunkte gibt es für ein Netto-Par auf einem Loch?",
+"optionen": [
+"1 Punkt",
+"2 Punkte",
+"3 Punkte",
+"0 Punkte"
+],
+"richtig": 1,
+"erklaerung": "Ein Netto-Par ergibt 2 Stableford-Punkte. Netto-Bogey = 1, Netto-Birdie = 3, Netto-Eagle = 4 Punkte.",
+"schwierigkeit": 1
+},
+{
+"id": "q_zaehl_002",
+"kapitel": "Zählweisen",
+"frage": "Wie viele Stableford-Punkte gibt es bei einem Netto-Bogey (ein Schlag über Netto-Par)?",
+"optionen": [
+"0 Punkte",
+"1 Punkt",
+"2 Punkte",
+"3 Punkte"
+],
+"richtig": 1,
+"erklaerung": "Ein Netto-Bogey (Netto-Par + 1) bringt 1 Stableford-Punkt.",
+"schwierigkeit": 1
+},
+{
+"id": "q_zaehl_003",
+"kapitel": "Zählweisen",
+"frage": "Wie viele Stableford-Punkte erhält man bei einem Netto-Ergebnis von zwei oder mehr Schlägen über Netto-Par?",
+"optionen": [
+"1 Punkt",
+"0 Punkte",
+"2 Punkte",
+"Minuspunkte"
+],
+"richtig": 1,
+"erklaerung": "Ab Netto-Doppelbogey (zwei oder mehr über Netto-Par) gibt es 0 Punkte. Man kann das Loch dann aufnehmen, ohne einen Nachteil im Ergebnis zu haben.",
+"schwierigkeit": 1
+},
+{
+"id": "q_zaehl_004",
+"kapitel": "Zählweisen",
+"frage": "Wie viele Stableford-Nettopunkte bedeuten, dass ein Spieler exakt seiner Vorgabe entsprechend gespielt hat?",
+"optionen": [
+"30 Punkte",
+"36 Punkte",
+"40 Punkte",
+"18 Punkte"
+],
+"richtig": 1,
+"erklaerung": "36 Stableford-Nettopunkte über 18 Löcher entsprechen einer Runde genau im Rahmen der Spielvorgabe (durchschnittlich 2 Punkte pro Loch).",
+"schwierigkeit": 2
+},
+{
+"id": "q_zaehl_005",
+"kapitel": "Zählweisen",
+"frage": "Wie viele Stableford-Punkte gibt es für ein Netto-Eagle (zwei unter Netto-Par)?",
+"optionen": [
+"3 Punkte",
+"4 Punkte",
+"5 Punkte",
+"2 Punkte"
+],
+"richtig": 1,
+"erklaerung": "Ein Netto-Eagle bringt 4 Stableford-Punkte; ein Netto-Birdie 3, ein Netto-Albatros (drei unter) 5 Punkte.",
+"schwierigkeit": 2
+},
+{
+"id": "q_zaehl_006",
+"kapitel": "Zählweisen",
+"frage": "Was zählt im klassischen Zählspiel (Stroke Play) für das Rundenergebnis?",
+"optionen": [
+"Die Zahl der gewonnenen Löcher",
+"Die Summe aller Schläge (ggf. plus Strafschläge)",
+"Nur die Schläge auf den Grüns",
+"Die Stableford-Punkte"
+],
+"richtig": 1,
+"erklaerung": "Im Zählspiel zählt die Gesamtzahl aller Schläge einschließlich Strafschläge. Wer die wenigsten Schläge braucht, gewinnt (brutto) bzw. nach Abzug des Handicaps (netto).",
+"schwierigkeit": 1
+},
+{
+"id": "q_zaehl_007",
+"kapitel": "Zählweisen",
+"frage": "Wie wird ein Lochspiel (Match Play) gewertet?",
+"optionen": [
+"Nach der Gesamtschlagzahl",
+"Loch für Loch; es gewinnt, wer mehr Löcher gewinnt",
+"Nach Stableford-Punkten",
+"Nach dem besten einzelnen Loch"
+],
+"richtig": 1,
+"erklaerung": "Im Lochspiel wird jedes Loch einzeln gewonnen, verloren oder geteilt. Das Match ist entschieden, sobald ein Spieler mehr Löcher vorn liegt, als noch zu spielen sind.",
+"schwierigkeit": 1
+},
+{
+"id": "q_zaehl_008",
+"kapitel": "Zählweisen",
+"frage": "Beim Zählspiel-Ergebnis: Was bedeutet 'Brutto'?",
+"optionen": [
+"Das Ergebnis nach Abzug des Handicaps",
+"Die tatsächlich gespielte Schlagzahl ohne Handicap-Abzug",
+"Nur die Schläge auf den Par-3-Löchern",
+"Die Stableford-Punkte"
+],
+"richtig": 1,
+"erklaerung": "Das Brutto-Ergebnis ist die tatsächlich benötigte Schlagzahl ohne Berücksichtigung des Handicaps. Das Netto-Ergebnis entsteht erst nach Abzug der Spielvorgabe.",
+"schwierigkeit": 1
+},
+{
+"id": "q_zaehl_009",
+"kapitel": "Zählweisen",
+"frage": "Was ist beim Ausfüllen der Zählkarte im Zählspiel die Aufgabe des Spielers am Ende der Runde?",
+"optionen": [
+"Nur die eigene Unterschrift",
+"Ergebnis je Loch prüfen und Zählkarte unterschreiben (Spieler und Zähler)",
+"Die Karte der Spielleitung diktieren",
+"Nichts, der Zähler macht alles allein"
+],
+"richtig": 1,
+"erklaerung": "Der Spieler ist für die Richtigkeit seiner Lochergebnisse verantwortlich. Zähler und Spieler bestätigen die Zählkarte durch Unterschrift, bevor sie abgegeben wird.",
+"schwierigkeit": 2
+},
+{
+"id": "q_zaehl_010",
+"kapitel": "Zählweisen",
+"frage": "Wer führt im Zählspiel üblicherweise die Zählkarte eines Spielers?",
+"optionen": [
+"Der Spieler selbst",
+"Ein von der Spielleitung bestimmter Zähler (Marker), meist ein Mitspieler",
+"Der Platzwart",
+"Ein Schiedsrichter an jedem Loch"
+],
+"richtig": 1,
+"erklaerung": "Im Zählspiel führt ein Zähler (Marker), in der Regel ein Flightpartner, die Zählkarte des Spielers und notiert dessen Lochergebnisse.",
+"schwierigkeit": 1
+},
+{
+"id": "q_zaehl_011",
+"kapitel": "Zählweisen",
+"frage": "Was passiert im Zählspiel, wenn ein Spieler auf der Zählkarte ein niedrigeres Ergebnis für ein Loch angibt, als er tatsächlich gespielt hat?",
+"optionen": [
+"Es wird ignoriert",
+"Disqualifikation",
+"Ein Strafschlag",
+"Das Loch wird mit Par gewertet"
+],
+"richtig": 1,
+"erklaerung": "Wird für ein Loch ein niedrigeres Ergebnis abgegeben, als tatsächlich gespielt wurde, führt das zur Disqualifikation. Ein zu hoch eingetragenes Ergebnis bleibt hingegen bestehen.",
+"schwierigkeit": 3
+},
+{
+"id": "q_zaehl_012",
+"kapitel": "Zählweisen",
+"frage": "Was kennzeichnet ein Par-/Bogey-Wettspiel als Zählweise?",
+"optionen": [
+"Es zählt die Gesamtschlagzahl",
+"Jedes Loch wird wie im Lochspiel gegen ein festes Ziel (Par bzw. Bogey) gewonnen, geteilt oder verloren",
+"Es gibt nur Stableford-Punkte",
+"Es werden nur die ersten neun Löcher gewertet"
+],
+"richtig": 1,
+"erklaerung": "Beim Par-/Bogey-Wettspiel spielt der Spieler auf jedem Loch gegen das feste Netto-Ziel Par (bzw. Bogey). Das Gesamtergebnis ist die Summe aus gewonnenen minus verlorenen Löchern.",
+"schwierigkeit": 3
+},
+{
+"id": "q_zaehl_013",
+"kapitel": "Zählweisen",
+"frage": "Welche Zählweise eignet sich besonders, um bei schlechten Löchern das Spiel zu beschleunigen, weil man aufnehmen darf?",
+"optionen": [
+"Klassisches Zählspiel (Stroke Play)",
+"Stableford",
+"Vierer",
+"Scramble"
+],
+"richtig": 1,
+"erklaerung": "Bei Stableford gibt es ab Netto-Doppelbogey 0 Punkte, weiteres Spielen bringt keinen Nachteil. Man darf das Loch aufnehmen, was das Spiel beschleunigt.",
+"schwierigkeit": 2
+},
+{
+"id": "q_zaehl_014",
+"kapitel": "Zählweisen",
+"frage": "Auf welchen Löchern erhält ein Spieler seine Vorgabenschläge (Netto-Berechnung) zuerst?",
+"optionen": [
+"Auf den letzten Löchern der Runde",
+"Nach dem Stroke-Index (Handicap-Verteilung) der Löcher, beginnend beim schwierigsten",
+"Immer nur auf Par-3-Löchern",
+"Zufällig verteilt"
+],
+"richtig": 1,
+"erklaerung": "Die Vorgabenschläge werden gemäß dem auf der Scorecard angegebenen Stroke-Index (Vorgabenverteilung) vergeben. Loch mit Index 1 ist das schwierigste und erhält als erstes einen Schlag.",
+"schwierigkeit": 2
+},
+{
+"id": "q_whs_001",
+"kapitel": "Handicap & WHS",
+"frage": "Was beschreibt der Handicap-Index im World Handicap System (WHS)?",
+"optionen": [
+"Die Schlagzahl einer konkreten Runde",
+"Das portable, plätzeunabhängige Maß der Spielstärke eines Golfers",
+"Die Anzahl gespielter Turniere",
+"Das Alter des Spielers"
+],
+"richtig": 1,
+"erklaerung": "Der Handicap-Index ist ein einheitliches, plätzeunabhängiges Maß der Spielstärke. Er wird auf jedem Platz erst über das Course Handicap in die konkrete Spielvorgabe umgerechnet.",
+"schwierigkeit": 1
+},
+{
+"id": "q_whs_002",
+"kapitel": "Handicap & WHS",
+"frage": "Wie lautet die WHS-Formel für das Course Handicap?",
+"optionen": [
+"Handicap-Index × (Slope Rating / 113) + (Course Rating − Par)",
+"Handicap-Index + Slope Rating",
+"Handicap-Index × Course Rating",
+"Handicap-Index / Slope Rating × Par"
+],
+"richtig": 0,
+"erklaerung": "Course Handicap = Handicap-Index × (Slope Rating / 113) + (Course Rating − Par). Es gibt an, wie viele Vorgabenschläge man auf dem konkreten Platz von den gewählten Abschlägen erhält.",
+"schwierigkeit": 3
+},
+{
+"id": "q_whs_003",
+"kapitel": "Handicap & WHS",
+"frage": "Welchen Wert hat das Slope Rating eines Platzes mit durchschnittlichem Schwierigkeitsgrad (Bezugswert)?",
+"optionen": [
+"100",
+"113",
+"120",
+"150"
+],
+"richtig": 1,
+"erklaerung": "Das neutrale Slope Rating ist 113. Höhere Werte (bis 155) bedeuten einen für höhere Handicaps relativ schwereren Platz, niedrigere (bis 55) einen leichteren.",
+"schwierigkeit": 2
+},
+{
+"id": "q_whs_004",
+"kapitel": "Handicap & WHS",
+"frage": "Was gibt das Course Rating eines Platzes an?",
+"optionen": [
+"Die durchschnittlich erwartete Schlagzahl eines Scratch-Spielers (Handicap 0) von den betreffenden Abschlägen",
+"Die Länge des Platzes in Metern",
+"Die Zahl der Bunker",
+"Die maximale Punktzahl bei Stableford"
+],
+"richtig": 0,
+"erklaerung": "Das Course Rating drückt die für einen Scratch-Golfer erwartete Schlagzahl aus und misst die Platzschwierigkeit für sehr gute Spieler.",
+"schwierigkeit": 2
+},
+{
+"id": "q_whs_005",
+"kapitel": "Handicap & WHS",
+"frage": "Was drückt das Slope Rating aus?",
+"optionen": [
+"Die Platzschwierigkeit speziell für den Scratch-Spieler",
+"Die relative Schwierigkeit eines Platzes für den Bogey-Golfer im Vergleich zum Scratch-Golfer",
+"Die Höhe des Greenfees",
+"Die Windstärke"
+],
+"richtig": 1,
+"erklaerung": "Das Slope Rating beschreibt, wie stark die Schwierigkeit für den durchschnittlichen (Bogey-)Golfer im Verhältnis zum Scratch-Golfer ansteigt. Der Bezugswert ist 113.",
+"schwierigkeit": 3
+},
+{
+"id": "q_whs_006",
+"kapitel": "Handicap & WHS",
+"frage": "Was unterscheidet das Playing Handicap vom Course Handicap?",
+"optionen": [
+"Nichts, beide sind identisch",
+"Das Playing Handicap ergibt sich aus dem Course Handicap nach Anwendung des wettspiel-/formatabhängigen Vorgabenzuschlags (Handicap Allowance)",
+"Das Playing Handicap ist immer höher als der Handicap-Index",
+"Das Playing Handicap gilt nur im Lochspiel"
+],
+"richtig": 1,
+"erklaerung": "Das Course Handicap wird mit dem für Format/Wettspiel geltenden Vorgabenzuschlag (Handicap Allowance, z. B. 95 %) multipliziert und ergibt so das Playing Handicap – die tatsächlich wirksame Spielvorgabe.",
+"schwierigkeit": 3
+},
+{
+"id": "q_whs_007",
+"kapitel": "Handicap & WHS",
+"frage": "Aus wie vielen der letzten 20 vorgabewirksamen Runden wird der Handicap-Index im WHS berechnet?",
+"optionen": [
+"Aus allen 20",
+"Aus den besten 8",
+"Aus den besten 5",
+"Aus den letzten 10"
+],
+"richtig": 1,
+"erklaerung": "Der Handicap-Index ist der Durchschnitt der besten 8 Score Differentials aus den letzten 20 vorgabewirksamen Runden.",
+"schwierigkeit": 3
+},
+{
+"id": "q_whs_008",
+"kapitel": "Handicap & WHS",
+"frage": "Was ist der höchste (maximale) Handicap-Index im WHS?",
+"optionen": [
+"36,0",
+"45,0",
+"54,0",
+"72,0"
+],
+"richtig": 2,
+"erklaerung": "Der Handicap-Index ist auf maximal 54,0 begrenzt – für Männer wie für Frauen. Das Course Handicap kann je nach Platz auch höher ausfallen.",
+"schwierigkeit": 2
+},
+{
+"id": "q_whs_009",
+"kapitel": "Handicap & WHS",
+"frage": "Wie viele Stableford-Nettopunkte muss eine Runde in der Regel mindestens bringen, damit sie als 'gut gespielt' den Index senken kann – bzw. was ist der Referenzwert einer vorgabekonformen Runde?",
+"optionen": [
+"18 Punkte",
+"36 Punkte (Spiel genau nach Vorgabe)",
+"40 Punkte",
+"50 Punkte"
+],
+"richtig": 1,
+"erklaerung": "36 Nettopunkte entsprechen dem Spiel genau nach Spielvorgabe. Mehr als 36 Punkte bedeuten eine bessere Runde, die den Handicap-Index tendenziell senkt.",
+"schwierigkeit": 2
+},
+{
+"id": "q_whs_010",
+"kapitel": "Handicap & WHS",
+"frage": "Damit eine Runde vorgabewirksam (zählend) ist, muss sie in der Regel welche Bedingung erfüllen?",
+"optionen": [
+"Sie muss ein internationales Turnier sein",
+"Sie muss vorab registriert/als vorgabewirksam gekennzeichnet und nach den Golfregeln auf einem gerateten Platz gespielt werden",
+"Sie muss mit Profis gespielt werden",
+"Sie muss über 36 Löcher gehen"
+],
+"richtig": 1,
+"erklaerung": "Vorgabewirksam sind Runden, die vorab als solche angemeldet und nach den Golfregeln auf einem bewerteten (Rating vorhandenen) Platz mit gültiger Zählkarte gespielt und eingereicht werden – auch EDS/Privatrunden.",
+"schwierigkeit": 2
+},
+{
+"id": "q_whs_011",
+"kapitel": "Handicap & WHS",
+"frage": "Ein Spieler hat Handicap-Index 18,0, Slope 128, Course Rating 71,0, Par 72. Wie groß ist sein Course Handicap (gerundet)?",
+"optionen": [
+"18",
+"19",
+"20",
+"23"
+],
+"richtig": 1,
+"erklaerung": "Course Handicap = Index × (Slope/113) + (Course Rating − Par) = 18,0 × (128/113) + (71,0 − 72) = 20,39 − 1 = 19,39 ≈ 19. Der Slope erhöht die Vorgabe, der negative (CR − Par)-Term senkt sie leicht.",
+"schwierigkeit": 3
+},
+{
+"id": "q_whs_012",
+"kapitel": "Handicap & WHS",
+"frage": "Was bedeutet 'Netto-Ergebnis' im Zusammenhang mit dem Handicap?",
+"optionen": [
+"Die Bruttoschläge plus Strafschläge",
+"Das Ergebnis nach Abzug der Spielvorgabe (Playing Handicap) vom Bruttoergebnis",
+"Das Ergebnis der ersten neun Löcher",
+"Die Zahl der gewonnenen Löcher"
+],
+"richtig": 1,
+"erklaerung": "Das Netto-Ergebnis entsteht, indem vom Brutto (tatsächliche Schläge) die persönliche Spielvorgabe abgezogen wird. Es ermöglicht faire Vergleiche zwischen unterschiedlich starken Spielern.",
+"schwierigkeit": 1
+},
+{
+"id": "q_whs_013",
+"kapitel": "Handicap & WHS",
+"frage": "Was geschieht mit dem Handicap-Index, wenn eine Runde deutlich schlechter als die Vorgabe gespielt wird?",
+"optionen": [
+"Er steigt sofort stark an",
+"Er kann leicht steigen, ist aber durch Mechanismen wie den gleitenden Durchschnitt der besten 8 gedämpft",
+"Er bleibt immer gleich",
+"Er wird auf 54 gesetzt"
+],
+"richtig": 1,
+"erklaerung": "Da der Index der Schnitt der besten 8 aus 20 Runden ist, wirken einzelne schlechte Runden nur gedämpft. Zusätzlich begrenzen Sicherungen (Soft/Hard Cap) starke Anstiege.",
+"schwierigkeit": 3
+},
+{
+"id": "q_whs_014",
+"kapitel": "Handicap & WHS",
+"frage": "Warum kann ein Spieler auf einem schwereren Platz (höheres Slope) mehr Vorgabenschläge erhalten als auf einem leichten?",
+"optionen": [
+"Weil das Green-Fee höher ist",
+"Weil das Course Handicap mit dem Slope Rating skaliert (Slope/113)",
+"Weil dort mehr Löcher gespielt werden",
+"Das stimmt nicht, die Schläge sind überall gleich"
+],
+"richtig": 1,
+"erklaerung": "Im Course Handicap wird der Handicap-Index mit Slope/113 multipliziert. Ein höheres Slope Rating ergibt daher mehr Vorgabenschläge, weil der Platz für den Durchschnittsgolfer relativ schwerer ist.",
+"schwierigkeit": 2
+},
+{
+"id": "q_whs_015",
+"kapitel": "Handicap & WHS",
+"frage": "Was ist der Unterschied zwischen Brutto- und Nettowertung in einem Wettspiel?",
+"optionen": [
+"Brutto berücksichtigt das Handicap, Netto nicht",
+"Brutto wertet die reinen Schläge (Spielstärke absolut), Netto wertet nach Abzug der Spielvorgabe",
+"Es gibt keinen Unterschied",
+"Netto gilt nur im Lochspiel"
+],
+"richtig": 1,
+"erklaerung": "Die Bruttowertung belohnt die absolut beste Leistung ohne Handicap. Die Nettowertung zieht die Spielvorgabe ab und ermöglicht faire Chancen für Spieler unterschiedlicher Stärke.",
+"schwierigkeit": 1
+},
+{
+"id": "q_ausr_001",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Wie viele Schläger darf ein Spieler während einer Runde nach den Regeln höchstens mit sich führen?",
+"optionen": [
+"12",
+"13",
+"14",
+"16"
+],
+"richtig": 2,
+"erklaerung": "Erlaubt sind maximal 14 Schläger. Werden mehr mitgeführt, drohen im Zählspiel Strafschläge (max. 4) bzw. im Lochspiel Lochabzug.",
+"schwierigkeit": 1
+},
+{
+"id": "q_ausr_002",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Welcher Schläger hat typischerweise den geringsten Loft (flachste Schlagfläche) und erzeugt die größte Weite?",
+"optionen": [
+"Sandwedge",
+"Pitching Wedge",
+"Driver",
+"9er-Eisen"
+],
+"richtig": 2,
+"erklaerung": "Der Driver (1er-Holz) hat den geringsten Loft und ist auf maximale Weite ausgelegt. Wedges haben hohen Loft für kurze, hohe Schläge.",
+"schwierigkeit": 1
+},
+{
+"id": "q_ausr_003",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Wofür wird ein Tee (Abschlagstift) verwendet?",
+"optionen": [
+"Zum Markieren des Balls auf dem Grün",
+"Zum Aufsetzen des Balls im Abschlagsbereich",
+"Zum Reparieren von Pitchmarken",
+"Als Ballmarker im Rough"
+],
+"richtig": 1,
+"erklaerung": "Ein Tee darf nur im Abschlagsbereich (Teeing Area) verwendet werden, um den Ball für den Abschlag leicht erhöht aufzulegen.",
+"schwierigkeit": 1
+},
+{
+"id": "q_ausr_004",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Was versteht man unter 'Par' eines Lochs?",
+"optionen": [
+"Die Zahl der Bunker",
+"Die für einen sehr guten Spieler vorgesehene Sollschlagzahl inklusive zweier Putts",
+"Die Länge in Metern",
+"Die maximale erlaubte Schlagzahl"
+],
+"richtig": 1,
+"erklaerung": "Par ist die festgelegte Sollschlagzahl, die ein Scratch-Golfer für ein Loch benötigen sollte – inklusive zweier Putts auf dem Grün. Es richtet sich hauptsächlich nach der Lochlänge.",
+"schwierigkeit": 1
+},
+{
+"id": "q_ausr_005",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Welche typische Lochlänge entspricht meist einem Par 3?",
+"optionen": [
+"Bis etwa 230–250 Meter",
+"Bis etwa 100 Meter maximal",
+"Über 450 Meter",
+"Genau 300 Meter"
+],
+"richtig": 0,
+"erklaerung": "Par-3-Löcher sind die kürzesten und sollen mit dem Abschlag direkt das Grün erreichbar machen. Par 4 und Par 5 sind entsprechend länger.",
+"schwierigkeit": 2
+},
+{
+"id": "q_ausr_006",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Aus wie vielen Löchern besteht eine volle Standard-Golfrunde?",
+"optionen": [
+"9",
+"12",
+"18",
+"24"
+],
+"richtig": 2,
+"erklaerung": "Eine Standardrunde umfasst 18 Löcher. Viele Anlagen bieten daneben 9-Loch-Plätze bzw. 9-Loch-Runden an.",
+"schwierigkeit": 1
+},
+{
+"id": "q_ausr_007",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Welche Schuhausstattung ist auf modernen Golfplätzen üblich und meist vorgeschrieben bzw. empfohlen?",
+"optionen": [
+"Metallspikes",
+"Softspikes (Kunststoffnoppen) oder Spikeless-Sohlen",
+"Fußballstollen",
+"Barfuß"
+],
+"richtig": 1,
+"erklaerung": "Aus Rücksicht auf die Grüns sind Metallspikes fast überall verboten. Üblich sind Softspikes aus Kunststoff oder spikeless Sohlen mit gutem Grip.",
+"schwierigkeit": 1
+},
+{
+"id": "q_ausr_008",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Was ist bei der Kleidung auf den meisten Golfanlagen üblich (Dresscode)?",
+"optionen": [
+"Badebekleidung ist erlaubt",
+"Kragenshirt/Polo und Golfhose bzw. Bermuda; keine Jeans/Trainingsanzüge",
+"Nur Regenkleidung",
+"Es gibt nie Vorgaben"
+],
+"richtig": 1,
+"erklaerung": "Üblich ist ein gepflegter Dresscode: Polo-/Kragenshirt und Golfhose oder Bermuda. Jeans, Jogginghosen oder ärmellose Herrenshirts sind vielerorts unerwünscht.",
+"schwierigkeit": 1
+},
+{
+"id": "q_ausr_009",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Welche Aussage zum Golfball ist korrekt?",
+"optionen": [
+"Er darf während des Spielens eines Lochs beliebig gewechselt werden",
+"Ein Loch soll grundsätzlich mit demselben Ball gespielt werden; ein Wechsel ist nur in bestimmten Situationen erlaubt",
+"Die Balgröße ist frei wählbar ohne Norm",
+"Ein Ball darf nur einmal gespielt werden"
+],
+"richtig": 1,
+"erklaerung": "Grundsätzlich wird ein Loch mit demselben Ball gespielt. Ein Wechsel ist z. B. beim Droppen/Legen nach Erleichterung, zwischen den Löchern oder bei beschädigtem Ball erlaubt.",
+"schwierigkeit": 2
+},
+{
+"id": "q_ausr_010",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Welche Schlägergruppe umfasst typischerweise die höchsten Lofts für kurze, hohe Annäherungen?",
+"optionen": [
+"Die Hölzer",
+"Die Wedges (z. B. Pitching-, Sand-, Lobwedge)",
+"Der Driver",
+"Die langen Eisen (3er/4er)"
+],
+"richtig": 1,
+"erklaerung": "Wedges haben die höchsten Lofts und werden für kurze, hohe Schläge ins Grün und aus dem Bunker verwendet. Hölzer und lange Eisen sind auf Weite ausgelegt.",
+"schwierigkeit": 2
+},
+{
+"id": "q_ausr_011",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Welcher Schläger wird üblicherweise auf dem Grün zum Einlochen verwendet?",
+"optionen": [
+"Der Driver",
+"Das Sandwedge",
+"Der Putter",
+"Das 5er-Eisen"
+],
+"richtig": 2,
+"erklaerung": "Auf dem Grün wird mit dem Putter gerollt. Er hat nahezu keinen Loft und dient dem präzisen Rollen des Balls ins Loch.",
+"schwierigkeit": 1
+},
+{
+"id": "q_ausr_012",
+"kapitel": "Ausrüstung & Grundwissen",
+"frage": "Was ist das Par eines typischen 18-Loch-Meisterschaftsplatzes häufig?",
+"optionen": [
+"Etwa 54",
+"Etwa 60",
+"Etwa 72",
+"Etwa 90"
+],
+"richtig": 2,
+"erklaerung": "Die meisten 18-Loch-Plätze haben ein Gesamt-Par von etwa 70 bis 72, häufig 72 (meist vier Par-3-, zehn Par-4- und vier Par-5-Löcher).",
+"schwierigkeit": 2
+}
+]

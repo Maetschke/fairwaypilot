@@ -1,0 +1,10 @@
+{
+ "version": "2026-08-08",
+ "bundles": {
+  "golfwissen": 20,
+  "lexikon": 97,
+  "fragenkatalog": 114,
+  "platzreife": 10,
+  "videos": 25
+ }
+}

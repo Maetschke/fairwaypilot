@@ -1,0 +1,380 @@
+{
+  "disclaimer": "Kurzer rechtlicher Hinweis: Die Platzreife-Prüfung liegt beim jeweiligen Club; es gibt keinen bundesweit einheitlichen Fragenkatalog. Dieser Kurs ist Vorbereitung, keine Prüfungsgarantie.",
+  "pruefung": {
+    "fragen_anzahl": 20,
+    "bestehen_prozent": 75,
+    "zeit_minuten": 20,
+    "quelle_kapitel": [
+      "Golfregeln",
+      "Etikette",
+      "Sicherheit",
+      "Verhalten auf dem Platz",
+      "Spielablauf",
+      "Zählweisen",
+      "Handicap & WHS",
+      "Ausrüstung & Grundwissen"
+    ]
+  },
+  "kapitel": [
+    {
+      "id": "pr_regeln",
+      "nummer": 1,
+      "titel": "Golfregeln – Grundlagen",
+      "einfuehrung": "Die offiziellen Golfregeln werden gemeinsam von R&A und USGA herausgegeben und seit der grossen Reform 2019, aktualisiert 2023, in verschlankter Form geführt. Sie regeln, wie eine Runde gespielt wird, wie mit besonderen Situationen umzugehen ist und wie Fairness zwischen allen Spielern gewahrt bleibt. Für die Platzreife musst du die Grundprinzipien sicher beherrschen, nicht jede Detailregel auswendig kennen.",
+      "abschnitte": [
+        {
+          "ueberschrift": "Grundprinzip: Spiele den Ball, wie er liegt",
+          "text": "Das zentrale Prinzip des Golfsports lautet: Spiele den Platz, wie du ihn vorfindest, und spiele den Ball, wie er liegt. Du darfst die Lage des Balls oder die Bedingungen deines Schlages grundsätzlich nicht zu deinem Vorteil verändern. Nur wenn eine Regel es ausdrücklich erlaubt, darfst du den Ball aufnehmen, reinigen oder an anderer Stelle wieder ins Spiel bringen. Dieses Prinzip zieht sich als roter Faden durch das gesamte Regelwerk."
+        },
+        {
+          "ueberschrift": "Aufbau der Regeln und Platzbereiche",
+          "text": "Der Platz ist in fünf definierte Bereiche eingeteilt: das allgemeine Gelände (früher Durchgrün), das Abschlagsgebiet des zu spielenden Lochs, die Bunker, die Strafgebiete (Penalty Areas) und das Grün. Für jeden Bereich gelten teils eigene Regeln, etwa was das Berühren des Bodens oder das Aufnehmen des Balls angeht. Wer weiss, in welchem Bereich sein Ball liegt, kann die richtige Regel schneller finden."
+        },
+        {
+          "ueberschrift": "Strafschläge statt Disqualifikation",
+          "text": "Die meisten Regelverstösse werden nicht mit Ausschluss, sondern mit Strafschlägen geahndet. Üblich sind ein Strafschlag (etwa beim Aufnehmen zur Erleichterung) oder zwei Strafschläge im Zählspiel für schwerere Verstösse. Im Lochspiel führt ein Verstoss meist zum Lochverlust. Nur bei grobem Fehlverhalten oder Falschangaben droht die Disqualifikation."
+        },
+        {
+          "ueberschrift": "Ehrlichkeit und Eigenverantwortung",
+          "text": "Golf ist ein Sport ohne Schiedsrichter auf jedem Loch. Jeder Spieler ist selbst für die Einhaltung der Regeln, das korrekte Zählen seiner Schläge und das Anwenden von Strafschlägen verantwortlich. Diese Selbstkontrolle und Ehrlichkeit gelten als Kern des sportlichen Charakters. Im Zweifel darfst du eine zweite Ball-Variante spielen (im Zählspiel) und die Situation später mit der Spielleitung klären."
+        },
+        {
+          "ueberschrift": "Beratung, Hilfen und Verantwortung des Spielers",
+          "text": "Während der Runde darfst du dir von deinem Partner oder Caddie helfen lassen, aber nicht von Mitbewerbern Ratschläge zur Schlägerwahl oder Spielweise einholen. Entfernungsmesser sind je nach Platzregel erlaubt. Du bist verpflichtet, mit dem richtigen Ball zu spielen und ihn eindeutig zu markieren, damit Verwechslungen ausgeschlossen sind. Das Spielen eines falschen Balls kostet Strafschläge."
+        }
+      ],
+      "merksaetze": [
+        "Spiele den Ball, wie er liegt, und den Platz, wie du ihn vorfindest.",
+        "Fünf Platzbereiche: allgemeines Gelände, Abschlag, Bunker, Strafgebiet, Grün.",
+        "Die meisten Verstösse kosten Strafschläge, nicht die Disqualifikation.",
+        "Markiere deinen Ball eindeutig – ein falscher Ball kostet Strafschläge.",
+        "Jeder Spieler ist selbst Schiedsrichter seiner eigenen Runde."
+      ],
+      "zusammenfassung": "Die Golfregeln beruhen auf Fairness, Eigenverantwortung und dem Grundsatz, den Ball zu spielen, wie er liegt. Wer die fünf Platzbereiche und das System der Strafschläge versteht, findet sich in fast jeder Situation zurecht."
+    },
+    {
+      "id": "pr_etikette",
+      "nummer": 2,
+      "titel": "Etikette & Verhalten",
+      "einfuehrung": "Etikette ist der ungeschriebene, in den Regeln aber ausdrücklich empfohlene Verhaltenskodex des Golfsports. Sie sorgt dafür, dass alle Spieler eine sichere, zügige und respektvolle Runde erleben. Für die Platzreife ist Etikette mindestens so wichtig wie das Regelwissen, weil sie zeigt, dass du platzreif für das Miteinander bist.",
+      "abschnitte": [
+        {
+          "ueberschrift": "Rücksicht auf Mitspieler",
+          "text": "Verhalte dich so, dass du andere nicht störst. Während ein Mitspieler zum Schlag ausholt, stehst du ruhig, ausserhalb seines Blickfelds und schweigst. Bewegungen, Gespräche oder Schattenwurf über der Puttlinie können konzentrationsstörend wirken. Handys werden lautlos gestellt oder ausgeschaltet."
+        },
+        {
+          "ueberschrift": "Zügiges Spiel (Ready Golf)",
+          "text": "Langsames Spiel ist einer der grössten Kritikpunkte auf dem Platz. Bereite deinen Schlag vor, während andere spielen, und schlage, sobald es sicher und du bereit bist – das nennt man Ready Golf. Halte mit der Gruppe vor dir Anschluss; wenn eure Gruppe zurückfällt und dahinter gewartet wird, lasst die schnellere Gruppe durchspielen."
+        },
+        {
+          "ueberschrift": "Pflege des Platzes",
+          "text": "Jeder Spieler hinterlässt den Platz so, wie er ihn selbst gern vorfinden würde. Ausgeschlagene Rasenstücke (Divots) werden zurückgelegt oder mit Sand aufgefüllt, Einschlaglöcher (Pitchmarken) auf dem Grün werden ausgebessert und Bunker nach dem Schlag glattgeharkt. So bleibt der Platz für die nachfolgenden Gruppen in gutem Zustand."
+        },
+        {
+          "ueberschrift": "Verhalten auf dem Grün",
+          "text": "Das Grün ist der empfindlichste Bereich des Platzes. Betritt es nicht mit dem Trolley oder Cart, laufe nicht durch die Puttlinie deiner Mitspieler und wirf die Fahne behutsam ab. Stelle deine Tasche neben, nie auf dem Grün ab und verlasse das Grün zügig, sobald alle eingelocht haben, um die Folgegruppe nicht aufzuhalten."
+        },
+        {
+          "ueberschrift": "Kleidung und Umgangston",
+          "text": "Die meisten Clubs erwarten angemessene Golfkleidung: Polohemd, Golfhose oder knielange Bermuda, Golfschuhe. Sportlicher Anstand, ein freundlicher Gruss und ein respektvoller Ton gehören dazu. Ärger über einen misslungenen Schlag darf niemals an Mitspielern, dem Personal oder dem Platz ausgelassen werden."
+        }
+      ],
+      "merksaetze": [
+        "Ruhe und Bewegungslosigkeit, während andere schlagen.",
+        "Ready Golf: spiele, sobald du sicher bereit bist.",
+        "Divots zurücklegen, Pitchmarken ausbessern, Bunker harken.",
+        "Nie durch die Puttlinie der Mitspieler laufen.",
+        "Schnellere Gruppen durchspielen lassen, wenn ihr aufhaltet."
+      ],
+      "zusammenfassung": "Etikette bedeutet Rücksicht, Tempo und Pflege: Störe niemanden beim Schlag, halte das Spiel flüssig und hinterlasse den Platz in bestem Zustand. Sie ist der Beweis, dass du das Miteinander auf dem Platz beherrschst."
+    },
+    {
+      "id": "pr_sicherheit",
+      "nummer": 3,
+      "titel": "Sicherheit auf dem Platz",
+      "einfuehrung": "Ein Golfball erreicht Geschwindigkeiten, bei denen ein Treffer schwere Verletzungen verursachen kann; auch der Schwung mit dem Schläger ist gefährlich. Sicherheit hat deshalb auf dem Platz absolute Priorität und ist fester Bestandteil jeder Platzreife-Prüfung. Wer die Grundregeln beachtet, schützt sich und andere zuverlässig.",
+      "abschnitte": [
+        {
+          "ueberschrift": "Niemals schlagen, solange jemand in Reichweite ist",
+          "text": "Vergewissere dich vor jedem Schlag, dass sich niemand in Schlagrichtung oder in möglicher Reichweite deines Balls befindet – auch nicht schräg voraus oder in Nachbarbahnen. Warte, bis die Gruppe vor dir ausser Reichweite ist. Diese eine Regel verhindert die meisten Unfälle auf dem Golfplatz."
+        },
+        {
+          "ueberschrift": "Der Warnruf Fore",
+          "text": "Fliegt dein Ball unkontrolliert in Richtung anderer Personen, rufe sofort laut und deutlich Fore. Das ist der international verstandene Warnruf im Golf. Wer Fore hört, sollte sich nicht umdrehen, sondern sich wegducken und mit Armen und Händen Kopf und Nacken schützen."
+        },
+        {
+          "ueberschrift": "Sicherheitsabstand beim Üben und Schwingen",
+          "text": "Halte beim Üben oder Warten ausreichend Abstand zu anderen Spielern – ein voller Golfschwung braucht viel Raum. Stelle dich nie unmittelbar neben oder hinter jemanden, der ausholt. Probeschwünge nur dort ausführen, wo niemand getroffen werden kann und kein Rasen unnötig beschädigt wird."
+        },
+        {
+          "ueberschrift": "Gewitter und Wetter",
+          "text": "Bei aufziehendem Gewitter ist das Spiel sofort zu unterbrechen; ein Golfplatz mit erhobenem Metallschläger ist bei Blitzschlag besonders gefährlich. Suche geschützte Bereiche wie Clubhaus oder Blitzschutzhütten auf und meide einzelne Bäume, offene Flächen und Wasser. Ertönt das Signal der Spielleitung zur Unterbrechung, wird das Spiel umgehend eingestellt."
+        },
+        {
+          "ueberschrift": "Umgang mit Cart, Trolley und Ausrüstung",
+          "text": "Fahre mit Cart oder E-Trolley vorsichtig, halte Abstand zu Personen und beachte die Wegeführung des Platzes. Lege Schläger nicht achtlos in die Laufwege und achte auf Kinder und Zuschauer. Bunkerharken und Fahnenstangen so ablegen, dass niemand stolpert."
+        }
+      ],
+      "merksaetze": [
+        "Erst schlagen, wenn niemand in Reichweite ist.",
+        "Bei Gefahr laut Fore rufen – auf Fore wegducken und Kopf schützen.",
+        "Voller Schwung braucht Abstand: nie neben Ausholenden stehen.",
+        "Bei Gewitter sofort unterbrechen und Schutz suchen.",
+        "Einzelne Bäume, offene Flächen und Wasser bei Blitzgefahr meiden."
+      ],
+      "zusammenfassung": "Sicherheit geht vor jedem Schlag: Vergewissere dich, dass niemand in Reichweite ist, warne mit Fore und unterbrich bei Gewitter sofort. Ausreichender Abstand und Aufmerksamkeit verhindern die meisten Unfälle."
+    },
+    {
+      "id": "pr_spielablauf",
+      "nummer": 4,
+      "titel": "Spielablauf & Ablauf einer Runde",
+      "einfuehrung": "Eine Golfrunde folgt einem festen Ablauf vom ersten Abschlag bis zum letzten Einlochen. Wer den Ablauf kennt, spielt zügig, sicher und regelkonform und weiss jederzeit, wer an der Reihe ist. Dieses Kapitel führt dich durch die typische Runde.",
+      "abschnitte": [
+        {
+          "ueberschrift": "Vor der Runde: Startzeit und Ballmarkierung",
+          "text": "Melde dich rechtzeitig im Sekretariat an, halte deine Startzeit ein und sei einige Minuten vor dem Start am ersten Abschlag. Notiere die Marke und Nummer deines Balls, damit du ihn eindeutig identifizieren kannst. Prüfe, ob du höchstens 14 Schläger in der Tasche hast, und informiere dich über die Platzregeln."
+        },
+        {
+          "ueberschrift": "Der Abschlag und das Abschlagsgebiet",
+          "text": "Der erste Schlag jedes Lochs erfolgt aus dem Abschlagsgebiet, das durch zwei Abschlagmarkierungen begrenzt wird. Der Ball muss zwischen und nicht vor den Markierungen aufgeteet werden; du selbst darfst ausserhalb stehen. Nur hier darfst du den Ball auf ein Tee legen."
+        },
+        {
+          "ueberschrift": "Reihenfolge des Spiels: Ehre und weiteste Entfernung",
+          "text": "Auf dem ersten Abschlag wird die Reihenfolge oft ausgelost, danach hat derjenige die Ehre, der das vorige Loch am besten gespielt hat. Im weiteren Verlauf des Lochs spielt grundsätzlich der Ball, der am weitesten vom Loch entfernt liegt, zuerst. Aus Tempogründen ist Ready Golf, also das Spielen in bereiter Reihenfolge, ausdrücklich erwünscht."
+        },
+        {
+          "ueberschrift": "Weg zum Grün und Einlochen",
+          "text": "Vom Abschlag arbeitest du dich über das Fairway in Richtung Grün vor, bis der Ball schliesslich ins Loch gespielt wird. Erst wenn der Ball vollständig im Loch ruht, ist das Loch beendet. Auf dem Grün darf der Ball markiert, aufgenommen und gereinigt werden."
+        },
+        {
+          "ueberschrift": "Zählen, Scorekarte und Rundenabschluss",
+          "text": "Im Zählspiel führt jeder Spieler die Scorekarte eines Mitspielers (Zähler) und notiert dessen Bruttoschläge Loch für Loch. Nach der Runde werden die Ergebnisse gemeinsam geprüft, von Spieler und Zähler unterschrieben und bei der Spielleitung abgegeben. Eine nicht unterschriebene oder mit zu niedrigen Werten abgegebene Karte kann zur Disqualifikation führen."
+        }
+      ],
+      "merksaetze": [
+        "Pünktlich zur Startzeit, Ball eindeutig markieren, maximal 14 Schläger.",
+        "Erster Schlag immer zwischen den Abschlagmarkierungen aufteen.",
+        "Es spielt, wer am weitesten vom Loch entfernt liegt – oder Ready Golf.",
+        "Das Loch endet erst, wenn der Ball vollständig im Loch ruht.",
+        "Scorekarte prüfen und von Spieler und Zähler unterschreiben lassen."
+      ],
+      "zusammenfassung": "Eine Runde läuft strukturiert vom Abschlag über das Fairway bis zum Einlochen, mit klarer Spielreihenfolge und sauberer Scorekarte. Pünktlichkeit, korrekte Ballmarkierung und eine unterschriebene Karte gehören zum ordnungsgemässen Ablauf."
+    },
+    {
+      "id": "pr_zaehlweisen",
+      "nummer": 5,
+      "titel": "Zählweisen (Zählspiel/Lochspiel/Stableford)",
+      "einfuehrung": "Golf kennt mehrere Wertungsformen, die den Charakter einer Runde stark verändern. Die drei wichtigsten sind Zählspiel, Lochspiel und Stableford. Für die Platzreife solltest du wissen, wie jede zählt und wann welche Form eingesetzt wird.",
+      "abschnitte": [
+        {
+          "ueberschrift": "Zählspiel (Stroke Play)",
+          "text": "Im Zählspiel zählt jeder einzelne Schlag über die gesamte Runde; gewonnen hat, wer für alle Löcher die wenigsten Schläge benötigt. Jeder Ball muss eingelocht werden, denn jeder Schlag geht ins Gesamtergebnis ein. Das Bruttoergebnis ist die Summe aller Schläge, das Nettoergebnis ergibt sich nach Abzug der Vorgabe."
+        },
+        {
+          "ueberschrift": "Lochspiel (Match Play)",
+          "text": "Im Lochspiel treten zwei Parteien Loch für Loch gegeneinander an; jedes Loch wird einzeln gewonnen, verloren oder halbiert. Es zählt nicht die Gesamtzahl der Schläge, sondern die Anzahl gewonnener Löcher. Ein Loch kann aufgegeben werden, und der Wettkampf endet, sobald eine Partei mehr Löcher vorne liegt, als noch zu spielen sind (z. B. 3 auf 2)."
+        },
+        {
+          "ueberschrift": "Stableford: Punkte statt Schläge",
+          "text": "Bei Stableford werden pro Loch Punkte nach dem Nettoergebnis vergeben, nicht Schläge summiert. Wer ein Loch mit zu vielen Schlägen spielt, streicht es einfach (0 Punkte) und geht zum nächsten – das hält das Spiel flüssig und ist für Anfänger ideal. Gewonnen hat, wer am Ende die meisten Punkte erreicht."
+        },
+        {
+          "ueberschrift": "Die Stableford-Punktetabelle (netto)",
+          "text": "Die Punkte richten sich nach dem Nettoergebnis relativ zum Par des Lochs: Netto-Par ergibt 2 Punkte, ein Netto-Bogey (ein Schlag über Par) 1 Punkt, ein Doppelbogey oder schlechter 0 Punkte. Besser als Par bringt mehr: Netto-Birdie 3, Netto-Eagle 4 und Netto-Albatros 5 Punkte. Als Faustregel gilt: Nettobogey = 1, Nettopar = 2, und je Schlag besser ein Punkt mehr."
+        },
+        {
+          "ueberschrift": "Brutto und Netto",
+          "text": "Das Bruttoergebnis ist die tatsächliche Schlagzahl ohne Vorgabe; das Nettoergebnis entsteht, indem die Vorgabeschläge des Spielers berücksichtigt werden. Vorgabeschläge werden nach dem Stroke-Index der Löcher verteilt, sodass ein höheres Handicap an den schwierigsten Löchern zusätzliche Schläge erhält. So können Spieler unterschiedlicher Spielstärke fair miteinander gewertet werden."
+        }
+      ],
+      "merksaetze": [
+        "Zählspiel: jeder Schlag zählt, immer einlochen.",
+        "Lochspiel: Löcher gewinnen, nicht Schläge summieren.",
+        "Stableford: schlechte Löcher streichen, weiterspielen.",
+        "Nettopar = 2 Punkte, Nettobogey = 1, Doppelbogey = 0 Punkte.",
+        "Je Schlag besser als Par ein Stableford-Punkt mehr (Birdie 3, Eagle 4)."
+      ],
+      "zusammenfassung": "Zählspiel summiert alle Schläge, Lochspiel wertet gewonnene Löcher, Stableford vergibt Punkte nach Nettoergebnis. Kernwissen ist die Stableford-Tabelle – Nettopar zwei Punkte, je Schlag besser einer mehr – sowie der Unterschied zwischen Brutto und Netto."
+    },
+    {
+      "id": "pr_handicap",
+      "nummer": 6,
+      "titel": "Handicap & World Handicap System (WHS)",
+      "einfuehrung": "Das Handicap misst die Spielstärke eines Golfers und ermöglicht faire Wettspiele zwischen unterschiedlich starken Spielern. Seit 2020/2021 gilt in Deutschland und weltweit das World Handicap System (WHS), das nationale Systeme vereinheitlicht. Für die Platzreife genügt ein solides Grundverständnis der Begriffe und Formeln.",
+      "abschnitte": [
+        {
+          "ueberschrift": "Handicap-Index als weltweiter Massstab",
+          "text": "Der Handicap-Index (frühere Stammvorgabe) drückt deine Spielstärke als Zahl aus – je niedriger, desto besser. Er wird aus den besten 8 der letzten 20 gewerteten Runden gebildet und ist plattform- und länderübergreifend gültig. So kannst du dein Handicap auf jedem WHS-Platz der Welt in ein platzbezogenes Handicap umrechnen."
+        },
+        {
+          "ueberschrift": "Course Rating, Slope Rating und die Zahl 113",
+          "text": "Jeder Platz und jeder Abschlag hat ein Course Rating (erwartete Schlagzahl eines Scratch-Golfers) und ein Slope Rating (relative Schwierigkeit für höhere Handicaps). Der Slope reicht von 55 bis 155, wobei 113 den Durchschnittsplatz beschreibt. Diese Werte machen unterschiedlich schwere Plätze miteinander vergleichbar."
+        },
+        {
+          "ueberschrift": "Course Handicap berechnen",
+          "text": "Das Course Handicap (Platzvorgabe) sagt dir, wie viele Vorgabeschläge du auf einem konkreten Platz erhältst. Die Formel lautet: Course Handicap = Handicap-Index × (Slope Rating / 113) + (Course Rating − Par). Beispiel: Bei Index 20,0, Slope 125 und einem Course Rating von 71,5 auf einem Par-72-Platz ergibt sich 20,0 × (125/113) + (71,5 − 72) ≈ 22 − 0,5 ≈ 22 Schläge."
+        },
+        {
+          "ueberschrift": "Playing Handicap und Handicap Allowance",
+          "text": "Für viele Wettspielformen wird das Course Handicap noch mit einem Prozentsatz, der Handicap Allowance, multipliziert, um das Playing Handicap zu erhalten: Playing Handicap = Course Handicap × Allowance. Im Einzel-Zählspiel beträgt die Allowance häufig 95 Prozent. Das Playing Handicap ist die Zahl der Schläge, die tatsächlich für die Netto-Wertung angerechnet werden."
+        },
+        {
+          "ueberschrift": "Score Differential und Fortschreibung",
+          "text": "Nach einer gewerteten Runde wird ein Score Differential berechnet: (113 / Slope Rating) × (angepasstes Bruttoergebnis − Course Rating). Aus dem Mittel der besten 8 der letzten 20 Differentials entsteht der neue Handicap-Index. Zusätzlich begrenzen Schutzmechanismen wie das Netto-Doppelbogey als maximale Lochwertung und eine Sicherung gegen zu starkes Verschlechtern die Ausschläge."
+        }
+      ],
+      "merksaetze": [
+        "Handicap-Index = Mittel der besten 8 aus den letzten 20 Runden.",
+        "Slope 113 = Durchschnittsplatz; Course Rating = Erwartung des Scratch-Golfers.",
+        "Course Handicap = Index × (Slope/113) + (Course Rating − Par).",
+        "Playing Handicap = Course Handicap × Handicap Allowance (oft 95 % im Einzel).",
+        "Score Differential = (113/Slope) × (Bruttoergebnis − Course Rating)."
+      ],
+      "zusammenfassung": "Das WHS macht Handicaps weltweit vergleichbar: Der Handicap-Index wird über Course und Slope Rating in ein Course Handicap und mit der Allowance in ein Playing Handicap umgerechnet. Wer die Kernformeln und die Zahl 113 kennt, versteht das System."
+    },
+    {
+      "id": "pr_ausruestung",
+      "nummer": 7,
+      "titel": "Ausrüstung & Regeln dazu",
+      "einfuehrung": "Die richtige und regelkonforme Ausrüstung ist Voraussetzung für ein faires Spiel. Die Regeln legen fest, wie viele und welche Schläger du führen darfst und welche Hilfsmittel erlaubt sind. Dieses Kapitel gibt dir den nötigen Überblick.",
+      "abschnitte": [
+        {
+          "ueberschrift": "Maximal 14 Schläger",
+          "text": "Du darfst während einer Runde höchstens 14 Schläger in der Tasche führen. Zu viele Schläger werden mit Strafschlägen geahndet – im Zählspiel zwei Strafschläge pro betroffenem Loch bis maximal vier, im Lochspiel mit Lochkorrektur. Prüfe deine Tasche daher vor dem Start."
+        },
+        {
+          "ueberschrift": "Die Schlägerarten und ihr Einsatz",
+          "text": "Eine typische Ausrüstung besteht aus Hölzern (Driver und Fairwayhölzer für weite Schläge), Eisen (für mittlere und kurze Distanzen sowie Annäherungen), einem oder mehreren Wedges (für kurze, hohe Schläge und den Bunker) und dem Putter (für das Rollen des Balls auf dem Grün). Welchen Schläger du wählst, hängt von Distanz, Lage und gewünschter Flugbahn ab."
+        },
+        {
+          "ueberschrift": "Der Ball und seine Kennzeichnung",
+          "text": "Es dürfen nur konforme Golfbälle gespielt werden, die den Normen von R&A und USGA entsprechen. Kennzeichne deinen Ball mit einer eindeutigen Markierung, damit du ihn zweifelsfrei identifizieren kannst. Einen Ball darfst du nur wechseln, wenn eine Regel es erlaubt, etwa zwischen zwei Löchern oder bei Beschädigung."
+        },
+        {
+          "ueberschrift": "Erlaubte und verbotene Hilfsmittel",
+          "text": "Entfernungsmesser sind erlaubt, sofern die Platzregeln sie nicht ausschliessen; sie dürfen jedoch grundsätzlich keine Höhenunterschiede oder Windwerte anzeigen, wenn dies verboten ist. Nicht erlaubt sind Hilfsmittel, die dir einen unzulässigen Vorteil verschaffen, etwa das Einschätzen der Puttlinie durch technische Geräte während der Runde. Handschuh, Regenschirm und Übungsschläge sind normal, künstliche Schwunghilfen während der Runde nicht."
+        },
+        {
+          "ueberschrift": "Pflege und Zustand der Schläger",
+          "text": "Schläger dürfen während der Runde grundsätzlich nicht so verändert werden, dass sich ihre Eigenschaften wesentlich ändern. Wird ein Schläger im normalen Spiel beschädigt, darfst du ihn in der Regel weiter benutzen oder reparieren lassen, aber meist nicht durch einen völlig neuen ersetzen. Halte Griffe und Schlagflächen sauber, das verbessert die Kontrolle."
+        }
+      ],
+      "merksaetze": [
+        "Höchstens 14 Schläger – zu viele kosten Strafschläge.",
+        "Hölzer weit, Eisen mittel, Wedges kurz und hoch, Putter auf dem Grün.",
+        "Nur konforme, eindeutig gekennzeichnete Bälle spielen.",
+        "Entfernungsmesser nur, wenn die Platzregel es zulässt.",
+        "Keine künstlichen Schwunghilfen oder unzulässigen Geräte während der Runde."
+      ],
+      "zusammenfassung": "Erlaubt sind maximal 14 konforme Schläger und ein gekennzeichneter, normgerechter Ball. Hilfsmittel wie Entfernungsmesser sind nur im Rahmen der Platzregeln zulässig; unzulässige Vorteile verschaffende Geräte sind verboten."
+    },
+    {
+      "id": "pr_ballregeln",
+      "nummer": 8,
+      "titel": "Ballregeln & Erleichterung (Penalty Areas, Aus, unspielbar, Drop)",
+      "einfuehrung": "Nicht jeder Ball landet günstig – für schwierige Lagen kennen die Regeln klare Verfahren mit und ohne Strafschlag. Wer die Erleichterungsregeln beherrscht, spielt zügig und vermeidet unnötige Fehler. Dieses Kapitel behandelt die wichtigsten Standardsituationen.",
+      "abschnitte": [
+        {
+          "ueberschrift": "Strafgebiete (Penalty Areas)",
+          "text": "Strafgebiete – meist rot oder gelb markiert – umfassen Wasserhindernisse und andere ausgewiesene Bereiche. Landet dein Ball dort, darfst du ihn spielen, wie er liegt, oder mit einem Strafschlag Erleichterung nehmen. Bei gelben Strafgebieten stehen zwei, bei roten zusätzlich eine seitliche Drop-Option (zwei Schlägerlängen) zur Verfügung; in beiden Fällen darfst du auch am letzten Spielpunkt erneut spielen."
+        },
+        {
+          "ueberschrift": "Aus (Out of Bounds) und verlorener Ball",
+          "text": "Ein Ball im Aus – meist durch weisse Pfähle markiert – oder ein verlorener Ball wird mit Schlag-und-Distanzverlust bestraft: Du spielst einen neuen Ball mit einem Strafschlag von der Stelle des vorherigen Schlages. Um Zeit zu sparen, kannst du bei Unsicherheit einen provisorischen Ball spielen. Die Suchzeit für einen Ball beträgt maximal drei Minuten."
+        },
+        {
+          "ueberschrift": "Unspielbarer Ball",
+          "text": "Liegt dein Ball so ungünstig, dass du ihn nicht spielen willst oder kannst, darfst du ihn ausserhalb eines Strafgebiets für unspielbar erklären – die Entscheidung triffst allein du. Gegen einen Strafschlag hast du drei Optionen: zurück zum Ort des letzten Schlages, zwei Schlägerlängen seitlich droppen oder auf der Linie Loch–Ball beliebig weit zurück droppen. Diese Regel gilt überall ausser im Strafgebiet."
+        },
+        {
+          "ueberschrift": "Straflose Erleichterung",
+          "text": "In bestimmten Fällen darfst du ohne Strafschlag droppen, etwa bei ungewöhnlich beschaffenem Boden (Boden in Ausbesserung), zeitweiligem Wasser, Tierlöchern oder unbeweglichen Hemmnissen wie Wegen und Sprinklerdeckeln. Du bestimmst den nächstgelegenen Punkt vollständiger Erleichterung und droppst innerhalb einer Schlägerlänge, nicht näher zum Loch. Straflose Erleichterung gibt es nur, wenn die Beeinträchtigung tatsächlich vorliegt."
+        },
+        {
+          "ueberschrift": "Richtig droppen",
+          "text": "Seit 2019 wird der Ball aus Kniehöhe fallen gelassen, nicht mehr aus Schulterhöhe. Er muss in einem definierten Erleichterungsbereich (eine oder zwei Schlägerlängen, gemessen mit dem längsten Schläger ausser dem Putter) zum Liegen kommen und darf nicht näher zum Loch fallen. Rollt der Ball aus dem Bereich, wird ein zweites Mal gedroppt; bleibt er erneut nicht liegen, wird er an der Auftreffstelle hingelegt."
+        }
+      ],
+      "merksaetze": [
+        "Strafgebiet: mit einem Strafschlag Erleichterung, rot zusätzlich seitlich.",
+        "Aus oder verloren: Schlag und Distanz, ein Strafschlag von der alten Stelle.",
+        "Suchzeit maximal drei Minuten – im Zweifel provisorischen Ball spielen.",
+        "Unspielbar: du entscheidest, ein Strafschlag, drei Drop-Optionen.",
+        "Droppen aus Kniehöhe, nicht näher zum Loch, im Erleichterungsbereich."
+      ],
+      "zusammenfassung": "Für schwierige Lagen gibt es klare Verfahren: Strafgebiet und unspielbarer Ball kosten einen Strafschlag mit mehreren Drop-Optionen, Aus und verlorener Ball kosten Schlag und Distanz. Straflose Erleichterung gilt bei Hemmnissen und ungewöhnlichem Boden – stets aus Kniehöhe und nicht näher zum Loch gedroppt."
+    },
+    {
+      "id": "pr_gruen",
+      "nummer": 9,
+      "titel": "Grün & Putten (Regeln + Etikette)",
+      "einfuehrung": "Auf dem Grün werden Runden entschieden, denn hier fällt oft ein grosser Teil der Schläge an. Für das Grün gelten besondere Regeln und eine besonders sorgsame Etikette, weil die Fläche empfindlich und gepflegt ist. Dieses Kapitel fasst beides zusammen.",
+      "abschnitte": [
+        {
+          "ueberschrift": "Besondere Rechte auf dem Grün",
+          "text": "Sobald dein Ball auf dem Grün liegt, darfst du ihn markieren, aufnehmen und reinigen. Du darfst Sand, lose Erde sowie Pitchmarken und alte Lochstopfen ausbessern, auch wenn sie in deiner Puttlinie liegen. Markiere die Ballposition mit einem Marker direkt hinter dem Ball, bevor du ihn aufnimmst."
+        },
+        {
+          "ueberschrift": "Die Fahne beim Putten",
+          "text": "Seit 2019 darfst du die Fahne im Loch stecken lassen, auch wenn du vom Grün puttest – trifft der Ball die steckende Fahne, gibt es keine Strafe. Du kannst die Fahne aber auch herausnehmen oder betreuen lassen. Wähle die Variante, die dir mehr Sicherheit gibt, und lege die herausgenommene Fahne behutsam ausserhalb der Laufwege ab."
+        },
+        {
+          "ueberschrift": "Puttlinie und Verhalten der Mitspieler",
+          "text": "Betritt niemals die Puttlinie deiner Mitspieler, denn Fussabdrücke können die Rollrichtung verändern. Die Linie darf nicht durch Berühren oder Auflegen von Gegenständen zur Hilfe markiert werden. Stehe ruhig ausserhalb des Sichtfelds, während ein anderer puttet, und wirf keinen Schatten über dessen Linie."
+        },
+        {
+          "ueberschrift": "Ball am oder im Loch",
+          "text": "Ein Ball gilt als eingelocht, wenn er vollständig unterhalb der Lochkante ruht. Bleibt der Ball am Lochrand hängen und über der Kante, hast du eine angemessene Zeit (etwa zehn Sekunden nach dem Herangehen), um zu warten, ob er noch fällt. Fällt er nicht, musst du ihn mit einem weiteren Schlag einlochen."
+        },
+        {
+          "ueberschrift": "Grün-Etikette und Tempo",
+          "text": "Stelle deine Tasche oder deinen Trolley nie auf dem Grün ab und betrete es nicht mit dem Cart. Bessere deine Pitchmarke sofort aus, halte dich beim Markieren und Putten zügig und verlasse das Grün rasch, sobald alle eingelocht haben. Die Ergebnisse trägst du erst am nächsten Abschlag in die Scorekarte ein, damit die Folgegruppe nicht wartet."
+        }
+      ],
+      "merksaetze": [
+        "Auf dem Grün darf der Ball markiert, aufgenommen und gereinigt werden.",
+        "Markieren immer direkt hinter dem Ball, dann erst aufnehmen.",
+        "Fahne darf stecken bleiben – Treffer gibt keine Strafe.",
+        "Pitchmarken sofort ausbessern, Puttlinie der anderen nie betreten.",
+        "Grün zügig verlassen, Ergebnis erst am nächsten Abschlag notieren."
+      ],
+      "zusammenfassung": "Auf dem Grün darfst du den Ball markieren, aufnehmen und reinigen sowie die Fahne stecken lassen. Sorgsame Etikette – Pitchmarken ausbessern, Puttlinien meiden und das Grün zügig verlassen – schützt die Fläche und das Spieltempo."
+    },
+    {
+      "id": "pr_begriffe",
+      "nummer": 10,
+      "titel": "Golfbegriffe & Prüfungswissen kompakt",
+      "einfuehrung": "Zum Abschluss bündelt dieses Kapitel die wichtigsten Fachbegriffe und Prüfungsfakten, die in jeder Platzreife-Vorbereitung vorkommen. Es dient als schnelles Nachschlagewerk kurz vor der Prüfung. Wer diese Begriffe sicher zuordnen kann, ist gut gerüstet.",
+      "abschnitte": [
+        {
+          "ueberschrift": "Ergebnisbegriffe: Par, Birdie, Bogey & Co.",
+          "text": "Par ist die für ein Loch vorgesehene Schlagzahl. Ein Birdie bedeutet einen Schlag unter Par, ein Eagle zwei unter Par und ein Albatros drei unter Par. Über Par heisst es Bogey (einer über), Doppelbogey (zwei über) und so weiter; ein Hole-in-One ist das Einlochen mit dem ersten Schlag."
+        },
+        {
+          "ueberschrift": "Platz- und Schlagbegriffe",
+          "text": "Fairway ist die kurz gemähte Spielbahn, Rough das höhere Gras daneben, Green die Puttfläche und Tee sowohl das Abschlagsgebiet als auch das Stäbchen für den Ball. Ein Drive ist der weite Abschlag, ein Pitch und ein Chip sind kurze Annäherungen, ein Putt der Schlag auf dem Grün. Divot und Pitchmark bezeichnen die Spuren, die du ausbessern musst."
+        },
+        {
+          "ueberschrift": "Regel- und Wertungsbegriffe",
+          "text": "Brutto ist das Ergebnis ohne Vorgabe, Netto das Ergebnis nach Abzug der Vorgabeschläge. Stroke Index gibt die Reihenfolge an, in der Löcher Vorgabeschläge erhalten. Provisorischer Ball, Drop, Penalty Area und Out of Bounds sind zentrale Regelbegriffe, die du sicher zuordnen können solltest."
+        },
+        {
+          "ueberschrift": "Kernfakten zur Prüfung",
+          "text": "Merke dir die häufig geprüften Fixpunkte: maximal 14 Schläger, höchstens drei Minuten Suchzeit, Droppen aus Kniehöhe, Nettopar gleich zwei Stableford-Punkte und der Warnruf Fore. Diese Fakten kommen in vielen Prüfungsfragen wieder. Die Platzreife-Prüfung selbst wird vom jeweiligen Club gestaltet und kann Theorie und Praxis kombinieren."
+        },
+        {
+          "ueberschrift": "Vorgehen bei Unsicherheit",
+          "text": "Wenn du eine Regelsituation nicht sicher lösen kannst, entscheide dich im Zweifel für das vorsichtigere Verfahren und kläre die Frage anschliessend mit der Spielleitung. Im Zählspiel darfst du in strittigen Fällen mit einem zweiten Ball weiterspielen und beide Ergebnisse melden. Ruhe, Fairness und Ehrlichkeit sind wichtiger als jede auswendig gelernte Detailregel."
+        }
+      ],
+      "merksaetze": [
+        "Birdie −1, Eagle −2, Albatros −3; Bogey +1, Doppelbogey +2.",
+        "Fairway, Rough, Green, Tee – kenne die Platzbereiche und ihre Namen.",
+        "Brutto ohne Vorgabe, Netto nach Abzug der Vorgabeschläge.",
+        "Fixpunkte: 14 Schläger, 3 Minuten Suchzeit, Droppen aus Kniehöhe.",
+        "Im Zweifel vorsichtig handeln und die Spielleitung fragen."
+      ],
+      "zusammenfassung": "Dieses Kapitel bündelt Ergebnis-, Platz- und Regelbegriffe sowie die am häufigsten geprüften Fixpunkte. Wer Par-Begriffe, Brutto/Netto und die Kernfakten wie 14 Schläger, drei Minuten Suchzeit und Kniehöhe beim Droppen kennt, geht sicher in die clubindividuelle Platzreife-Prüfung."
+    }
+  ]
+}

@@ -1,0 +1,763 @@
+[
+  {
+    "id": "gw_griff",
+    "kategorie": "Grundlagen",
+    "titel": "Der Griff",
+    "einfuehrung": "Der Griff ist deine einzige Verbindung zum Schläger und entscheidet mit darüber, wie die Schlagfläche im Treffmoment steht. Ein neutraler, entspannter Griff ist die Basis für gerade Schläge und beugt vielen Fehlerbildern vor. Wer hier von Anfang an sauber arbeitet, spart sich später mühsames Umlernen.",
+    "schritte": [
+      "Lege den Schläger diagonal in die Finger der oberen Hand (bei Rechtshändern links), nicht in die Handfläche.",
+      "Schließe die obere Hand so, dass der Daumen leicht rechts der Schaftmitte liegt und du beim Blick nach unten zwei bis drei Knöchel siehst (neutrale Position).",
+      "Setze die untere Hand darunter, sodass der 'V'-Ausbau aus Daumen und Zeigefinger etwa zum Kinn oder zur rechten Schulter zeigt.",
+      "Verbinde beide Hände als Einheit: Overlapping (kleiner Finger liegt auf), Interlocking (Finger verschränkt) oder Baseball-Griff für kräftigere Hände.",
+      "Prüfe den Griffdruck: fest genug für Kontrolle, locker genug, dass die Unterarme entspannt bleiben (etwa 4 von 10).",
+      "Kontrolliere im Spiegel oder mit Trainingsgriff, ob beide Handflächen parallel zueinander und zur Schlagfläche stehen."
+    ],
+    "fehler": [
+      "Zu starker (gedrehter) Griff, bei dem beide Hände zu weit rechts liegen und die Schlagfläche schließt.",
+      "Zu schwacher Griff mit nach links gedrehten Händen, der die Schlagfläche öffnet.",
+      "Verkrampfter, zu fester Griffdruck, der Handgelenke und Unterarme blockiert.",
+      "Schläger liegt in der Handfläche statt in den Fingern, wodurch das Handgelenk nicht sauber abklappen kann."
+    ],
+    "korrekturen": [
+      "Nutze die Knöchel-Kontrolle: Zwei bis drei sichtbare Knöchel der oberen Hand = neutral.",
+      "Übe den Griff mehrmals täglich ohne Ball, bis er sich automatisch richtig anfühlt.",
+      "Setze auf Trainingsgriffe oder aufgemalte Markierungen am Schaft für die Handposition.",
+      "Lockere bewusst den Druck, indem du den Schläger einige Sekunden nur mit minimaler Kraft hältst und dann leicht nachfasst."
+    ],
+    "uebungen": [
+      "Griff-Routine: 20-mal täglich neu greifen und Position kontrollieren, bis sie sitzt.",
+      "Zahnpasta-Test: Halte den Schläger so locker, dass du eine gedachte Tube nicht ausdrücken würdest, und schlage sanfte Bälle.",
+      "Spiegel-Check: Griff im Spiegel prüfen und mit einem Foto der Idealposition vergleichen."
+    ],
+    "checkliste": [
+      "Schläger in den Fingern, nicht in der Handfläche",
+      "Zwei bis drei Knöchel der oberen Hand sichtbar",
+      "Beide 'V' zeigen Richtung rechte Schulter/Kinn",
+      "Griffdruck locker (ca. 4 von 10)",
+      "Hände arbeiten als eine Einheit"
+    ],
+    "zusammenfassung": "Ein neutraler Griff in den Fingern mit lockerem Druck ist das Fundament: Er sorgt für eine korrekt stehende Schlagfläche und macht gerade Schläge überhaupt erst möglich."
+  },
+  {
+    "id": "gw_setup_ausrichtung",
+    "kategorie": "Grundlagen",
+    "titel": "Stand, Setup und Ausrichtung",
+    "einfuehrung": "Viele Fehlschläge entstehen nicht im Schwung, sondern schon in der Ansprechposition. Ein sauberes Setup mit korrekter Ausrichtung, Standbreite und Ballposition legt die Richtung fest, bevor der Schläger überhaupt in Bewegung kommt. Es ist der Teil des Spiels, den du zu 100 Prozent kontrollieren kannst.",
+    "schritte": [
+      "Wähle zuerst hinter dem Ball ein Zwischenziel (z. B. ein Grasbüschel) auf der Linie zum eigentlichen Ziel.",
+      "Stelle die Schlagfläche zuerst rechtwinklig zur Ziellinie hinter den Ball, danach baust du deinen Stand auf.",
+      "Richte Füße, Hüften und Schultern parallel zur Ziellinie aus (wie zwei Bahngleise, du stehst auf dem linken Gleis).",
+      "Wähle die Standbreite: bei Wedges etwa hüftbreit, beim Driver etwa schulterbreit.",
+      "Lege die Ballposition passend zum Schläger fest: kurze Eisen mittig, lange Eisen/Hölzer weiter vorne, Driver an der Innenseite des vorderen Fußes.",
+      "Verteile das Gewicht ausgeglichen auf die Fußballen und lass die Arme locker herabhängen."
+    ],
+    "fehler": [
+      "Ausrichtung nach der Schulterlinie statt an einem klaren Zwischenziel, dadurch offener oder geschlossener Stand.",
+      "Ballposition passt nicht zum Schläger (z. B. Driver zu weit hinten, Eisen zu weit vorne).",
+      "Zu breiter oder zu schmaler Stand, der Balance und Gewichtsverlagerung erschwert.",
+      "Gewicht auf den Fersen, wodurch der Oberkörper im Schwung aufrichtet."
+    ],
+    "korrekturen": [
+      "Lege zwei Schläger auf den Boden: einen auf die Ziellinie, einen parallel an die Zehen zur Kontrolle.",
+      "Baue jeden Schlag über das Zwischenziel-Prinzip auf: erst Schlagfläche, dann Körper.",
+      "Merke dir Ballpositionen als Faustregel und teste sie mit Impact-Spray oder Fußabdrücken.",
+      "Kontrolliere Balance, indem du im Setup leicht auf Ballen und Fersen wippst und in der Mitte stehen bleibst."
+    ],
+    "uebungen": [
+      "Bahn-Drill: Mit zwei Ausrichtungsstöcken auf der Range 10 Bälle schlagen und die parallele Ausrichtung verinnerlichen.",
+      "Ballpositions-Test: Denselben Schläger mit drei verschiedenen Ballpositionen schlagen und den Unterschied im Flug beobachten."
+    ],
+    "checkliste": [
+      "Zwischenziel gewählt",
+      "Schlagfläche zuerst ausgerichtet",
+      "Füße, Hüften, Schultern parallel zur Ziellinie",
+      "Standbreite passend zum Schläger",
+      "Ballposition passend zum Schläger"
+    ],
+    "zusammenfassung": "Ein präzises Setup mit paralleler Ausrichtung und schlägergerechter Ballposition entscheidet über die Schlagrichtung, noch bevor du den Schläger bewegst."
+  },
+  {
+    "id": "gw_posture",
+    "kategorie": "Grundlagen",
+    "titel": "Körperhaltung (Posture)",
+    "einfuehrung": "Eine athletische, ausbalancierte Körperhaltung ermöglicht eine freie Rotation und einen wiederholbaren Schwungradius. Kippst du falsch ab oder rundest den Rücken, leiden Ebene, Balance und Konstanz. Gute Posture schont zudem den Rücken über viele Löcher hinweg.",
+    "schritte": [
+      "Stelle dich aufrecht hin, Füße stabil, Schläger locker vor dem Körper.",
+      "Beuge dich aus der Hüfte nach vorne (Hüftknick, nicht aus dem unteren Rücken), sodass das Gesäß leicht nach hinten geht.",
+      "Lass die Arme frei unter den Schultern herabhängen; hier fasst du den Schläger.",
+      "Beuge die Knie nur leicht, sodass du federnd und athletisch stehst.",
+      "Halte den Rücken gerade (neutrale Wirbelsäule) und das Kinn vom Brustkorb weg, damit die Schulter frei durchdrehen kann.",
+      "Bringe das Gewicht auf die Fußballen, sodass ein gedachtes Lot von den Schultern über die Fußballen fällt."
+    ],
+    "fehler": [
+      "Runder Rücken ('Katzenbuckel') statt neutraler Wirbelsäule.",
+      "Abknicken aus dem unteren Rücken statt aus der Hüfte.",
+      "Zu tiefes Sitzen in den Knien, wodurch Beweglichkeit verloren geht.",
+      "Kinn zu tief auf der Brust, was die Schulterdrehung blockiert."
+    ],
+    "korrekturen": [
+      "Schaft-Test: Einen Schläger an den Rücken halten (Kontakt an Kopf, Wirbelsäule, Steißbein) und die Neutralstellung spüren.",
+      "Hüftknick üben, indem du die Hände in die Hüftfalten legst und dich darüber nach vorne beugst.",
+      "Im Spiegel von der Seite prüfen, ob der Rücken gerade und die Arme frei hängen.",
+      "Kinn leicht anheben, sodass ein bis zwei Fäuste Platz zwischen Kinn und Brust bleiben."
+    ],
+    "uebungen": [
+      "Posture-Reset: Vor jedem Übungsschlag die Haltung neu aufbauen (Hüftknick, Arme hängen, Balance).",
+      "Wand-Drill: Mit dem Gesäß knapp vor einer Wand in Position gehen und den Hüftknick spüren, ohne den Rücken zu runden."
+    ],
+    "checkliste": [
+      "Beugen aus der Hüfte, nicht aus dem Rücken",
+      "Rücken gerade, neutrale Wirbelsäule",
+      "Arme hängen frei unter den Schultern",
+      "Knie leicht gebeugt, athletisch",
+      "Gewicht auf den Fußballen"
+    ],
+    "zusammenfassung": "Eine athletische Haltung mit Hüftknick und geradem Rücken schafft die Balance und Rotationsfreiheit, die ein wiederholbarer Schwung braucht."
+  },
+  {
+    "id": "gw_schwungebene",
+    "kategorie": "Langes Spiel",
+    "titel": "Die Schwungebene",
+    "einfuehrung": "Die Schwungebene beschreibt den Winkel und die Bahn, auf der sich der Schläger um deinen Körper bewegt. Eine konstante Ebene sorgt dafür, dass der Schläger immer wieder ähnlich zum Ball zurückkehrt, was Richtung und Treffqualität verbessert. Sie ist der rote Faden zwischen Setup, Rückschwung und Impact.",
+    "schritte": [
+      "Baue im Setup den passenden Schaftwinkel auf; er gibt die natürliche Ausgangsebene vor.",
+      "Führe den Schläger im Takeaway flach am Boden entlang zurück, ohne ihn sofort steil hochzureißen.",
+      "Lass Arme und Schultern gemeinsam drehen, sodass der Schläger auf einer Linie zwischen zu flach und zu steil bleibt.",
+      "Kontrolliere am Ende des Rückschwungs, dass der Schaft grob parallel zur Ziellinie zeigt.",
+      "Starte den Abschwung von unten (Hüfte/Beine), damit der Schläger von innen an den Ball kommt und nicht 'über die Ebene'.",
+      "Schwinge zu einem vollständigen, balancierten Finish durch, in dem der Schläger hinter dem Kopf ausläuft."
+    ],
+    "fehler": [
+      "Zu steiler Rückschwung ('Schläger hochheben'), der später zu Steilschlägen und Slice führt.",
+      "Zu flacher, um den Körper geworfener Rückschwung, der Hooks begünstigt.",
+      "Über-die-Ebene-Bewegung im Abschwung (Out-to-in), typische Slice-Ursache.",
+      "Arme lösen sich vom Körper und heben den Schläger von der Ebene ab."
+    ],
+    "korrekturen": [
+      "Ausrichtungsstock in einem Winkel in den Boden stecken und den Schläger parallel dazu führen (Plane-Drill).",
+      "Takeaway mit tiefem Schlägerkopf üben: erste 30 cm flach am Boden entlang.",
+      "Abschwung bewusst von unten einleiten (Gewichtswechsel zuerst), um die Ebene von innen zu treffen.",
+      "Halbschwünge mit Fokus auf gleichbleibende Schaftrichtung im Rück- und Durchschwung."
+    ],
+    "uebungen": [
+      "Plane-Drill mit Stock: 15 Bälle mit halbem Schwung entlang der gesetzten Ebene schlagen.",
+      "Slow-Motion-Schwünge ohne Ball, bei denen du die Ebene bewusst nachzeichnest."
+    ],
+    "checkliste": [
+      "Flacher, tiefer Takeaway",
+      "Arme und Körper drehen gemeinsam",
+      "Schaft am Top parallel zur Ziellinie",
+      "Abschwung von unten eingeleitet",
+      "Balanciertes Finish"
+    ],
+    "zusammenfassung": "Eine konstante Schwungebene führt den Schläger wiederholbar zum Ball zurück und ist die Basis für Richtung und sauberen Ballkontakt."
+  },
+  {
+    "id": "gw_rueckschwung",
+    "kategorie": "Langes Spiel",
+    "titel": "Der Rückschwung",
+    "einfuehrung": "Der Rückschwung lädt den Schwung auf und stellt die Weichen für den gesamten Bewegungsablauf. Ein kontrollierter, drehungsbasierter Rückschwung schafft Weite ohne Kraftaufwand und bringt den Schläger in eine gute Position für den Abschwung. Hektik und reines Armheben rauben dir dagegen Kraft und Konstanz.",
+    "schritte": [
+      "Starte den Rückschwung als 'Ein-Stück-Bewegung' aus Schultern, Armen und Schläger gemeinsam.",
+      "Drehe die Brust weg vom Ziel, statt die Arme isoliert hochzuheben.",
+      "Verlagere dabei etwas Gewicht auf das hintere Bein, ohne seitlich wegzurutschen (kein Sway).",
+      "Lass die Handgelenke im weiteren Verlauf natürlich abknicken, sodass der Schläger Hebel aufbaut.",
+      "Drehe bis zu einem vollen Schulterturn (etwa 90 Grad), soweit deine Beweglichkeit es zulässt.",
+      "Halte am Top eine stabile, nicht überdrehte Position, in der der vordere Arm relativ gestreckt bleibt."
+    ],
+    "fehler": [
+      "Reines Hochheben der Arme ohne Rumpfdrehung ('Alle Kraft aus den Armen').",
+      "Seitliches Wegkippen des Körpers (Sway) statt Drehung um die Wirbelsäule.",
+      "Zu schneller, hektischer Rückschwung, der die Balance zerstört.",
+      "Überdrehen am Top mit knickendem vorderem Arm und Kontrollverlust."
+    ],
+    "korrekturen": [
+      "One-Piece-Takeaway üben: Dreieck aus Armen und Schultern die ersten 30 cm gemeinsam bewegen.",
+      "Gewichtsgefühl kontrollieren: hinteres Bein spürt Druck an der Innenseite, nicht außen.",
+      "Rhythmus zählen ('eins' zurück, 'zwei' durch), um Hektik zu vermeiden.",
+      "Am Top kurz innehalten und die Position kontrollieren, dann erst durchschwingen."
+    ],
+    "uebungen": [
+      "Spiegel-Rückschwung: Position am Top im Spiegel prüfen und speichern.",
+      "Ball-zwischen-Unterarmen-Drill: einen Übungsball zwischen die Unterarme klemmen und die Ein-Stück-Bewegung spüren."
+    ],
+    "checkliste": [
+      "Ein-Stück-Start aus Schultern und Armen",
+      "Brust dreht weg vom Ziel",
+      "Gewicht kontrolliert aufs hintere Bein",
+      "Handgelenke knicken natürlich ab",
+      "Stabile, nicht überdrehte Top-Position"
+    ],
+    "zusammenfassung": "Ein ruhiger, drehungsbasierter Rückschwung lädt Kraft auf und bringt den Schläger konstant in Position, ohne dass du mit den Armen reißen musst."
+  },
+  {
+    "id": "gw_abschwung_impact",
+    "kategorie": "Langes Spiel",
+    "titel": "Abschwung und Impact",
+    "einfuehrung": "Im Abschwung und im Treffmoment entscheidet sich, wie weit und wie gerade der Ball fliegt. Die richtige Reihenfolge von unten nach oben erzeugt Schlägerkopfgeschwindigkeit und einen sauberen, ballzuerst-Kontakt. Der Impact ist der einzige Moment, der wirklich zählt, alles davor dient nur seiner Vorbereitung.",
+    "schritte": [
+      "Leite den Abschwung von unten ein: zuerst Gewicht auf das vordere Bein, dann drehen Hüfte und Rumpf.",
+      "Lass die Arme dem Körper folgen, statt aktiv mit den Händen zu schlagen ('Schläger fällt in den Slot').",
+      "Halte den Winkel zwischen Armen und Schaft möglichst lange (Lag), um Energie zu speichern.",
+      "Treffe bei Eisen den Ball zuerst und danach den Boden, sodass der Divot vor dem Ball liegt.",
+      "Bringe im Impact die Hände leicht vor den Ball (vorwärts geneigter Schaft) und das Gewicht überwiegend auf dem vorderen Bein.",
+      "Beschleunige durch den Ball hindurch zu einem vollständigen Finish, nicht in den Ball hinein."
+    ],
+    "fehler": [
+      "Abschwung von oben mit den Schultern/Armen (Casting), wodurch Lag und Speed verloren gehen.",
+      "Gewicht bleibt hinten, Ball wird 'hochgeholfen' (Topping oder dünner Treffer).",
+      "Aktives Ausklappen der Handgelenke zu früh (Scooping), Schlagfläche kommt hinter dem Ball auf.",
+      "Abbremsen im Treffmoment statt Beschleunigung."
+    ],
+    "korrekturen": [
+      "Gewichtswechsel zuerst: Übe, den Abschwung mit einem kleinen Druck aufs vordere Bein zu starten.",
+      "Pump-Drill: Schläger zweimal in den Abschwung 'pumpen' und den Lag spüren, dann durchschwingen.",
+      "Impact-Position mit vorwärts geneigtem Schaft im Zeitlupentempo einnehmen und halten.",
+      "Divot-Kontrolle: Ziel-Tee vor den Ball legen und versuchen, es nach dem Ball zu treffen."
+    ],
+    "uebungen": [
+      "Impact-Bag oder festes Kissen treffen und die feste, vordere Impact-Position spüren.",
+      "Halbschwung-Eisen mit Fokus auf 'Ball zuerst, Boden danach' und Divot vor dem Ball."
+    ],
+    "checkliste": [
+      "Abschwung startet von unten",
+      "Gewicht auf das vordere Bein",
+      "Lag möglichst lange halten",
+      "Hände vor dem Ball im Impact",
+      "Durch den Ball beschleunigen"
+    ],
+    "zusammenfassung": "Der Abschwung startet von unten und mündet in einen ballzuerst-Impact mit vorderem Gewicht und vorwärts geneigtem Schaft, dem eigentlichen Moment der Wahrheit."
+  },
+  {
+    "id": "gw_gewichtsverlagerung",
+    "kategorie": "Langes Spiel",
+    "titel": "Gewichtsverlagerung",
+    "einfuehrung": "Eine saubere Gewichtsverlagerung liefert einen großen Teil der Schlägerkopfgeschwindigkeit und sorgt für konstanten Bodenkontakt. Verlagerst du im Rückschwung nach hinten und im Abschwung wieder nach vorne, arbeitet der ganze Körper mit statt nur die Arme. Ohne diesen Transfer bleibt der Schwung kraftlos und unrhythmisch.",
+    "schritte": [
+      "Beginne im Setup mit ausgeglichenem Gewicht auf beiden Füßen.",
+      "Verlagere im Rückschwung etwa 60 bis 70 Prozent des Drucks auf das hintere Bein (Innenseite).",
+      "Starte den Abschwung mit einer Druckverlagerung zurück auf das vordere Bein, bevor die Arme kommen.",
+      "Rotiere über das vordere Bein, sodass die Hüfte sich öffnet und Platz für die Arme schafft.",
+      "Bringe im Impact den Großteil des Gewichts (etwa 80 bis 90 Prozent) auf das vordere Bein.",
+      "Beende die Bewegung im Finish vollständig auf dem vorderen Bein, hinterer Fuß nur noch mit der Spitze am Boden."
+    ],
+    "fehler": [
+      "Reverse Pivot: Gewicht im Rückschwung vorne und im Abschwung hinten (genau falsch herum).",
+      "Sway: seitliches Wegrutschen statt Drehung mit Druckwechsel.",
+      "Gewicht bleibt im Abschwung hinten ('Hängenbleiben'), führt zu fetten oder dünnen Schlägen.",
+      "Zu aktives Schieben mit dem Oberkörper statt Druckverlagerung aus den Beinen."
+    ],
+    "korrekturen": [
+      "Step-Drill: Im Abschwung mit dem vorderen Fuß einen kleinen Schritt Richtung Ziel machen, um den Transfer zu spüren.",
+      "Finish-Halten: Nach jedem Schlag drei Sekunden balanciert auf dem vorderen Bein stehen bleiben.",
+      "Auf Reverse Pivot achten: im Rückschwung bewusst Druck auf die Innenseite des hinteren Fußes bringen.",
+      "Barfuß oder auf einer Waage üben, um das Druckgefühl bewusst wahrzunehmen."
+    ],
+    "uebungen": [
+      "Step-Change-Drill: 10 Schläge mit kleinem Anlaufschritt zum Ziel für den Gewichtstransfer.",
+      "Balance-Finish-Drill: Jeden Rangeschlag im Finish 'einfrieren' und die Balance kontrollieren."
+    ],
+    "checkliste": [
+      "Setup ausgeglichen",
+      "Rückschwung: Druck aufs hintere Bein (innen)",
+      "Abschwung startet mit Druck nach vorne",
+      "Impact: Gewicht überwiegend vorne",
+      "Finish komplett auf dem vorderen Bein"
+    ],
+    "zusammenfassung": "Gewicht zurück im Rückschwung, früh nach vorne im Abschwung: Dieser Druckwechsel liefert Weite und sorgt für konstanten, sauberen Bodenkontakt."
+  },
+  {
+    "id": "gw_vollschwung_eisen",
+    "kategorie": "Langes Spiel",
+    "titel": "Vollschwung mit dem Eisen",
+    "einfuehrung": "Der Eisenvollschwung ist das Arbeitspferd auf dem Weg zum Grün und verbindet alle Grundlagen zu einer flüssigen Bewegung. Ziel ist ein absteigender Treffer, bei dem der Ball zuerst und der Boden danach getroffen wird. Wer das beherrscht, kontrolliert Distanz und Flug seiner Annäherungen zuverlässig.",
+    "schritte": [
+      "Ballposition mittig bis leicht vorn, Hände im Setup leicht vor dem Ball.",
+      "Starte mit einer ruhigen Ein-Stück-Bewegung in den Rückschwung und drehe die Brust voll ein.",
+      "Erreiche einen kontrollierten Top-Punkt mit vollem Schulterturn und gehaltener Balance.",
+      "Leite den Abschwung mit dem Gewichtswechsel nach vorne ein und lass die Arme folgen.",
+      "Treffe den Ball mit absteigendem Schlägerkopf zuerst, der Divot entsteht vor dem Ball.",
+      "Schwinge zu einem vollen, aufrechten Finish durch, Brust zeigt zum Ziel."
+    ],
+    "fehler": [
+      "Ball wird hochgeholfen statt absteigend getroffen (Scooping), Folge: dünn oder fett.",
+      "Zu langer, unkontrollierter Rückschwung ohne Balance.",
+      "Oberkörper drückt sich in den Ball, Gewicht bleibt hinten.",
+      "Zu fester Griff und angespannte Arme, die den Rhythmus zerstören."
+    ],
+    "korrekturen": [
+      "Handtuch- oder Tee-Drill: Ein Objekt hinter dem Ball platzieren, das du nicht treffen darfst, um den absteigenden Schlag zu erzwingen.",
+      "Tempo-Fokus: Rückschwung deutlich langsamer als gefühlt, dann kontrolliert beschleunigen.",
+      "Gewichtstransfer betonen, damit der Tiefpunkt vor dem Ball liegt.",
+      "9-bis-3-Schwünge (halbe Bewegung) für sauberen Kontakt, dann Länge steigern."
+    ],
+    "uebungen": [
+      "Divot-Linien-Drill: Eine Linie auf die Range malen, Ball darauf legen, Divot muss vor der Linie starten.",
+      "9-to-3-Drill: 15 kontrollierte Halbschwünge für konstanten Ball-vor-Boden-Kontakt."
+    ],
+    "checkliste": [
+      "Hände leicht vor dem Ball",
+      "Voller Schulterturn, Balance halten",
+      "Gewichtswechsel leitet Abschwung ein",
+      "Ball zuerst, Divot vor dem Ball",
+      "Volles Finish zum Ziel"
+    ],
+    "zusammenfassung": "Der Eisenschlag lebt vom absteigenden Treffer: Ball zuerst, Boden danach, angetrieben durch Rotation und Gewichtstransfer statt durch Nachhelfen mit den Händen."
+  },
+  {
+    "id": "gw_driver_abschlag",
+    "kategorie": "Langes Spiel",
+    "titel": "Driver und Abschlag",
+    "einfuehrung": "Der Driver ist der längste Schläger im Bag und braucht eine andere Ansteuerung als die Eisen: Der Ball wird im aufsteigenden Bogen getroffen, nicht absteigend. Ein guter Abschlag verschafft dir Länge und eine bequeme Ausgangsposition für das nächste Loch. Richtung schlägt dabei fast immer pure Länge.",
+    "schritte": [
+      "Ball vom Tee an der Innenseite des vorderen Fußes positionieren, sodass die Ballmitte etwa auf Höhe der Oberkante der Schlagfläche liegt.",
+      "Etwas breiterer Stand (schulterbreit oder mehr) für Stabilität und Kraft.",
+      "Rechte Schulter (bei Rechtshändern) und Wirbelsäule leicht vom Ziel weg neigen, Gewicht minimal hinten.",
+      "Voller, breiter Rückschwung mit komplettem Schulterturn.",
+      "Abschwung von unten einleiten und den Ball im aufsteigenden Bogen treffen (Aufwärtswinkel).",
+      "Zu einem hohen, balancierten Finish durchschwingen."
+    ],
+    "fehler": [
+      "Ball zu weit hinten, dadurch absteigender Treffer und flacher, kraftloser Flug.",
+      "Zu steiles Herunterschlagen von oben, führt zu Slice und Pop-ups.",
+      "Über-die-Ebene-Bewegung (Out-to-in) als Hauptursache des Slice.",
+      "Zu viel Krafteinsatz aus den Armen statt geschmeidiger Rotation."
+    ],
+    "korrekturen": [
+      "Tee-Höhe kontrollieren: halber Ball ragt über die Oberkante der Schlagfläche.",
+      "Leichte Rückwärtsneigung der Wirbelsäule im Setup einbauen, um den aufsteigenden Treffer zu ermöglichen.",
+      "Von innen schwingen üben (In-to-out-Gefühl), um den Slice zu bekämpfen.",
+      "Mit 80 Prozent Krafteinsatz schwingen, das verbessert Rhythmus und Treffqualität."
+    ],
+    "uebungen": [
+      "Tee-Höhen-Test: Verschiedene Tee-Höhen ausprobieren und den optimalen Startwinkel finden.",
+      "Gate-Drill: Zwei Tees als Tor knapp außerhalb der Ideallinie stecken, um mittig und von innen zu treffen."
+    ],
+    "checkliste": [
+      "Ball vorne, hoch aufgeteet",
+      "Breiter, stabiler Stand",
+      "Wirbelsäule leicht vom Ziel geneigt",
+      "Aufsteigender Treffer",
+      "Rhythmus vor voller Kraft"
+    ],
+    "zusammenfassung": "Mit dem Driver triffst du den hoch aufgeteeten Ball im aufsteigenden Bogen: breiter Stand, leichte Rückwärtsneigung und Rhythmus bringen mehr als brachiale Kraft."
+  },
+  {
+    "id": "gw_fairwayholz",
+    "kategorie": "Langes Spiel",
+    "titel": "Das Fairwayholz",
+    "einfuehrung": "Fairwayhölzer decken die großen Distanzen vom Boden (oder vom Tee) ab und sind vielseitige Helfer bei langen Par 4 und Par 5. Wegen des langen Schafts und geringen Lofts brauchen sie einen flachen, sweependen Treffer statt eines steilen Divots. Sauber gespielt sind sie ein enormer Zeit- und Schlaggewinn.",
+    "schritte": [
+      "Ballposition etwas vor der Mitte, näher zum vorderen Fuß als beim Eisen.",
+      "Stand etwas breiter als beim mittleren Eisen für Stabilität.",
+      "Hände etwa auf Höhe des Balls oder minimal davor, nicht stark vorgepresst.",
+      "Breiter, flacher Rückschwung, der den Schwungradius groß hält.",
+      "Den Ball flach 'wegfegen' (Sweep): der Tiefpunkt liegt am oder knapp hinter dem Ball, nur ein hauchdünner Divot.",
+      "Ausbalanciert und vollständig ins Finish durchschwingen, ohne in den Ball zu schlagen."
+    ],
+    "fehler": [
+      "Zu steiler Angriff wie beim Eisen, führt zu fetten Schlägen und dickem Divot.",
+      "Den Ball hochhelfen wollen, weil der Loft niedrig wirkt (Scooping, dünne Treffer).",
+      "Ball zu weit hinten, dadurch verkantet der lange Schaft.",
+      "Zu viel Kraft, wodurch Balance und Sweep-Bewegung verloren gehen."
+    ],
+    "korrekturen": [
+      "Sweep-Gefühl üben: den Boden nur streifen, nicht ausstechen.",
+      "Vom Tee (niedrig) üben, um Vertrauen in den flachen Treffer aufzubauen.",
+      "Breiten, tiefen Takeaway betonen, damit die Bahn flach bleibt.",
+      "Tempo drosseln und Balance im Finish kontrollieren."
+    ],
+    "uebungen": [
+      "Tee-Sweep-Drill: Ball auf ein sehr niedriges Tee legen und flach wegfegen, ohne das Tee stark zu beschädigen.",
+      "Line-Drill: Ball auf eine Bodenlinie legen und nur einen minimalen Divot nach der Linie erzeugen."
+    ],
+    "checkliste": [
+      "Ball vor der Mitte",
+      "Breiter, stabiler Stand",
+      "Hände neutral, nicht vorgepresst",
+      "Flacher Sweep statt steiler Divot",
+      "Balanciert durchschwingen"
+    ],
+    "zusammenfassung": "Fairwayhölzer verlangen einen flachen, fegenden Treffer mit dem Tiefpunkt am Ball, nicht das steile Ausstechen eines Eisens."
+  },
+  {
+    "id": "gw_hybrid",
+    "kategorie": "Langes Spiel",
+    "titel": "Der Hybrid",
+    "einfuehrung": "Hybride vereinen die Länge eines Holzes mit der Kontrolle eines Eisens und sind besonders für Anfänger und mittlere Handicaps ein Gewinn. Sie ersetzen die schwer spielbaren langen Eisen und helfen aus vielen Lagen, auch aus dem Semi-Rough. Ihre breite Sohle verzeiht Treffer, die ein langes Eisen bestrafen würde.",
+    "schritte": [
+      "Ballposition leicht vor der Mitte, etwas weiter hinten als beim Fairwayholz.",
+      "Stand etwa schulterbreit, ausgeglichenes Gewicht.",
+      "Wie ein langes Eisen ansprechen: Hände leicht vor dem Ball, aber ohne extremes Vorpressen.",
+      "Ruhiger, runder Rückschwung mit vollem Körperturn.",
+      "Den Ball mit einem leicht absteigenden bis neutralen Treffer 'durchschlagen', nur ein flacher Divot.",
+      "Kontrolliert ins balancierte Finish durchschwingen."
+    ],
+    "fehler": [
+      "Den Hybrid wie einen Driver aufsteigend spielen wollen, Folge: dünne Treffer.",
+      "Zu steiler Angriff, der die breite Sohle nicht nutzt.",
+      "Ball zu weit vorne, dadurch inkonstanter Kontakt.",
+      "Verkrampfter Versuch, den Ball hochzuhebeln."
+    ],
+    "korrekturen": [
+      "Wie ein 'langes Eisen mit mehr Vertrauen' spielen: Ball leicht absteigend treffen.",
+      "Der Sohle vertrauen: aus leicht schwierigen Lagen ruhig durchschwingen statt bremsen.",
+      "Ballposition testen, bis der Kontakt konstant sauber wird.",
+      "Tempo und Balance vor Kraft stellen."
+    ],
+    "uebungen": [
+      "Vergleichs-Drill: Abwechselnd Hybrid und langes Eisen auf dasselbe Ziel schlagen und Konstanz vergleichen.",
+      "Rough-Drill: Ball ins leichte Semi legen und die verzeihende Sohle bewusst nutzen."
+    ],
+    "checkliste": [
+      "Ball leicht vor der Mitte",
+      "Ansprechen wie langes Eisen",
+      "Voller, runder Körperturn",
+      "Neutraler bis leicht absteigender Treffer",
+      "Balanciertes Finish"
+    ],
+    "zusammenfassung": "Der Hybrid ist der vielseitige Lückenfüller: wie ein langes Eisen gespielt, mit leicht absteigendem Treffer und Vertrauen in die verzeihende Sohle."
+  },
+  {
+    "id": "gw_pitchen",
+    "kategorie": "Kurzes Spiel",
+    "titel": "Pitchen",
+    "einfuehrung": "Der Pitch ist der hohe, kurze Annäherungsschlag mit viel Flug und wenig Roll, ideal, um Hindernisse zu überwinden und den Ball schnell zum Stehen zu bringen. Er entscheidet oft über gerettete Pars, wenn das Grün in Reichweite ist. Distanz steuerst du dabei über die Schwunglänge, nicht über bloße Kraft.",
+    "schritte": [
+      "Wähle ein Wedge mit viel Loft (Pitching-, Sand- oder Lob-Wedge).",
+      "Schmaler Stand, Ball etwa mittig, Gewicht leicht auf dem vorderen Bein.",
+      "Hände knapp vor dem Ball, Schlagfläche zeigt zum Ziel.",
+      "Setze die Handgelenke aktiver ein als beim Chip (Zwei-Hebel-Bewegung) und drehe den Körper mit.",
+      "Steuere die Länge über die Größe des Schwungs (z. B. Hüfthöhe, Brusthöhe, Schulterhöhe).",
+      "Beschleunige durch den Ball und lass die Schlagfläche zum Ziel ausschwingen, für Höhe und Backspin."
+    ],
+    "fehler": [
+      "Abbremsen im Treffmoment aus Angst, zu weit zu schlagen (führt zu fetten oder dünnen Schlägen).",
+      "Den Ball hochhebeln wollen statt dem Loft zu vertrauen (Scooping).",
+      "Zu großer Schwung mit anschließendem Abbremsen statt kontrollierter Länge.",
+      "Gewicht zu weit hinten, dadurch dünner Kontakt."
+    ],
+    "korrekturen": [
+      "Feste Schwunglängen definieren (z. B. 9-3 und 10-2 Uhr) und die zugehörigen Distanzen einprägen.",
+      "Immer durch den Ball beschleunigen, Durchschwung mindestens so lang wie der Rückschwung.",
+      "Gewicht leicht vorne halten, um sauber Ball-zuerst zu treffen.",
+      "Dem Loft vertrauen: Höhe kommt vom Schläger, nicht vom Nachhelfen."
+    ],
+    "uebungen": [
+      "Uhr-Drill: Pitches mit drei definierten Rückschwunglängen schlagen und die Distanzen notieren.",
+      "Landezonen-Drill: Ein Handtuch als Landepunkt auslegen und den Ball wiederholt dort landen lassen."
+    ],
+    "checkliste": [
+      "Loft-starkes Wedge wählen",
+      "Ball mittig, Gewicht leicht vorne",
+      "Aktivere Handgelenke als beim Chip",
+      "Länge über Schwunggröße steuern",
+      "Durch den Ball beschleunigen"
+    ],
+    "zusammenfassung": "Der Pitch fliegt hoch und rollt wenig: Länge steuerst du über die Schwunggröße, und du beschleunigst stets durch den Ball, statt abzubremsen."
+  },
+  {
+    "id": "gw_chippen",
+    "kategorie": "Kurzes Spiel",
+    "titel": "Chippen",
+    "einfuehrung": "Der Chip ist der niedrige Annäherungsschlag mit wenig Flug und viel Roll, gedacht für kurze Distanzen knapp neben dem Grün. Er ist einfacher und sicherer als der Pitch, weil er einer Putt-ähnlichen Pendelbewegung folgt. Ein zuverlässiger Chip spart über die Runde viele Schläge.",
+    "schritte": [
+      "Wähle je nach Rollbedarf ein Eisen (7/8 für viel Roll) bis Wedge (mehr Flug).",
+      "Geh nah an den Ball heran (etwa eine Fußlänge Abstand) und greife am Schaft etwas tiefer.",
+      "Schmaler, leicht offener Stand, Ball etwas hinter der Mitte, Gewicht klar auf dem vorderen Bein.",
+      "Hände deutlich vor dem Ball, sodass der Schaft zum vorderen Bein zeigt.",
+      "Führe eine ruhige Pendelbewegung aus Schultern und Armen aus, mit kaum Handgelenkseinsatz.",
+      "Halte das Gewicht vorne und triff den Ball zuerst, sodass er niedrig startet und ausrollt."
+    ],
+    "fehler": [
+      "Zu viel Handgelenkseinsatz, wodurch der Kontakt inkonstant wird (fett/dünn).",
+      "Gewicht wandert nach hinten, der Ball wird hochgeholfen (Topping).",
+      "Abbremsen vor dem Ball statt sanftem Durchschwingen.",
+      "Falsche Schlägerwahl für den gewünschten Roll (zu viel oder zu wenig Loft)."
+    ],
+    "korrekturen": [
+      "Handgelenke ruhig halten: die Putt-ähnliche Pendelbewegung bewusst trainieren.",
+      "Gewicht dauerhaft auf dem vorderen Bein lassen (etwa 70 Prozent).",
+      "Flug-zu-Roll-Verhältnis lernen: grob 1/3 Flug zu 2/3 Roll je nach Schläger einkalkulieren.",
+      "Den Ball auf die gewünschte Landezone auf dem Grün spielen und ausrollen lassen."
+    ],
+    "uebungen": [
+      "Landing-Spot-Drill: Eine Münze oder Marke als Landepunkt auslegen und dorthin chippen.",
+      "One-Handed-Drill: Einige Chips nur mit der vorderen Hand, um das Nachhelfen abzugewöhnen."
+    ],
+    "checkliste": [
+      "Nah am Ball, tiefer greifen",
+      "Ball hinter der Mitte, Gewicht vorne",
+      "Hände vor dem Ball",
+      "Pendelbewegung, ruhige Handgelenke",
+      "Landezone statt Fahne anpeilen"
+    ],
+    "zusammenfassung": "Der Chip ist ein niedriger Roll-Schlag mit Putt-ähnlicher Pendelbewegung: Gewicht vorne, ruhige Hände und eine geplante Landezone bringen ihn sicher ans Loch."
+  },
+  {
+    "id": "gw_bunkerschlag",
+    "kategorie": "Kurzes Spiel",
+    "titel": "Der Bunkerschlag (Grünbunker)",
+    "einfuehrung": "Der Grünbunkerschlag ist für viele ein Angstschlag, dabei ist er der einzige Schlag im Golf, bei dem du den Ball gar nicht direkt treffen sollst. Du schlägst in den Sand hinter dem Ball, der ihn wie auf einem Kissen heraushebt. Mit der richtigen Technik und Beschleunigung wird der Bunker vom Schrecken zur Routine.",
+    "schritte": [
+      "Wähle ein Sand-Wedge mit ausreichend Bounce und öffne die Schlagfläche leicht, bevor du greifst.",
+      "Grabe die Füße für Stabilität etwas in den Sand ein und nimm einen etwas breiteren Stand.",
+      "Ball leicht vorne positionieren, Gewicht etwas auf dem vorderen Bein.",
+      "Ziele mit dem Einschlagpunkt etwa 2 bis 4 cm hinter den Ball, nicht auf den Ball selbst.",
+      "Schwinge etwas steiler ein und lass den Bounce durch den Sand unter dem Ball hindurchgleiten (Splash).",
+      "Beschleunige aktiv durch den Sand und schwinge vollständig durch, damit der Sand den Ball heraushebt."
+    ],
+    "fehler": [
+      "Abbremsen im Sand statt zu beschleunigen (Ball bleibt liegen).",
+      "Direkt den Ball treffen wollen (Vollschlag über das Grün).",
+      "Zu steiler, hackender Einschlag, wodurch sich der Schläger eingräbt.",
+      "Falscher Schläger ohne Bounce (z. B. Pitching-Wedge), der sich in den Sand bohrt."
+    ],
+    "korrekturen": [
+      "Linien-Drill: Eine Linie in den Sand ziehen, Ball darauf denken und bewusst hinter der Linie einschlagen.",
+      "Immer voll durchschwingen: Durchschwung mindestens so lang wie der Rückschwung.",
+      "Schlagfläche offen halten, damit der Bounce arbeitet und der Schläger gleitet.",
+      "Übe ohne Ball, nur den 'Sand-Divot' hinter einer gezogenen Linie herausschlagen."
+    ],
+    "uebungen": [
+      "Sanddollar-Drill: Einen Kreis um den Ball ziehen und die ganze 'Sandscheibe' herausschlagen.",
+      "Linien-Drill ohne Ball: 10-mal den Sand nach einer gezogenen Linie sauber herausbeschleunigen."
+    ],
+    "checkliste": [
+      "Sand-Wedge, Schlagfläche leicht offen",
+      "Füße eingraben, stabiler Stand",
+      "Einschlag 2 bis 4 cm hinter dem Ball",
+      "Bounce durch den Sand gleiten lassen",
+      "Aktiv beschleunigen und durchschwingen"
+    ],
+    "zusammenfassung": "Im Grünbunker triffst du nicht den Ball, sondern den Sand dahinter: offene Schlagfläche, gleitender Bounce und volle Beschleunigung heben den Ball sicher heraus."
+  },
+  {
+    "id": "gw_putten_setup_stroke",
+    "kategorie": "Putten",
+    "titel": "Putten: Setup und Stroke",
+    "einfuehrung": "Putten macht rund 40 Prozent aller Schläge einer Runde aus und ist damit der größte Hebel für bessere Scores. Ein ruhiges Setup und eine pendelnde, gleichmäßige Stroke sorgen für konstante Richtung und Geschwindigkeit. Die gute Nachricht: Putten braucht keine Kraft, sondern Technik und Gefühl.",
+    "schritte": [
+      "Nimm einen komfortablen Griff (z. B. Reverse-Overlap), der die Handgelenke ruhig hält.",
+      "Augen direkt über oder knapp innerhalb der Balllinie positionieren.",
+      "Ball leicht vor der Mitte, Hände neutral, Schlagfläche exakt rechtwinklig zur Startlinie.",
+      "Schultern, Unterarme und Putter bilden ein stabiles Dreieck.",
+      "Führe die Stroke als Pendel aus den Schultern aus, ohne die Handgelenke zu knicken.",
+      "Halte den Puttkopf nach dem Treffen kurz auf der Linie und lass ihn dem Ziel folgen (Nachschwung)."
+    ],
+    "fehler": [
+      "Handgelenke knicken während der Stroke, was Richtung und Tempo unregelmäßig macht.",
+      "Augen zu weit innen oder außen der Linie, dadurch Fehlwahrnehmung der Linie.",
+      "Schlagfläche im Treffmoment nicht rechtwinklig (Haupt-Ursache verzogener Putts).",
+      "Zu langer Rückschwung mit anschließendem Abbremsen."
+    ],
+    "korrekturen": [
+      "Augen-Check: Ball unter die Augen fallen lassen, er sollte auf der Linie landen.",
+      "Dreieck stabil halten und die Stroke bewusst aus den Schultern pendeln.",
+      "Gate-Drill: Zwei Tees knapp breiter als der Putterkopf, sauber hindurchputten.",
+      "Rück- und Durchschwung etwa gleich lang halten für gleichmäßiges Tempo."
+    ],
+    "uebungen": [
+      "Gate-Drill: Durch ein Tor aus zwei Tees putten, um Face und Bahn zu kontrollieren.",
+      "Ein-Meter-Serie: Zehn Putts aus einem Meter in Folge lochen, um Face-Kontrolle und Selbstvertrauen zu bauen."
+    ],
+    "checkliste": [
+      "Augen über der Ballinie",
+      "Schlagfläche rechtwinklig zur Startlinie",
+      "Stabiles Schulter-Arm-Putter-Dreieck",
+      "Pendelbewegung ohne Handgelenke",
+      "Rück- und Durchschwung gleich lang"
+    ],
+    "zusammenfassung": "Gutes Putten beginnt mit ruhigem Setup und rechtwinkliger Schlagfläche und lebt von einer pendelnden Schulter-Stroke, nicht von aktiven Handgelenken."
+  },
+  {
+    "id": "gw_lag_putting",
+    "kategorie": "Putten",
+    "titel": "Lag-Putting und Speed-Kontrolle",
+    "einfuehrung": "Beim langen Putt geht es nicht ums Lochen, sondern ums sichere Annähern, damit der nächste Putt ein kurzer 'Tap-in' wird. Diese Distanz- oder Speed-Kontrolle verhindert Drei-Putts und ist auf großen Grüns der Schlüssel zu niedrigen Scores. Tempo schlägt hier Linie: Die Geschwindigkeit entscheidet über den Erfolg.",
+    "schritte": [
+      "Lies den Putt vor allem auf Geschwindigkeit und grobe Neigung, nicht nur auf die exakte Linie.",
+      "Stelle dir einen 'Zielkreis' von etwa einem Schlägerlänge-Radius um das Loch vor.",
+      "Steuere die Länge über die Größe der Pendelbewegung, nicht über härteres Zuschlagen.",
+      "Mache ein bis zwei Probeschwünge, während du auf das Loch (nicht den Ball) blickst, um das Tempo zu fühlen.",
+      "Führe die Stroke gleichmäßig aus und lass den Ball die letzte Strecke sanft ausrollen.",
+      "Ziel: den Ball knapp am oder leicht hinter dem Loch zum Stehen bringen, nicht kurz davor."
+    ],
+    "fehler": [
+      "Zu starke Fokussierung auf die exakte Linie statt auf das Tempo.",
+      "Immer gleiche Schwunggröße unabhängig von der Distanz.",
+      "Zu kurz putten aus Angst vor dem 'Vorbeirollen' (drei Putts folgen).",
+      "Verkrampfter, ungleichmäßiger Schlag ohne Gefühl."
+    ],
+    "korrekturen": [
+      "Distanz-Kalibrierung: verschiedene Schwunggrößen mit den erzielten Distanzen abspeichern.",
+      "Blick zum Loch beim Probeschwung, um das Tempo statt die Mechanik zu spüren.",
+      "Die 'knapp vorbei'-Regel anwenden: lieber leicht zu lang als deutlich zu kurz.",
+      "Grüngeschwindigkeit vor der Runde beim Einputten bewusst einschätzen."
+    ],
+    "uebungen": [
+      "Leiter-Drill: Bälle auf 5, 10 und 15 Meter putten und jeweils sanft am Loch stoppen lassen.",
+      "Zielkreis-Drill: Aus großer Distanz zehn Putts in einen Kreis von einer Schlägerlänge um das Loch legen."
+    ],
+    "checkliste": [
+      "Tempo vor Linie lesen",
+      "Zielkreis statt exaktes Loch",
+      "Länge über Schwunggröße steuern",
+      "Probeschwung mit Blick zum Loch",
+      "Knapp am oder hinter dem Loch stoppen"
+    ],
+    "zusammenfassung": "Beim Lag-Putt zählt die Geschwindigkeit: Ziel ist ein sicherer Tap-in-Abstand rund ums Loch, gesteuert über die Schwunggröße statt über Kraft."
+  },
+  {
+    "id": "gw_distanzkontrolle_wedges",
+    "kategorie": "Kurzes Spiel",
+    "titel": "Distanzkontrolle mit Wedges",
+    "einfuehrung": "Zwischen vollem Schwung und kurzem Chip liegt die Zone der Teildistanzen, in der viele Golfer raten statt zu kontrollieren. Ein System aus definierten Schwunglängen macht deine Wedge-Distanzen planbar und deine Annäherungen präziser. Wer seine Zahlen kennt, greift die Fahne sicherer an.",
+    "schritte": [
+      "Lege für ein Wedge drei Schwunggrößen fest, z. B. Rückschwung zu Hüft-, Brust- und Schulterhöhe.",
+      "Schlage jede Größe mehrfach und notiere die durchschnittliche Carry-Distanz.",
+      "Wiederhole das für deine verschiedenen Wedges, sodass ein Distanz-Raster entsteht.",
+      "Halte Rhythmus und Beschleunigung bei allen Größen gleich; nur die Länge variiert.",
+      "Wähle auf dem Platz die Kombination aus Schläger und Schwunggröße, die zur Restdistanz passt.",
+      "Vertraue deinem Wert und beschleunige durch den Ball, statt im Zweifel abzubremsen."
+    ],
+    "fehler": [
+      "Distanz über wechselnde Kraft statt über konstante Schwunggrößen steuern.",
+      "Immer voll schwingen und die Länge durch Abbremsen 'dosieren'.",
+      "Keine gemessenen Referenzwerte, dadurch reines Schätzen.",
+      "Unterschiedlicher Rhythmus je nach gewünschter Weite."
+    ],
+    "korrekturen": [
+      "Uhr-System nutzen (z. B. 7:30, 9:00, 10:30 Uhr) und feste Distanzen zuordnen.",
+      "Auf konstantes Tempo achten: nur die Rückschwunglänge ändert die Weite.",
+      "Carry-Werte per Range-Session oder Entfernungsmesser dokumentieren.",
+      "Ein 'Gapping' durchführen, damit zwischen den Werten keine großen Lücken bleiben."
+    ],
+    "uebungen": [
+      "Gapping-Session: Pro Wedge je 10 Bälle in drei Schwunggrößen und Distanzen protokollieren.",
+      "Zielflaggen-Drill: Auf der Range verschiedene Ziele mit der passenden Schwunggröße anspielen."
+    ],
+    "checkliste": [
+      "Feste Schwunggrößen definieren",
+      "Carry-Distanzen messen und notieren",
+      "Tempo konstant halten",
+      "Distanz-Raster über alle Wedges",
+      "Wert vertrauen, durchbeschleunigen"
+    ],
+    "zusammenfassung": "Präzise Wedge-Distanzen entstehen durch ein System fester Schwunggrößen bei gleichbleibendem Tempo, nicht durch variierende Kraft oder Abbremsen."
+  },
+  {
+    "id": "gw_fehlerbilder",
+    "kategorie": "Fehlerbilder",
+    "titel": "Typische Fehlerbilder: Slice, Hook, Topping, Fat",
+    "einfuehrung": "Jeder Golfer kennt sie: der Slice, der nach rechts wegbiegt, der Hook nach links, der getoppte Ball, der über den Boden rollt, und der Fat-Schlag, der zu früh in den Boden geht. Wer die Ursachen dieser Fehlerbilder versteht, kann sie gezielt beheben, statt planlos zu experimentieren. Die meisten haben klare, korrigierbare Auslöser.",
+    "schritte": [
+      "Slice (Ball biegt stark nach rechts, Rechtshänder): meist offene Schlagfläche plus Out-to-in-Bahn; prüfe Griff und Schwungrichtung.",
+      "Hook (Ball biegt stark nach links): meist geschlossene Schlagfläche plus zu stark von innen; prüfe zu starken Griff und Handeinsatz.",
+      "Topping (Ball wird oben getroffen, rollt): meist Aufrichten im Schwung oder Gewicht hinten; halte Posture und Gewicht vorne.",
+      "Fat (Schläger trifft zuerst den Boden): meist Tiefpunkt hinter dem Ball, Gewicht bleibt hinten oder Casting; verlagere das Gewicht nach vorne.",
+      "Bestimme dein Hauptmuster ehrlich anhand des Ballflugs, statt an Symptomen herumzudoktern.",
+      "Arbeite an einer Ursache zur Zeit und kontrolliere die Veränderung am Ballflug."
+    ],
+    "fehler": [
+      "Symptome bekämpfen (z. B. bewusst nach links zielen beim Slice) statt der Ursache.",
+      "Mehrere Änderungen gleichzeitig, sodass unklar bleibt, was wirkt.",
+      "Griffkontrolle vernachlässigen, obwohl sie Slice und Hook stark beeinflusst.",
+      "Gewichtsverlagerung ignorieren, die hinter Topping und Fat steckt."
+    ],
+    "korrekturen": [
+      "Gegen Slice: Griff leicht stärken, von innen schwingen (In-to-out-Gefühl), Schlagfläche schließen.",
+      "Gegen Hook: Griff neutralisieren, Körperrotation durch den Impact fortsetzen statt mit den Händen zu schließen.",
+      "Gegen Topping: Posture und Kopfhöhe halten, Gewicht vorne, durch den Ball schwingen.",
+      "Gegen Fat: Gewicht früh nach vorne, Tiefpunkt vor den Ball bringen, Casting vermeiden."
+    ],
+    "uebungen": [
+      "Gate-Drill für die Bahn: Zwei Tees als Tor stecken, um Slice/Hook-Bahn sichtbar zu korrigieren.",
+      "Tee-vor-dem-Ball-Drill gegen Fat: Ein Tee vor den Ball setzen und lernen, es nach dem Ball zu treffen."
+    ],
+    "checkliste": [
+      "Ballflug ehrlich diagnostizieren",
+      "Slice/Hook: Griff und Bahn prüfen",
+      "Topping/Fat: Posture und Gewicht prüfen",
+      "Eine Ursache zur Zeit angehen",
+      "Wirkung am Ballflug kontrollieren"
+    ],
+    "zusammenfassung": "Slice und Hook stecken meist in Schlagfläche und Bahn, Topping und Fat in Haltung und Gewichtsverlagerung: Ursache erkennen und einzeln beheben ist der Weg."
+  },
+  {
+    "id": "gw_pre_shot_routine",
+    "kategorie": "Strategie",
+    "titel": "Die Pre-Shot-Routine",
+    "einfuehrung": "Eine feste Pre-Shot-Routine ist der mentale und technische Anker vor jedem Schlag und sorgt für Konstanz unter Druck. Sie hilft dir, Entscheidungen zu treffen, dich auszurichten und mit klarem Kopf zu schwingen. Profis verdanken einen großen Teil ihrer Verlässlichkeit genau dieser wiederkehrenden Abfolge.",
+    "schritte": [
+      "Sammle hinter dem Ball die Informationen: Distanz, Wind, Lage, Ziel und mögliche Gefahren.",
+      "Triff eine klare Entscheidung für Schläger, Ziel und Ballflug (committen, nicht zögern).",
+      "Visualisiere den gewünschten Schlag und wähle ein Zwischenziel auf der Linie.",
+      "Mache einen definierten Probeschwung, der das gewünschte Gefühl abruft.",
+      "Tritt an den Ball, richte über das Zwischenziel aus und baue den Stand auf.",
+      "Ein letzter ruhiger Blick zum Ziel, dann ohne weiteres Grübeln auslösen."
+    ],
+    "fehler": [
+      "Keine feste Reihenfolge, dadurch mal mehr, mal weniger Schritte und schwankende Ergebnisse.",
+      "Über dem Ball noch zweifeln oder die Schlägerwahl umentscheiden.",
+      "Zu lange Standzeit über dem Ball, die Anspannung erzeugt.",
+      "Probeschwung ohne konkrete Absicht, rein mechanisch."
+    ],
+    "korrekturen": [
+      "Routine in feste Schritte gliedern und bei jedem Schlag identisch durchziehen.",
+      "Entscheidung vor dem Ansprechen final treffen ('commit and go').",
+      "Standzeit über dem Ball bewusst kurz halten (wenige Sekunden).",
+      "Probeschwung immer mit dem Zielgefühl des echten Schlags verbinden."
+    ],
+    "uebungen": [
+      "Routine-Training: Auf der Range jeden Ball mit voller Pre-Shot-Routine spielen, nicht 'Ball für Ball'.",
+      "Zeit-Check: Die Dauer der Routine stoppen und bewusst gleich lang halten."
+    ],
+    "checkliste": [
+      "Informationen sammeln",
+      "Klar entscheiden und committen",
+      "Ziel visualisieren, Zwischenziel wählen",
+      "Definierter Probeschwung",
+      "Kurz stehen, dann auslösen"
+    ],
+    "zusammenfassung": "Eine gleichbleibende Pre-Shot-Routine schafft klare Entscheidungen und Konstanz: entscheiden, visualisieren, ausrichten und ohne Grübeln auslösen."
+  },
+  {
+    "id": "gw_course_management",
+    "kategorie": "Strategie",
+    "titel": "Course-Management-Grundlagen",
+    "einfuehrung": "Course Management bedeutet, mit klugen Entscheidungen Schläge zu sparen, statt jeden Schlag maximal zu riskieren. Oft bringt der sichere Weg ein besseres Ergebnis als der heroische Versuch über Wasser oder Bäume. Gerade für Anfänger und mittlere Handicaps ist strategisches Denken der schnellste Weg zu niedrigeren Scores.",
+    "schritte": [
+      "Plane jedes Loch rückwärts: von der Wunschposition zur Fahne über die ideale Lage für die Annäherung.",
+      "Spiele zur breitesten sicheren Zone, nicht immer direkt zur Fahne oder maximal weit.",
+      "Kalkuliere mit deiner realistischen Durchschnittsdistanz, nicht mit dem einen Traumschlag.",
+      "Ziele bei Annäherungen zur Grünmitte, um Bunker und Wasser an den Rändern zu vermeiden.",
+      "Bewerte Risiko und Ertrag: Nimm einen Schläger mehr für die Sicherheit, wenn hinten Platz ist.",
+      "Nach einem Fehlschlag den sicheren Rückweg aufs Fairway wählen, statt den Fehler zu verschlimmern."
+    ],
+    "fehler": [
+      "Immer die Fahne direkt attackieren, auch wenn sie hinter Bunkern oder Wasser steckt.",
+      "Mit der maximalen statt der durchschnittlichen Distanz kalkulieren.",
+      "Nach einem Fehler einen riskanten 'Heldenschlag' versuchen und Doppelbogeys kassieren.",
+      "Wind, Lage und Gefahren nicht in die Schlägerwahl einbeziehen."
+    ],
+    "korrekturen": [
+      "Zur Grünmitte spielen und Fahnen an den Rändern bewusst 'ignorieren'.",
+      "Ehrliche Durchschnittsdistanzen kennen und danach den Schläger wählen.",
+      "Nach Fehlern in den 'Bogey-Modus' schalten: sicher zurück ins Spiel, Schaden begrenzen.",
+      "Vor jedem Schlag die Frage stellen: Wo darf der Ball auf keinen Fall hin?"
+    ],
+    "uebungen": [
+      "Strategie-Runde: Eine Runde bewusst nur zur Grünmitte und in sichere Zonen spielen und die Scores vergleichen.",
+      "Zielzonen-Planung: Vor dem Abschlag laut die sichere Landezone benennen, bevor du den Schläger ziehst."
+    ],
+    "checkliste": [
+      "Loch rückwärts planen",
+      "Breiteste sichere Zone anspielen",
+      "Mit Durchschnittsdistanz rechnen",
+      "Annäherung zur Grünmitte",
+      "Nach Fehlern sicher zurückspielen"
+    ],
+    "zusammenfassung": "Gutes Course Management spart Schläge durch kluge, risikobewusste Entscheidungen: sichere Zonen, Grünmitte und realistische Distanzen statt riskanter Heldenschläge."
+  }
+]

@@ -5638,6 +5638,459 @@ var RT_IC_DETAIL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABi
 var RT_IC_HI="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAABgFBMVEXYZy7LWCTkcjTDSxm7Rhf+/PfJUh3hbDAAAADIeE7359XapIa5VSjqyK/Ul3Lu0rrw2cbOg1nLiWXbcTbBTiCxSiHktJW6dVS4Yzq3a0j/AAD57uDEbUHkvKOqVQDYnoP/VVW5UB3bpHrYtJq1PAzhqom1PBq5Qxd/AAC8Rxv/fwD98962RBm6RBexRBjXWDHbcTriczZ/fwC5QhfFShfBRBfUZjPIazjVbjfZcDbdcjnUeE3Ve0rSiWPXmXnbxbT//wCZRCKfSia1PhG7RBGlTCa/TSC8TiK/Xz+7ZjOqYEK9dj2wdU6/ckmwdWK/g1++iGTBSRvBRRrARRjCRRfETiffbzbXbTjMcD3ccznecjnHdUTBc0rQgl3IgFjbu6HjbjfjbzHhby/ifzj/f1XpekHgj1zhnHPgo34AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACtPor0AAAAgHRSTlP+/v7+/v///gD///7///////7////+/////gH///8D/wP//////xCzAkoC/yea1wZ4vQJ5D3cULZya2wxHo9b/AQ+dLQ9QndYID9b/DVAN//9Cmr/bDVDWGUK/JZ1M1v8ld5sSBu3///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAEb9MAAAZHSURBVHjarZgFm+M4DIbl2k7sMLSd4jDsLO8t0+0xMzPT//8FJ8lJmkw70JvT02lT23otfZadTMGwTbaN+eDZ85cPwsa28LW1RR+r7eDl5z9+ZMz2xBGA318y5uHjJ2WvhAtbCb1e78njh+xcg7bNrV+x2fd76xmNv/0OulegV8yDOz3wK1uLhMO/+wYBDNo233bmWNf+fEYxgblqfu9d0p4iBCZX/7hzWdCdp1cnsG1u9y5tt802TH7p/Q/2/QTMbx2F/Xo1/GZhLgJ6ZOCBv2Kp2oUAYOFcGLwLX/Vaw3wHocqtSFDmcZAmAJ0wl+YtP4RHPVfxZau1rKsTyiTWZIQ6vV6x9Qf42q83T69cFKQLy+5mRIkDfMsOcmKdlttP0N6nbkp3bYuD+BpjcrBDQulsmOSWO51zWfo8Nb6gIO8OqVcm4XAeZ1OXUoiehE5S/q6DOB6GSUmUkuVADx98yOszYcGCykUHaZiDAJ8bBeRhpusemr3Si0VgkH/ypEF5gywOEwtCuGFOeIA8CeMYcVkzqV9nlC+fWCLWga0zheZ08RsJhjqFRX9lq0EZ+CdWwF9ciwWoZatB1cAyL5LcgTCrpKj61wfZwOlKIFp/eylQ6dJcgGANUCwakFsgQaDgLFBxHiitQBmBXPN8HZDogji1aaXRGqB0kU8qGpB2ES0iPh/UEiazFkprNxwIjUHehcSe62BGnwzCjKbVDpsySIhUD5dBdgVoj5MQNWhhM+ag7gcXAkER6PwsUKCTJZDYWOb8lb+/mzQg1Mjmef5x0ICs1vlKEPq0GiDeTQLcYdXcOlYSzdtJa7FFQmItgSyAi9d9FfmwQBae/tQ4m9Lys0VpExEtajNeLECiNvw2293l797uUHZAHoGm4Lkwh64MGjfRAeEsSbyXhU6GOELvCuShNSAv5BRnVrRsAeLgUv1JqAMXfRp5whsFnYi0AwUYkJ3qsAOCJiLMK9Ab4yykUBKtCyUkgXDbkXtEB/9MCk+paEdEdKxzoo21U0t08HOcUVJICCIpedXccAIFIGU0LP5OIjXHuqCUBdT+G9CiDlO6I+aeiDCkeIDToHmOhNWElwpzD1HA0TwcSQ/Sf8QqkKd26OCg5EiSEJOjEvIYRZdCYTHOFUY+UpG1EgtuNUhKhQDKTWxQ/SleMOZwWHIckFCywGcKTH6YJapx76TGO1tPZ04wmlfIZhYPxUehEukE0/FeXeqngWgnCZYpGyt0rxeHOSFHR6Bc5bk6FeTR01DBrjsUU6FkIyCdbXtRA7Ke117/ZdAeHhJ8rfA40fORm1UNkmodyJ+Py04ZnQB5oLNCJ1XEaoyJBlg1Ug1syvG5/SKC4AVVyekgXNnENiAhoz16vEqigtUd1auI04XLoKgVkNXBIGdQNcohKJMgGUhOy6O4X4S1APXIDgjrNseay1VLxihhVDjCBWR5sdpmeq9oQM52EOS1JLI4AeBQ+qzasYZ3C9QJKRJ7pMLNireoor1nPW9njKBWi6QJcWumVtY1jS2KMdyDfbGlfSMpwIbjKQZ5nW0i5T5qrtjV7Q5HqGBWz/epfTER1mwFEh3QIMJTJBvtsC/PB6pCSRWNUh2MBy7ERjTJINlRTdmMn8/xcTSvQFE8dvFIm/JT8zSLbcOWpByD+g2oz7UTVrfDUFAmGHWit/YdqekbCtk1BA36uJ28Ps3Q7+Of3LeOQ+GjthGeUdNiHEVEQihZoeQySDCgz5y+a+QH8zFf29TdtoPAOY847UgugTbgbfpgI1K/70m4pjO8/bsBxTWXzNbAgek803Y5ovfgLVGDlAOpIrWDcZxIVwpNorw4Be64aJgsgeRrcFxjMCSXnaD9rmo5o6ClihKKi+AECMe/CW+oOrOVpjb4/7WtU7ob0KtgbsgzOHK/iMcqmh+c7G+74NUNA5PrdUSu6wRSgWon2gGxg3O6PoFNc7dRSa4ITbXel0FMUvKu2YTJ5NbRQu/VSS5H2nU4ujWZgLli7skzSKpCVHmvMKkOEQLGbJpPu0MqZ+cq6wa1GoODjhHBP0RNzOHnp4w63+TRoZnUP41tmsP78r+gMOT7hxRP/WPdFWNev3FTyXUpX3x2nZ0bkJkg9d7x0c2BUoPBoDN+wC3Uwa+F3Tw6/hKzqX4+/BcSlnsfyfaIEgAAAABJRU5ErkJggg==";
 var RT_IC_LERNEN="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAABgFBMVEXXnCbsuTn+/vfzw0Lzwz3jqTDZpC3r1ZEAAADpvEX899LZtFXy5a/lzIjlyHHPlxrt3KfUt2zTqkry68jEqGr//wDcwnHz4ZjDjBP/qgDgvWnu03b/qlXXnSbUoR3csTz/fwD/00X+9LfZnR3RmCbVmSXyw0TVmSLYmiTPmy7lqxvwxUl/fwC4hRPMjh7Rmi7doCTbtzP/AADgpSzsuTjluk3vwD7wxk3twUvyxk3zyEzox3TmyoP/1FXv0HC7mUS+mlHCmUzMn0HUqireoCTcoCbBoGDfv1/du1Xdu2bbvGLbumvXu3LfwFrXxInfx4bd0Jnf1KX/f3/gnyf/qirvvzzgt1Hyv0Hkvk7tv0PqwDfrxHX//1UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABTHjkNAAAAgHRSTlP+/v/+/v7+/wD+/////v////7///4B////A///A7X//wL//w0pm75GeNb/dwL/GQ7bCgFMFCmcEkKa26PWBkwPnVD/Bnea1ggtD1Cd1v8N////Av8GUBl5m9YlDQMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALc/aF4AAAUUSURBVHjarZiHdqM6EIYHBJIQQrTFzq6TzU3ddrf3fnvvvb3/c9wZiWZKEq93fDBY1nz6f40E5wDSRrUr5b9vXr4SyYVDvHr55gcpdytHAPv9gZSPn79gG8eL519J+UsH+k/ev8UOWOCCzq5f0Aarj2EwdutLuduAKvno9KDNw3ODaVt62CHu4PQPWTnQrnw207Xh2ZM9JsQx9ow0Ac7PU8ZGVqye6YlZN05XTxECVfX6dAIUzIKCHrG+Pn1dVbAr/zxY69QqCoJJRGAddqPixcEtuQvVP41/NprZCU8B68bpiX9cgXzCxhPMgvV6rcHaIXuwvyQ8GhWhNt+nNjXzvMEqct28IPoafsdTb8xgUBe2nuh56yyPeQG1sW/gCfMmHLjwgnb2SYy3OoyIRRLqtibYt/A3UuciYFHEvAjD5QjFlkqwyBuDvgMcgXrWv1sotmBb5K0FgXxfaWEGf3jRAiIHav5pXWFLEI1AkfAplF6ydVAOti9msB4pGhKGIN/XM6BhyjSpASk99NaALhgOpO10bwtaLc1kxsagmX8mFEUmejfQsEX7OtoeFBmFRRHhttbqVaL5zTkQuyCI9CjBb97cVNGwarRKYs5W051DcxZoMKbhnrfyDRcaQwjWmz4TLQ73jTDsIiDOV5rFpYpNs6fcajBaKYUgTrtfjXf/CBRy4Yt9g/Od1CS/NLQmMN9wc8i5dvzoTBCVnWsV72s0pxuS4FRMnLv9RMWcu8oaLwynQCG1c7LPY6XxUDxeAyECp0x9v3JYHIhFfAwKKbCH5isBBk2IWocFgaBEXeqfVCx8U5QWtFQmnAHh7uCGhsZD+XGhalAqfFUYVSrl6xK10fRhL3/J10BhEw7ka2tu4dPRgjQXZVkrzHMCXdW0lTDNs59LEHagDP1g2RO0srDmstZahlJVTVp0oDqQdwn4CISmrDlVmyOQVeSsqnhhQdS7UzEAZRZE5pbWXN6AVJyrEsMv0ba4KIjMKQPa1cvVT4DWqOnnUhurM+ZngrQDqYLrQ5S1usrLZkHmfEnbTxsLt1VLzlWE48dKXOU8ovXtQCqH2BjDwe2dcxQ1ILUAY1IQyw7k+1leFEVe75wYsr4ijiDeB0G96xXspIbWVQ9Ezc3FUJEF8V754UqzL27DUvm2Qj1QF6RoAArtT+5AaQPyswIiEbmCXRDkrvgAhIugAL4JyFqjbxiAfJVwOAvUTjZmW5CLMQjvjnk2B0o7ELlZA4kRyM3WLAjCNrsBAcVGINLfqahBAC0onwIlM3O0IUikDQgfSevWKBezLQjsZQuKaIq1WORxHOd5kikC4XIvxSLGHYKNSUY3phhvm0mbycGCoAeKhSm6ljSFXJvUiBx2dlLXgm1FbvYRZNKu5yXoBYFSoH6JyMoSH9mmgB1Mhp3bECcZ3UUyVMYtjkAwB9IAxY9a9dakJi07sCj7CzUzCMvmQbj4ynI01zov8nErPQmSOdCoykr5Z4S6sga60f3gcR5TYag8dKb7WKMlc2WMe1H0NPAv4CSEcaSuPBif4ALAJ1pSDHtQ9Xqgj+AanBMkjZ/XCT6Gu/Be4i3ISW8bRngioTp+H4KOK7gsr28tKbwuL0NV/ba3JSnc+7Sq6CXLEfy6FQeO6CWLlJflNb6FppBfQ0T9IurOu7sL9+40L6JI09F1JG9OwcfHZ0ekp3lZ96GUxyf3+IaskN/7/NgmtyD5AKn3H+7d2IDEb+w9vItuHjjC/2RjbKyeuqDqAAAAAElFTkSuQmCC";
 var RT_IC_ANALYSE="data:image/png;base64,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";
+/* ============================================================
+   M1-4 Lernbereich - Hub, Rubriken, Quiz/Pruefung, Gamification
+   Inhalte als statische JSON unter /learning/*.json (fetch+Cache)
+   ============================================================ */
+var RT_LRN_panel='tab-lernen';
+var RT_LRN_data={};
+var RT_LRN_totals={golfwissen:20,lexikon:97,fragenkatalog:114,platzreife:10,videos:25};
+var RT_LRN_view='hub';
+var RT_LRN_quiz=null;
+var RT_LRN_examTimer=null;
+var RT_LRN_lexQuery='';
+
+function RT_LRN_esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function RT_LRN_set(html){ var el=document.getElementById(RT_LRN_panel); if(!el) return; el.innerHTML='<div class="lrnwrap" style="max-width:640px;margin:0 auto;padding:2px 2px 90px;">'+html+'</div>'; try{ el.scrollTop=0; window.scrollTo(0,0); }catch(e){} }
+
+/* ---------- Persistenz / Gamification ---------- */
+function RT_LRN_gxp(){ return rtGet('fp_lrn_xp')||0; }
+function RT_LRN_doneMap(){ return rtGet('fp_lrn_done')||{}; }
+function RT_LRN_badges(){ return rtGet('fp_lrn_badges')||[]; }
+function RT_LRN_examRec(){ return rtGet('fp_lrn_exam')||{best:0,passed:false,count:0}; }
+function RT_LRN_wrongMap(){ return rtGet('fp_lrn_wrong')||{}; }
+function RT_LRN_streak(){ return rtGet('fp_lrn_streak')||{count:0,last:''}; }
+function RT_LRN_levelInfo(){ var xp=RT_LRN_gxp(); var lv=1+Math.floor(xp/150); return {level:lv,into:xp-(lv-1)*150,need:150,pct:Math.round((xp-(lv-1)*150)/150*100)}; }
+function RT_LRN_countPrefix(pre){ var d=RT_LRN_doneMap(),n=0; for(var k in d){ if(d.hasOwnProperty(k)&&k.lastIndexOf(pre,0)===0) n++; } return n; }
+function RT_LRN_mark(key){ var d=RT_LRN_doneMap(); if(d[key]) return false; d[key]=1; rtSet('fp_lrn_done',d); return true; }
+function RT_LRN_addXp(n){ rtSet('fp_lrn_xp',RT_LRN_gxp()+n); }
+function RT_LRN_dayStr(dt){ return dt.getFullYear()+'-'+(dt.getMonth()+1)+'-'+dt.getDate(); }
+function RT_LRN_streakTick(){
+  var s=RT_LRN_streak(); var now=new Date(); var today=RT_LRN_dayStr(now);
+  if(s.last===today) return s;
+  var y=new Date(now.getTime()-86400000); var yday=RT_LRN_dayStr(y);
+  s.count=(s.last===yday)?(s.count+1):1; s.last=today; rtSet('fp_lrn_streak',s); return s;
+}
+var RT_LRN_BADGES=[
+ {id:'first_module',t:'Erste Schritte',d:'Erstes Golfwissen-Modul gelesen',ic:'🎯'},
+ {id:'ten_modules',t:'Wissensdurst',d:'10 Technikmodule gelesen',ic:'📚'},
+ {id:'all_modules',t:'Technik-Profi',d:'Alle Technikmodule gelesen',ic:'🏌️'},
+ {id:'lex25',t:'Lexikon-Kenner',d:'25 Begriffe nachgeschlagen',ic:'🔤'},
+ {id:'lex_all',t:'Lexikon-Fuchs',d:'Alle Begriffe angesehen',ic:'🦊'},
+ {id:'q50',t:'Regelkundig',d:'50 Fragen richtig beantwortet',ic:'✅'},
+ {id:'q_all',t:'Quiz-Meister',d:'Alle Fragen richtig beantwortet',ic:'🧠'},
+ {id:'exam_pass',t:'Platzreife-Prüfung bestanden',d:'Prüfung erfolgreich',ic:'🏅'},
+ {id:'exam_perfect',t:'Perfekte Prüfung',d:'100 % in der Prüfung',ic:'💯'},
+ {id:'streak3',t:'Dranbleiber',d:'3 Tage in Folge gelernt',ic:'🔥'},
+ {id:'streak7',t:'Golf-Routine',d:'7 Tage in Folge gelernt',ic:'⚡'},
+ {id:'level5',t:'Aufsteiger',d:'Level 5 erreicht',ic:'⭐'}
+];
+function RT_LRN_hasBadge(id){ return RT_LRN_badges().indexOf(id)>=0; }
+function RT_LRN_checkBadges(){
+  var gw=RT_LRN_countPrefix('gw:'),lx=RT_LRN_countPrefix('lx:'),q=RT_LRN_countPrefix('q:');
+  var ex=RT_LRN_examRec(),st=RT_LRN_streak(),lv=RT_LRN_levelInfo().level;
+  var want=[];
+  if(gw>=1)want.push('first_module'); if(gw>=10)want.push('ten_modules'); if(gw>=RT_LRN_totals.golfwissen)want.push('all_modules');
+  if(lx>=25)want.push('lex25'); if(lx>=RT_LRN_totals.lexikon)want.push('lex_all');
+  if(q>=50)want.push('q50'); if(q>=RT_LRN_totals.fragenkatalog)want.push('q_all');
+  if(ex.passed)want.push('exam_pass'); if(ex.best>=100)want.push('exam_perfect');
+  if(st.count>=3)want.push('streak3'); if(st.count>=7)want.push('streak7'); if(lv>=5)want.push('level5');
+  var have=RT_LRN_badges(),fresh=[];
+  want.forEach(function(id){ if(have.indexOf(id)<0){ have.push(id); fresh.push(id); } });
+  if(fresh.length){ rtSet('fp_lrn_badges',have); }
+  return fresh;
+}
+function RT_LRN_gain(xp,markKey){
+  var isNew=true; if(markKey){ isNew=RT_LRN_mark(markKey); }
+  RT_LRN_addXp(isNew?xp:Math.min(2,xp));
+  RT_LRN_streakTick();
+  var fresh=RT_LRN_checkBadges();
+  if(fresh.length) RT_LRN_toastBadge(fresh[0]);
+  return isNew;
+}
+function RT_LRN_toastBadge(id){
+  var b=null; for(var i=0;i<RT_LRN_BADGES.length;i++){ if(RT_LRN_BADGES[i].id===id){ b=RT_LRN_BADGES[i]; break; } }
+  if(!b) return;
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:4000;background:#12261B;color:#fff;border-radius:14px;padding:10px 16px;box-shadow:0 6px 22px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px;font-family:Inter,sans-serif;';
+  t.innerHTML='<span style="font-size:22px;">'+b.ic+'</span><span><b style="font-size:13px;">Abzeichen freigeschaltet</b><br><span style="font-size:12px;opacity:.85;">'+RT_LRN_esc(b.t)+'</span></span>';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.style.transition='opacity .5s'; t.style.opacity='0'; setTimeout(function(){ try{t.remove();}catch(e){} },500); },2600);
+}
+function RT_LRN_confetti(){
+  var host=document.getElementById(RT_LRN_panel)||document.body;
+  var cols=['#1F8A4D','#F6C35A','#4a90d9','#e05a5a','#7FE0A6','#fff'];
+  for(var i=0;i<36;i++){ (function(i){
+    var p=document.createElement('div'); var c=cols[i%cols.length];
+    var left=Math.floor((i*997)%100); var dur=1400+((i*131)%900); var delay=(i*37)%400; var sz=6+((i*13)%8);
+    p.style.cssText='position:fixed;top:-14px;left:'+left+'%;width:'+sz+'px;height:'+(sz+3)+'px;background:'+c+';opacity:.95;z-index:3900;border-radius:2px;pointer-events:none;animation:lrnfall '+dur+'ms ease-in '+delay+'ms forwards;';
+    document.body.appendChild(p);
+    setTimeout(function(){ try{p.remove();}catch(e){} },dur+delay+200);
+  })(i); }
+}
+function RT_LRN_ensureStyle(){
+  if(document.getElementById('rt-lrn-style')) return;
+  var s=document.createElement('style'); s.id='rt-lrn-style';
+  s.textContent=''
+   +'.lrnwrap,.lrnwrap *{box-sizing:border-box;}'
+   +'.lrncard{background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(20,40,25,.08);padding:14px;}'
+   +'.lrnhead{display:flex;align-items:center;gap:10px;margin:6px 2px 12px;}'
+   +'.lrnback{width:38px;height:38px;border:none;border-radius:12px;background:#eef3ee;cursor:pointer;font-size:19px;color:#2d4a34;flex:none;}'
+   +'.lrntitle{font-size:19px;font-weight:800;color:#1d3324;font-family:Inter,sans-serif;}'
+   +'.lrnrubrik{display:flex;align-items:center;gap:13px;width:100%;text-align:left;border:none;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(20,40,25,.08);padding:14px;margin-bottom:11px;cursor:pointer;}'
+   +'.lrnrubrik:active{transform:scale(.99);}'
+   +'.lrnpill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:#eef3ee;color:#3d6b4a;}'
+   +'.lrnopt{display:block;width:100%;text-align:left;border:1.5px solid #e2e8e2;background:#fff;border-radius:13px;padding:13px 15px;margin-bottom:9px;font-size:14.5px;color:#233;cursor:pointer;font-family:Inter,sans-serif;line-height:1.35;}'
+   +'.lrnopt:active{background:#f4f8f4;}'
+   +'.lrnbtn{display:inline-block;border:none;border-radius:13px;padding:13px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;}'
+   +'.lrnbtn-p{background:#1F8A4D;color:#fff;}'
+   +'.lrnbtn-s{background:#eef3ee;color:#2d4a34;}'
+   +'.lrnli{padding:6px 0 6px 20px;position:relative;font-size:14px;line-height:1.5;color:#2c3b30;}'
+   +'.lrnli:before{content:"";position:absolute;left:2px;top:12px;width:7px;height:7px;border-radius:50%;background:#1F8A4D;}'
+   +'.lrnsec-h{font-size:14px;font-weight:800;color:#1F8A4D;margin:16px 0 6px;}'
+   +'@keyframes lrnfall{to{transform:translateY(105vh) rotate(540deg);opacity:.9;}}';
+  document.head.appendChild(s);
+}
+
+/* ---------- Ringe / kleine Bausteine ---------- */
+function RT_LRN_ring(pct,size,col,inner){
+  pct=Math.max(0,Math.min(100,pct||0)); var r=(size-7)/2, cx=size/2, cir=2*Math.PI*r, off=cir*(1-pct/100);
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" style="flex:none;">'
+    +'<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="#e6ece6" stroke-width="5"/>'
+    +'<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+cir.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 '+cx+' '+cx+')"/>'
+    +(inner?('<text x="'+cx+'" y="'+(cx+4)+'" text-anchor="middle" font-size="'+(size*0.28)+'" font-weight="800" fill="#1d3324" font-family="Inter,sans-serif">'+inner+'</text>'):'')
+    +'</svg>';
+}
+
+/* ---------- Daten laden ---------- */
+function RT_LRN_load(name){
+  if(RT_LRN_data[name]) return Promise.resolve(RT_LRN_data[name]);
+  return fetch('/learning/'+name+'.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw new Error(name+' '+r.status); return r.json(); }).then(function(j){ RT_LRN_data[name]=j; return j; });
+}
+function RT_LRN_ensure(names,cb){
+  Promise.all(names.map(RT_LRN_load)).then(function(){ cb(); }).catch(function(e){
+    RT_LRN_set('<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">Lernen</div></div><div class="lrncard" style="text-align:center;padding:30px;"><div style="font-size:15px;color:#c0392b;font-weight:700;">Inhalte konnten nicht geladen werden.</div><div style="margin-top:8px;color:#5d7060;font-size:13px;">'+RT_LRN_esc(e&&e.message||'')+'</div><button class="lrnbtn lrnbtn-p" style="margin-top:16px;" onclick="RT_LRN_go(\''+RT_LRN_view+'\')">Erneut versuchen</button></div>');
+  });
+}
+function RT_LRN_clearTimer(){ if(RT_LRN_examTimer){ clearInterval(RT_LRN_examTimer); RT_LRN_examTimer=null; } }
+
+/* ---------- Mount + Router ---------- */
+function RT_LRN_mount(panelId){
+  RT_LRN_panel=panelId||'tab-lernen'; RT_LRN_ensureStyle();
+  RT_LRN_set('<div class="lrncard" style="text-align:center;padding:36px;color:#5d7060;">Lädt …</div>');
+  RT_LRN_load('manifest').then(function(m){ if(m&&m.bundles){ for(var k in m.bundles){ RT_LRN_totals[k]=m.bundles[k]; } } }).catch(function(){}).then(function(){ RT_LRN_go('hub'); });
+}
+function RT_LRN_go(view,a,b){
+  RT_LRN_clearTimer(); RT_LRN_view=view; RT_LRN_ensureStyle();
+  if(view==='hub'){ RT_LRN_renderHub(); return; }
+  if(view==='gw'){ RT_LRN_ensure(['golfwissen'],RT_LRN_renderGwList); return; }
+  if(view==='gw_detail'){ RT_LRN_ensure(['golfwissen'],function(){ RT_LRN_renderGwDetail(a); }); return; }
+  if(view==='lx'){ RT_LRN_ensure(['lexikon'],RT_LRN_renderLex); return; }
+  if(view==='lx_detail'){ RT_LRN_ensure(['lexikon'],function(){ RT_LRN_renderLexDetail(a); }); return; }
+  if(view==='fk'){ RT_LRN_ensure(['fragenkatalog'],RT_LRN_renderFkHome); return; }
+  if(view==='pr'){ RT_LRN_ensure(['platzreife'],RT_LRN_renderPrHome); return; }
+  if(view==='pr_detail'){ RT_LRN_ensure(['platzreife'],function(){ RT_LRN_renderPrChapter(a); }); return; }
+  if(view==='video'){ RT_LRN_ensure(['videoakademie'],RT_LRN_renderVideo); return; }
+}
+
+/* ---------- Hub ---------- */
+function RT_LRN_rubrikCard(view,ic,titel,sub,pct,col){
+  return '<button class="lrnrubrik" onclick="RT_LRN_go(\''+view+'\')">'
+    + RT_LRN_ring(pct,52,col,pct+'%')
+    + '<div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:800;color:#1d3324;">'+ic+' '+RT_LRN_esc(titel)+'</div>'
+    + '<div style="font-size:12.5px;color:#5d7060;margin-top:3px;line-height:1.35;">'+RT_LRN_esc(sub)+'</div></div>'
+    + '<span style="font-size:22px;color:#c3d0c5;">›</span></button>';
+}
+function RT_LRN_renderHub(){
+  var li=RT_LRN_levelInfo(), st=RT_LRN_streak();
+  var gw=RT_LRN_countPrefix('gw:'),lx=RT_LRN_countPrefix('lx:'),q=RT_LRN_countPrefix('q:'),pr=RT_LRN_countPrefix('pr:'),vd=RT_LRN_countPrefix('vid:');
+  var T=RT_LRN_totals, ex=RT_LRN_examRec();
+  var pctOf=function(n,t){ return t?Math.round(n/t*100):0; };
+  var badges=RT_LRN_badges();
+  var header='<div class="lrncard" style="background:linear-gradient(135deg,#1F8A4D,#146a3a);color:#fff;margin-bottom:14px;">'
+    +'<div style="display:flex;align-items:center;gap:14px;">'
+    + RT_LRN_ring(li.pct,58,'#F6C35A','L'+li.level).replace('#1d3324','#fff')
+    +'<div style="flex:1;min-width:0;"><div style="font-size:18px;font-weight:800;">Level '+li.level+'</div>'
+    +'<div style="font-size:12.5px;opacity:.9;margin-top:2px;">'+RT_LRN_gxp()+' XP · noch '+(li.need-li.into)+' XP bis Level '+(li.level+1)+'</div></div>'
+    +'<div style="text-align:center;flex:none;"><div style="font-size:22px;">🔥</div><div style="font-size:12px;font-weight:800;">'+(st.count||0)+' Tag'+((st.count===1)?'':'e')+'</div></div>'
+    +'</div></div>';
+  var body=''
+    + RT_LRN_rubrikCard('gw','🏌️','Golfwissen',gw+' / '+T.golfwissen+' Technikmodule',pctOf(gw,T.golfwissen),'#1F8A4D')
+    + RT_LRN_rubrikCard('lx','📖','Lexikon',lx+' / '+T.lexikon+' Begriffe angesehen',pctOf(lx,T.lexikon),'#4a90d9')
+    + RT_LRN_rubrikCard('fk','❓','Fragenkatalog',q+' / '+T.fragenkatalog+' Fragen gemeistert',pctOf(q,T.fragenkatalog),'#e0913a')
+    + RT_LRN_rubrikCard('pr','🎓','Platzreife',(pr+' / '+T.platzreife+' Kapitel')+(ex.passed?' · bestanden ✓':(ex.best?(' · Best '+ex.best+'%'):'')),pctOf(pr,T.platzreife),'#8e5bd0')
+    + RT_LRN_rubrikCard('video','🎬','Videoakademie',vd+' / '+T.videos+' Videos angesehen',pctOf(vd,T.videos),'#d94a6a');
+  var badgeHtml=RT_LRN_BADGES.map(function(b){ var has=badges.indexOf(b.id)>=0;
+    return '<div title="'+RT_LRN_esc(b.d)+'" style="width:60px;text-align:center;opacity:'+(has?'1':'.32')+';filter:'+(has?'none':'grayscale(1)')+';"><div style="font-size:25px;line-height:1;">'+b.ic+'</div><div style="font-size:9px;color:#5d7060;margin-top:3px;line-height:1.1;">'+RT_LRN_esc(b.t)+'</div></div>';
+  }).join('');
+  var badgeSec='<div class="lrncard" style="margin-top:6px;"><div class="lrnsec-h" style="margin-top:0;">Abzeichen ('+badges.length+'/'+RT_LRN_BADGES.length+')</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:14px 4px;justify-content:space-between;">'+badgeHtml+'</div></div>';
+  RT_LRN_set('<div class="lrnhead" style="justify-content:space-between;"><div class="lrntitle">Lernen</div></div>'+header+body+badgeSec);
+}
+
+/* ---------- Golfwissen ---------- */
+function RT_LRN_renderGwList(){
+  var mods=RT_LRN_data.golfwissen||[]; var cats={},order=[];
+  mods.forEach(function(m,i){ if(!cats[m.kategorie]){ cats[m.kategorie]=[]; order.push(m.kategorie); } cats[m.kategorie].push(i); });
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">🏌️ Golfwissen</div></div>';
+  order.forEach(function(cat){
+    html+='<div class="lrnsec-h">'+RT_LRN_esc(cat)+'</div>';
+    cats[cat].forEach(function(i){ var m=mods[i]; var done=RT_LRN_doneMap()['gw:'+m.id];
+      html+='<button class="lrnrubrik" style="margin-bottom:9px;padding:12px 14px;" onclick="RT_LRN_go(\'gw_detail\','+i+')">'
+        +'<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:700;color:#1d3324;">'+RT_LRN_esc(m.titel)+'</div>'
+        +'<div style="font-size:12px;color:#5d7060;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+RT_LRN_esc(m.einfuehrung)+'</div></div>'
+        +(done?'<span style="color:#1F8A4D;font-size:18px;flex:none;">✓</span>':'<span style="font-size:20px;color:#c3d0c5;flex:none;">›</span>')+'</button>';
+    });
+  });
+  RT_LRN_set(html);
+}
+function RT_LRN_gwSecList(title,arr){ if(!arr||!arr.length) return ''; return '<div class="lrnsec-h">'+title+'</div>'+arr.map(function(x){ return '<div class="lrnli">'+RT_LRN_esc(x)+'</div>'; }).join(''); }
+function RT_LRN_renderGwDetail(i){
+  var m=(RT_LRN_data.golfwissen||[])[i]; if(!m){ RT_LRN_go('gw'); return; }
+  var isNew=RT_LRN_gain(15,'gw:'+m.id);
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'gw\')">‹</button><div class="lrntitle" style="font-size:17px;">'+RT_LRN_esc(m.titel)+'</div></div>';
+  html+='<div class="lrncard"><span class="lrnpill">'+RT_LRN_esc(m.kategorie)+'</span>'
+     +'<div style="font-size:14px;line-height:1.55;color:#2c3b30;margin-top:10px;">'+RT_LRN_esc(m.einfuehrung)+'</div>'
+     +RT_LRN_gwSecList('So geht\'s',m.schritte)
+     +RT_LRN_gwSecList('Typische Fehler',m.fehler)
+     +RT_LRN_gwSecList('Korrekturen',m.korrekturen)
+     +RT_LRN_gwSecList('Übungen',m.uebungen)
+     +RT_LRN_gwSecList('Checkliste',m.checkliste)
+     +'<div class="lrnsec-h">Kurz gesagt</div><div style="background:#eef7ef;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.5;color:#1d4a2e;">'+RT_LRN_esc(m.zusammenfassung)+'</div>'
+     +(isNew?'<div style="text-align:center;color:#1F8A4D;font-size:12.5px;font-weight:700;margin-top:14px;">+15 XP</div>':'')
+     +'</div>';
+  html+='<div style="display:flex;gap:10px;margin-top:12px;"><button class="lrnbtn lrnbtn-s" style="flex:1;" onclick="RT_LRN_go(\'gw\')">Zur Liste</button><button class="lrnbtn lrnbtn-p" style="flex:1;" onclick="RT_LRN_gwNext('+i+')">Nächstes Modul</button></div>';
+  RT_LRN_set(html);
+}
+function RT_LRN_gwNext(i){ var n=(RT_LRN_data.golfwissen||[]).length; if(i+1<n) RT_LRN_go('gw_detail',i+1); else RT_LRN_go('gw'); }
+
+/* ---------- Lexikon ---------- */
+function RT_LRN_renderLex(){
+  var terms=RT_LRN_data.lexikon||[];
+  var q=RT_LRN_lexQuery.toLowerCase();
+  var filt=terms.filter(function(t){ return !q || t.begriff.toLowerCase().indexOf(q)>=0 || (t.definition||'').toLowerCase().indexOf(q)>=0; });
+  var groups={},letters=[];
+  filt.forEach(function(t,i){ var L=t.begriff.charAt(0).toUpperCase(); var idx=terms.indexOf(t); if(!groups[L]){ groups[L]=[]; letters.push(L); } groups[L].push(idx); });
+  letters.sort();
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">📖 Lexikon</div></div>';
+  html+='<input id="lrn-lexsearch" value="'+RT_LRN_esc(RT_LRN_lexQuery)+'" oninput="RT_LRN_lexInput(this.value)" placeholder="Begriff suchen …" style="width:100%;box-sizing:border-box;border:1.5px solid #e2e8e2;border-radius:13px;padding:12px 15px;font-size:15px;font-family:Inter,sans-serif;margin-bottom:12px;">';
+  html+='<div style="font-size:12px;color:#5d7060;margin:0 2px 10px;">'+filt.length+' Begriff'+(filt.length===1?'':'e')+'</div>';
+  if(!filt.length){ html+='<div class="lrncard" style="text-align:center;color:#5d7060;padding:26px;">Keine Treffer.</div>'; }
+  letters.forEach(function(L){
+    html+='<div class="lrnsec-h">'+L+'</div><div class="lrncard" style="padding:4px 0;">';
+    groups[L].forEach(function(idx){ var t=terms[idx]; var seen=RT_LRN_doneMap()['lx:'+t.begriff];
+      html+='<button onclick="RT_LRN_go(\'lx_detail\','+idx+')" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:none;background:none;padding:11px 15px;border-bottom:1px solid #f0f3f0;cursor:pointer;">'
+        +'<span style="flex:1;min-width:0;font-size:14.5px;font-weight:600;color:#1d3324;">'+RT_LRN_esc(t.begriff)+'</span>'
+        +'<span class="lrnpill" style="font-size:10px;">'+RT_LRN_esc(t.kategorie)+'</span>'
+        +(seen?'<span style="color:#1F8A4D;">✓</span>':'')+'</button>';
+    });
+    html+='</div>';
+  });
+  RT_LRN_set(html);
+  var s=document.getElementById('lrn-lexsearch'); if(s && RT_LRN_lexQuery){ try{ s.focus(); s.setSelectionRange(s.value.length,s.value.length); }catch(e){} }
+}
+function RT_LRN_lexInput(v){ RT_LRN_lexQuery=v; RT_LRN_renderLex(); }
+function RT_LRN_renderLexDetail(i){
+  var t=(RT_LRN_data.lexikon||[])[i]; if(!t){ RT_LRN_go('lx'); return; }
+  var isNew=RT_LRN_gain(3,'lx:'+t.begriff);
+  var rel=(t.related||[]).map(function(r){ var idx=-1,arr=RT_LRN_data.lexikon||[]; for(var k=0;k<arr.length;k++){ if(arr[k].begriff===r){ idx=k; break; } }
+    return idx>=0?'<button class="lrnpill" style="border:none;cursor:pointer;margin:3px 5px 0 0;" onclick="RT_LRN_go(\'lx_detail\','+idx+')">'+RT_LRN_esc(r)+'</button>':'<span class="lrnpill" style="margin:3px 5px 0 0;opacity:.6;">'+RT_LRN_esc(r)+'</span>'; }).join('');
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'lx\')">‹</button><div class="lrntitle" style="font-size:18px;">'+RT_LRN_esc(t.begriff)+'</div></div>';
+  html+='<div class="lrncard"><span class="lrnpill">'+RT_LRN_esc(t.kategorie)+'</span>'
+     +'<div style="font-size:15px;line-height:1.6;color:#2c3b30;margin-top:12px;">'+RT_LRN_esc(t.definition)+'</div>'
+     +(rel?('<div class="lrnsec-h">Verwandt</div><div>'+rel+'</div>'):'')
+     +(isNew?'<div style="text-align:center;color:#1F8A4D;font-size:12.5px;font-weight:700;margin-top:14px;">+3 XP</div>':'')
+     +'</div>';
+  html+='<button class="lrnbtn lrnbtn-s" style="width:100%;margin-top:12px;" onclick="RT_LRN_go(\'lx\')">Zurück zum Lexikon</button>';
+  RT_LRN_set(html);
+}
+
+/* ---------- Fragenkatalog / Quiz ---------- */
+function RT_LRN_kapitelList(){ var q=RT_LRN_data.fragenkatalog||[]; var seen={},o=[]; q.forEach(function(x){ if(!seen[x.kapitel]){ seen[x.kapitel]=0; o.push(x.kapitel); } seen[x.kapitel]++; }); return o.map(function(k){ return {kapitel:k,n:seen[k]}; }); }
+function RT_LRN_renderFkHome(){
+  var wrong=RT_LRN_wrongMap(); var nWrong=0; for(var w in wrong){ if(wrong.hasOwnProperty(w)) nWrong++; }
+  var q=RT_LRN_data.fragenkatalog||[]; var mastered=RT_LRN_countPrefix('q:');
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">❓ Fragenkatalog</div></div>';
+  html+='<div class="lrncard" style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:12px;">'+RT_LRN_ring(RT_LRN_totals.fragenkatalog?Math.round(mastered/RT_LRN_totals.fragenkatalog*100):0,54,'#e0913a',mastered+'')
+    +'<div><div style="font-size:14px;font-weight:800;color:#1d3324;">'+mastered+' von '+q.length+' Fragen gemeistert</div><div style="font-size:12px;color:#5d7060;margin-top:2px;">Beantworte eine Frage richtig, um sie zu meistern.</div></div></div></div>';
+  html+='<div class="lrnsec-h" style="margin-top:4px;">Modus wählen</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+    +'<button class="lrnrubrik" style="display:block;text-align:center;margin:0;padding:16px 10px;" onclick="RT_LRN_startQuiz(\'lernen\',null)"><div style="font-size:24px;">📚</div><div style="font-size:14px;font-weight:700;color:#1d3324;margin-top:5px;">Lernen</div><div style="font-size:11px;color:#5d7060;">alle, mit Erklärung</div></button>'
+    +'<button class="lrnrubrik" style="display:block;text-align:center;margin:0;padding:16px 10px;" onclick="RT_LRN_startQuiz(\'zufall\',null)"><div style="font-size:24px;">🎲</div><div style="font-size:14px;font-weight:700;color:#1d3324;margin-top:5px;">Zufall</div><div style="font-size:11px;color:#5d7060;">15 gemischte</div></button>'
+    +'<button class="lrnrubrik" style="display:block;text-align:center;margin:0;padding:16px 10px;'+(nWrong?'':'opacity:.5;')+'" onclick="'+(nWrong?'RT_LRN_startQuiz(\'fehler\',null)':'')+'"><div style="font-size:24px;">🔁</div><div style="font-size:14px;font-weight:700;color:#1d3324;margin-top:5px;">Fehler</div><div style="font-size:11px;color:#5d7060;">'+nWrong+' offen</div></button>'
+    +'<button class="lrnrubrik" style="display:block;text-align:center;margin:0;padding:16px 10px;background:#f3eefb;" onclick="RT_LRN_go(\'pr\')"><div style="font-size:24px;">🎓</div><div style="font-size:14px;font-weight:700;color:#1d3324;margin-top:5px;">Prüfung</div><div style="font-size:11px;color:#5d7060;">im Platzreife-Bereich</div></button>'
+    +'</div>';
+  html+='<div class="lrnsec-h">Nach Thema üben</div>';
+  RT_LRN_kapitelList().forEach(function(k){
+    html+='<button class="lrnrubrik" style="margin-bottom:9px;padding:12px 14px;" onclick="RT_LRN_startQuiz(\'lernen\',\''+RT_LRN_esc(k.kapitel).replace(/'/g,"\\'")+'\')"><div style="flex:1;"><div style="font-size:14.5px;font-weight:700;color:#1d3324;">'+RT_LRN_esc(k.kapitel)+'</div></div><span class="lrnpill">'+k.n+'</span><span style="font-size:20px;color:#c3d0c5;margin-left:8px;">›</span></button>';
+  });
+  RT_LRN_set(html);
+}
+function RT_LRN_shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function RT_LRN_startQuiz(mode,kapitel){
+  var all=RT_LRN_data.fragenkatalog||[]; var pool=[];
+  if(mode==='fehler'){ var w=RT_LRN_wrongMap(); pool=all.filter(function(x){ return w[x.id]; }); }
+  else if(kapitel){ pool=all.filter(function(x){ return x.kapitel===kapitel; }); }
+  else { pool=all.slice(); }
+  pool=RT_LRN_shuffle(pool);
+  if(mode==='zufall') pool=pool.slice(0,15);
+  if(!pool.length){ RT_LRN_go('fk'); return; }
+  RT_LRN_quiz={mode:mode,kapitel:kapitel,pool:pool,idx:0,correct:0,answers:[],exam:false,title:(kapitel||({lernen:'Lernen',zufall:'Zufallsquiz',fehler:'Fehlerwiederholung'}[mode]||'Quiz'))};
+  RT_LRN_renderQuiz();
+}
+function RT_LRN_renderQuiz(){
+  var Q=RT_LRN_quiz; if(!Q){ RT_LRN_go('fk'); return; }
+  var item=Q.pool[Q.idx]; var n=Q.pool.length;
+  var head='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_quizExit()">‹</button><div style="flex:1;"><div class="lrntitle" style="font-size:16px;">'+RT_LRN_esc(Q.exam?'Prüfung':Q.title)+'</div></div>'
+    +(Q.exam?'<div id="lrn-timer" style="font-weight:800;color:#8e5bd0;font-size:15px;">'+RT_LRN_fmtTime(Q.timeLeft)+'</div>':'<div style="font-size:13px;color:#5d7060;font-weight:700;">'+(Q.idx+1)+'/'+n+'</div>')+'</div>';
+  var bar='<div style="height:6px;background:#e6ece6;border-radius:6px;overflow:hidden;margin:0 2px 14px;"><div style="height:100%;width:'+Math.round((Q.idx)/n*100)+'%;background:'+(Q.exam?'#8e5bd0':'#1F8A4D')+';border-radius:6px;transition:width .2s;"></div></div>';
+  var opts=item.optionen.map(function(o,i){ return '<button class="lrnopt" id="lrn-opt-'+i+'" onclick="RT_LRN_answer('+i+')">'+RT_LRN_esc(o)+'</button>'; }).join('');
+  var html=head+bar+'<div class="lrncard"><span class="lrnpill">'+RT_LRN_esc(item.kapitel)+'</span>'
+    +'<div style="font-size:16px;font-weight:700;line-height:1.45;color:#1d3324;margin:12px 0 16px;">'+RT_LRN_esc(item.frage)+'</div>'
+    +'<div id="lrn-opts">'+opts+'</div>'
+    +'<div id="lrn-feedback"></div></div>';
+  RT_LRN_set(html);
+}
+function RT_LRN_answer(i){
+  var Q=RT_LRN_quiz; if(!Q) return; var item=Q.pool[Q.idx];
+  if(Q.answered) return; Q.answered=true;
+  var ok=(i===item.richtig); Q.answers.push({id:item.id,ok:ok});
+  if(ok) Q.correct++;
+  // Fehler-Map pflegen
+  var w=RT_LRN_wrongMap();
+  if(ok){ if(w[item.id]){ delete w[item.id]; rtSet('fp_lrn_wrong',w); } RT_LRN_gain(5,'q:'+item.id); }
+  else { w[item.id]=1; rtSet('fp_lrn_wrong',w); RT_LRN_streakTick(); }
+  if(Q.exam){ RT_LRN_quiz.answered=false; RT_LRN_quizAdvance(); return; }
+  // Feedback anzeigen
+  for(var k=0;k<item.optionen.length;k++){ var b=document.getElementById('lrn-opt-'+k); if(!b) continue; b.onclick=null;
+    if(k===item.richtig){ b.style.background='#e6f6ec'; b.style.borderColor='#1F8A4D'; b.style.color='#14612f'; b.style.fontWeight='700'; }
+    else if(k===i){ b.style.background='#fdecec'; b.style.borderColor='#d24a4a'; b.style.color='#a12a2a'; }
+    else { b.style.opacity='.6'; }
+  }
+  var fb=document.getElementById('lrn-feedback');
+  if(fb){ fb.innerHTML='<div style="margin-top:6px;background:'+(ok?'#eef7ef':'#fdf2f2')+';border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.5;color:#2c3b30;">'
+    +'<b style="color:'+(ok?'#1F8A4D':'#c0392b')+';">'+(ok?'Richtig! +5 XP':'Nicht ganz.')+'</b><br>'+RT_LRN_esc(item.erklaerung)+'</div>'
+    +'<button class="lrnbtn lrnbtn-p" style="width:100%;margin-top:12px;" onclick="RT_LRN_quizAdvance()">'+((Q.idx+1<Q.pool.length)?'Weiter':'Ergebnis')+'</button>'; }
+}
+function RT_LRN_quizAdvance(){
+  var Q=RT_LRN_quiz; if(!Q) return; Q.idx++; Q.answered=false;
+  if(Q.idx>=Q.pool.length){ if(Q.exam){ RT_LRN_finishExam(); } else { RT_LRN_quizResult(); } return; }
+  RT_LRN_renderQuiz();
+  if(Q.exam) RT_LRN_startExamTimerTick();
+}
+function RT_LRN_quizExit(){ if(RT_LRN_quiz&&RT_LRN_quiz.exam){ RT_LRN_pageConfirmExit(); } else { RT_LRN_go('fk'); } }
+function RT_LRN_pageConfirmExit(){ RT_LRN_clearTimer(); RT_LRN_quiz=null; RT_LRN_go('pr'); }
+function RT_LRN_quizResult(){
+  var Q=RT_LRN_quiz; var n=Q.pool.length, c=Q.correct, pct=Math.round(c/n*100);
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'fk\')">‹</button><div class="lrntitle">Ergebnis</div></div>';
+  html+='<div class="lrncard" style="text-align:center;padding:26px;">'+RT_LRN_ring(pct,110,pct>=75?'#1F8A4D':'#e0913a',pct+'%')
+    +'<div style="font-size:17px;font-weight:800;color:#1d3324;margin-top:14px;">'+c+' von '+n+' richtig</div>'
+    +'<div style="font-size:13px;color:#5d7060;margin-top:4px;">Weiter so – jede richtige Antwort bringt dich näher an die Platzreife.</div></div>';
+  html+='<div style="display:flex;gap:10px;margin-top:12px;"><button class="lrnbtn lrnbtn-s" style="flex:1;" onclick="RT_LRN_go(\'fk\')">Übersicht</button><button class="lrnbtn lrnbtn-p" style="flex:1;" onclick="RT_LRN_startQuiz(\''+Q.mode+'\','+(Q.kapitel?('\''+RT_LRN_esc(Q.kapitel).replace(/\x27/g,"\\x27")+'\''):'null')+')">Nochmal</button></div>';
+  RT_LRN_quiz=null; RT_LRN_set(html);
+}
+
+/* ---------- Platzreife ---------- */
+function RT_LRN_renderPrHome(){
+  var d=RT_LRN_data.platzreife||{}; var kaps=d.kapitel||[]; var ex=RT_LRN_examRec();
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">🎓 Platzreife</div></div>';
+  html+='<button class="lrnrubrik" style="background:linear-gradient(135deg,#8e5bd0,#6f42c1);color:#fff;margin-bottom:14px;padding:16px;" onclick="RT_LRN_startExam()">'
+    +'<div style="flex:1;"><div style="font-size:16px;font-weight:800;">Prüfung starten</div>'
+    +'<div style="font-size:12.5px;opacity:.92;margin-top:3px;">'+(d.pruefung?d.pruefung.fragen_anzahl:20)+' Fragen · '+(d.pruefung?d.pruefung.zeit_minuten:20)+' Min · '+(d.pruefung?d.pruefung.bestehen_prozent:75)+'% zum Bestehen'+(ex.passed?' · bestanden ✓':(ex.best?(' · Best '+ex.best+'%'):''))+'</div></div>'
+    +'<span style="font-size:24px;">▶</span></button>';
+  html+='<div class="lrnsec-h" style="margin-top:2px;">Kurs · '+kaps.length+' Kapitel</div>';
+  kaps.forEach(function(k,i){ var done=RT_LRN_doneMap()['pr:'+k.id];
+    html+='<button class="lrnrubrik" style="margin-bottom:9px;padding:12px 14px;" onclick="RT_LRN_go(\'pr_detail\','+i+')">'
+      +'<div style="width:30px;height:30px;border-radius:9px;background:#f3eefb;color:#6f42c1;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none;">'+(k.nummer||i+1)+'</div>'
+      +'<div style="flex:1;min-width:0;"><div style="font-size:14.5px;font-weight:700;color:#1d3324;">'+RT_LRN_esc(k.titel)+'</div></div>'
+      +(done?'<span style="color:#1F8A4D;font-size:18px;">✓</span>':'<span style="font-size:20px;color:#c3d0c5;">›</span>')+'</button>';
+  });
+  if(d.disclaimer){ html+='<div style="margin-top:10px;padding:12px 14px;background:#fbfaf3;border:1px solid #eee6c8;border-radius:12px;font-size:11.5px;line-height:1.5;color:#6b6444;">ℹ️ '+RT_LRN_esc(d.disclaimer)+'</div>'; }
+  RT_LRN_set(html);
+}
+function RT_LRN_renderPrChapter(i){
+  var d=RT_LRN_data.platzreife||{}; var k=(d.kapitel||[])[i]; if(!k){ RT_LRN_go('pr'); return; }
+  var isNew=RT_LRN_gain(15,'pr:'+k.id);
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'pr\')">‹</button><div class="lrntitle" style="font-size:16px;">'+RT_LRN_esc(k.titel)+'</div></div>';
+  html+='<div class="lrncard"><div style="font-size:14px;line-height:1.6;color:#2c3b30;">'+RT_LRN_esc(k.einfuehrung)+'</div>';
+  (k.abschnitte||[]).forEach(function(a){ html+='<div class="lrnsec-h">'+RT_LRN_esc(a.ueberschrift)+'</div><div style="font-size:14px;line-height:1.6;color:#2c3b30;">'+RT_LRN_esc(a.text)+'</div>'; });
+  if(k.merksaetze&&k.merksaetze.length){ html+='<div class="lrnsec-h">Merksätze</div><div style="background:#eef7ef;border-radius:12px;padding:6px 4px;">'+k.merksaetze.map(function(m){ return '<div class="lrnli">'+RT_LRN_esc(m)+'</div>'; }).join('')+'</div>'; }
+  if(k.zusammenfassung){ html+='<div class="lrnsec-h">Zusammenfassung</div><div style="font-size:14px;line-height:1.55;color:#1d4a2e;">'+RT_LRN_esc(k.zusammenfassung)+'</div>'; }
+  html+=(isNew?'<div style="text-align:center;color:#1F8A4D;font-size:12.5px;font-weight:700;margin-top:14px;">+15 XP</div>':'')+'</div>';
+  var n=(d.kapitel||[]).length;
+  html+='<div style="display:flex;gap:10px;margin-top:12px;"><button class="lrnbtn lrnbtn-s" style="flex:1;" onclick="RT_LRN_go(\'pr\')">Kapitel</button><button class="lrnbtn lrnbtn-p" style="flex:1;" onclick="'+((i+1<n)?('RT_LRN_go(\'pr_detail\','+(i+1)+')'):'RT_LRN_startExam()')+'">'+((i+1<n)?'Nächstes Kapitel':'Zur Prüfung')+'</button></div>';
+  RT_LRN_set(html);
+}
+/* ---------- Prüfungsmodus ---------- */
+function RT_LRN_fmtTime(s){ s=Math.max(0,s|0); var m=Math.floor(s/60); var r=s%60; return m+':'+(r<10?'0':'')+r; }
+function RT_LRN_startExam(){
+  RT_LRN_ensure(['platzreife','fragenkatalog'],function(){
+    var d=RT_LRN_data.platzreife||{}; var cfg=d.pruefung||{fragen_anzahl:20,bestehen_prozent:75,zeit_minuten:20,quelle_kapitel:null};
+    var all=RT_LRN_data.fragenkatalog||[];
+    var pool=cfg.quelle_kapitel?all.filter(function(x){ return cfg.quelle_kapitel.indexOf(x.kapitel)>=0; }):all.slice();
+    pool=RT_LRN_shuffle(pool).slice(0,cfg.fragen_anzahl||20);
+    RT_LRN_quiz={mode:'pruefung',exam:true,pool:pool,idx:0,correct:0,answers:[],answered:false,timeLeft:(cfg.zeit_minuten||20)*60,passPct:cfg.bestehen_prozent||75,title:'Prüfung'};
+    RT_LRN_renderQuiz(); RT_LRN_startExamTimerTick();
+  });
+}
+function RT_LRN_startExamTimerTick(){
+  RT_LRN_clearTimer();
+  RT_LRN_examTimer=setInterval(function(){
+    var Q=RT_LRN_quiz; if(!Q||!Q.exam){ RT_LRN_clearTimer(); return; }
+    Q.timeLeft--; var el=document.getElementById('lrn-timer'); if(el) el.textContent=RT_LRN_fmtTime(Q.timeLeft);
+    if(Q.timeLeft<=0){ RT_LRN_clearTimer(); RT_LRN_finishExam(true); }
+  },1000);
+}
+function RT_LRN_finishExam(timeUp){
+  RT_LRN_clearTimer(); var Q=RT_LRN_quiz; if(!Q) return;
+  var answered=Q.answers.length, n=Q.pool.length, c=Q.correct;
+  var pct=Math.round(c/n*100); var pass=pct>=(Q.passPct||75);
+  var rec=RT_LRN_examRec(); rec.count=(rec.count||0)+1; if(pct>rec.best) rec.best=pct; if(pass) rec.passed=true; rtSet('fp_lrn_exam',rec);
+  RT_LRN_addXp(30+(pass?80:0)); RT_LRN_streakTick(); var fresh=RT_LRN_checkBadges();
+  RT_LRN_quiz=null;
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'pr\')">‹</button><div class="lrntitle">Prüfungsergebnis</div></div>';
+  html+='<div class="lrncard" style="text-align:center;padding:28px 22px;">'
+    +RT_LRN_ring(pct,120,pass?'#1F8A4D':'#d24a4a',pct+'%')
+    +'<div style="font-size:22px;font-weight:800;margin-top:16px;color:'+(pass?'#1F8A4D':'#c0392b')+';">'+(pass?'Bestanden! 🎉':'Nicht bestanden')+'</div>'
+    +'<div style="font-size:14px;color:#3a4a3e;margin-top:6px;">'+c+' von '+n+' richtig'+(timeUp?' · Zeit abgelaufen':'')+' · benötigt: '+(Q.passPct||75)+'%</div>'
+    +'<div style="font-size:12.5px;color:#5d7060;margin-top:8px;">+'+(30+(pass?80:0))+' XP'+(pass?' · Abzeichen erhalten':'')+'</div>'
+    +(pass?'':'<div style="font-size:12.5px;color:#5d7060;margin-top:10px;line-height:1.5;">Tipp: Wiederhole die Kapitel und übe im Fragenkatalog gezielt die Themen, die dir schwerfallen.</div>')
+    +'</div>';
+  html+='<div style="display:flex;gap:10px;margin-top:12px;"><button class="lrnbtn lrnbtn-s" style="flex:1;" onclick="RT_LRN_go(\'pr\')">Zum Kurs</button><button class="lrnbtn lrnbtn-p" style="flex:1;" onclick="RT_LRN_startExam()">Neue Prüfung</button></div>';
+  RT_LRN_set(html);
+  if(pass){ RT_LRN_confetti(); }
+}
+
+/* ---------- Videoakademie (Zwei-Klick, nocookie) ---------- */
+function RT_LRN_renderVideo(){
+  var d=RT_LRN_data.videoakademie||{}; var cats=d.kategorien||[];
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">🎬 Videoakademie</div></div>';
+  html+='<div style="margin:0 2px 12px;padding:11px 13px;background:#fbfaf3;border:1px solid #eee6c8;border-radius:12px;font-size:11.5px;line-height:1.5;color:#6b6444;">🔒 Videos werden erst nach deinem Klick von YouTube (Modus ohne Cookies) geladen.</div>';
+  cats.forEach(function(cat,ci){
+    html+='<div class="lrnsec-h">'+RT_LRN_esc(cat.kategorie)+'</div>';
+    (cat.videos||[]).forEach(function(v,vi){
+      var thumb='https://i.ytimg.com/vi/'+v.youtubeId+'/hqdefault.jpg';
+      html+='<div class="lrncard" style="padding:0;overflow:hidden;margin-bottom:11px;" id="lrn-vid-'+ci+'-'+vi+'">'
+        +'<button onclick="RT_LRN_playVideo('+ci+','+vi+')" style="display:block;width:100%;border:none;background:none;padding:0;cursor:pointer;position:relative;">'
+        +'<div style="position:relative;width:100%;aspect-ratio:16/9;background:#000;"><img src="'+thumb+'" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy">'
+        +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><div style="width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-size:22px;margin-left:3px;">▶</span></div></div>'
+        +(v.dauer?'<div style="position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.8);color:#fff;font-size:11px;padding:2px 6px;border-radius:5px;">'+RT_LRN_esc(v.dauer)+'</div>':'')+'</div></button>'
+        +'<div style="padding:11px 13px;"><div style="font-size:14px;font-weight:700;color:#1d3324;line-height:1.35;">'+RT_LRN_esc(v.titel)+'</div>'
+        +'<div style="font-size:12px;color:#5d7060;margin-top:3px;">'+RT_LRN_esc(v.kanal)+'</div>'
+        +(v.beschreibung?'<div style="font-size:12.5px;color:#4a5a4e;margin-top:6px;line-height:1.45;">'+RT_LRN_esc(v.beschreibung)+'</div>':'')+'</div></div>';
+    });
+  });
+  RT_LRN_set(html);
+}
+function RT_LRN_playVideo(ci,vi){
+  var d=RT_LRN_data.videoakademie||{}; var v=((d.kategorien||[])[ci]||{}).videos[vi]; if(!v) return;
+  RT_LRN_gain(5,'vid:'+v.youtubeId);
+  var host=document.getElementById('lrn-vid-'+ci+'-'+vi); if(!host) return;
+  host.innerHTML='<div style="position:relative;width:100%;aspect-ratio:16/9;background:#000;"><iframe src="https://www.youtube-nocookie.com/embed/'+v.youtubeId+'?autoplay=1&rel=0" title="'+RT_LRN_esc(v.titel)+'" allow="accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe></div>'
+    +'<div style="padding:11px 13px;"><div style="font-size:14px;font-weight:700;color:#1d3324;line-height:1.35;">'+RT_LRN_esc(v.titel)+'</div><div style="font-size:12px;color:#5d7060;margin-top:3px;">'+RT_LRN_esc(v.kanal)+'</div></div>';
+}
+/* ===== Ende Lernbereich ===== */
+
 function RT_renderTabBar(){
   var nav=document.getElementById('nav-tabs'); if(!nav) return;
   nav.innerHTML=RT_TABS.map(function(t){
@@ -5673,7 +6126,7 @@ function RT_mountShell(panelId,title,text,icon){
 registerTab({id:'runde',label:'Runde',icon:'<img src="'+RT_IC_RUNDE+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_render(); }});
 registerTab({id:'detail',label:'Schläge',icon:'<img src="'+RT_IC_DETAIL+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var detailIcon=document.getElementById('detail-usericon'); if(detailIcon) detailIcon.innerHTML=RT_userIcon(); RD_renderSegButtons(); GD_renderRangeButtons(); GD_renderKPIs(); renderRounds('all'); renderPenChart(); renderFW(); renderSandChart(); renderPuttsChart(); renderMetrics(); renderPerf(); }});
 registerTab({id:'hi',label:'Handicap',icon:'<img src="'+RT_IC_HI+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var hiSub=document.getElementById('hi-subtitle'); if(hiSub) hiSub.textContent='HI-Verlauf '+RT_myDisplayName(); var hiChartSub=document.getElementById('hi-chart-sub'); if(hiChartSub) hiChartSub.textContent='Ungedeckelt · 9L x2 · HI '+rtDe(RT_ownHandicap())+' = eigenes Handicap'; var hiIcon=document.getElementById('hi-usericon'); if(hiIcon) hiIcon.innerHTML=RT_userIcon(); HV_renderLegend(); HV_renderSegButtons(); HV_renderRangeButtons(); HV_renderKPIs(); HV_renderChart(); HV_renderTable(); }});
-registerTab({id:'lernen',label:'Lernen',icon:'<img src="'+RT_IC_LERNEN+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_mountShell('tab-lernen','Lernen','Platzreife-Kurs, Golfwissen und Fragenkatalog entstehen in den nächsten Schritten.',RT_IC_LERNEN); }});
+registerTab({id:'lernen',label:'Lernen',icon:'<img src="'+RT_IC_LERNEN+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_LRN_mount('tab-lernen'); }});
 registerTab({id:'analyse',label:'Analyse',icon:'<img src="'+RT_IC_ANALYSE+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_mountShell('tab-analyse','Analyse','Video-Analyse von Ballflug und Bewegungsablauf entsteht in den nächsten Schritten.',RT_IC_ANALYSE); }});
 /* ===== Ende Registry ===== */
 

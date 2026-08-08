@@ -1,0 +1,972 @@
+[
+ {
+  "begriff": "Abschlag",
+  "kategorie": "Platz",
+  "definition": "Der Abschlag ist der markierte Startbereich eines Lochs, von dem aus der erste Schlag gespielt wird. Innerhalb der beiden Abschlagmarkierungen darf der Ball auf ein Tee aufgesetzt werden. Umgangssprachlich bezeichnet der Begriff auch den ersten Schlag selbst.",
+  "related": [
+   "Tee",
+   "Drive",
+   "Fairway"
+  ]
+ },
+ {
+  "begriff": "Ace",
+  "kategorie": "Score",
+  "definition": "Ein Ace, auch Hole-in-One, ist ein Loch, das mit dem ersten Schlag direkt eingelocht wird. Es gelingt fast nur an kurzen Par-3-Löchern und gilt als seltener Glücksmoment im Golf.",
+  "related": [
+   "Par",
+   "Birdie",
+   "Eagle"
+  ]
+ },
+ {
+  "begriff": "Adressposition",
+  "kategorie": "Schlagarten",
+  "definition": "Die Adressposition, auch Ansprechen des Balls, ist die Ausgangshaltung unmittelbar vor dem Schlag. Dabei richten sich Stand, Griff und Schlägerblatt zum Ziel aus, bevor der Schwung beginnt.",
+  "related": [
+   "Griff",
+   "Stand",
+   "Durchschwung"
+  ]
+ },
+ {
+  "begriff": "Albatros",
+  "kategorie": "Score",
+  "definition": "Ein Albatros bezeichnet ein Loch, das drei Schläge unter Par gespielt wird, etwa eine 2 an einem Par 5. Es ist eines der seltensten Ergebnisse im Golf und wird auch Double Eagle genannt.",
+  "related": [
+   "Eagle",
+   "Par",
+   "Ace"
+  ]
+ },
+ {
+  "begriff": "Approach",
+  "kategorie": "Schlagarten",
+  "definition": "Als Approach bezeichnet man den Annäherungsschlag, mit dem der Ball aus mittlerer oder kurzer Distanz auf das Grün gespielt wird. Ziel ist es, den Ball möglichst nah an die Fahne zu legen.",
+  "related": [
+   "Pitch",
+   "Chip",
+   "Green"
+  ]
+ },
+ {
+  "begriff": "Aus",
+  "kategorie": "Platz",
+  "definition": "Aus, englisch Out of Bounds, bezeichnet den Bereich außerhalb der Spielgrenzen des Platzes, meist durch weiße Pfähle oder Linien markiert. Ein Ball im Aus darf nicht gespielt werden; der Schlag muss unter Zusatzstrafe vom vorherigen Punkt wiederholt werden.",
+  "related": [
+   "Strafschlag",
+   "Provisorischer Ball",
+   "Penalty Area"
+  ]
+ },
+ {
+  "begriff": "Backspin",
+  "kategorie": "Schlagarten",
+  "definition": "Backspin ist der Rückwärtsdrall, den ein sauber getroffener Ball erhält. Er sorgt für eine stabile, höhere Flugbahn und lässt den Ball auf dem Grün schneller stoppen oder sogar zurückspringen.",
+  "related": [
+   "Wedge",
+   "Approach",
+   "Pitch"
+  ]
+ },
+ {
+  "begriff": "Ballmarker",
+  "kategorie": "Etikette",
+  "definition": "Ein Ballmarker ist eine kleine Münze oder Marke, mit der die Position des Balls auf dem Grün gekennzeichnet wird, bevor man ihn aufnimmt. So kann der Ball gereinigt oder aus der Puttlinie eines Mitspielers entfernt werden.",
+  "related": [
+   "Green",
+   "Putt",
+   "Etikette"
+  ]
+ },
+ {
+  "begriff": "Birdie",
+  "kategorie": "Score",
+  "definition": "Ein Birdie ist ein Loch, das einen Schlag unter Par gespielt wird, also zum Beispiel eine 3 an einem Par 4. Für Amateure ist es ein sehr gutes Einzelergebnis.",
+  "related": [
+   "Par",
+   "Eagle",
+   "Bogey"
+  ]
+ },
+ {
+  "begriff": "Blade",
+  "kategorie": "Ausrüstung",
+  "definition": "Ein Blade, auch Muscle Back, ist ein Eisen mit massivem, kompaktem Schlägerkopf ohne ausgeprägte Hohlkehle. Es bietet erfahrenen Spielern viel Kontrolle und Rückmeldung, verzeiht Fehltreffer aber weniger als ein Cavity Back.",
+  "related": [
+   "Eisen",
+   "Cavity Back",
+   "Sweetspot"
+  ]
+ },
+ {
+  "begriff": "Bogey",
+  "kategorie": "Score",
+  "definition": "Ein Bogey ist ein Loch, das einen Schlag über Par gespielt wird, etwa eine 5 an einem Par 4. Für Anfänger ist es oft ein solides Ergebnis.",
+  "related": [
+   "Par",
+   "Doppelbogey",
+   "Birdie"
+  ]
+ },
+ {
+  "begriff": "Bounce",
+  "kategorie": "Ausrüstung",
+  "definition": "Der Bounce ist der Winkel zwischen der Sohle eines Wedges und dem Boden. Ein höherer Bounce verhindert, dass sich der Schläger im Sand oder weichen Boden eingräbt, und hilft besonders bei Bunker- und Pitchschlägen.",
+  "related": [
+   "Sand Wedge",
+   "Bunkerschlag",
+   "Loft"
+  ]
+ },
+ {
+  "begriff": "Brutto",
+  "kategorie": "Handicap",
+  "definition": "Das Bruttoergebnis ist die tatsächliche Anzahl der gespielten Schläge ohne Berücksichtigung der Vorgabe. Es steht im Gegensatz zum Nettoergebnis, bei dem das Handicap abgezogen wird.",
+  "related": [
+   "Netto",
+   "Vorgabe",
+   "Handicap-Index"
+  ]
+ },
+ {
+  "begriff": "Bump and Run",
+  "kategorie": "Schlagarten",
+  "definition": "Der Bump and Run ist ein flacher Annäherungsschlag, bei dem der Ball nur kurz fliegt und den größten Teil der Strecke rollt. Er wird gerne aus dem Vorgrün mit einem weniger gelofteten Schläger gespielt.",
+  "related": [
+   "Chip",
+   "Fringe / Vorgrün",
+   "Approach"
+  ]
+ },
+ {
+  "begriff": "Bunker",
+  "kategorie": "Platz",
+  "definition": "Ein Bunker ist eine mit Sand gefüllte Vertiefung, die als Hindernis dient. Beim Schlag aus dem Bunker gelten besondere Regeln, etwa das Verbot, den Sand vor dem Schlag mit dem Schläger zu berühren.",
+  "related": [
+   "Bunkerschlag",
+   "Sand Wedge",
+   "Rough"
+  ]
+ },
+ {
+  "begriff": "Bunkerschlag",
+  "kategorie": "Schlagarten",
+  "definition": "Beim Bunkerschlag schlägt der Schläger den Sand kurz hinter dem Ball, sodass dieser mit einem Sandpolster herausgehoben wird. Er wird typischerweise mit einem Sand Wedge und weit geöffnetem Schlägerblatt gespielt.",
+  "related": [
+   "Bunker",
+   "Sand Wedge",
+   "Bounce"
+  ]
+ },
+ {
+  "begriff": "Caddie",
+  "kategorie": "Etikette",
+  "definition": "Ein Caddie trägt die Golftasche des Spielers und unterstützt ihn mit Ratschlägen zu Schlägerwahl, Distanzen und dem Lesen des Grüns. Im Amateurgolf ist er selten, auf Profiturnieren aber Standard.",
+  "related": [
+   "Etikette",
+   "Grün lesen",
+   "Flight"
+  ]
+ },
+ {
+  "begriff": "Cavity Back",
+  "kategorie": "Ausrüstung",
+  "definition": "Ein Cavity Back ist ein Eisen mit ausgehöhlter Rückseite, wodurch das Gewicht an den Rand verlagert wird. Das vergrößert den Sweetspot und macht den Schläger fehlerverzeihender, weshalb er sich besonders für Anfänger eignet.",
+  "related": [
+   "Eisen",
+   "Blade",
+   "Sweetspot"
+  ]
+ },
+ {
+  "begriff": "Chip",
+  "kategorie": "Schlagarten",
+  "definition": "Der Chip ist ein kurzer Annäherungsschlag nahe am Grün, bei dem der Ball nur kurz fliegt und danach zur Fahne rollt. Er wird meist mit einem Eisen oder Wedge aus dem Vorgrün gespielt.",
+  "related": [
+   "Pitch",
+   "Bump and Run",
+   "Approach"
+  ]
+ },
+ {
+  "begriff": "Course Rating",
+  "kategorie": "Handicap",
+  "definition": "Das Course Rating gibt an, wie viele Schläge ein sehr guter Amateurspieler (Scratch-Golfer) auf einem Platz im Schnitt benötigt. Es beschreibt die absolute Schwierigkeit des Platzes und ist Grundlage für die Vorgabenberechnung.",
+  "related": [
+   "Slope Rating",
+   "WHS",
+   "Handicap-Index"
+  ]
+ },
+ {
+  "begriff": "Divot",
+  "kategorie": "Etikette",
+  "definition": "Ein Divot ist das Rasenstück, das beim Schlag aus dem Boden herausgeschlagen wird. Zur Etikette gehört es, das Divot zurückzulegen oder das Loch mit Sand-Saatgut-Gemisch zu füllen.",
+  "related": [
+   "Fairway",
+   "Etikette",
+   "Pitchmark"
+  ]
+ },
+ {
+  "begriff": "Dogleg",
+  "kategorie": "Platz",
+  "definition": "Ein Dogleg ist ein Loch, dessen Fairway nach links oder rechts abknickt, ähnlich einem Hundebein. Der Spieler muss seinen Abschlag so platzieren, dass er eine gute Position für den nächsten Schlag hat.",
+  "related": [
+   "Fairway",
+   "Abschlag",
+   "Draw"
+  ]
+ },
+ {
+  "begriff": "Doppelbogey",
+  "kategorie": "Score",
+  "definition": "Ein Doppelbogey ist ein Loch, das zwei Schläge über Par gespielt wird, etwa eine 6 an einem Par 4. Es folgt in der Reihe nach dem Bogey.",
+  "related": [
+   "Bogey",
+   "Triple Bogey",
+   "Par"
+  ]
+ },
+ {
+  "begriff": "Draw",
+  "kategorie": "Schlagarten",
+  "definition": "Ein Draw ist ein kontrollierter Ballflug, der beim Rechtshänder leicht von rechts nach links kurvt. Im Gegensatz zum Hook ist die Kurve gewollt und moderat.",
+  "related": [
+   "Fade",
+   "Hook",
+   "Slice"
+  ]
+ },
+ {
+  "begriff": "Drive",
+  "kategorie": "Schlagarten",
+  "definition": "Der Drive ist der lange Abschlag, meist mit dem Driver von der Abschlagbox gespielt, um maximale Weite zu erzielen. Er kommt vor allem an Par-4- und Par-5-Löchern zum Einsatz.",
+  "related": [
+   "Driver",
+   "Abschlag",
+   "Fairway"
+  ]
+ },
+ {
+  "begriff": "Driver",
+  "kategorie": "Ausrüstung",
+  "definition": "Der Driver ist der längste Schläger mit dem größten Kopf und dem geringsten Loft. Er ist auf maximale Schlagweite ausgelegt und wird überwiegend vom Abschlag gespielt.",
+  "related": [
+   "Holz",
+   "Drive",
+   "Loft"
+  ]
+ },
+ {
+  "begriff": "Drop",
+  "kategorie": "Regeln",
+  "definition": "Beim Drop lässt der Spieler den Ball aus Kniehöhe in einen erlaubten Bereich fallen, um das Spiel nach einer Erleichterung oder einem Strafgebiet fortzusetzen. Der Ball muss innerhalb der vorgeschriebenen Zone zur Ruhe kommen.",
+  "related": [
+   "Erleichterung",
+   "Strafschlag",
+   "Penalty Area"
+  ]
+ },
+ {
+  "begriff": "Durchschwung",
+  "kategorie": "Schlagarten",
+  "definition": "Der Durchschwung, englisch Follow-through, ist die Bewegung des Schlägers nach dem Treffmoment bis zum Ausschwung. Ein vollständiger, ausbalancierter Durchschwung ist ein Zeichen für einen gut getimten Schlag.",
+  "related": [
+   "Adressposition",
+   "Drive",
+   "Draw"
+  ]
+ },
+ {
+  "begriff": "Eagle",
+  "kategorie": "Score",
+  "definition": "Ein Eagle ist ein Loch, das zwei Schläge unter Par gespielt wird, zum Beispiel eine 3 an einem Par 5. Es ist ein herausragendes Ergebnis, das meist an Par-5-Löchern gelingt.",
+  "related": [
+   "Birdie",
+   "Albatros",
+   "Par"
+  ]
+ },
+ {
+  "begriff": "Ehre",
+  "kategorie": "Etikette",
+  "definition": "Die Ehre, englisch Honour, bezeichnet das Recht, am Abschlag zuerst zu spielen. Sie steht traditionell dem Spieler zu, der am vorherigen Loch das beste Ergebnis erzielt hat.",
+  "related": [
+   "Etikette",
+   "Abschlag",
+   "Ready Golf"
+  ]
+ },
+ {
+  "begriff": "Eisen",
+  "kategorie": "Ausrüstung",
+  "definition": "Eisen sind Schläger mit dünnem, gelofteten Metallkopf, die von etwa 3 bis 9 durchnummeriert sind. Je höher die Nummer, desto größer der Loft und desto kürzer und höher der Schlag.",
+  "related": [
+   "Holz",
+   "Wedge",
+   "Loft"
+  ]
+ },
+ {
+  "begriff": "Erleichterung",
+  "kategorie": "Regeln",
+  "definition": "Erleichterung bedeutet, dass ein Spieler seinen Ball unter bestimmten Umständen straflos oder mit Strafe an anderer Stelle spielen darf, etwa bei einem unspielbaren Ball oder einer ungewöhnlichen Platzbedingung. Der Ball wird dann am nächstgelegenen Punkt vollständiger Erleichterung gedroppt.",
+  "related": [
+   "Drop",
+   "Strafschlag",
+   "Zeitweiliges Wasser"
+  ]
+ },
+ {
+  "begriff": "Fade",
+  "kategorie": "Schlagarten",
+  "definition": "Ein Fade ist ein kontrollierter Ballflug, der beim Rechtshänder leicht von links nach rechts kurvt. Er ist die gewollte, moderate Variante gegenüber dem stärkeren Slice.",
+  "related": [
+   "Draw",
+   "Slice",
+   "Hook"
+  ]
+ },
+ {
+  "begriff": "Fahne",
+  "kategorie": "Platz",
+  "definition": "Die Fahne, auch Pin oder Fahnenstock, markiert die Position des Lochs auf dem Grün. Sie hilft dem Spieler aus der Ferne, das Ziel zu erkennen, und kann beim Putten gezogen oder stehen gelassen werden.",
+  "related": [
+   "Green",
+   "Putt",
+   "Approach"
+  ]
+ },
+ {
+  "begriff": "Fairway",
+  "kategorie": "Platz",
+  "definition": "Das Fairway ist der kurz gemähte Bereich zwischen Abschlag und Grün, der die ideale Spielbahn bildet. Von hier aus lässt sich der Ball am besten kontrollieren.",
+  "related": [
+   "Rough",
+   "Green",
+   "Fairways in Regulation"
+  ]
+ },
+ {
+  "begriff": "Fairways in Regulation",
+  "kategorie": "Statistik",
+  "definition": "Fairways in Regulation ist die Statistik, die angibt, bei wie vielen Löchern der Abschlag auf dem Fairway landet (gezählt an Löchern, die kein Par 3 sind). Sie misst die Genauigkeit vom Abschlag.",
+  "related": [
+   "Fairway",
+   "Green in Regulation",
+   "Drive"
+  ]
+ },
+ {
+  "begriff": "Fat",
+  "kategorie": "Schlagarten",
+  "definition": "Ein Fat-Schlag, auch Chunk oder umgangssprachlich fetter Schlag, entsteht, wenn der Schläger zu früh in den Boden trifft und viel Rasen vor dem Ball erwischt. Der Ball verliert dadurch stark an Weite.",
+  "related": [
+   "Top",
+   "Divot",
+   "Shank"
+  ]
+ },
+ {
+  "begriff": "Fitting",
+  "kategorie": "Ausrüstung",
+  "definition": "Beim Fitting werden Golfschläger individuell an Körpermaße, Schwung und Spielstärke angepasst, etwa in Schaftlänge, Flex und Lie-Winkel. Ein passendes Fitting kann Genauigkeit und Weite deutlich verbessern.",
+  "related": [
+   "Schaft-Flex",
+   "Lie",
+   "Grip"
+  ]
+ },
+ {
+  "begriff": "Flight",
+  "kategorie": "Etikette",
+  "definition": "Als Flight bezeichnet man die Gruppe von zwei bis vier Spielern, die gemeinsam eine Runde spielen. Der Begriff wird im deutschen Sprachgebrauch für die Spielergruppe verwendet.",
+  "related": [
+   "Ready Golf",
+   "Ehre",
+   "Etikette"
+  ]
+ },
+ {
+  "begriff": "Flop",
+  "kategorie": "Schlagarten",
+  "definition": "Der Flop ist ein hoher, steil aufsteigender Schlag mit weit geöffnetem Schlägerblatt, der den Ball fast senkrecht hochfliegen und mit wenig Rollen landen lässt. Er wird gespielt, um schnell über ein Hindernis auf ein nahes Ziel zu kommen.",
+  "related": [
+   "Lob Wedge",
+   "Pitch",
+   "Bunkerschlag"
+  ]
+ },
+ {
+  "begriff": "Fore!",
+  "kategorie": "Etikette",
+  "definition": "Fore! ist der laute Warnruf, mit dem man andere warnt, wenn ein Ball in ihre Richtung fliegt und sie treffen könnte. Wer den Ruf hört, sollte sich sofort schützen und den Kopf einziehen.",
+  "related": [
+   "Etikette",
+   "Marshal",
+   "Aus"
+  ]
+ },
+ {
+  "begriff": "Fourball",
+  "kategorie": "Regeln",
+  "definition": "Fourball, auch Vierball, ist eine Spielform, bei der zwei Zweierteams gegeneinander spielen und pro Team jeweils das bessere Ergebnis am Loch zählt. Jeder Spieler spielt dabei seinen eigenen Ball.",
+  "related": [
+   "Foursome",
+   "Lochspiel",
+   "Zählspiel"
+  ]
+ },
+ {
+  "begriff": "Foursome",
+  "kategorie": "Regeln",
+  "definition": "Beim Foursome, auch Vierer, bildet ein Zweierteam eine Partei und spielt abwechselnd nur einen gemeinsamen Ball. Auch der Abschlag wird abwechselnd übernommen.",
+  "related": [
+   "Fourball",
+   "Lochspiel",
+   "Zählspiel"
+  ]
+ },
+ {
+  "begriff": "Fransenkante",
+  "kategorie": "Platz",
+  "definition": "Die Fransenkante ist der Übergangsbereich mit etwas höherem Gras rund um das kurz gemähte Grün. Sie entspricht weitgehend dem Vorgrün und beeinflusst, ob man puttet oder chippt.",
+  "related": [
+   "Fringe / Vorgrün",
+   "Green",
+   "Chip"
+  ]
+ },
+ {
+  "begriff": "Fringe / Vorgrün",
+  "kategorie": "Platz",
+  "definition": "Das Vorgrün, englisch Fringe, ist der schmale, etwas höher gemähte Grasstreifen unmittelbar um das Grün. Von hier aus lässt sich der Ball je nach Lage putten oder chippen.",
+  "related": [
+   "Green",
+   "Fransenkante",
+   "Chip"
+  ]
+ },
+ {
+  "begriff": "Gap Wedge",
+  "kategorie": "Ausrüstung",
+  "definition": "Das Gap Wedge (GW) schließt mit einem Loft von etwa 50 bis 54 Grad die Lücke zwischen Pitching Wedge und Sand Wedge. Es eignet sich für Annäherungen aus mittlerer kurzer Distanz.",
+  "related": [
+   "Pitching Wedge",
+   "Sand Wedge",
+   "Loft"
+  ]
+ },
+ {
+  "begriff": "Green",
+  "kategorie": "Platz",
+  "definition": "Das Green, auf Deutsch Grün, ist die besonders kurz und fein gemähte Fläche rund um das Loch, auf der geputtet wird. Sein Untergrund ist so präpariert, dass der Ball gleichmäßig rollen kann.",
+  "related": [
+   "Putt",
+   "Fahne",
+   "Fringe / Vorgrün"
+  ]
+ },
+ {
+  "begriff": "Green in Regulation",
+  "kategorie": "Statistik",
+  "definition": "Green in Regulation (GIR) bedeutet, dass der Ball das Grün mit mindestens zwei Schlägen unter Par erreicht, also am Par 4 mit dem zweiten Schlag. Die GIR-Quote ist ein wichtiger Indikator für das lange Spiel.",
+  "related": [
+   "Fairways in Regulation",
+   "Green",
+   "Scrambling"
+  ]
+ },
+ {
+  "begriff": "Greenfee",
+  "kategorie": "Etikette",
+  "definition": "Das Greenfee ist die Gebühr, die Gastspieler für eine Runde auf einem Golfplatz zahlen, dem sie nicht als Mitglied angehören. Höhe und Konditionen unterscheiden sich je nach Club und Saison.",
+  "related": [
+   "Etikette",
+   "Flight",
+   "Marshal"
+  ]
+ },
+ {
+  "begriff": "Griff",
+  "kategorie": "Ausrüstung",
+  "definition": "Der Griff, englisch Grip, ist der gummierte oder umwickelte obere Teil des Schafts, an dem der Schläger gehalten wird. Griffstärke und Material beeinflussen Halt und Gefühl im Schwung; zugleich meint Griff auch die Art, den Schläger mit den Händen zu fassen.",
+  "related": [
+   "Schaft-Flex",
+   "Fitting",
+   "Adressposition"
+  ]
+ },
+ {
+  "begriff": "Grün lesen",
+  "kategorie": "Schlagarten",
+  "definition": "Grün lesen bedeutet, vor dem Putt die Neigung, Geschwindigkeit und Bruchrichtung des Grüns einzuschätzen. Aus dieser Einschätzung ergibt sich die richtige Ziellinie und Schlagstärke.",
+  "related": [
+   "Putt",
+   "Green",
+   "Lag-Putt"
+  ]
+ },
+ {
+  "begriff": "Handicap-Index",
+  "kategorie": "Handicap",
+  "definition": "Der Handicap-Index ist eine standardisierte Kennzahl für die Spielstärke eines Golfers und wird aus den besten Runden der jüngsten Ergebnisse berechnet. Er ist platzunabhängig und wird über die Slope- und Rating-Werte in die konkrete Spielvorgabe umgerechnet.",
+  "related": [
+   "Vorgabe",
+   "Playing Handicap",
+   "WHS"
+  ]
+ },
+ {
+  "begriff": "Holz",
+  "kategorie": "Ausrüstung",
+  "definition": "Hölzer sind Schläger mit großem, gewölbtem Kopf für lange Schläge, wobei der Driver das 1er-Holz ist und Fairwayhölzer wie das 3er und 5er folgen. Trotz des Namens bestehen sie heute aus Metall oder Verbundwerkstoffen.",
+  "related": [
+   "Driver",
+   "Hybrid",
+   "Eisen"
+  ]
+ },
+ {
+  "begriff": "Hook",
+  "kategorie": "Schlagarten",
+  "definition": "Ein Hook ist ein stark nach links kurvender Ballflug beim Rechtshänder, der meist ungewollt entsteht. Er ist die ausgeprägte, fehlerhafte Variante des Draw.",
+  "related": [
+   "Draw",
+   "Slice",
+   "Fade"
+  ]
+ },
+ {
+  "begriff": "Hybrid",
+  "kategorie": "Ausrüstung",
+  "definition": "Ein Hybrid, auch Rescue, vereint Eigenschaften von Holz und Eisen und ersetzt oft die schwer zu spielenden langen Eisen. Der Kopf ist kompakter als ein Holz, was den Ball leichter in die Luft bringt und Fehler verzeiht.",
+  "related": [
+   "Holz",
+   "Eisen",
+   "Loft"
+  ]
+ },
+ {
+  "begriff": "Lag-Putt",
+  "kategorie": "Schlagarten",
+  "definition": "Ein Lag-Putt ist ein langer Putt, bei dem nicht das Einlochen, sondern das nahe Heranrollen an das Loch im Vordergrund steht. Ziel ist es, den zweiten Putt möglichst kurz und sicher zu machen.",
+  "related": [
+   "Putt",
+   "Grün lesen",
+   "Green"
+  ]
+ },
+ {
+  "begriff": "Lay-up",
+  "kategorie": "Schlagarten",
+  "definition": "Beim Lay-up spielt der Spieler bewusst kürzer, statt ein Hindernis wie Wasser oder Bunker mit vollem Risiko zu überspielen. So bringt er sich in eine sichere Position für den nächsten Schlag.",
+  "related": [
+   "Approach",
+   "Penalty Area",
+   "Strafschlag"
+  ]
+ },
+ {
+  "begriff": "Lie",
+  "kategorie": "Ausrüstung",
+  "definition": "Der Lie-Winkel beschreibt den Winkel zwischen Schaft und Schlägersohle bei angesprochener Position. Ein falscher Lie führt dazu, dass das Schlägerblatt nicht flach aufliegt und Schläge nach links oder rechts abweichen. Der Begriff Lie meint zudem die Lage des Balls im Gelände.",
+  "related": [
+   "Fitting",
+   "Loft",
+   "Adressposition"
+  ]
+ },
+ {
+  "begriff": "Lob Wedge",
+  "kategorie": "Ausrüstung",
+  "definition": "Das Lob Wedge (LW) hat mit etwa 58 bis 64 Grad den größten Loft aller Wedges und erzeugt sehr hohe, kurze Schläge. Es wird für Flops und heikle Schläge über Hindernisse nahe am Grün genutzt.",
+  "related": [
+   "Sand Wedge",
+   "Flop",
+   "Loft"
+  ]
+ },
+ {
+  "begriff": "Lochspiel",
+  "kategorie": "Regeln",
+  "definition": "Beim Lochspiel, englisch Matchplay, gewinnt man einzelne Löcher statt Schläge zu summieren, und es zählt, wer mehr Löcher für sich entscheidet. Ein Loch kann jederzeit aufgegeben werden, wenn es nicht mehr zu gewinnen ist.",
+  "related": [
+   "Zählspiel",
+   "Fourball",
+   "Foursome"
+  ]
+ },
+ {
+  "begriff": "Loft",
+  "kategorie": "Ausrüstung",
+  "definition": "Der Loft ist der Neigungswinkel des Schlägerblatts zur Senkrechten und bestimmt maßgeblich Flughöhe und Weite. Ein geringer Loft wie beim Driver erzeugt flache, weite Schläge, ein hoher Loft wie beim Wedge kurze, hohe Schläge.",
+  "related": [
+   "Driver",
+   "Wedge",
+   "Eisen"
+  ]
+ },
+ {
+  "begriff": "Lose hinderliche Naturstoffe",
+  "kategorie": "Regeln",
+  "definition": "Lose hinderliche Naturstoffe, englisch Loose Impediments, sind unbefestigte Naturgegenstände wie Steine, Blätter, Zweige oder Zapfen. Sie dürfen fast überall auf dem Platz straflos entfernt werden, solange der Ball sich dabei nicht bewegt.",
+  "related": [
+   "Erleichterung",
+   "Drop",
+   "Strafschlag"
+  ]
+ },
+ {
+  "begriff": "Marshal",
+  "kategorie": "Etikette",
+  "definition": "Ein Marshal ist ein Platzordner, der auf zügiges Spiel, Einhaltung der Etikette und einen reibungslosen Ablauf auf dem Platz achtet. Er kann langsame Gruppen zum Aufschließen auffordern.",
+  "related": [
+   "Etikette",
+   "Ready Golf",
+   "Flight"
+  ]
+ },
+ {
+  "begriff": "Mulligan",
+  "kategorie": "Regeln",
+  "definition": "Ein Mulligan ist ein straflos wiederholter Schlag, meist am ersten Abschlag, wenn der erste misslingt. Er ist nicht regelkonform und im offiziellen Wettspiel nicht erlaubt, sondern nur eine gesellige Freundschaftsregel.",
+  "related": [
+   "Strafschlag",
+   "Abschlag",
+   "Ready Golf"
+  ]
+ },
+ {
+  "begriff": "Netto",
+  "kategorie": "Handicap",
+  "definition": "Das Nettoergebnis ergibt sich, wenn man von den tatsächlich gespielten Schlägen die persönliche Spielvorgabe abzieht. Es macht Spieler unterschiedlicher Stärke vergleichbar und steht dem Brutto gegenüber.",
+  "related": [
+   "Brutto",
+   "Vorgabe",
+   "Stableford"
+  ]
+ },
+ {
+  "begriff": "Par",
+  "kategorie": "Score",
+  "definition": "Par ist die vorgegebene Anzahl an Schlägen, die ein sehr guter Spieler für ein Loch oder eine Runde benötigen sollte. Löcher werden je nach Länge als Par 3, Par 4 oder Par 5 eingestuft.",
+  "related": [
+   "Birdie",
+   "Bogey",
+   "Eagle"
+  ]
+ },
+ {
+  "begriff": "Penalty Area",
+  "kategorie": "Platz",
+  "definition": "Eine Penalty Area, auf Deutsch Strafgebiet, ist ein durch rote oder gelbe Pfähle markierter Bereich wie ein Teich oder Bach, in dem der Ball häufig verloren geht. Für die Weiterführung des Spiels von außerhalb wird ein Strafschlag fällig.",
+  "related": [
+   "Aus",
+   "Strafschlag",
+   "Drop"
+  ]
+ },
+ {
+  "begriff": "Pitch",
+  "kategorie": "Schlagarten",
+  "definition": "Der Pitch ist ein hoher Annäherungsschlag aus dem kurzen Spiel, bei dem der Ball überwiegend fliegt und nach der Landung nur wenig rollt. Er wird meist mit einem Wedge über kurze bis mittlere Distanz gespielt.",
+  "related": [
+   "Chip",
+   "Flop",
+   "Approach"
+  ]
+ },
+ {
+  "begriff": "Pitching Wedge",
+  "kategorie": "Ausrüstung",
+  "definition": "Das Pitching Wedge (PW) hat einen Loft von etwa 44 bis 48 Grad und ist das am wenigsten geloftete Wedge. Es eignet sich für vollere Annäherungen und mittellange Pitches.",
+  "related": [
+   "Gap Wedge",
+   "Sand Wedge",
+   "Loft"
+  ]
+ },
+ {
+  "begriff": "Pitchmark",
+  "kategorie": "Etikette",
+  "definition": "Eine Pitchmark ist die Einschlagdelle, die ein aus der Höhe landender Ball im weichen Grün hinterlässt. Zur Etikette gehört es, sie sofort mit einer Pitchgabel auszubessern, damit das Grün eben bleibt.",
+  "related": [
+   "Green",
+   "Divot",
+   "Etikette"
+  ]
+ },
+ {
+  "begriff": "Playing Handicap",
+  "kategorie": "Handicap",
+  "definition": "Das Playing Handicap ist die für einen bestimmten Platz und Abschlag berechnete Spielvorgabe, also die Anzahl der Vorgabenschläge, die man erhält. Es leitet sich aus dem Handicap-Index über Course- und Slope-Rating ab.",
+  "related": [
+   "Handicap-Index",
+   "Slope Rating",
+   "Course Rating"
+  ]
+ },
+ {
+  "begriff": "Provisorischer Ball",
+  "kategorie": "Regeln",
+  "definition": "Ein provisorischer Ball wird gespielt, wenn der Originalball vermutlich verloren oder im Aus ist, um Zeit zu sparen. Findet man den Originalball rechtzeitig und spielbar, wird der provisorische Ball straflos aufgegeben.",
+  "related": [
+   "Aus",
+   "Strafschlag",
+   "Drop"
+  ]
+ },
+ {
+  "begriff": "Punch",
+  "kategorie": "Schlagarten",
+  "definition": "Der Punch ist ein bewusst flach gehaltener Schlag mit verkürztem Schwung, der eine niedrige Flugbahn erzeugt. Er wird gegen Wind oder unter Ästen gespielt, um den Ball unter Hindernissen hindurchzubringen.",
+  "related": [
+   "Draw",
+   "Eisen",
+   "Approach"
+  ]
+ },
+ {
+  "begriff": "Putt",
+  "kategorie": "Schlagarten",
+  "definition": "Ein Putt ist ein rollender Schlag auf dem Grün, mit dem der Ball ins Loch gebracht wird. Er wird mit dem Putter gespielt und erfordert vor allem Gefühl für Richtung und Geschwindigkeit.",
+  "related": [
+   "Putter",
+   "Green",
+   "Lag-Putt"
+  ]
+ },
+ {
+  "begriff": "Putter",
+  "kategorie": "Ausrüstung",
+  "definition": "Der Putter ist der Schläger mit fast senkrechtem Schlägerblatt und minimalem Loft, der ausschließlich zum Rollen des Balls auf dem Grün dient. Es gibt ihn in vielen Kopfformen wie Blade oder Mallet.",
+  "related": [
+   "Putt",
+   "Green",
+   "Loft"
+  ]
+ },
+ {
+  "begriff": "Putts pro Runde",
+  "kategorie": "Statistik",
+  "definition": "Putts pro Runde ist die durchschnittliche Anzahl der Putts, die ein Spieler über 18 Löcher benötigt. Sie ist eine zentrale Kennzahl für die Qualität des Puttspiels; Werte um 30 gelten als solide.",
+  "related": [
+   "Putt",
+   "Green in Regulation",
+   "Scrambling"
+  ]
+ },
+ {
+  "begriff": "Ready Golf",
+  "kategorie": "Regeln",
+  "definition": "Ready Golf bedeutet, dass jeder spielt, sobald er bereit und sicher ist, statt strikt der klassischen Reihenfolge nach Ehre zu folgen. Es dient dazu, das Spieltempo im Zählspiel zu beschleunigen.",
+  "related": [
+   "Ehre",
+   "Zählspiel",
+   "Marshal"
+  ]
+ },
+ {
+  "begriff": "Rough",
+  "kategorie": "Platz",
+  "definition": "Das Rough ist das höher gewachsene Gras seitlich des Fairways, in dem der Ball schwerer zu spielen ist. Je nach Länge des Grases wird zwischen Semi-Rough und tiefem Rough unterschieden.",
+  "related": [
+   "Fairway",
+   "Semi-Rough",
+   "Bunker"
+  ]
+ },
+ {
+  "begriff": "Sand Wedge",
+  "kategorie": "Ausrüstung",
+  "definition": "Das Sand Wedge (SW) hat einen Loft von etwa 54 bis 58 Grad und einen ausgeprägten Bounce, der das Spiel aus dem Bunker erleichtert. Es dient neben Bunkerschlägen auch kurzen, hohen Annäherungen.",
+  "related": [
+   "Bunkerschlag",
+   "Bounce",
+   "Loft"
+  ]
+ },
+ {
+  "begriff": "Schaft-Flex",
+  "kategorie": "Ausrüstung",
+  "definition": "Der Schaft-Flex beschreibt, wie stark sich der Schläger im Schwung durchbiegt, und reicht von weich (Ladies, Senior) bis steif (Stiff, Extra Stiff). Er sollte zur Schlägerkopfgeschwindigkeit passen, damit der Ball genau und weit fliegt.",
+  "related": [
+   "Fitting",
+   "Griff",
+   "Driver"
+  ]
+ },
+ {
+  "begriff": "Scrambling",
+  "kategorie": "Statistik",
+  "definition": "Scrambling ist die Statistik, die angibt, wie oft ein Spieler trotz verfehltem Grün in Regulation dennoch mit Par oder besser abschließt. Sie misst die Stärke des kurzen Spiels und Rettungsvermögens.",
+  "related": [
+   "Green in Regulation",
+   "Chip",
+   "Putts pro Runde"
+  ]
+ },
+ {
+  "begriff": "Semi-Rough",
+  "kategorie": "Platz",
+  "definition": "Das Semi-Rough ist der Übergangsbereich mit mäßig hohem Gras zwischen dem kurz gemähten Fairway und dem tiefen Rough. Der Ball liegt hier meist noch gut spielbar, aber schwerer zu kontrollieren als auf dem Fairway.",
+  "related": [
+   "Rough",
+   "Fairway",
+   "Fransenkante"
+  ]
+ },
+ {
+  "begriff": "Shank",
+  "kategorie": "Schlagarten",
+  "definition": "Ein Shank ist ein Fehlschlag, bei dem der Ball vom Übergang zwischen Schlägerblatt und Schaft (dem Hosel) getroffen wird und scharf seitlich wegschießt. Er zählt zu den gefürchtetsten Fehlern im Golf.",
+  "related": [
+   "Top",
+   "Fat",
+   "Slice"
+  ]
+ },
+ {
+  "begriff": "Slice",
+  "kategorie": "Schlagarten",
+  "definition": "Ein Slice ist ein stark nach rechts kurvender Ballflug beim Rechtshänder, der meist ungewollt entsteht. Er ist die ausgeprägte Fehlerform des Fade und ein typischer Anfängerfehler.",
+  "related": [
+   "Fade",
+   "Hook",
+   "Draw"
+  ]
+ },
+ {
+  "begriff": "Slope Rating",
+  "kategorie": "Handicap",
+  "definition": "Das Slope Rating drückt aus, wie viel schwieriger ein Platz für einen durchschnittlichen Bogey-Golfer im Vergleich zum Scratch-Golfer ist. Die Skala reicht von 55 bis 155, wobei 113 als Standard gilt.",
+  "related": [
+   "Course Rating",
+   "Handicap-Index",
+   "Playing Handicap"
+  ]
+ },
+ {
+  "begriff": "Stableford",
+  "kategorie": "Handicap",
+  "definition": "Stableford ist eine Zählweise, bei der pro Loch je nach Nettoergebnis Punkte vergeben werden, statt nur Schläge zu addieren. Ein Netto-Par bringt zwei Punkte; ein Loch ohne Punkte kann aufgegeben werden, was das Spiel beschleunigt.",
+  "related": [
+   "Netto",
+   "Vorgabe",
+   "Zählspiel"
+  ]
+ },
+ {
+  "begriff": "Strafschlag",
+  "kategorie": "Regeln",
+  "definition": "Ein Strafschlag, englisch Penalty, ist ein zusätzlicher Schlag, der bei bestimmten Regelverstößen oder Erleichterungen zum Ergebnis addiert wird, etwa bei einem Ball im Strafgebiet oder im Aus. Je nach Situation kommen ein oder zwei Strafschläge hinzu.",
+  "related": [
+   "Penalty Area",
+   "Aus",
+   "Drop"
+  ]
+ },
+ {
+  "begriff": "Sweetspot",
+  "kategorie": "Ausrüstung",
+  "definition": "Der Sweetspot ist der optimale Treffpunkt auf dem Schlägerblatt, an dem die Energie am effizientesten auf den Ball übertragen wird. Ein Treffer im Sweetspot fühlt sich sauber an und liefert maximale Weite und Kontrolle.",
+  "related": [
+   "Cavity Back",
+   "Blade",
+   "Driver"
+  ]
+ },
+ {
+  "begriff": "Tee",
+  "kategorie": "Ausrüstung",
+  "definition": "Ein Tee ist ein kleiner Stift aus Holz oder Kunststoff, auf den der Ball am Abschlag gesetzt wird, um ihn leicht anzuheben. Es darf ausschließlich beim ersten Schlag eines Lochs verwendet werden.",
+  "related": [
+   "Abschlag",
+   "Drive",
+   "Driver"
+  ]
+ },
+ {
+  "begriff": "Top",
+  "kategorie": "Schlagarten",
+  "definition": "Ein Top-Schlag entsteht, wenn der Schläger den Ball zu weit oben trifft, sodass dieser flach über den Boden rollt oder springt. Ursache ist meist ein Aufrichten des Körpers vor dem Treffmoment.",
+  "related": [
+   "Fat",
+   "Shank",
+   "Punch"
+  ]
+ },
+ {
+  "begriff": "Triple Bogey",
+  "kategorie": "Score",
+  "definition": "Ein Triple Bogey ist ein Loch, das drei Schläge über Par gespielt wird, etwa eine 7 an einem Par 4. Es folgt in der Reihe nach dem Doppelbogey.",
+  "related": [
+   "Doppelbogey",
+   "Bogey",
+   "Par"
+  ]
+ },
+ {
+  "begriff": "Vorgabe",
+  "kategorie": "Handicap",
+  "definition": "Die Vorgabe, auch Handicap, ist die Anzahl der Schläge, die einem Spieler entsprechend seiner Spielstärke gutgeschrieben werden, um faire Vergleiche zu ermöglichen. Sie wird über den Handicap-Index und die Platzwerte zur konkreten Spielvorgabe berechnet.",
+  "related": [
+   "Handicap-Index",
+   "Playing Handicap",
+   "Netto"
+  ]
+ },
+ {
+  "begriff": "WHS",
+  "kategorie": "Handicap",
+  "definition": "Das WHS (World Handicap System) ist das seit 2020 weltweit einheitliche Handicap-System, das frühere nationale Systeme abgelöst hat. Es berechnet den Handicap-Index einheitlich aus den besten der letzten Ergebnisse.",
+  "related": [
+   "Handicap-Index",
+   "Course Rating",
+   "Slope Rating"
+  ]
+ },
+ {
+  "begriff": "Wintergrün",
+  "kategorie": "Platz",
+  "definition": "Ein Wintergrün ist ein Ersatzgrün, das in der kalten Jahreszeit bespielt wird, um die empfindlichen Sommergrüns zu schonen. Es ist meist einfacher präpariert und oft nur provisorisch gemäht.",
+  "related": [
+   "Green",
+   "Fahne",
+   "Putt"
+  ]
+ },
+ {
+  "begriff": "Yips",
+  "kategorie": "Schlagarten",
+  "definition": "Die Yips sind unwillkürliche Muskelzuckungen oder Verkrampfungen, die vor allem beim Putten oder Chippen auftreten und den Schlag stören. Sie gelten als überwiegend mentales Problem und können Spieler jeder Stärke treffen.",
+  "related": [
+   "Putt",
+   "Chip",
+   "Grün lesen"
+  ]
+ },
+ {
+  "begriff": "Zeitweiliges Wasser",
+  "kategorie": "Regeln",
+  "definition": "Zeitweiliges Wasser, englisch Temporary Water, ist eine vorübergehende Wasseransammlung auf dem Platz, etwa nach Regen, die kein Strafgebiet ist. Der Spieler erhält davon straflose Erleichterung und darf den Ball am nächstgelegenen trockenen Punkt droppen.",
+  "related": [
+   "Erleichterung",
+   "Drop",
+   "Penalty Area"
+  ]
+ },
+ {
+  "begriff": "Zählspiel",
+  "kategorie": "Regeln",
+  "definition": "Beim Zählspiel, englisch Stroke Play, werden alle Schläge einer Runde addiert, und es gewinnt, wer insgesamt die wenigsten benötigt. Es ist die häufigste Wettspielform und Grundlage der meisten Turniere.",
+  "related": [
+   "Lochspiel",
+   "Stableford",
+   "Ready Golf"
+  ]
+ }
+]

@@ -1,0 +1,269 @@
+{
+  "kategorien": [
+    {
+      "kategorie": "Grundlagen/Setup",
+      "videos": [
+        {
+          "titel": "Das Setup: richtig am Ball stehen (Ansprechposition Golf)",
+          "kanal": "GOLFSTUN.DE - Golf-Training und -Übungen",
+          "youtubeId": "JZrsILHBqTk",
+          "dauer": "",
+          "beschreibung": "Erklärt die korrekte Ansprechposition: Ballposition, Stand, Haltung und Ausrichtung als Basis für einen sauberen Schwung.",
+          "quelle_url": "https://www.youtube.com/watch?v=JZrsILHBqTk"
+        },
+        {
+          "titel": "5 Golfschwung Grundlagen für jeden Anfänger",
+          "kanal": "Vaughan spielt den Platz",
+          "youtubeId": "k94N8LvVoqQ",
+          "dauer": "",
+          "beschreibung": "Fünf grundlegende Bausteine des Golfschwungs, die jeder Einsteiger von Anfang an beachten sollte.",
+          "quelle_url": "https://www.youtube.com/watch?v=k94N8LvVoqQ"
+        },
+        {
+          "titel": "Den Golfschwung von Grund auf richtig lernen | Teil 1/12",
+          "kanal": "BIRDIETRAIN",
+          "youtubeId": "sbqcA77oxRg",
+          "dauer": "",
+          "beschreibung": "Auftakt einer Schritt-für-Schritt-Serie, die den Golfschwung systematisch von den Grundlagen an aufbaut.",
+          "quelle_url": "https://www.youtube.com/watch?v=sbqcA77oxRg"
+        }
+      ]
+    },
+    {
+      "kategorie": "Griff",
+      "videos": [
+        {
+          "titel": "DER GRIFF - SO GREIFST DU DEN SCHLÄGER RICHTIG",
+          "kanal": "Fabian Bünker Golfakademie",
+          "youtubeId": "Te4zjtlxarE",
+          "dauer": "",
+          "beschreibung": "Anleitung, wie man den Golfschläger korrekt greift und Hände sowie Finger richtig positioniert.",
+          "quelle_url": "https://www.youtube.com/watch?v=Te4zjtlxarE"
+        },
+        {
+          "titel": "Griffarten und Griffweisen – Der Griff beim Golf",
+          "kanal": "GOLFSTUN.DE - Golf-Training und -Übungen",
+          "youtubeId": "hkMiGvWeH8U",
+          "dauer": "",
+          "beschreibung": "Vergleich der gängigen Griffarten (Interlocking, Overlap, Baseball) und wann welche Griffweise sinnvoll ist.",
+          "quelle_url": "https://www.youtube.com/watch?v=hkMiGvWeH8U"
+        }
+      ]
+    },
+    {
+      "kategorie": "Vollschwung",
+      "videos": [
+        {
+          "titel": "DER GOLFSCHWUNG EINFACH ERKLÄRT - KONZEPT & BASICS",
+          "kanal": "Florian Raggl Golf",
+          "youtubeId": "exWJcYyvBwA",
+          "dauer": "",
+          "beschreibung": "Grundkonzept und Basics des vollen Golfschwungs einfach und verständlich erklärt.",
+          "quelle_url": "https://www.youtube.com/watch?v=exWJcYyvBwA"
+        },
+        {
+          "titel": "In 3 simplen Schritten zu einem super Golfschwung",
+          "kanal": "BIRDIETRAIN",
+          "youtubeId": "ibGzGqNPOBE",
+          "dauer": "",
+          "beschreibung": "Drei einfache Schritte, um den Bewegungsablauf des Vollschwungs zu verbessern.",
+          "quelle_url": "https://www.youtube.com/watch?v=ibGzGqNPOBE"
+        }
+      ]
+    },
+    {
+      "kategorie": "Driver/Abschlag",
+      "videos": [
+        {
+          "titel": "GOLFSCHWUNG MIT DEM DRIVER – Die komplette Technik + Basics für den Golf-Abschlag (deutsch)",
+          "kanal": "GOLFSTUN.DE - Golf-Training und -Übungen",
+          "youtubeId": "PrRNSUTUMys",
+          "dauer": "",
+          "beschreibung": "Komplette Technik für den Abschlag mit dem Driver, inklusive Setup, Ballposition und Schwungablauf.",
+          "quelle_url": "https://www.youtube.com/watch?v=PrRNSUTUMys"
+        },
+        {
+          "titel": "ABSCHLAG MIT DEM DRIVER – Die richtige Technik beim Golfschwung",
+          "kanal": "GOLFSTUN.DE - Golf-Training und -Übungen",
+          "youtubeId": "rcHlyCVgNMw",
+          "dauer": "",
+          "beschreibung": "Die richtige Technik für den Driver-Abschlag Schritt für Schritt erklärt.",
+          "quelle_url": "https://www.youtube.com/watch?v=rcHlyCVgNMw"
+        },
+        {
+          "titel": "DIE HÄUFIGSTEN FEHLER MIT DEM DRIVER - GOLFSCHWUNG TECHNIK",
+          "kanal": "Florian Raggl Golf",
+          "youtubeId": "AUJFSQbqoZQ",
+          "dauer": "",
+          "beschreibung": "Zeigt typische Fehler beim Driver-Schwung und wie man sie vermeidet.",
+          "quelle_url": "https://www.youtube.com/watch?v=AUJFSQbqoZQ"
+        }
+      ]
+    },
+    {
+      "kategorie": "Eisen",
+      "videos": [
+        {
+          "titel": "PERFEKTE EISEN SCHLÄGE - DIE 3 WICHTIGSTEN FAKTOREN - GOLF SCHWUNG TECHNIK",
+          "kanal": "Florian Raggl Golf",
+          "youtubeId": "FebNJ-0UdN0",
+          "dauer": "",
+          "beschreibung": "Die drei entscheidenden Faktoren für saubere und konstante Eisenschläge.",
+          "quelle_url": "https://www.youtube.com/watch?v=FebNJ-0UdN0"
+        },
+        {
+          "titel": "KONSTANTE EISENSCHLÄGE - GOLFTECHNIK",
+          "kanal": "Florian Raggl Golf",
+          "youtubeId": "sgHuRUkWg_g",
+          "dauer": "",
+          "beschreibung": "Tipps und Technik, um den Ball mit dem Eisen konstant sauber zu treffen.",
+          "quelle_url": "https://www.youtube.com/watch?v=sgHuRUkWg_g"
+        }
+      ]
+    },
+    {
+      "kategorie": "Pitchen",
+      "videos": [
+        {
+          "titel": "PITCHEN - DIE PERFEKTE TECHNIK",
+          "kanal": "Fabian Bünker Golfakademie",
+          "youtubeId": "2uXiPwXNMWw",
+          "dauer": "",
+          "beschreibung": "Grundtechnik des Pitchens für kontrollierte Annäherungsschläge ans Grün.",
+          "quelle_url": "https://www.youtube.com/watch?v=2uXiPwXNMWw"
+        },
+        {
+          "titel": "Die 3 Geheimnisse beim PITCHEN – So spielst Du einen Pitch an die Fahne (Golf-Technik)",
+          "kanal": "GOLFSTUN.DE - Golf-Training und -Übungen",
+          "youtubeId": "OgK6t-gjfiw",
+          "dauer": "",
+          "beschreibung": "Drei Schlüssel für präzise Pitches, die nah an die Fahne rollen.",
+          "quelle_url": "https://www.youtube.com/watch?v=OgK6t-gjfiw"
+        }
+      ]
+    },
+    {
+      "kategorie": "Chippen",
+      "videos": [
+        {
+          "titel": "CHIPPEN - DIE PERFEKTE TECHNIK",
+          "kanal": "Fabian Bünker Golfakademie",
+          "youtubeId": "0TbWsdD0I8Y",
+          "dauer": "",
+          "beschreibung": "Grundlegende Chip-Technik für sichere Schläge rund ums Grün.",
+          "quelle_url": "https://www.youtube.com/watch?v=0TbWsdD0I8Y"
+        },
+        {
+          "titel": "DER STANDARD CHIP - GOLFTECHNIK",
+          "kanal": "Florian Raggl Golf",
+          "youtubeId": "VDF36n0qCmA",
+          "dauer": "",
+          "beschreibung": "Der Standard-Chip als zuverlässige Basis-Technik fürs kurze Spiel.",
+          "quelle_url": "https://www.youtube.com/watch?v=VDF36n0qCmA"
+        }
+      ]
+    },
+    {
+      "kategorie": "Bunker",
+      "videos": [
+        {
+          "titel": "Golf Bunker Schlag - der einfache Golfschwung, um aus dem Sand zu kommen #einfachbessergolfen",
+          "kanal": "EINFACH BESSER GOLFEN",
+          "youtubeId": "pEiCFHX-5ao",
+          "dauer": "",
+          "beschreibung": "Einfacher Ansatz, um zuverlässig aus dem Sandbunker herauszukommen.",
+          "quelle_url": "https://www.youtube.com/watch?v=pEiCFHX-5ao"
+        },
+        {
+          "titel": "DER BUNKERSCHLAG - RAUS AUS DEM GRÜN BUNKER - GOLFTECHNIK",
+          "kanal": "Florian Raggl Golf",
+          "youtubeId": "x06Sxd0ggyY",
+          "dauer": "",
+          "beschreibung": "Technik für den Grünbunker: Setup, Schlagflächenstellung und Sandkontakt.",
+          "quelle_url": "https://www.youtube.com/watch?v=x06Sxd0ggyY"
+        }
+      ]
+    },
+    {
+      "kategorie": "Putten",
+      "videos": [
+        {
+          "titel": "GERADE PUTTEN - Die Technik-Grundlagen und Basics für einen konstanten Putt beim Golf (deutsch)",
+          "kanal": "GOLFSTUN.DE - Golf-Training und -Übungen",
+          "youtubeId": "VMBqHXYalis",
+          "dauer": "",
+          "beschreibung": "Grundlagen für einen geraden, konstanten Putt: Setup, Pendelbewegung und Ausrichtung.",
+          "quelle_url": "https://www.youtube.com/watch?v=VMBqHXYalis"
+        }
+      ]
+    },
+    {
+      "kategorie": "Fehler beheben (Slice/Hook)",
+      "videos": [
+        {
+          "titel": "Den Slice mit dem Driver abstellen | Golftechnik",
+          "kanal": "BIRDIETRAIN",
+          "youtubeId": "6czUkwq7sgk",
+          "dauer": "",
+          "beschreibung": "Ursachen des Slice und konkrete Korrekturen, um den Ball wieder gerade zu spielen.",
+          "quelle_url": "https://www.youtube.com/watch?v=6czUkwq7sgk"
+        },
+        {
+          "titel": "Wie du den Hook abstellen kannst | Den Hook in einen Draw verwandeln | Golftechnik",
+          "kanal": "BIRDIETRAIN",
+          "youtubeId": "JTHFInfCZBY",
+          "dauer": "",
+          "beschreibung": "Erklärt, wie man einen Hook korrigiert und in einen kontrollierten Draw verwandelt.",
+          "quelle_url": "https://www.youtube.com/watch?v=JTHFInfCZBY"
+        }
+      ]
+    },
+    {
+      "kategorie": "Golfregeln erklärt",
+      "videos": [
+        {
+          "titel": "9 Wichtige Golfregeln, die (nicht nur) Anfänger oft falsch anwenden",
+          "kanal": "Golfen mit Freude",
+          "youtubeId": "-8_URO-oeqc",
+          "dauer": "",
+          "beschreibung": "Neun häufig missverstandene Golfregeln verständlich erklärt.",
+          "quelle_url": "https://www.youtube.com/watch?v=-8_URO-oeqc"
+        },
+        {
+          "titel": "Das Grün: 7 Golfregeln, die du kennen musst - Golfregeln Erklärt Teil 3",
+          "kanal": "Golfen mit Freude",
+          "youtubeId": "1IHLnyHN-Jc",
+          "dauer": "",
+          "beschreibung": "Die wichtigsten Regeln rund um das Grün, verständlich zusammengefasst.",
+          "quelle_url": "https://www.youtube.com/watch?v=1IHLnyHN-Jc"
+        }
+      ]
+    },
+    {
+      "kategorie": "Platzreife-Tipps",
+      "videos": [
+        {
+          "titel": "Platzreife-Vorbereitung : Komplett-Kurs! (Praktischer Teil)",
+          "kanal": "Golfen mit Freude",
+          "youtubeId": "KPMsmuQyAHY",
+          "dauer": "",
+          "beschreibung": "Praxisnaher Komplettkurs zur Vorbereitung auf die praktische Platzreifeprüfung.",
+          "quelle_url": "https://www.youtube.com/watch?v=KPMsmuQyAHY"
+        }
+      ]
+    },
+    {
+      "kategorie": "Fitness/Beweglichkeit",
+      "videos": [
+        {
+          "titel": "10-Minuten Mobility für Golfer | Mehr Beweglichkeit für deinen Schwung",
+          "kanal": "golfreich.fitness",
+          "youtubeId": "X0mrku5S_v0",
+          "dauer": "",
+          "beschreibung": "Kurzes Mobility-Programm, das die Beweglichkeit für einen größeren, geschmeidigeren Schwung fördert.",
+          "quelle_url": "https://www.youtube.com/watch?v=X0mrku5S_v0"
+        }
+      ]
+    }
+  ]
+}

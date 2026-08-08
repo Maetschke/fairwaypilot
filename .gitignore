@@ -1,2 +1,8 @@
 .DS_Store
 **/.DS_Store
+node_modules/
+src/worker/pages.generated.js
+capacitor/www/
+_m0_setup.py
+_wtest_
+_to_delete/

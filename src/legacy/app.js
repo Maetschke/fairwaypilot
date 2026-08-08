@@ -1,0 +1,5590 @@
+var SC_PAR = {
+  Front:[4,4,5,4,3,4,4,4,5],
+  Back: [3,5,4,4,3,4,3,5,4],
+  KawF: [4,4,3,4,4,3,4,5,4],
+  KawB: [4,3,5,4,3,4,4,4,4],
+  WalF: [4,4,3,4,4,3,4,5,4],
+  WalB: [4,4,3,4,4,3,4,5,4]
+};
+var SC_SI = {
+  Front:[2,7,1,4,8,6,3,9,5],
+  Back: [8,6,5,4,7,3,9,2,1],
+  KawF: [2,7,1,4,8,6,3,9,5],
+  KawB: [8,6,5,4,7,3,9,2,1],
+  WalF: [2,7,1,4,8,6,3,9,5],
+  WalB: [8,6,5,4,7,3,9,2,1]
+};
+var SC_CH = { Front:32, Back:31, KawF:32, KawB:31, WalF:32, WalB:31 };
+function SC_netPar(par, chval, si, holes){
+  holes = holes || 9;
+  var extra = Math.floor(chval/holes);
+  var rem = chval%holes;
+  if(si<=rem) extra+=1;
+  return par+extra;
+}
+function SC_stbfHole(score, par, chval, si, holes){
+  if(score===null||score===undefined) return null;
+  var npar = SC_netPar(par, chval, si, holes);
+  var pts = 2 - (score - npar);
+  return Math.max(0, pts);
+}
+function SC_scoreClass(score, par){
+  if(score===null||score===undefined) return null;
+  var d = score - par;
+  if(d<=-2) return 'eagle';
+  if(d===-1) return 'birdie';
+  if(d===0)  return 'par';
+  if(d===1)  return 'bogey';
+  return 'dbogey'; // >=2 über Par
+}
+/* Zeigt Tag.Monat.Jahr - keine F/B/?-Kennung mehr, da die Halbe direkt darunter als
+   Platzname (z.B. "K\u00fcrten F") sichtbar ist und daher redundant war. Diese Funktion war
+   bisher UNABHAENGIG von scEntry.lbl (siehe RT_convertHalf) und hatte nur eine feste Liste
+   von vier bekannten Halbcodes - jeder andere Code (z.B. bei eigenen/recherchierten Plaetzen
+   wie Kuerten) fiel auf "?" zurueck. Bei mehreren Runden derselben Halbe am selben Tag wird
+   zur Unterscheidung eine Nummer in Klammern angehaengt. */
+function SC_label(sc){
+  var same = SC.filter(function(x){return x.date===sc.date && x.half===sc.half;})
+   .sort(function(a,b){var at=a.time||'', bt=b.time||''; return at>bt?1:at<bt?-1:0;});
+  var d = sc.date.slice(8,10)+'.'+sc.date.slice(5,7)+'.'+sc.date.slice(0,4);
+  if(same.length>1){ return d+' ('+(same.indexOf(sc)+1)+')'; }
+  return d;
+}
+var HV_D_STATIC=[
+  {date:'2026-04-01',lbl:'01.04.',half:'KawF',s:94,cr:35.35,sl:135,hi:94.3,col:'#FF9F0A',stbf:15},
+  {date:'2026-04-01',lbl:'01.04.',half:'KawB',s:87,cr:35.35,sl:135,hi:83.0,col:'#FFD60A',stbf:8},
+  {date:'2026-04-18',lbl:'18.04.',half:'Back',s:84,cr:35.4,sl:130,hi:81.1,col:'#BF5AF2',stbf:7},
+  {date:'2026-04-26',lbl:'26.04.',half:'Front',s:95,cr:36.2,sl:138,hi:92.4,col:'#0A84FF',stbf:4},
+  {date:'2026-04-28',lbl:'28.04.',half:'Back',s:86,cr:35.4,sl:130,hi:84.4,col:'#BF5AF2',stbf:10},
+  {date:'2026-05-02',lbl:'02.05.',half:'Back',s:90,cr:35.4,sl:130,hi:91.1,col:'#BF5AF2',stbf:4},
+  {date:'2026-05-14',lbl:'14.05.',half:'Back',s:92,cr:35.4,sl:130,hi:94.5,col:'#BF5AF2',stbf:1},
+  {date:'2026-05-15',lbl:'15.05.',half:'Back',s:80,cr:35.4,sl:130,hi:74.4,col:'#BF5AF2',stbf:4},
+  {date:'2026-05-16',lbl:'16.05.',half:'Front',s:76,cr:36.2,sl:138,hi:62.6,col:'#0A84FF',stbf:12},
+  {date:'2026-05-16',lbl:'16.05.',half:'Back',s:73,cr:35.4,sl:130,hi:62.8,col:'#BF5AF2',stbf:11},
+  {date:'2026-05-24',lbl:'24.05.',half:'WalF',s:80,cr:36.2,sl:131,hi:72.5,col:'#5AC8FA',stbf:9},
+  {date:'2026-05-24',lbl:'24.05.',half:'WalB',s:73,cr:36.2,sl:131,hi:60.9,col:'#0071B2',stbf:9},
+  {date:'2026-05-25',lbl:'25.05.',half:'Front',s:80,cr:36.2,sl:138,hi:68.9,col:'#0A84FF',stbf:8},
+  {date:'2026-05-25',lbl:'25.05.',half:'Back',s:76,cr:35.4,sl:130,hi:67.8,col:'#BF5AF2',stbf:8},
+  {date:'2026-05-27',lbl:'27.05.',half:'Front',s:83,cr:36.2,sl:138,hi:73.6,col:'#0A84FF',stbf:4},
+  {date:'2026-05-27',lbl:'27.05.',half:'Back',s:77,cr:35.4,sl:130,hi:69.4,col:'#BF5AF2',stbf:7},
+  {date:'2026-06-22',lbl:'22.06.',half:'Back',s:75,cr:35.4,sl:130,hi:66.1,col:'#BF5AF2',stbf:10},
+  {date:'2026-06-24',lbl:'24.06.',half:'Back',s:75,cr:35.4,sl:130,hi:66.1,col:'#BF5AF2',stbf:12},
+  {date:'2026-06-26',lbl:'26.06.',half:'Back',s:71,cr:35.4,sl:130,hi:59.4,col:'#BF5AF2',stbf:13},
+  {date:'2026-06-30',lbl:'30.06.',half:'Front',s:73,cr:36.2,sl:138,hi:57.9,col:'#0A84FF',stbf:14},
+  {date:'2026-06-30',lbl:'30.06.',half:'Back',s:74,cr:35.4,sl:130,hi:64.4,col:'#BF5AF2',stbf:14},
+  {date:'2026-07-01',lbl:'01.07.',half:'Front',s:84,cr:36.2,sl:138,hi:75.1,col:'#0A84FF',stbf:7},
+  {date:'2026-07-01',lbl:'01.07.',half:'Back',s:87,cr:35.4,sl:130,hi:86.1,col:'#BF5AF2',stbf:7},
+  {date:'2026-07-05',lbl:'05.07.',half:'Front',s:83,cr:36.2,sl:138,hi:73.6,col:'#0A84FF',stbf:8},
+  {date:'2026-07-05',lbl:'05.07.',half:'Back',s:78,cr:35.4,sl:130,hi:71.1,col:'#BF5AF2',stbf:11},
+  {date:'2026-07-06',lbl:'06.07.',half:'Front',s:83,cr:36.2,sl:138,hi:73.6,col:'#0A84FF',stbf:14},
+  {date:'2026-07-06',lbl:'06.07.',half:'Back',s:72,cr:35.4,sl:130,hi:61.1,col:'#BF5AF2',stbf:13},
+  {date:'2026-07-09',lbl:'09.07.',half:'Back',s:78,cr:35.4,sl:130,hi:71.1,col:'#BF5AF2',stbf:7},
+  {date:'2026-07-16',lbl:'16.07.',half:'Back',s:72,cr:35.4,sl:130,hi:61.1,col:'#BF5AF2',stbf:15},
+  {date:'2026-07-16',lbl:'16.07.',half:'Back',s:70,cr:35.4,sl:130,hi:57.7,col:'#BF5AF2',stbf:15},
+  {date:'2026-07-17',lbl:'17.07.',half:'Back',s:67,cr:35.4,sl:130,hi:52.7,col:'#BF5AF2',stbf:17},
+  {date:'2026-07-17',lbl:'17.07.',half:'Front',s:84,cr:36.2,sl:138,hi:75.1,col:'#0A84FF',stbf:5},
+  {date:'2026-07-19',lbl:'19.07.',half:'Front',s:72,cr:36.2,sl:138,hi:56.3,col:'#0A84FF',stbf:14},
+  {date:'2026-07-19',lbl:'19.07.',half:'Back',s:69,cr:35.4,sl:130,hi:56.1,col:'#BF5AF2',stbf:17},
+  {date:'2026-07-19',lbl:'19.07.',half:'Back',s:72,cr:35.4,sl:130,hi:61.1,col:'#BF5AF2',stbf:13},
+  {date:'2026-07-24',lbl:'24.07.',half:'Front',s:68,cr:36.2,sl:138,hi:50.0,col:'#0A84FF',stbf:19},
+  {date:'2026-07-24',lbl:'24.07.',half:'Back',s:71,cr:35.4,sl:130,hi:59.4,col:'#BF5AF2',stbf:14},
+  {date:'2026-07-25',lbl:'25.07.',half:'Front',s:75,cr:36.2,sl:138,hi:61.0,col:'#0A84FF',stbf:12},
+  {date:'2026-07-25',lbl:'25.07.',half:'Back',s:75,cr:35.4,sl:130,hi:66.1,col:'#BF5AF2',stbf:10},
+  {date:'2026-07-25',lbl:'25.07.',half:'Back',s:68,cr:35.4,sl:130,hi:54.4,col:'#BF5AF2',stbf:16}
+];
+/* HV_D startet bewusst LEER statt mit HV_D_STATIC.slice(): die Konstante enthaelt Marks echte
+   Handicap-Historie im Klartext und diente frueher (vor dem Supabase-Konto-/Multi-User-System)
+   als Default-Anzeige. Seit jeder Nutzer sein eigenes Konto hat, wuerde ein Default mit Marks
+   echten Daten fuer JEDEN anderen Nutzer falsch/fremd sein, bis RT_hydrateHistoricalData() beim
+   ersten Tab-Wechsel ueberschreibt. HV_D_STATIC bleibt nur noch als Altdaten-Quelle fuer den
+   (nicht mehr automatisch aufgerufenen) manuellen Hole19-Reimport RT_seedHistoricalRounds()
+   erhalten. */
+var HV_D=[];
+var HV_COURSE_META={
+ Front:{label:'Georghausen F', color:'#0A84FF'},
+ Back:{label:'Georghausen B', color:'#BF5AF2'},
+ WalF:{label:'Waldhof F', color:'#5AC8FA'},
+ WalB:{label:'Waldhof B', color:'#0071B2'},
+ KawF:{label:'Kaanapali F', color:'#FF9F0A'},
+ KawB:{label:'Kaanapali B', color:'#FFD60A'},
+ KueF:{label:'K\u00fcrten F', color:'#34C759'},
+ KueB:{label:'K\u00fcrten B', color:'#1F8A4D'}
+};
+var RT_COLOR_PALETTE=['#30B0C7','#8E8E93','#AC8E68','#66D4CF','#FF3B30','#5E5CE6','#FF9F0A','#34C759','#0071B2','#D46BB3'];
+/* Farbe deterministisch aus dem Platzcode ableiten statt aus einem fortlaufenden Zaehler:
+   der Zaehler haengt an der Reihenfolge, in der Plaetze erstmals auftauchen, und liefert
+   damit je nach geladener Rundenmenge unterschiedliche Farben fuer denselben Platz. */
+/* Farbtoene der fest hinterlegten Plaetze (HV_COURSE_META): Georghausen blau/violett,
+   Waldhof zweimal blau, Kaanapali orange/gelb, Kuerten zweimal gruen. Berechnete Farben
+   halten zu diesen Werten Abstand, damit z.B. Leverkusen nicht im selben Gruen landet
+   wie Kuerten. */
+var RT_RESERVED_HUES=[211,278,197,202,36,50,142,146];
+function RT_hueDist(a,b){
+ var d=Math.abs(a-b)%360;
+ return d>180?360-d:d;
+}
+function RT_colorForCode(code){
+ /* Farbton aus dem Platznamen OHNE F/B-Suffix, Helligkeit unterscheidet die beiden Haelften:
+    so gehoeren Front und Back eines Platzes sichtbar zusammen. Anschliessend wird der Ton
+    in 6-Grad-Schritten weitergedreht, bis er mindestens 28 Grad von jedem reservierten
+    Farbton entfernt liegt - deterministisch, da der Startwert aus dem Namen kommt. */
+ var base=String(code).replace(/[FB]$/,'');
+ var h=0;
+ for(var i=0;i<base.length;i++){ h=(h*31+base.charCodeAt(i))>>>0; }
+ var hue=h%360;
+ for(var step=0;step<360;step+=6){
+  var cand=(hue+step)%360;
+  var clash=false;
+  for(var r=0;r<RT_RESERVED_HUES.length;r++){
+   if(RT_hueDist(cand,RT_RESERVED_HUES[r])<28){ clash=true; break; }
+  }
+  if(!clash){ hue=cand; break; }
+ }
+ var isFront=/F$/.test(code);
+ return 'hsl('+hue+',62%,'+(isFront?'52%':'34%')+')';
+}
+
+/* Fasst mehrere Halbcodes desselben Platzes (z.B. "Front"+"Back") zu EINEM Filter-Chip
+   zusammen ("Georghausen" statt getrennt "Georghausen F"/"Georghausen B"). Betrifft NUR die
+   Chip-Auswahl - Legende, Chart-Farben und Tabellen zeigen weiterhin jede Halbe einzeln wie
+   bisher, da sie ueber HV_D/SC.half (die einzelnen Codes) und nicht ueber die Gruppen gehen. */
+function RT_groupCodes(codes){
+ var groups=[], byBase={};
+ codes.forEach(function(code){
+  var m=HV_COURSE_META[code]||{label:code,color:'#8E8E93'};
+  var base=m.label.replace(/\s+[FB]$/,'');
+  if(!byBase[base]){ byBase[base]={label:base, codes:[code]}; groups.push(byBase[base]); }
+  else byBase[base].codes.push(code);
+ });
+ return groups;
+}
+
+function HV_hn(h){return (HV_COURSE_META[h]&&HV_COURSE_META[h].label)||h;}
+var RT_hiRange='all', RT_gdRange='all';
+function RT_rangeCutoff(range){
+ if(!range||range==='all') return null;
+ var days=parseInt(range,10);
+ if(isNaN(days)) return null;
+ var d=new Date(); d.setDate(d.getDate()-days);
+ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+function HV_filt(v){
+ var base;
+ if(v==='all') base=HV_D;
+ else{ var codes=v.split(','); base=HV_D.filter(function(d){return codes.indexOf(d.half)>=0;}); }
+ var cutoff=RT_rangeCutoff(RT_hiRange);
+ if(cutoff) base=base.filter(function(d){return d.date>=cutoff;});
+ return base;
+}
+var HV_W=360,HV_H=292,HV_P={t:28,r:30,b:52,l:44};
+var HV_cW=HV_W-HV_P.l-HV_P.r,HV_cH=HV_H-HV_P.t-HV_P.b;
+var HV_curV='all';
+function HV_hiCol(hi){
+  if(hi>=95)return{bg:'rgba(139,0,0,.35)',tc:'#CC0000'};
+  if(hi>=90)return{bg:'rgba(160,0,30,.35)',tc:'#E0001E'};
+  if(hi>=85)return{bg:'rgba(180,30,0,.35)',tc:'#E83000'};
+  if(hi>=80)return{bg:'rgba(190,70,0,.35)',tc:'#E86000'};
+  if(hi>=75)return{bg:'rgba(180,100,0,.35)',tc:'#D47800'};
+  if(hi>=70)return{bg:'rgba(160,120,0,.35)',tc:'#C09000'};
+  if(hi>=65)return{bg:'rgba(120,120,0,.35)',tc:'#909000'};
+  if(hi>=60)return{bg:'rgba(80,110,0,.35)',tc:'#608000'};
+  if(hi>=55)return{bg:'rgba(50,120,0,.35)',tc:'#409000'};
+  if(hi>54) return{bg:'rgba(30,150,0,.35)',tc:'#20AA00'};
+  return{bg:'rgba(52,199,89,.15)',tc:'#34C759'};
+}
+/* Die Codes fallen in der Reihenfolge an, in der sie in den Runden vorkommen - dadurch
+   stand je nach Datenlage mal die Back-, mal die Front-Neun vorn. Hier wird pro Platz
+   fest Front vor Back gestellt; die Plaetze selbst behalten die Reihenfolge ihres ersten
+   Auftretens. Wirkt zugleich auf Legende, Filter-Chips und Tabellen, da alle darauf
+   aufbauen. */
+function RT_sortHalfCodes(codes){
+ var order=[], byBase={};
+ codes.forEach(function(code){
+  var m=HV_COURSE_META[code]||{label:code};
+  var lbl=String(m.label);
+  var base=lbl.replace(/\s+[FB]$/,'');
+  if(!byBase[base]){ byBase[base]={F:null,B:null,rest:[]}; order.push(base); }
+  var g=byBase[base];
+  if(/\s+F$/.test(lbl)&&!g.F) g.F=code;
+  else if(/\s+B$/.test(lbl)&&!g.B) g.B=code;
+  else g.rest.push(code);
+ });
+ var out=[];
+ order.forEach(function(b){
+  var g=byBase[b];
+  if(g.F) out.push(g.F);
+  if(g.B) out.push(g.B);
+  g.rest.forEach(function(c){ out.push(c); });
+ });
+ return out;
+}
+function HV_usedCodes(){
+ var seen={}, codes=[];
+ HV_D.forEach(function(d){ if(!seen[d.half]){ seen[d.half]=true; codes.push(d.half); } });
+ return RT_sortHalfCodes(codes);
+}
+function SC_usedCodes(){
+ var seen={}, codes=[];
+ SC.forEach(function(sc){ if(!seen[sc.half]){ seen[sc.half]=true; codes.push(sc.half); } });
+ return RT_sortHalfCodes(codes);
+}
+function HV_renderLegend(){
+ var html=HV_usedCodes().map(function(code){
+  var m=HV_COURSE_META[code]||{label:code,color:'#8E8E93'};
+  return '<div class="li"><div class="lc" style="background:'+m.color+'"></div>'+m.label+'</div>';
+ }).join('');
+ document.getElementById('legend').innerHTML=html;
+ var hiHint='<div class="ld" style="border-color:rgba(255,69,58,.7)"></div>HI '+rtDe(RT_ownHandicap());
+ var hiEl=document.getElementById('hi-hint');
+ if(hiEl) hiEl.innerHTML=hiHint;
+}
+function HV_renderSegButtons(){
+ var html='<button class="sb'+(HV_curV==='all'?' on':'')+'" data-v="all">Alle</button>';
+ html+=RT_groupCodes(HV_usedCodes()).map(function(g){
+  var v=g.codes.join(',');
+  return '<button class="sb'+(HV_curV===v?' on':'')+'" data-v="'+v+'">'+g.label+'</button>';
+ }).join('');
+ document.getElementById('seg').innerHTML=html;
+}
+function RD_renderSegButtons(){
+ var html='<button class="sb'+(curRoFilter==='all'?' on':'')+'" data-v="all">Alle</button>';
+ html+=RT_groupCodes(SC_usedCodes()).map(function(g){
+  var v=g.codes.join(',');
+  return '<button class="sb'+(curRoFilter===v?' on':'')+'" data-v="'+v+'">'+g.label+'</button>';
+ }).join('');
+ document.getElementById('seg-ro').innerHTML=html;
+}
+function GD_renderRangeButtons(){
+ var opts=[['all','Alle'],['30','30 Tage'],['90','90 Tage'],['180','6 Monate']];
+ var html=opts.map(function(o){return '<button class="sb'+(RT_gdRange===o[0]?' on':'')+'" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('');
+ var el=document.getElementById('seg-gdrange'); if(el) el.innerHTML=html;
+}
+document.getElementById('seg-gdrange').addEventListener('click',function(e){
+  var btn=e.target.closest('.sb'); if(!btn)return;
+  RT_gdRange=btn.dataset.v;
+  document.querySelectorAll('#seg-gdrange .sb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  renderPenChart(); renderSandChart(); renderPuttsChart();
+});
+function HV_renderKPIs(){
+  var hi=HV_D.map(function(d){return d.hi;});
+  var best=Math.min.apply(null,hi).toFixed(1);
+  var worst=Math.max.apply(null,hi).toFixed(1);
+  var f4=HV_D.slice(0,4).reduce(function(s,d){return s+d.hi;},0)/4;
+  var l4=HV_D.slice(-4).reduce(function(s,d){return s+d.hi;},0)/4;
+  var tr=(l4-f4).toFixed(1);
+  document.getElementById('kpis').innerHTML=
+   '<div class="kpi"><div class="kv cg">'+best+'</div><div class="kl">Bestes HI</div></div>'+
+   '<div class="kpi"><div class="kv ca">'+worst+'</div><div class="kl">Schlechtestes</div></div>'+
+   '<div class="kpi"><div class="kv '+(parseFloat(tr)<0?'cg':'cb')+'">'+(parseFloat(tr)<0?'':'+')+tr+'</div><div class="kl">Trend</div></div>';
+}
+function HV_renderChart(){
+  var svg=document.getElementById('svg');
+  var pts=HV_filt(HV_curV);
+  var n=pts.length;
+  if(!n){svg.innerHTML='<text x="180" y="130" text-anchor="middle" font-size="12" fill="rgba(100,118,102,.95)">Keine Daten</text>';return;}
+  var ms=function(s){return new Date(s).getTime();};
+  var ts=pts.map(function(d){return ms(d.date);});
+  var t0=Math.min.apply(null,ts),t1=Math.max.apply(null,ts),tSpan=Math.max(1,t1-t0);
+  var xS=function(i){return HV_P.l+(t1===t0?HV_cW/2:(ms(pts[i].date)-t0)/tSpan*HV_cW);};
+  var hiA=pts.map(function(d){return d.hi;});
+  var hiMn=Math.floor((Math.min.apply(null,hiA)-10)/10)*10;
+  var hiMx=Math.ceil((Math.max.apply(null,hiA)+10)/10)*10;
+  var yS=function(v){return HV_P.t+HV_cH-(v-hiMn)/(hiMx-hiMn)*HV_cH;};
+  var g='';
+  for(var v=hiMn;v<=hiMx;v+=10){
+    var gy=yS(v).toFixed(1);
+    g+='<line x1="'+HV_P.l+'" y1="'+gy+'" x2="'+(HV_W-HV_P.r)+'" y2="'+gy+'" stroke="rgba(27,46,32,'+(v%20===0?.12:.06)+')"/>';
+    g+='<text x="'+(HV_P.l-5)+'" y="'+(parseFloat(gy)+3.5).toFixed(1)+'" text-anchor="end" font-size="9" fill="rgba(96,115,99,.95)" font-family="Inter,sans-serif">'+v+'</text>';
+  }
+  var ownHi=RT_ownHandicap();
+  if(ownHi>=hiMn&&ownHi<=hiMx){
+    var y54=yS(ownHi).toFixed(1);
+    g+='<rect x="'+HV_P.l+'" y="'+HV_P.t+'" width="'+HV_cW+'" height="'+(parseFloat(y54)-HV_P.t).toFixed(1)+'" fill="rgba(255,69,58,.04)"/>';
+    g+='<line x1="'+HV_P.l+'" y1="'+y54+'" x2="'+(HV_W-HV_P.r)+'" y2="'+y54+'" stroke="rgba(255,69,58,.75)" stroke-width="2" stroke-dasharray="6,4"/>';
+    g+='<text x="'+(HV_W-HV_P.r+4)+'" y="'+(parseFloat(y54)+3.5).toFixed(1)+'" font-size="8.5" fill="rgba(255,69,58,.85)" font-weight="700" font-family="Inter,sans-serif">HI '+rtDe(ownHi)+'</text>';
+  }
+    HV_usedCodes().forEach(function(t){
+    var tp=pts.filter(function(d){return d.half===t;});
+    if(tp.length<2)return;
+    var path='';
+    tp.forEach(function(d){var xi=pts.indexOf(d);path+=(path?'L':'M')+xS(xi).toFixed(1)+','+yS(d.hi).toFixed(1);});
+    g+='<path d="'+path+'" fill="none" stroke="'+HV_COURSE_META[t].color+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>';
+  });
+  [['2026-04-01','Apr'],['2026-05-01','Mai'],['2026-06-01','Jun'],['2026-07-01','Jul'],['2026-07-25','25.07.']].forEach(function(L){
+    var t=ms(L[0]); if(t<t0||t>t1) return;
+    var x=(HV_P.l+(t-t0)/tSpan*HV_cW).toFixed(1);
+    g+='<line x1="'+x+'" y1="'+HV_P.t+'" x2="'+x+'" y2="'+(HV_P.t+HV_cH)+'" stroke="rgba(27,46,32,.07)" stroke-dasharray="2,4"/>';
+    g+='<text x="'+x+'" y="'+(HV_P.t+HV_cH+14).toFixed(1)+'" text-anchor="middle" font-size="9.5" fill="rgba(50,72,56,.9)" font-weight="500" font-family="Inter,sans-serif">'+L[1]+'</text>';
+  });
+  pts.forEach(function(d,i){
+    var x=xS(i).toFixed(1),y=yS(d.hi).toFixed(1);
+    g+='<circle class="dot" data-idx="'+HV_D.indexOf(d)+'" cx="'+x+'" cy="'+y+'" r="4.5" fill="'+d.col+'" stroke="#fff" stroke-width="2" style="cursor:pointer"/>';
+    if(i===0||i===n-1||d.hi>88||d.hi<=54)
+      g+='<text x="'+x+'" y="'+(parseFloat(y)-9).toFixed(1)+'" text-anchor="middle" font-size="9" fill="'+d.col+'" font-weight="700" font-family="Inter,sans-serif">'+d.hi.toFixed(0)+'</text>';
+  });
+  svg.innerHTML=g;
+  var tip=document.getElementById('tip');
+  function show(ex,ey,d){
+    tip.innerHTML='<div class="tit" style="color:'+d.col+'">'+d.lbl+' '+HV_hn(d.half)+'</div>'+
+      '<div class="tr"><span>Schläge 9L</span><b>'+d.s+'</b></div>'+
+      '<div class="tr"><span>Stableford</span><b>'+d.stbf+'</b></div>'+
+      '<div class="tr"><span>CR / SL</span><b>'+rtDe(d.cr)+' / '+d.sl+'</b></div>'+
+      '<div class="tr"><span>HI theoret.</span><b>'+d.hi.toFixed(1)+'</b></div>';
+    tip.classList.add('on');
+    var wr=svg.parentElement.getBoundingClientRect();
+    var lf=ex-wr.left+12; if(lf+195>wr.width) lf=ex-wr.left-200;
+    tip.style.left=Math.max(0,lf)+'px'; tip.style.top=Math.max(0,ey-wr.top-70)+'px';
+  }
+  svg.querySelectorAll('.dot').forEach(function(el){
+    el.addEventListener('mouseenter',function(e){var d=HV_D[parseInt(el.dataset.idx)];if(d)show(e.clientX,e.clientY,d);});
+    el.addEventListener('mouseleave',function(){tip.classList.remove('on');});
+    el.addEventListener('click',function(e){var d=HV_D[parseInt(el.dataset.idx)];if(d)show(e.clientX,e.clientY,d);});
+    el.addEventListener('touchstart',function(e){e.preventDefault();var d=HV_D[parseInt(el.dataset.idx)];if(!d)return;var t=e.touches[0];show(t.clientX,t.clientY,d);setTimeout(function(){tip.classList.remove('on');},2500);},{passive:false});
+  });
+}
+var HV_tblPage=0;
+function HV_renderTable(){
+  var sortedHV=HV_D.slice().sort(function(a,b){
+   if(a.date!==b.date) return b.date>a.date?1:-1;
+   var at=a.time||'', bt=b.time||'';
+   return bt>at?1:bt<at?-1:0;
+  });
+  var start=HV_tblPage*20;
+  var shown=sortedHV.slice(start,start+20);
+  var rows=shown.map(function(d){
+    var hc=HV_hiCol(d.hi);
+    var pill='<span class="pill" style="background:'+hc.bg+';color:'+hc.tc+'">'+d.hi.toFixed(1)+'</span>';
+    var stbf='<span style="font-size:10px;font-weight:600;color:#BF5AF2;">'+d.stbf+'</span>';
+    return '<tr><td>'+d.lbl+'</td><td style="color:'+d.col+';font-size:9px">'+HV_hn(d.half)+'</td>'+
+      '<td style="text-align:right;font-size:9px">'+rtDe(d.cr)+'/'+d.sl+'</td>'+
+      '<td style="text-align:right">'+d.s+'</td>'+
+      '<td style="text-align:right">'+stbf+'</td>'+
+      '<td style="text-align:right">'+pill+'</td></tr>';
+  }).join('');
+  document.getElementById('tbl').innerHTML='<thead><tr><th>Datum</th><th>Typ</th><th style="text-align:right">CR/SL</th><th style="text-align:right">Schlg</th><th style="text-align:right">Stbf</th><th style="text-align:right">HI</th></tr></thead><tbody>'+rows+'</tbody>';
+  var hasPrev=HV_tblPage>0, hasNext=start+20<sortedHV.length;
+  var rangeEnd=Math.min(start+20,sortedHV.length);
+  document.getElementById('tbl-more').innerHTML = (hasPrev||hasNext)
+    ? '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">'+
+      '<button class="sb" style="flex:1;background:#E9F0E2;" '+(hasPrev?'onclick="HV_tblPrev()"':'disabled style="flex:1;background:#E9F0E2;opacity:.4;"')+'>&#8249; Vorherige</button>'+
+      '<div style="font-size:10px;color:rgba(93,112,96,.95);white-space:nowrap;">'+(start+1)+'–'+rangeEnd+' von '+sortedHV.length+'</div>'+
+      '<button class="sb" style="flex:1;background:#E9F0E2;" '+(hasNext?'onclick="HV_tblNext()"':'disabled style="flex:1;background:#E9F0E2;opacity:.4;"')+'>Nächste &#8250;</button>'+
+    '</div>'
+    : '';
+}
+function HV_tblNext(){ HV_tblPage++; HV_renderTable(); }
+function HV_tblPrev(){ if(HV_tblPage>0){ HV_tblPage--; HV_renderTable(); } }
+document.getElementById('seg').addEventListener('click',function(e){
+  var btn=e.target.closest('.sb'); if(!btn)return;
+  HV_curV=btn.dataset.v;
+  document.querySelectorAll('#seg .sb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  HV_renderChart();
+});
+function HV_renderRangeButtons(){
+ var opts=[['all','Alle'],['30','30 Tage'],['90','90 Tage'],['180','6 Monate']];
+ var html=opts.map(function(o){return '<button class="sb'+(RT_hiRange===o[0]?' on':'')+'" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('');
+ var el=document.getElementById('seg-hirange'); if(el) el.innerHTML=html;
+}
+document.getElementById('seg-hirange').addEventListener('click',function(e){
+  var btn=e.target.closest('.sb'); if(!btn)return;
+  RT_hiRange=btn.dataset.v;
+  document.querySelectorAll('#seg-hirange .sb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  HV_renderChart();
+});
+
+function barChart(svgId, series, colors, labels, dataArr, tipId, seriesLabels){
+  dataArr = dataArr || SC;
+  var svg=document.getElementById(svgId);
+  var W=340,H=140,pb={t:20,r:10,b:36,l:32};
+  var cW=W-pb.l-pb.r,cH=H-pb.t-pb.b;
+  var n=labels.length;
+  var allVals=[];
+  series.forEach(function(s){s.forEach(function(v){allVals.push(v);});});
+  var mx=Math.ceil(Math.max.apply(null,allVals)+1);
+  var g='';
+  // Grid
+  for(var i=0;i<=4;i++){
+    var gv=mx*i/4;
+    var gy=(pb.t+cH-gv/mx*cH).toFixed(1);
+    g+='<line x1="'+pb.l+'" y1="'+gy+'" x2="'+(W-pb.r)+'" y2="'+gy+'" stroke="rgba(27,46,32,.10)"/>';
+    g+='<text x="'+(pb.l-4)+'" y="'+(parseFloat(gy)+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="rgba(100,118,102,.95)" font-family="Inter,sans-serif">'+Math.round(gv)+'</text>';
+  }
+  // Zeitproportionale X-Achse basierend auf dataArr.date
+  var _ts=dataArr.map(function(x){return new Date(x.date).getTime();});
+  var t0=Math.min.apply(null,_ts);
+  var t1=Math.max.apply(null,_ts);
+  var tSpan=Math.max(1,t1-t0);
+  var bW=8; // feste Balkenbreite
+  // Monatsgrenzen als Orientierungslinien
+  ['2026-04-01','2026-05-01','2026-06-01','2026-07-01'].forEach(function(md){
+    var t=new Date(md).getTime();
+    if(t<t0||t>t1) return;
+    var x=(pb.l+(t-t0)/tSpan*cW).toFixed(1);
+    var mo=md.slice(5,7)==='04'?'Apr':md.slice(5,7)==='05'?'Mai':md.slice(5,7)==='06'?'Jun':'Jul';
+    g+='<line x1="'+x+'" y1="'+pb.t+'" x2="'+x+'" y2="'+(pb.t+cH)+'" stroke="rgba(27,46,32,.09)" stroke-dasharray="2,4"/>';
+    g+='<text x="'+x+'" y="'+(pb.t+cH+12).toFixed(1)+'" text-anchor="middle" font-size="8.5" fill="rgba(74,96,80,.9)" font-weight="500" font-family="Inter,sans-serif">'+mo+'</text>';
+  });
+  // Balken zeitproportional positionieren
+  dataArr.forEach(function(sc,i){
+    var t=new Date(sc.date).getTime();
+    var cx=pb.l+(t-t0)/tSpan*cW;
+    var grpW=series.length*bW+(series.length-1)*2;
+    var startX=cx-grpW/2;
+    series.forEach(function(ser,si){
+      var v=ser[i];
+      if(!v) return;
+      var bh=Math.max(2,v/mx*cH);
+      var bx=(startX+si*(bW+2)).toFixed(1);
+      var by=(pb.t+cH-bh).toFixed(1);
+      g+='<rect class="bar" data-idx="'+i+'" data-si="'+si+'" x="'+bx+'" y="'+by+'" width="'+bW+'" height="'+bh.toFixed(1)+'" rx="2" fill="'+colors[si]+'" opacity=".85" style="cursor:pointer"/>';
+    });
+  });
+  svg.innerHTML=g;
+  if(tipId){
+    var tip=document.getElementById(tipId);
+    if(tip){
+      var showBarTip=function(ex,ey,idx,si){
+        var sc=dataArr[idx]; if(!sc) return;
+        var val=series[si]?series[si][idx]:null;
+        var lbl=(seriesLabels&&seriesLabels[si])||'Wert';
+        var courseName=(HV_COURSE_META[sc.half]&&HV_COURSE_META[sc.half].label)||hn(sc.half);
+        tip.innerHTML='<div class="tit">'+SC_label(sc)+' &middot; '+courseName+'</div>'+
+         '<div class="tr"><span>'+lbl+'</span><b>'+(val!==null&&val!==undefined?val:'–')+'</b></div>'+
+         (sc.stbf!==undefined?'<div class="tr"><span>Stableford</span><b>'+sc.stbf+'</b></div>':'');
+        tip.classList.add('on');
+        var wr=svg.parentElement.getBoundingClientRect();
+        var lf=ex-wr.left+12; if(lf+195>wr.width) lf=ex-wr.left-200;
+        tip.style.left=Math.max(0,lf)+'px'; tip.style.top=Math.max(0,ey-wr.top-70)+'px';
+      };
+      svg.querySelectorAll('.bar').forEach(function(el){
+        el.addEventListener('mouseenter',function(e){ showBarTip(e.clientX,e.clientY,parseInt(el.dataset.idx,10),parseInt(el.dataset.si,10)); });
+        el.addEventListener('mouseleave',function(){ tip.classList.remove('on'); });
+        el.addEventListener('click',function(e){ showBarTip(e.clientX,e.clientY,parseInt(el.dataset.idx,10),parseInt(el.dataset.si,10)); });
+        el.addEventListener('touchstart',function(e){ e.preventDefault(); var t=e.touches[0]; showBarTip(t.clientX,t.clientY,parseInt(el.dataset.idx,10),parseInt(el.dataset.si,10)); setTimeout(function(){tip.classList.remove('on');},2500); },{passive:false});
+      });
+    }
+  }
+}
+
+
+
+
+
+
+
+
+var SC_STATIC=[
+  {id:'01.04-F', date:'2026-04-01', lbl:'01.04. F', half:'KawF',
+   scores:[14,12,7,12,10,6,10,17,6], crossed:[0,0,0,0,1,0,1,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0]},
+  {id:'01.04-B', date:'2026-04-01', lbl:'01.04. B', half:'KawB',
+   scores:[13,4,11,6,9,15,10,9,10], crossed:[0,0,0,0,0,0,1,1,1],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0]},
+  {id:'16.07.R1-B', date:'2026-07-16', lbl:'16.07. B1', half:'Back',
+   scores:[9,12,7,6,6,10,7,8,7], crossed:[0,0,0,0,0,1,0,0,0],
+   putts:[3,3,4,2,3,-1,3,3,3], fw:['C','C','C','C',null,null,null,'C','C'],
+   pen:[1,1,0,0,0,0,0,0,0], sand:[1,0,0,0,1,0,0,0,0],stbf:15},
+  {id:'16.07.R2-B', date:'2026-07-16', lbl:'16.07. B2', half:'Back',
+   scores:[8,10,7,6,6,10,7,8,7], crossed:[1,1,0,0,0,1,0,0,0],
+   putts:[-1,-1,4,2,3,-1,3,3,3], fw:[null,null,'C','C',null,null,null,'C','C'],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,1,0,0,0,0],stbf:15},
+  {id:'17.07-B', date:'2026-07-17', lbl:'17.07. B', half:'Back',
+   scores:[6,8,6,8,3,9,6,11,10], crossed:[0,0,0,0,0,0,0,1,0],
+   putts:[3,2,2,3,1,3,3,-1,2], fw:[null,'R','R','C',null,'C',null,null,'C'],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,2,0,0,0,0,0,0,0],stbf:17},
+  {id:'17.07-F', date:'2026-07-17', lbl:'17.07. F', half:'Front',
+   scores:[7,11,11,10,8,9,9,8,11], crossed:[0,0,1,1,1,0,0,0,0],
+   putts:[2,2,-1,-1,-1,3,3,2,3], fw:['C','C',null,null,null,'C','C','R','R'],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,1,0,0,0,0,0,0,1],stbf:5},
+  {id:'19.07-F', date:'2026-07-19', lbl:'19.07. F', half:'Front',
+   scores:[10,7,11,6,5,6,8,9,11], crossed:[0,0,1,0,0,0,0,1,1],
+   putts:[2,4,-1,3,4,3,3,-1,-1], fw:['R','C',null,'C',null,'R',null,null,null],
+   pen:[1,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0],stbf:14},
+  {id:'19.07-B', date:'2026-07-19', lbl:'19.07. B', half:'Back',
+   scores:[8,10,9,8,5,7,5,8,8], crossed:[1,1,0,0,0,0,0,0,0],
+   putts:[3,-1,3,2,2,2,3,2,2], fw:[null,null,'C','C',null,'R',null,'C','C'],
+   pen:[1,0,1,1,0,0,0,0,1], sand:[0,0,1,1,0,0,0,0,1],stbf:17},
+  {id:'19.07-B2', date:'2026-07-19', lbl:'19.07. B2', half:'Back',
+   scores:[7,11,8,10,5,8,4,9,10], crossed:[0,0,0,1,0,0,0,0,0],
+   putts:[2,3,3,-1,2,3,2,2,4], fw:[null,'R',null,null,null,'C',null,'C','R'],
+   pen:[1,0,0,0,0,0,0,0,1], sand:[0,0,0,0,1,0,0,0,1],stbf:13},
+  {id:'24.07-F', date:'2026-07-24', lbl:'24.07. F', half:'Front',
+   scores:[5,5,null,6,null,7,9,null,8], crossed:[0,0,1,0,1,0,0,1,0],
+   putts:[2,1,-1,2,-1,3,3,-1,3], fw:['C','R',null,'R',null,'R','R',null,'C'],
+   pen:[0,0,0,0,0,1,0,0,0], sand:[0,1,0,0,0,0,0,0,1],stbf:19},
+  {id:'24.07-B', date:'2026-07-24', lbl:'24.07. B', half:'Back',
+   scores:[8,7,7,8,null,8,7,11,7], crossed:[0,0,0,0,1,0,0,0,0],
+   putts:[2,2,2,3,-1,2,2,2,3], fw:[null,'R','C','R',null,'R',null,'R','C'],
+   pen:[1,0,0,0,0,0,1,1,0], sand:[0,0,0,0,0,0,2,0,0],stbf:14},
+  {id:'27.05-F', date:'2026-05-27', lbl:'27.05. F', half:'Front',
+   scores:[10,8,11,10,8,8,9,8,9], crossed:[1,0,1,1,1,1,0,1,0],
+   putts:[-1,3,-1,-1,-1,-1,3,-1,2], fw:[null,'R',null,null,null,null,'R',null,'R'],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,1,0],stbf:4},
+  {id:'27.05-B', date:'2026-05-27', lbl:'27.05. B', half:'Back',
+   scores:[8,9,7,10,8,8,6,11,10], crossed:[0,0,0,1,0,0,0,1,0],
+   putts:[-1,2,2,3,-1,3,2,-1,3], fw:[null,'R','R','R',null,'R',null,null,'R'],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0],stbf:7},
+  {id:'05.07-F', date:'2026-07-05', lbl:'05.07. F', half:'Front',
+   scores:[9,12,12,9,6,7,9,8,11], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[2,2,3,4,2,1,2,2,2], fw:['C','R','C','C',null,'C','C','R','R'],
+   pen:[0,0,0,0,1,0,1,1,1], sand:[0,0,0,0,0,0,0,0,0],stbf:8},
+  {id:'05.07-B', date:'2026-07-05', lbl:'05.07. B', half:'Back',
+   scores:[4,11,6,14,8,10,7,10,8], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[1,2,3,2,3,3,3,3,3], fw:[null,'R',null,'C',null,'C',null,'C','C'],
+   pen:[0,0,0,0,1,0,0,0,0], sand:[1,0,3,0,0,0,0,0,0],stbf:11},
+  {id:'25.07-F', date:'2026-07-25', lbl:'25.07. F', half:'Front',
+   scores:[7,8,11,8,8,9,8,8,7], crossed:[0,0,1,0,1,0,0,1,0],
+   putts:[3,2,-1,2,-1,2,3,-1,1], fw:['R','R',null,'C',null,'C','C',null,'C'],
+   pen:[0,0,0,1,0,1,0,0,0], sand:[0,0,0,0,0,0,0,1,0],stbf:12},
+  {id:'25.07-B', date:'2026-07-25', lbl:'25.07. B', half:'Back',
+   scores:[8,10,8,10,8,8,6,9,8], crossed:[1,0,0,0,1,0,0,0,0],
+   putts:[-1,2,3,3,-1,2,2,2,3], fw:[null,'R','R','L',null,'R',null,'C','C'],
+   pen:[0,0,0,0,0,1,0,0,0], sand:[0,0,0,0,0,0,1,0,0],stbf:10},
+  {id:'25.07-B2', date:'2026-07-25', lbl:'25.07. B2', half:'Back',
+   scores:[6,10,6,9,5,8,6,11,7], crossed:[0,1,0,0,0,0,0,0,0],
+   putts:[2,-1,2,3,2,2,3,2,3], fw:[null,null,'R','C',null,'R',null,'R','C'],
+   pen:[0,0,0,0,0,0,1,0,0], sand:[1,0,0,0,0,0,0,0,0],stbf:16},
+  {id:'ph-2026-04-18-Back', date:'2026-04-18', lbl:'18.04. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:7, noData:true},
+  {id:'ph-2026-04-26-Front', date:'2026-04-26', lbl:'26.04. F', half:'Front',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:4, noData:true},
+  {id:'ph-2026-04-28-Back', date:'2026-04-28', lbl:'28.04. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:10, noData:true},
+  {id:'ph-2026-05-02-Back', date:'2026-05-02', lbl:'02.05. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:4, noData:true},
+  {id:'ph-2026-05-14-Back', date:'2026-05-14', lbl:'14.05. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:1, noData:true},
+  {id:'ph-2026-05-15-Back', date:'2026-05-15', lbl:'15.05. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:4, noData:true},
+  {id:'ph-2026-05-16-Front', date:'2026-05-16', lbl:'16.05. F', half:'Front',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:12, noData:true},
+  {id:'ph-2026-05-16-Back', date:'2026-05-16', lbl:'16.05. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:11, noData:true},
+  {id:'ph-2026-05-24-WalF', date:'2026-05-24', lbl:'24.05. F', half:'WalF',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:9, noData:true},
+  {id:'ph-2026-05-24-WalB', date:'2026-05-24', lbl:'24.05. B', half:'WalB',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:9, noData:true},
+  {id:'ph-2026-05-25-Front', date:'2026-05-25', lbl:'25.05. F', half:'Front',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:8, noData:true},
+  {id:'ph-2026-05-25-Back', date:'2026-05-25', lbl:'25.05. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:8, noData:true},
+  {id:'ph-2026-06-22-Back', date:'2026-06-22', lbl:'22.06. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:10, noData:true},
+  {id:'ph-2026-06-24-Back', date:'2026-06-24', lbl:'24.06. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:12, noData:true},
+  {id:'ph-2026-06-26-Back', date:'2026-06-26', lbl:'26.06. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:13, noData:true},
+  {id:'ph-2026-06-30-Front', date:'2026-06-30', lbl:'30.06. F', half:'Front',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:14, noData:true},
+  {id:'ph-2026-06-30-Back', date:'2026-06-30', lbl:'30.06. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:14, noData:true},
+  {id:'ph-2026-07-01-Front', date:'2026-07-01', lbl:'01.07. F', half:'Front',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:7, noData:true},
+  {id:'ph-2026-07-01-Back', date:'2026-07-01', lbl:'01.07. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:7, noData:true},
+  {id:'ph-2026-07-06-Front', date:'2026-07-06', lbl:'06.07. F', half:'Front',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:14, noData:true},
+  {id:'ph-2026-07-06-Back', date:'2026-07-06', lbl:'06.07. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:13, noData:true},
+  {id:'ph-2026-07-09-Back', date:'2026-07-09', lbl:'09.07. B', half:'Back',
+   scores:[null,null,null,null,null,null,null,null,null], crossed:[0,0,0,0,0,0,0,0,0],
+   putts:[-1,-1,-1,-1,-1,-1,-1,-1,-1], fw:[null,null,null,null,null,null,null,null,null],
+   pen:[0,0,0,0,0,0,0,0,0], sand:[0,0,0,0,0,0,0,0,0], stbf:7, noData:true},
+];
+/* Siehe Kommentar bei HV_D weiter oben: SC startet ebenfalls leer statt mit Marks echten
+   Klartext-Daten aus SC_STATIC. */
+var SC=[];
+
+function hn(h){
+  return HV_hn(h);
+}
+
+function SC_filtered(){
+  return SC.filter(function(sc){ return curRoFilter==='all' || curRoFilter.split(',').indexOf(sc.half)>=0; });
+}
+function GD_filtered(){
+  var list=SC_filtered();
+  var cutoff=RT_rangeCutoff(RT_gdRange);
+  if(cutoff) list=list.filter(function(sc){return sc.date>=cutoff;});
+  return list;
+}
+function stats(){
+  var tP=0,cP=0,tPen=0,tSand=0;
+  var fwL=0,fwC=0,fwR=0;
+  var scList=SC_filtered();
+  scList.forEach(function(sc){
+    sc.putts.forEach(function(p){if(p>0){tP+=p;cP++;}});
+    sc.pen.forEach(function(p){tPen+=p;});
+    sc.sand.forEach(function(s){tSand+=s;});
+    sc.fw.forEach(function(f){if(f==='L')fwL++;else if(f==='C')fwC++;else if(f==='R')fwR++;});
+  });
+  var n=Math.max(1,scList.length);
+  return {avgPutts:(tP/Math.max(1,cP)).toFixed(1),avgPen:(tPen/n).toFixed(1),
+    avgSand:(tSand/n).toFixed(1),fwL:fwL,fwC:fwC,fwR:fwR,
+    fwTotal:fwL+fwC+fwR,totalPen:tPen,totalSand:tSand,roundCount:scList.length};
+}
+
+function GD_renderKPIs(){
+  var s=stats(); var tot=s.fwTotal||1;
+  var fwPct=Math.round(s.fwC/tot*100);
+  document.getElementById('gd-kpis').innerHTML=
+    '<div class="kpi"><div class="kv cg">'+fwPct+'%</div><div class="kl">Fairway Mitte</div></div>'+
+    '<div class="kpi"><div class="kv ca">'+s.avgPen+'</div><div class="kl">Strafschl./Rd.</div></div>'+
+    '<div class="kpi"><div class="kv cb">'+s.avgPutts+'</div><div class="kl">Putts/Loch</div></div>';
+}
+
+function renderFW(){
+  var s=stats(); var tot=s.fwTotal||1;
+  var lp=Math.round(s.fwL/tot*100),cp=Math.round(s.fwC/tot*100),rp=Math.round(s.fwR/tot*100);
+  document.getElementById('fw-chart').innerHTML=
+    '<div class="fw-bar"><div class="fw-l" style="width:'+lp+'%"></div>'+
+    '<div class="fw-c" style="width:'+cp+'%"></div>'+
+    '<div class="fw-r" style="width:'+rp+'%"></div></div>'+
+    '<div class="fw-legend">'+
+    '<div class="fw-li"><div class="fw-dot" style="background:#FF453A"></div>Links '+lp+'% ('+s.fwL+')</div>'+
+    '<div class="fw-li"><div class="fw-dot" style="background:#34C759"></div>Mitte '+cp+'% ('+s.fwC+')</div>'+
+    '<div class="fw-li"><div class="fw-dot" style="background:#FF9F0A"></div>Rechts '+rp+'% ('+s.fwR+')</div>'+
+    '</div>';
+}
+
+function renderPuttsChart(){
+  var fList=GD_filtered();
+  var labels=fList.map(function(sc,i){return i%3===0?sc.lbl.split(' ')[0]:'';});
+  var avgPutts=fList.map(function(sc){
+    var pp=sc.putts.filter(function(p){return p>0;});
+    return pp.length?parseFloat((pp.reduce(function(s,v){return s+v;},0)/pp.length).toFixed(2)):0;
+  });
+  barChart('svg-putts',[avgPutts],['#0A84FF'],labels,fList,'tip-putts',['Putts/Loch']);
+}
+
+function renderPenChart(){
+  var fList=GD_filtered();
+  var labels=fList.map(function(sc,i){return i%3===0?sc.lbl.split(' ')[0]:'';});
+  var pens=fList.map(function(sc){return sc.pen.reduce(function(s,v){return s+v;},0);});
+  barChart('svg-pen',[pens],['#FF453A'],labels,fList,'tip-pen',['Strafschläge']);
+}
+function renderSandChart(){
+  var fList=GD_filtered();
+  var labels=fList.map(function(sc,i){return i%3===0?sc.lbl.split(' ')[0]:'';});
+  var sands=fList.map(function(sc){return sc.sand.reduce(function(s,v){return s+v;},0);});
+  barChart('svg-sand',[sands],['#FF9F0A'],labels,fList,'tip-sand',['Bunker']);
+}
+
+function renderMetrics(){
+  var s=stats(); var tot=s.fwTotal||1;
+  var items=[
+    {icon:'&#127919;',bg:'rgba(52,199,89,.2)',col:'#34C759',name:'Fairway Mitte',desc:s.fwC+' von '+tot+' Abschlägen auf Par 4/5',val:Math.round(s.fwC/tot*100)+'%'},
+    {icon:'&#8594;',bg:'rgba(255,159,10,.2)',col:'#FF9F0A',name:'Tendenz Rechts',desc:s.fwR+' Abschläge nach rechts ('+Math.round(s.fwR/tot*100)+'%)',val:Math.round(s.fwR/tot*100)+'%'},
+    {icon:'&#9940;',bg:'rgba(255,69,58,.2)',col:'#FF453A',name:'Strafschläge pro Runde',desc:'Gesamt '+s.totalPen+' über '+s.roundCount+' Runden',val:s.avgPen},
+    {icon:'&#127944;',bg:'rgba(255,159,10,.2)',col:'#FF9F0A',name:'Bunker-Shots pro Runde',desc:'Gesamt '+s.totalSand+' über '+s.roundCount+' Runden',val:s.avgSand},
+    {icon:'&#127944;',bg:'rgba(10,132,255,.2)',col:'#0A84FF',name:'Putts pro Loch',desc:'Alle Löcher mit bekannter Putt-Zahl',val:s.avgPutts}
+  ];
+  document.getElementById('metrics').innerHTML=items.map(function(it){
+    return '<div class="mrow"><div class="mic" style="background:'+it.bg+'">'+it.icon+'</div>'+
+      '<div class="mbody"><div class="mn">'+it.name+'</div><div class="md">'+it.desc+'</div></div>'+
+      '<div class="mv" style="color:'+it.col+'">'+it.val+'</div></div>';
+  }).join('');
+}
+
+function renderPerf(){
+  var s=stats(); var tot=s.fwTotal||1;
+  var fwAcc=Math.round(s.fwC/tot*100);
+  var puttScore=Math.round(Math.max(0,Math.min(100,(3.5-parseFloat(s.avgPutts))/1.5*100)));
+  var penScore=Math.round(Math.max(0,Math.min(100,(5-parseFloat(s.avgPen))/5*100)));
+  var sandScore=Math.round(Math.max(0,Math.min(100,(4-parseFloat(s.avgSand))/4*100)));
+  var bars=[
+    {n:'Fairway-Genauigkeit',v:fwAcc,c:'#34C759',tip:fwAcc+'% Mitte'},
+    {n:'Rechts-Tendenz (inv.)',v:Math.round((1-s.fwR/tot)*100),c:'#BF5AF2',tip:s.fwR+' von '+tot+' rechts'},
+    {n:'Strafschlag-Kontrolle',v:penScore,c:'#FF453A',tip:'Oe '+s.avgPen+'/Runde'},
+    {n:'Bunker-Vermeidung',v:sandScore,c:'#FF9F0A',tip:'Oe '+s.avgSand+'/Runde'},
+    {n:'Putt-Effizienz',v:puttScore,c:'#0A84FF',tip:'Oe '+s.avgPutts+' Putts/Loch'}
+  ];
+  document.getElementById('perf').innerHTML=bars.map(function(b){
+    var g=b.v>=80?'Sehr gut':b.v>=60?'Gut':b.v>=40?'Ausbaufähig':'Handlungsbedarf';
+    var gc=b.v>=80?'#34C759':b.v>=60?'#0A84FF':b.v>=40?'#FF9F0A':'#FF453A';
+    return '<div class="pr"><div class="ph"><div class="pn">'+b.n+'</div><div class="pv" style="color:'+gc+'">'+g+'</div></div>'+
+      '<div class="pt"><div class="pf" style="width:'+b.v+'%;background:'+b.c+'"></div></div>'+
+      '<div style="font-size:10px;color:rgba(93,112,96,.95);margin-top:3px;">'+b.tip+'</div></div>';
+  }).join('');
+}
+
+var curRoFilter='all';
+var RD_page=0;
+function renderRounds(filter){
+  if(filter){ curRoFilter=filter; RD_page=0; }
+  var list=SC.slice().sort(function(a,b){
+   if(a.date!==b.date) return b.date>a.date?1:-1;
+   var at=a.time||'', bt=b.time||'';
+   return bt>at?1:bt<at?-1:0;
+  }).filter(function(sc){
+    if(curRoFilter==='all') return true;
+    return curRoFilter.split(',').indexOf(sc.half)>=0;
+  });
+  var rdStart=RD_page*10;
+  var shownList=list.slice(rdStart,rdStart+10);
+  var html=shownList.map(function(sc){
+    var pp=sc.putts.filter(function(p){return p>0;});
+    var avgP=pp.length?(pp.reduce(function(s,v){return s+v;},0)/pp.length).toFixed(1):'-';
+    var pen=sc.pen.reduce(function(s,v){return s+v;},0);
+    var sand=sc.sand.reduce(function(s,v){return s+v;},0);
+    var fw=sc.fw.filter(function(f){return f!==null;});
+    var fwC=fw.filter(function(f){return f==='C';}).length;
+    var fwPct=fw.length?Math.round(fwC/fw.length*100):0;
+    var col=(HV_COURSE_META[sc.half]&&HV_COURSE_META[sc.half].color)||'#8E8E93';
+    return '<div style="padding:12px 0;border-bottom:1px solid rgba(27,46,32,.07);cursor:pointer;" onclick="RT_editFromDetail(\''+(sc.rtId||('hist-'+sc.id))+'\')">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;">'+SC_label(sc)+'</div>'+
+      '<div style="font-size:10px;color:'+col+';margin-top:1px;">'+hn(sc.half)+'</div></div>'+
+      '<div style="display:grid;grid-template-columns:repeat(4,42px);gap:6px;text-align:center;flex:none;">'+
+      '<div><div style="font-size:14px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:#0A84FF;">'+avgP+'</div><div style="font-size:8px;line-height:1.3;color:rgba(93,112,96,.95);">Putts</div></div>'+
+      '<div><div style="font-size:14px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:#34C759;">'+fwPct+'%</div><div style="font-size:8px;line-height:1.3;color:rgba(93,112,96,.95);">FW-M</div></div>'+
+      '<div><div style="font-size:14px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:#FF453A;">'+pen+'</div><div style="font-size:8px;line-height:1.3;color:rgba(93,112,96,.95);">Pen</div></div>'+
+      '<div><div style="font-size:14px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:#FF9F0A;">'+sand+'</div><div style="font-size:8px;line-height:1.3;color:rgba(93,112,96,.95);">Sand</div></div>'+
+      '</div></div>'+renderHoles(sc)+'</div>';
+  }).join('');
+  document.getElementById('round-list').innerHTML=html||'<div style="color:rgba(93,112,96,.95);padding:20px;text-align:center;">Keine Runden</div>';
+  var rdHasPrev=RD_page>0, rdHasNext=rdStart+10<list.length;
+  var rdRangeEnd=Math.min(rdStart+10,list.length);
+  document.getElementById('round-list-more').innerHTML = (rdHasPrev||rdHasNext)
+    ? '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">'+
+      '<button class="sb" style="flex:1;background:#E9F0E2;" '+(rdHasPrev?'onclick="RD_prev()"':'disabled style="flex:1;background:#E9F0E2;opacity:.4;"')+'>&#8249; Vorherige</button>'+
+      '<div style="font-size:10px;color:rgba(93,112,96,.95);white-space:nowrap;">'+(list.length?(rdStart+1):0)+'–'+rdRangeEnd+' von '+list.length+'</div>'+
+      '<button class="sb" style="flex:1;background:#E9F0E2;" '+(rdHasNext?'onclick="RD_next()"':'disabled style="flex:1;background:#E9F0E2;opacity:.4;"')+'>Nächste &#8250;</button>'+
+    '</div>'
+    : '';
+}
+function RD_next(){ RD_page++; renderRounds(); }
+function RD_prev(){ if(RD_page>0){ RD_page--; renderRounds(); } }
+
+function renderHoles(sc){
+  var par = sc.par || SC_PAR[sc.half] || SC_PAR.Front;
+  var ch = sc.ch!==undefined&&sc.ch!==null ? sc.ch : (SC_CH[sc.half]||32);
+  var siArr = sc.si || SC_SI[sc.half] || SC_SI.Front;
+  /* chHoles laesst eine 9-Loch-Karte, die aus einer 18-Loch-Runde stammt (siehe
+     RT_convertHalf), ihre ECHTE Spielvorgabe/SI im 18-Loch-Kontext behalten, statt sie als
+     eigenstaendige 9-Loch-Runde neu zu interpretieren - sonst weicht die Anzeige von der
+     amtlichen Out-/In-Aufteilung der Scorekarte ab. */
+  var holesTotal = sc.chHoles || 9;
+  var h='<div style="display:flex;align-items:flex-start;gap:8px;">';
+  h+='<div style="display:flex;gap:3px;flex-wrap:wrap;flex:1;">';
+  var stbfSum=0; var grossSum=0; var hasAnyScore=false;
+  for(var i=0;i<sc.scores.length;i++){
+    var s=sc.scores[i]; var cross=sc.crossed[i];
+    var fw=sc.fw[i]; var pen=sc.pen[i]; var sand=sc.sand[i];
+    var p=par[i]; var si=siArr[i];
+    var cls=SC_scoreClass(s,p);
+    if(s!==null) hasAnyScore=true;
+    /* Fuer die Schlagzahl unter dem Stbf-Badge zaehlen die gewerteten Schlaege (mit
+       Netto-Doppelbogey-Deckel begrenzt). Gestrichene oder noch ungespielte Bahnen werden
+       NICHT ausgeschlossen, sondern - wie ueberall sonst in der App (RT_cap, RT_convertHalf) -
+       konservativ mit ihrem NDB-Deckel als Platzhalter gezaehlt, nie mit 0 und nie komplett
+       ignoriert. */
+    var npar=SC_netPar(p,ch,si,holesTotal);
+    grossSum+= cross||s===null ? npar+2 : Math.min(s,npar+2);
+    var stbfH = cross ? null : SC_stbfHole(s,p,ch,si,holesTotal);
+    if(stbfH!==null) stbfSum+=stbfH;
+    var bg=cross?'rgba(27,46,32,.07)':pen>0?'rgba(255,69,58,.2)':sand>0?'rgba(255,159,10,.15)':'rgba(27,46,32,.06)';
+    var tc=cross?'rgba(100,118,102,.95)':fw==='C'?'#34C759':fw==='R'?'#FF9F0A':fw==='L'?'#FF453A':'#0A84FF';
+    var ind=fw==='C'?'&#9711;':fw==='R'?'&#8599;':fw==='L'?'&#8598;':'';
+    var disp=s!==null?s:'--';
+    var shape='';
+    if(cls && !cross){
+      var scCol = cls==='eagle'?'#C9980A':cls==='birdie'?'#34C759':cls==='par'?'rgba(50,72,56,.9)':cls==='bogey'?'#FF9F0A':'#FF453A';
+      var scBg  = cls==='eagle'?'rgba(255,214,10,.22)':cls==='birdie'?'rgba(52,199,89,.18)':'transparent';
+      var brd   = 'none';
+      if(cls==='eagle') brd='2px solid '+scCol;
+      if(cls==='birdie') brd='1.5px solid '+scCol;
+      if(cls==='par') brd='1.5px solid rgba(84,104,88,.9)';
+      if(cls==='bogey') brd='1.5px solid '+scCol;
+      if(cls==='dbogey') brd='1.5px solid '+scCol;
+      var rad = (cls==='bogey'||cls==='dbogey') ? '3px' : '50%';
+      var extra = cls==='dbogey' ? 'box-shadow:0 0 0 2px rgba(255,69,58,.35) inset;' : '';
+      var stbfLbl = stbfH!==null ? stbfH : '';
+      shape='<div style="width:15px;height:15px;margin:1px auto 0;border-radius:'+rad+';border:'+brd+';background:'+scBg+';'+extra+'display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:'+scCol+';">'+stbfLbl+'</div>';
+    } else {
+      shape='<div style="width:15px;height:15px;margin:1px auto 0;"></div>';
+    }
+    h+='<div style="width:28px;background:'+bg+';border-radius:6px;padding:3px 2px;text-align:center;">'+
+      '<div style="font-size:8px;line-height:1.3;color:rgba(93,112,96,.95);">'+(i+1)+'</div>'+
+      '<div style="font-size:6.5px;line-height:1.1;color:rgba(93,112,96,.7);">Par '+p+'</div>'+
+      '<div style="font-size:11px;font-weight:700;color:'+tc+';text-decoration:'+(cross?'line-through':'none')+';">'+disp+'</div>'+
+      shape+
+      '<div style="font-size:8px;line-height:1.3;color:rgba(93,112,96,.95);">'+(ind||'&nbsp;')+'</div>'+
+      '</div>';
+  }
+  h+='</div>';
+  if(!hasAnyScore && sc.stbf) stbfSum=sc.stbf;
+  h+='<div style="flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:38px;padding:6px 4px;background:rgba(191,90,242,.15);border-radius:8px;">'+
+     '<div style="font-size:16px;font-weight:800;color:#BF5AF2;line-height:1;">'+stbfSum+'</div>'+
+     '<div style="font-size:7px;color:rgba(84,104,88,.9);margin-top:2px;">Stbf</div>'+
+     '<div style="font-size:9px;font-weight:700;color:rgba(84,104,88,.95);margin-top:3px;border-top:1px solid rgba(191,90,242,.3);padding-top:2px;">'+(grossSum||'\u2013')+'</div>'+
+     '</div>';
+  h+='</div>';
+  if(sc.noData) h+='<div style="font-size:9px;color:rgba(93,112,96,.95);margin-top:6px;">Keine Lochdaten verf\u00fcgbar &ndash; nur Rundensumme aus Hole19 bekannt.</div>';
+  return h+SC_legend();
+}
+
+function SC_legend(){
+  var items=[
+    {sh:'border-radius:50%;border:2px solid #C9980A;background:rgba(255,214,10,.22);',lbl:'Eagle o. besser'},
+    {sh:'border-radius:50%;border:1.5px solid #34C759;background:rgba(52,199,89,.18);',lbl:'Birdie'},
+    {sh:'border-radius:50%;border:1.5px solid rgba(84,104,88,.9);background:transparent;',lbl:'Par'},
+    {sh:'border-radius:3px;border:1.5px solid #FF9F0A;background:transparent;',lbl:'Bogey'},
+    {sh:'border-radius:3px;border:1.5px solid #FF453A;background:transparent;box-shadow:0 0 0 2px rgba(255,69,58,.35) inset;',lbl:'Doppelbogey o. mehr'}
+  ];
+  /* Zweite Zeile: Bedeutung der TEXTFARBE der grossen Bruttoschlag-Zahl selbst (siehe tc in
+     renderHoles) - das ist unabhaengig von der Schalen-/Rahmenfarbe oben und zeigt stattdessen
+     das Fairway-Treffer-Ergebnis dieser Bahn (nur bei Par 4/5 erfasst). */
+  var colorItems=[
+    {col:'#34C759', lbl:'Mitte'},
+    {col:'#FF9F0A', lbl:'rechts'},
+    {col:'#FF453A', lbl:'links'},
+    {col:'#0A84FF', lbl:'nicht erfasst'},
+    {col:'rgba(100,118,102,.95)', lbl:'gestrichen'}
+  ];
+  return '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid rgba(27,46,32,.07);">'+
+    items.map(function(it){
+      return '<div style="display:flex;align-items:center;gap:4px;">'+
+        '<div style="width:11px;height:11px;'+it.sh+'"></div>'+
+        '<span style="font-size:8.5px;color:rgba(84,104,88,.9);">'+it.lbl+'</span></div>';
+    }).join('')+'</div>'+
+    '<div style="font-size:8px;color:rgba(84,104,88,.75);margin-top:8px;">Farbe der Schlagzahl = Fairway-Treffer:</div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">'+
+    colorItems.map(function(it){
+      return '<div style="display:flex;align-items:center;gap:4px;">'+
+        '<span style="font-size:12px;font-weight:800;color:'+it.col+';">1</span>'+
+        '<span style="font-size:8.5px;color:rgba(84,104,88,.9);">'+it.lbl+'</span></div>';
+    }).join('')+'</div>';
+}
+document.getElementById('seg-ro').addEventListener('click',function(e){
+  var btn=e.target.closest('.sb');
+  if(!btn)return;
+  document.querySelectorAll('#seg-ro .sb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  renderRounds(btn.dataset.v);
+  /* Alle Analysen unterhalb (und die KPI-Kacheln oben) auf dieselbe Auswahl anwenden */
+  GD_renderKPIs();
+  renderPenChart();
+  renderFW();
+  renderSandChart();
+  renderPuttsChart();
+  renderMetrics();
+  renderPerf();
+});
+
+
+/* ===== RUNDEN-ERFASSUNG ===== */
+/* ===== Cloud-Sync (Supabase) ===== */
+var SB_URL='https://qzeesflibjxkdorvxqyf.supabase.co', SB_KEY='sb_publishable_vjpHBU2YE30WznFuaDoyWg_fxVmNDbW';
+var sb=null, sbUser=null, sbMsg='';
+/* Eigentuemer-Zuordnung fuer geteilte Runden: RT_roundOwners bildet Runden-ID auf die
+   user_id des Erstellers ab (kommt aus der rounds.user_id-Spalte, nicht aus rd.data selbst -
+   siehe sbPull). RT_myPlayerNameByOwner bildet Ersteller-user_id auf den Spielernamen ab,
+   unter dem ICH (der eingeladene/verknuepfte Nutzer) in dessen Runden gefuehrt werde (aus
+   player_links, wo linked_user_id = meine user_id ist). Beides zusammen ermoeglicht
+   RT_myPlayerIndex(), in einer FREMDEN, geteilten Runde den richtigen Spieler-Index (statt
+   blind players[0] = den Ersteller) fuer Schlag-Detail/Handicap-Verlauf zu finden - siehe
+   RT_convertRound(). Ohne das saehe ein eingeladener Mitspieler in diesen beiden Ansichten
+   die Analyse des Einladenden statt seiner eigenen. */
+var RT_roundOwners={}, RT_myPlayerNameByOwner={};
+function sbReady(){return SB_URL.indexOf('https')===0 && typeof window!=='undefined' && window.supabase;}
+var RT_LAST_UID_KEY='golflog_last_uid_v1';
+/* Verhindert Konto-Kontamination auf geteilten/wiederverwendeten Geraeten: wird ein ANDERES
+   Konto als beim letzten Mal erkannt (z.B. Kontowechsel auf demselben Browser/Geraet), werden
+   die lokal gecachten Runden/Plaetze GELOESCHT, bevor der Cloud-Sync laeuft. Ohne das wuerde
+   sbPull() alte lokale Daten des vorherigen Kontos als "noch nicht synchronisiert" ansehen und
+   sie in das NEUE Konto hochladen - genau das hat dazu gefuehrt, dass ein eingeladener
+   Mitspieler weiterhin fremde Runden sah, obwohl das automatische Historien-Seeding bereits
+   entfernt war. Ist noch KEIN vorheriges Konto bekannt (erstes Login auf diesem Geraet ueberhaupt),
+   wird NICHT geloescht, damit echte, noch nicht synchronisierte lokale Runden weiterhin normal
+   ins neue Konto uebernommen werden koennen.
+   Wird ZUSAETZLICH beim Abmelden (siehe sbOut) aufgerufen: ohne das blieben die eigenen Runden
+   (inkl. laufender Runde und eigenem Handicap) im localStorage stehen und waren im nicht
+   angemeldeten Zustand weiterhin sichtbar - lokale Daten sind unabhaengig von der Supabase-
+   Session und werden nie automatisch geloescht, nur durch expliziten Aufruf dieser Funktion. */
+function RT_clearLocalSyncedData(){
+ rtDel(RT_KEY);
+ rtDel(RT_ACT);
+ rtDel(RT_CUSTOM_KEY);
+ rtDel(RT_SIOV_KEY);
+ rtDel(RT_NAMEOV_KEY);
+ rtDel(RT_ADDROV_KEY);
+ rtDel(RT_TEEOV_KEY);
+ rtDel(RT_PHOTOOV_KEY);
+ rtDel(RT_PLAYERSAV_KEY);
+ rtDel(RT_HISTDEL_KEY);
+ rtDel(RT_OWNHI_KEY);
+ rtDel(RT_REFOV_KEY);
+ RT_roundOwners={}; RT_myPlayerNameByOwner={};
+ RT_round=null;
+ HV_D=[]; SC=[];
+}
+/* Laedt, unter welchem Spielernamen ICH in FREMDEN (von anderen erstellten) Runden gefuehrt
+   werde. Direktabfrage auf player_links statt ueber die RPC get_my_connections(), da diese
+   keine owner_id zurueckgibt - genau die wird hier als Schluessel gebraucht, um sie mit
+   RT_roundOwners (siehe sbPull) zu verknuepfen. Von der RLS-Policy player_links_select
+   (linked_user_id = auth.uid()) gedeckt. */
+async function RT_loadMyPlayerNames(){
+ RT_myPlayerNameByOwner={};
+ if(!sb||!sbUser)return;
+ try{
+  var r=await sb.from('player_links').select('owner_id,player_name').eq('linked_user_id',sbUser.id);
+  if(!r.error){
+   var map={};
+   r.data.forEach(function(row){ map[row.owner_id]=row.player_name; });
+   RT_myPlayerNameByOwner=map;
+  }
+ }catch(e){}
+}
+/* Liefert den Index in rd.players, der zum AKTUELL angemeldeten Nutzer gehoert:
+   - Eigene Runde (kein bekannter fremder Eigentuemer, oder Eigentuemer = ich selbst, oder
+     noch nicht synchronisiert): wie bisher Spieler 0 (der Ersteller).
+   - Fremde, geteilte Runde: Name-Abgleich (getrimmt, case-insensitive) gegen den ueber
+     player_links hinterlegten eigenen Spielernamen bei diesem Eigentuemer.
+   - Kein Treffer (sollte laut RLS nicht vorkommen): -1, die Runde wird dann in Schlag-Detail/
+     Handicap-Verlauf uebersprungen statt faelschlich fremde Daten zu zeigen. */
+function RT_myPlayerIndex(rd){
+ var norm=function(s){ return (s||'').trim().toLowerCase(); };
+ /* copiedForPlayer wird beim Kopieren einer geteilten Runde in mein eigenes Konto
+    gesetzt (siehe claim_invite/claim_by_email) und hat Vorrang vor der Eigentuemer-Pruefung
+    unten: nur weil ICH jetzt Eigentuemer dieser Kopie bin, heisst das nicht, dass ich
+    player[0] (der urspruengliche Ersteller) bin. */
+ if(rd.copiedForPlayer){
+  var cn=norm(rd.copiedForPlayer);
+  for(var j=0;j<rd.players.length;j++){ if(norm(rd.players[j].name)===cn) return j; }
+ }
+ var ownerId=RT_roundOwners[rd.id];
+ if(!ownerId||!sbUser||ownerId===sbUser.id) return 0;
+ var myName=RT_myPlayerNameByOwner[ownerId];
+ if(!myName) return -1;
+ var mn=norm(myName);
+ for(var i=0;i<rd.players.length;i++){ if(norm(rd.players[i].name)===mn) return i; }
+ return -1;
+}
+/* True, wenn diese Runde von einem ANDEREN Konto erstellt und nur mit mir geteilt wurde
+   (RLS gewaehrt mir dafuer ausschliesslich SELECT, siehe rounds_update_own/rounds_delete_own
+   in Supabase - dort ist ein UPDATE/DELETE durch mich serverseitig ohnehin ausgeschlossen).
+   Wird genutzt, um Bearbeiten/Loeschen/Runde-beenden clientseitig zu verstecken: ohne diese
+   Sperre wuerde ein Speicherversuch ueber sbPushRound() (upsert) still und leise eine NEUE,
+   eigene Kopie der GESAMTEN Runde (inkl. der Daten aller Mitspieler) unter meinem Konto mit
+   der GLEICHEN Runden-ID anlegen - das Original des Einladenden bliebe zwar unveraendert,
+   aber es entstuenden doppelte IDs und eine unerwuenschte Datenkopie bei mir. */
+function RT_isForeignRound(rd){
+ var ownerId=RT_roundOwners[rd.id];
+ return !!(ownerId&&sbUser&&ownerId!==sbUser.id);
+}
+/* Wie RT_isForeignRound, aber zusaetzlich true, wenn die Runde bereits abgeschlossen (done:true)
+   ist. Fuer eine noch AKTIVE (done:false) geteilte Runde erlaubt die Datenbank-Policy
+   rounds_update_shared_active dem verknuepften Mitspieler ausdruecklich, selbst Schlaege
+   einzutragen und die Runde zu beenden (das war der eigentliche Zweck dieser Policy) - erst nach
+   dem Abschluss wird sie dauerhaft schreibgeschuetzt. RT_isForeignLocked() ist daher die richtige
+   Sperre fuer Bearbeiten/Runde-starten, waehrend RT_isForeignRound() weiterhin fuer Loeschen und
+   die Kurzfassungs-Anzeige ("geteilt von") verwendet wird. */
+function RT_isForeignLocked(rd){
+ return RT_isForeignRound(rd)&&!!rd.done;
+}
+function sbInit(){
+ if(!sbReady())return;
+ sb=window.supabase.createClient(SB_URL,SB_KEY);
+ sb.auth.onAuthStateChange(function(ev,session){
+  sbUser=session?session.user:null;
+  if(sbUser){
+   /* TOKEN_REFRESHED feuert automatisch alle ca. 50-60 Minuten im Hintergrund (z.B. waehrend
+      einer laufenden Runde auf dem Platz), ohne dass sich der Nutzer neu anmeldet. Ein voller
+      sbPull() dabei ist unnoetig und riskant (ueberschreibt RT_KEY mit dem zuletzt bekannten
+      Cloud-Stand, waehrend lokal evtl. gerade eine aktive Runde bearbeitet wird, deren neuester
+      Klick fuer diese Bahn noch nicht per RT_autosaveHole hochgeladen wurde). Nur bei echtem
+      An-/Abmelden bzw. initialer Session-Wiederherstellung neu synchronisieren. */
+   if(ev==='TOKEN_REFRESHED'||ev==='USER_UPDATED'){ RT_render(); return; }
+   var lastUid=null; try{ lastUid=localStorage.getItem(RT_LAST_UID_KEY); }catch(e){}
+   if(lastUid&&lastUid!==sbUser.id){ RT_clearLocalSyncedData(); }
+   var firstEverLogin=!lastUid;
+   try{ localStorage.setItem(RT_LAST_UID_KEY,sbUser.id); }catch(e){}
+   sbPull(firstEverLogin); PL_load().then(RT_render); RT_loadConnections(); if(AG_joinCode) AG_claim(); AG_claimByEmail();
+  }
+  else RT_render();
+  AG_render();
+ });
+}
+async function sbAuth(mode){
+ var em=document.getElementById('sb-em').value.trim();
+ var pw=document.getElementById('sb-pw').value;
+ if(!em||pw.length<6){sbMsg='E-Mail und Passwort (mind. 6 Zeichen) eingeben.';RT_render();return;}
+ sbMsg='';
+ try{
+  var r=(mode==='up')?await sb.auth.signUp({email:em,password:pw})
+                     :await sb.auth.signInWithPassword({email:em,password:pw});
+  if(r.error)throw r.error;
+  if(mode==='up'&&!r.data.session)sbMsg='Registriert \u2013 bitte Best\u00e4tigungslink in der E-Mail \u00f6ffnen, dann anmelden.';
+ }catch(e){sbMsg='Anmeldung fehlgeschlagen: '+rtEsc(e.message||e);}
+ RT_render();
+}
+/* Vor dem eigentlichen Abmelden wird versucht, alle lokal vorhandenen, noch NICHT in der
+   Cloud vorhandenen Runden ein letztes Mal hochzuladen. Grund: RT_clearLocalSyncedData()
+   loescht danach kompromisslos den lokalen Stand - schlaegt der Cloud-Push vorher fehl (z.B.
+   durch einen transienten Sync-Fehler wie "JWT issued at future"), waren bis zu diesem Fix
+   noch nicht synchronisierte Runden unwiederbringlich verloren, sobald sich der Nutzer
+   abmeldete. Jetzt wird das Abmelden bei einem Fehlschlag gestoppt (RT_state.ask=
+   'logout_unsynced') und der Nutzer kann erneut versuchen oder bewusst trotzdem abmelden
+   (sbOutForce), statt die Daten kommentarlos zu verlieren. */
+async function sbOut(){
+ RT_state.logoutErr='';
+ if(sb&&sbUser){
+  RT_state.logoutBusy=true; RT_render();
+  try{
+   var r=await sb.from('rounds').select('data');
+   if(r.error)throw r.error;
+   var ids={}; r.data.forEach(function(x){ if(x.data&&x.data.id) ids[x.data.id]=1; });
+   var unsynced=(rtGet(RT_KEY)||[]).filter(function(x){
+    return !ids[x.id] && (!x.ownerHint||x.ownerHint===sbUser.id);
+   });
+   for(var i=0;i<unsynced.length;i++){
+    var rd=unsynced[i];
+    var pr=await sb.from('rounds').upsert({id:rd.id,date:rd.date,course_name:rd.courseName,data:rd});
+    if(pr.error) throw pr.error;
+   }
+  }catch(e){
+   RT_state.logoutBusy=false;
+   RT_state.ask='logout_unsynced';
+   RT_state.logoutErr=(e&&e.message)||String(e);
+   RT_render();
+   return;
+  }
+  RT_state.logoutBusy=false;
+ }
+ await sbOutForce();
+}
+async function sbOutForce(){
+ RT_state.ask='';
+ try{await sb.auth.signOut();}catch(e){}
+ sbUser=null;
+ RT_clearLocalSyncedData();
+ try{ localStorage.removeItem(RT_LAST_UID_KEY); localStorage.removeItem(AG_KEY); }catch(e){}
+ RT_state.screen='home';
+ RT_render();
+ AG_render();
+}
+async function sbPull(firstEverLogin){
+ try{
+  var r=await sb.from('rounds').select('data,user_id').order('date',{ascending:true});
+  if(r.error)throw r.error;
+  var cloud=r.data.map(function(x){return x.data;});
+  var owners={};
+  r.data.forEach(function(x){ if(x.data&&x.data.id) owners[x.data.id]=x.user_id; });
+  RT_roundOwners=owners;
+  await RT_loadMyPlayerNames();
+  var ids={}; cloud.forEach(function(x){ids[x.id]=1;});
+  /* KRITISCH: hier NICHT blind jede lokal gecachte, dem eigenen Cloud-Stand unbekannte Runde
+     als "meine, noch nicht synchronisierte" Runde behandeln und hochladen - genau das hat zu
+     einem echten Datenleck gefuehrt (siehe Vorfall vom 30.07.2026: 31 fremde Runden landeten
+     durch genau diesen Mechanismus als Duplikate im Konto eines eingeladenen Nutzers, dessen
+     Geraet/Browser zuvor fuer ein anderes Konto genutzt wurde). Nur Runden pushen, die
+     PROVABLY mir gehoeren: entweder per ownerHint (wird seit diesem Fix bei jeder lokalen
+     Erstellung/Bearbeitung gesetzt, siehe RT_start/RT_applyEdit) klar mir zugeordnet, oder -
+     falls kein ownerHint vorhanden (Altdaten von vor diesem Fix, oder echter Gastmodus) - nur
+     beim allerersten Login auf diesem Geraet ueberhaupt (kein vorher bekanntes anderes Konto),
+     damit legitime, offline im Gastmodus erfasste Runden weiterhin normal uebernommen werden
+     koennen, ohne dass sich fremde Altdaten einschleichen. Alles andere wird beim Zusammenfuehren
+     stillschweigend verworfen statt hochgeladen. */
+  var extra=(rtGet(RT_KEY)||[]).filter(function(x){
+   if(ids[x.id]) return false;
+   if(x.ownerHint) return x.ownerHint===sbUser.id;
+   return !!firstEverLogin;
+  });
+  extra.forEach(function(x){ if(!x.ownerHint) x.ownerHint=sbUser.id; sbPushRound(x); });
+  rtSet(RT_KEY,cloud.concat(extra));
+  var cr=await sb.from('courses').select('id,data,user_id');
+  if(!cr.error&&cr.data.length){
+   var allCustom=RT_loadCustomCourses();
+   /* Preset-Keys (georg/waldhof) werden seit diesem Fix ebenfalls in die Cloud
+      gepusht (siehe RT_setPhoto/RT_persistSi/RT_persistTees/RT_renameCourse/RT_renameAddress),
+      damit Aenderungen daran nicht mehr beim Abmelden verloren gehen. Sie duerfen aber NICHT
+      zusaetzlich in RT_CUSTOM_KEY landen - das wuerde in RT_platzChips() zu einem doppelten
+      Chip fuehren (einmal aus der festen Preset-Liste, einmal aus den "eigenen" Plaetzen). */
+   /* Seit der Policy courses_select_linked sehen verknuepfte Accounts (player_links)
+      auch die Plaetze des Owners. Dadurch koennen ZWEI Zeilen mit derselben id
+      ankommen: die eigene und die fremde. Ohne Priorisierung entscheidet die
+      Rueckgabereihenfolge der Datenbank, welche Fassung im Client landet - die eigene,
+      gerade bearbeitete Version koennte dabei von der fremden ueberschrieben werden.
+      Deshalb erst die fremden anwenden, die eigenen zuletzt (Array.sort ist stabil). */
+   var rowsC=cr.data.slice().sort(function(a,b){
+    var ao=(sbUser&&a.user_id===sbUser.id)?1:0, bo=(sbUser&&b.user_id===sbUser.id)?1:0;
+    return ao-bo;
+   });
+   rowsC.forEach(function(row){
+    if(row.id==='cust')return;
+    RT_COURSES[row.id]=row.data;
+    if(!RT_PRESET_KEYS[row.id]) allCustom[row.id]=row.data;
+   });
+   rtSet(RT_CUSTOM_KEY,allCustom);
+   /* Lokal eingetragene SI-Werte sind immer die aktuellste Wahrheit (Nutzer hat sie gerade auf
+      DIESEM Geraet eingetragen) - nach dem Cloud-Pull erneut ueber die Platzdaten legen, damit
+      ein veralteter/unvollstaendiger Cloud-Stand sie nicht wieder ueberschreibt. */
+   RT_applySiOverrides();
+   RT_applyParOverrides();
+   RT_applyKnownAddresses();
+   RT_applyNameOverrides();
+   RT_applyAddrOverrides();
+   RT_applyTeeOverrides();
+   RT_applyTeeOrderOverrides();
+   RT_applyPhotoOverrides();
+   RT_applyRefOverrides();
+  }
+  /* HV_D/SC nach jedem Cloud-Pull neu aus dem jetzt korrekt gefuellten RT_roundOwners/
+     RT_myPlayerNameByOwner aufbauen - und falls der Nutzer gerade den HI-Verlauf oder das
+     Schlag-Detail geoeffnet hat, diesen Tab sofort neu rendern. Ohne das blieben Werte aus
+     geteilten Runden, die noch VOR Abschluss dieses Pulls (also mit leerer
+     RT_roundOwners-Zuordnung) berechnet wurden, faelschlich auf Spieler 0 (den Ersteller)
+     stehen, bis der Nutzer manuell den Tab wechselt - siehe RT_myPlayerIndex(). */
+  RT_hydrateHistoricalData();
+  if(RT_curTab==='hi'||RT_curTab==='detail'){ showTab(RT_curTab); }
+ }catch(e){sbMsg='Sync-Fehler: '+rtEsc(e.message||e);}
+ RT_render();
+}
+async function sbPushRound(rd){
+ if(!sb||!sbUser)return;
+ try{
+  var r=await sb.from('rounds').upsert({id:rd.id,date:rd.date,course_name:rd.courseName,data:rd});
+  if(r.error)throw r.error;
+ }catch(e){sbMsg='Cloud-Speichern fehlgeschlagen: '+rtEsc(e.message||e);RT_render();}
+}
+async function sbDelRound(id){if(!sb||!sbUser)return;try{await sb.from('rounds').delete().eq('id',id);}catch(e){}}
+async function sbDelCourse(id){if(!sb||!sbUser)return;try{await sb.from('courses').delete().eq('id',id);}catch(e){}}
+async function sbPushCourse(id,courseObj){
+ if(!sb||!sbUser||!id||!courseObj)return;
+ try{
+  var r=await sb.from('courses').upsert({id:id,user_id:sbUser.id,name:courseObj.name,data:courseObj},{onConflict:'id,user_id'});
+  if(r.error)throw r.error;
+ }catch(e){
+  RT_state.saveWarn='Cloud-Speichern (Platzdaten) fehlgeschlagen: '+(e.message||e)+' \u2013 lokal gespeichert, bitte Verbindung pr\u00fcfen und erneut versuchen.';
+  RT_render();
+ }
+}
+/* ===== Auth-Gate: eigene Anmeldeseite + Mitspieler-Einladungen ===== */
+var AG_KEY='golflog_guest_v1';
+var AG_PENDING_JOIN_KEY='golflog_pending_join_v1';
+var AG_joinCode=null;
+/* Der Einladungscode wird zusaetzlich dauerhaft (localStorage) gemerkt, nicht nur im
+   JS-Speicher. Grund: verlangt Supabase eine E-Mail-Bestaetigung bei der Registrierung,
+   ist beim ersten Laden (mit ?join=CODE in der URL) noch keine Session vorhanden - erst NACH
+   dem Klick auf den Bestaetigungslink in der Mail entsteht eine Session, i.d.R. aber auf
+   einer neuen Seitenanfrage OHNE den urspruenglichen ?join=-Parameter. Ohne diese
+   Zwischenspeicherung ging der Code dabei verloren und die Einladung wurde nie
+   uebernommen (linked_user_id blieb dauerhaft leer). */
+(function(){
+ try{
+  var qs=new URLSearchParams(window.location.search);
+  var fromUrl=qs.get('join');
+  if(fromUrl){ AG_joinCode=fromUrl; localStorage.setItem(AG_PENDING_JOIN_KEY,fromUrl); }
+  else{ var pending=localStorage.getItem(AG_PENDING_JOIN_KEY); if(pending) AG_joinCode=pending; }
+ }catch(e){}
+})();
+var AG_msg='';
+function AG_shouldGate(){
+ if(sbUser) return false;
+ if(AG_joinCode) return true;
+ try{ if(localStorage.getItem(AG_KEY)==='1') return false; }catch(e){}
+ return true;
+}
+function AG_render(){
+ var el=document.getElementById('auth-gate'); if(!el) return;
+ if(!AG_shouldGate()){ el.style.display='none'; return; }
+ el.style.display='block';
+ var h='<div style="max-width:420px;margin:0 auto;">';
+ h+='<h1 style="margin-bottom:4px;">Fairway<em>Pilot</em></h1>';
+ h+='<div style="font-size:12px;color:var(--tx3);margin-bottom:20px;">Deine Runden, dein Handicap-Verlauf – privat und geräteübergreifend synchronisiert.</div>';
+ if(AG_joinCode){
+  h+='<div class="rtc" style="margin-bottom:16px;"><div class="rt-ct">Einladung</div>'+
+   '<div class="rt-cs">Du wurdest eingeladen, gemeinsam gespielte Runden in dein eigenes, privates Profil zu übernehmen.</div></div>';
+  h+='<div class="rtc"><div class="rt-ct">Mit E-Mail fortfahren</div>'+
+   '<div class="rt-cs" style="margin-bottom:8px;">Kein Passwort nötig – du bekommst einen Login-Link per E-Mail.</div>'+
+   '<span class="rt-lbl">E-Mail</span><input class="rt-inp" id="ag-em" type="email" autocomplete="email" style="margin-bottom:10px;">'+
+   '<button class="rt-btn" style="width:100%;" onclick="AG_auth(\'magic\')">Login-Link senden</button>';
+  if(AG_msg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(AG_msg)+'</div>';
+  h+='</div>';
+ }else{
+  h+='<div class="rtc" style="margin-bottom:16px;"><div class="rt-ct">Warum ein Konto?</div>'+
+   '<div class="rt-cs">Jeder Spieler bekommt ein eigenes, privates Profil. Runden werden in der Datenbank gespeichert und sind ausschließlich für dich sichtbar – andere Nutzer sehen deine Daten nicht. Wurdest du zu einer gemeinsam gespielten Runde eingeladen, kannst du sie per Einladungslink in dein Profil übernehmen.</div></div>';
+  h+='<div class="rtc"><div class="rt-ct">Anmelden</div>'+
+   '<span class="rt-lbl">E-Mail</span><input class="rt-inp" id="ag-em" type="email" autocomplete="email" style="margin-bottom:8px;">'+
+   '<span class="rt-lbl">Passwort</span><input class="rt-inp" id="ag-pw" type="password" autocomplete="current-password" style="margin-bottom:10px;">'+
+   '<div class="rt-row"><button class="rt-btn" onclick="AG_auth(\'in\')">Anmelden</button>'+
+   '<button class="rt-btn2" onclick="AG_auth(\'up\')">Registrieren</button></div>';
+  if(AG_msg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(AG_msg)+'</div>';
+  h+='</div>';
+ }
+ h+='<div style="text-align:center;margin-top:14px;"><a href="#" onclick="RT_state.showManualCode=!RT_state.showManualCode;AG_render();return false;" style="font-size:12px;color:var(--tx3);">Einladungscode manuell eingeben</a></div>';
+ if(RT_state.showManualCode){
+  h+='<div class="rtc" style="margin-top:10px;"><span class="rt-lbl">Einladungscode</span>'+
+   '<input class="rt-inp" id="manual-invite-code" placeholder="Code aus der Einladung" style="margin-bottom:8px;">'+
+   '<button class="rt-btn2" style="width:100%;" onclick="RT_manualClaim()">'+(RT_state.claimBusy?'Wird übernommen…':'Einladung übernehmen')+'</button></div>';
+ }
+ if(!AG_joinCode)h+='<div style="text-align:center;margin-top:18px;"><a href="#" onclick="AG_skip();return false;" style="font-size:12px;color:var(--tx3);">Ohne Konto fortfahren (nur dieses Gerät)</a></div>';
+ h+='</div>';
+ el.innerHTML=h;
+}
+function AG_skip(){ try{ localStorage.setItem(AG_KEY,'1'); }catch(e){} AG_render(); }
+async function AG_auth(mode){
+ var em=document.getElementById('ag-em').value.trim();
+ if(mode==='magic'){
+  if(!em){ AG_msg='Bitte deine E-Mail-Adresse eingeben.'; AG_render(); return; }
+  AG_msg='';
+  try{
+   var redirectTo=window.location.origin+window.location.pathname+(AG_joinCode?('?join='+encodeURIComponent(AG_joinCode)):'');
+   var r=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:redirectTo}});
+   if(r.error)throw r.error;
+   AG_msg='Login-Link verschickt – bitte E-Mail-Postfach öffnen und den Link antippen.';
+  }catch(e){ AG_msg='Versand fehlgeschlagen: '+(e.message||e); }
+  AG_render();
+  return;
+ }
+ var pw=document.getElementById('ag-pw').value;
+ if(!em||pw.length<6){ AG_msg='E-Mail und Passwort (mind. 6 Zeichen) eingeben.'; AG_render(); return; }
+ AG_msg='';
+ try{
+  var r=(mode==='up')?await sb.auth.signUp({email:em,password:pw}):await sb.auth.signInWithPassword({email:em,password:pw});
+  if(r.error)throw r.error;
+  if(mode==='up'&&!r.data.session){ AG_msg='Registriert – bitte Bestätigungslink in der E-Mail öffnen, dann anmelden.'; AG_render(); return; }
+ }catch(e){ AG_msg='Anmeldung fehlgeschlagen: '+(e.message||e); AG_render(); return; }
+ if(!AG_joinCode)AG_render();
+}
+async function AG_claim(){
+ if(!sb||!sbUser||!AG_joinCode)return;
+ try{
+  var r=await sb.rpc('claim_invite',{p_code:AG_joinCode});
+  if(r.error)throw r.error;
+  var row=(r.data&&r.data[0])||{};
+  AG_joinCode=null;
+  try{ var u=new URL(window.location.href); u.searchParams.delete('join'); window.history.replaceState({},'',u.toString()); }catch(e){}
+  try{ localStorage.setItem(AG_KEY,'1'); localStorage.removeItem(AG_PENDING_JOIN_KEY); }catch(e){}
+  AG_msg='Einladung als "'+rtEsc(row.player_name||'')+'" angenommen – '+(row.rounds_count||0)+' Runde(n) sind jetzt in deinem Profil sichtbar.';
+  await sbPull(); await PL_load();
+ }catch(e){ AG_msg='Einladung konnte nicht übernommen werden: '+(e.message||e); }
+ AG_render();
+}
+/* Zusaetzliches, robusteres Gegenstueck zu AG_claim(): matcht nicht ueber den
+   ?join=-URL-Parameter (der auf dem Weg durch die Mail-App/Weiterleitungskette verloren
+   gehen kann), sondern direkt ueber die beim Versand der Einladung hinterlegte
+   E-Mail-Adresse. Laeuft bei jedem Login automatisch mit, unabhaengig davon ob
+   AG_joinCode gesetzt ist, und ist idempotent (wirkt nur auf noch unverknuepfte
+   Eintraege). */
+async function AG_claimByEmail(){
+ if(!sb||!sbUser)return;
+ try{
+  var r=await sb.rpc('claim_by_email');
+  if(r.error)throw r.error;
+  if(r.data&&r.data.length){ await sbPull(); await PL_load(); RT_loadConnections(); AG_render(); }
+ }catch(e){}
+}
+
+/* Manuelles Gegenstueck zu AG_claim(): nimmt den Code direkt aus einem Eingabefeld statt aus
+   der URL/localStorage, damit das Herstellen einer Mitspieler-Verknuepfung nicht mehr davon
+   abhaengt, ob der ?join=-Parameter den kompletten Registrierungs-/Bestaetigungs-Weg
+   unbeschadet uebersteht. */
+async function RT_manualClaim(){
+ var codeEl=document.getElementById('manual-invite-code');
+ var code=(codeEl&&codeEl.value||'').trim();
+ if(!code){ AG_msg='Bitte einen Einladungscode eintragen.'; RT_render(); return; }
+ if(!sb||!sbUser){ AG_msg='Bitte zuerst anmelden.'; RT_render(); return; }
+ RT_state.claimBusy=true; RT_render();
+ AG_joinCode=code;
+ await AG_claim();
+ RT_state.claimBusy=false;
+ await RT_loadConnections();
+}
+var PL_msg='', PL_list=null;
+var RT_connections=null;
+/* Laedt sowohl eingehende (jemand hat mich eingeladen, ich habe angenommen) als auch
+   ausgehende (ich habe jemanden eingeladen, der angenommen hat) Verbindungen ueber die
+   sichere RPC get_my_connections() - loest Marks Anliegen "Verbindungen sollten sichtbar
+   sein", da bisher nur die eigenen ausgehenden Einladungen (player_links.owner_id=self)
+   abgefragt wurden, nie die eingehende Seite. */
+async function RT_loadConnections(){
+ if(!sb||!sbUser)return;
+ try{
+  var r=await sb.rpc('get_my_connections');
+  if(!r.error) RT_connections=r.data;
+ }catch(e){}
+ RT_render();
+}
+async function PL_load(){
+ if(!sb||!sbUser)return;
+ try{ var r=await sb.from('player_links').select('player_name,invite_code,linked_user_id,claimed_at').eq('owner_id',sbUser.id); if(!r.error)PL_list=r.data; }catch(e){}
+}
+function PL_statusFor(name){ if(!PL_list)return null; return PL_list.find(function(x){return x.player_name===name;})||null; }
+async function PL_invite(name){
+ if(!sb||!sbUser||!name)return;
+ try{
+  var r=await sb.from('player_links').insert({owner_id:sbUser.id,player_name:name}).select('player_name,invite_code,linked_user_id,claimed_at').single();
+  if(r.error)throw r.error;
+  if(!PL_list)PL_list=[]; PL_list.push(r.data); PL_msg='';
+ }catch(e){ PL_msg='Einladung fehlgeschlagen: '+(e.message||e); }
+ RT_render();
+}
+async function PL_copy(code){
+ var link=window.location.origin+window.location.pathname+'?join='+encodeURIComponent(code);
+ try{ await navigator.clipboard.writeText(link); PL_msg='Link kopiert: '+link; }catch(e){ PL_msg=link; }
+ RT_render();
+}
+function PL_buildLink(code){
+ return window.location.origin+window.location.pathname+'?join='+encodeURIComponent(code);
+}
+/* Blendet fuer eine Zeile das E-Mail-Eingabefeld ein/aus, statt den Link direkt zu kopieren -
+   siehe PL_sendInvite fuer den eigentlichen Versand. */
+function PL_showEmail(name){
+ RT_state.plEmailFor = (RT_state.plEmailFor===name) ? null : name;
+ PL_msg='';
+ RT_render();
+}
+/* Versendet die Einladung per E-Mail: legt bei Bedarf zuerst einen Einladungscode an (falls
+   noch keiner existiert), oeffnet dann die Mail-App des Geraets mit vorausgefuelltem
+   Empfaenger, Betreff und dem Einladungslink im Text - kein eigener Mailversand-Server
+   noetig, der Nutzer sendet ueber seine eigene, bereits eingerichtete Mail-App. */
+function PL_domId(name){ return 'pl-email-'+String(name).replace(/[^a-zA-Z0-9]/g,''); }
+async function PL_sendInvite(name){
+ var emEl=document.getElementById(PL_domId(name));
+ var em=(emEl?emEl.value:'').trim();
+ if(!em||em.indexOf('@')<0){ PL_msg='Bitte eine g\u00fcltige E-Mail-Adresse eingeben.'; RT_render(); return; }
+ var st=PL_statusFor(name);
+ if(!st){
+  if(!sb||!sbUser)return;
+  try{
+   var r=await sb.from('player_links').insert({owner_id:sbUser.id,player_name:name,invite_email:em}).select('player_name,invite_code,linked_user_id,claimed_at').single();
+   if(r.error)throw r.error;
+   if(!PL_list)PL_list=[]; PL_list.push(r.data);
+   st=r.data;
+  }catch(e){ PL_msg='Einladung fehlgeschlagen: '+(e.message||e); RT_render(); return; }
+ }else if(st.invite_email!==em){
+  try{ await sb.from('player_links').update({invite_email:em}).eq('owner_id',sbUser.id).eq('player_name',name); st.invite_email=em; }catch(e){}
+ }
+ var link=PL_buildLink(st.invite_code);
+ var subject='Einladung zu FairwayPilot';
+ var body='Hallo '+name+',\n\nich m\u00f6chte dich zu FairwayPilot einladen, damit unsere gemeinsam gespielten Golfrunden auch in deinem eigenen, privaten Profil erscheinen.\n\n\u00d6ffne einfach diesen Link, um dich zu registrieren:\n'+link+'\n\nViele Gr\u00fc\u00dfe';
+ var mailto='mailto:'+encodeURIComponent(em)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+ window.location.href=mailto;
+ RT_state.plEmailFor=null;
+ PL_msg='Mail-App f\u00fcr '+rtEsc(em)+' ge\u00f6ffnet.';
+ RT_render();
+}
+function sbCard(){
+ if(!sbReady())return '<div class="rt-note">Cloud-Sync ist noch nicht konfiguriert \u2013 Runden werden nur lokal auf diesem Ger\u00e4t gespeichert.</div>';
+ var h='<div class="rtc"><div class="rt-ct">Konto &amp; Cloud-Sync</div>';
+ if(sbUser){
+  h+='<div class="rt-cs">Angemeldet als '+rtEsc(sbUser.email)+' \u2013 Runden und Pl\u00e4tze werden in der Datenbank gespeichert und ger\u00e4te\u00fcbergreifend synchronisiert.</div>'+
+   '<button class="rt-btn2" onclick="RT_go(\'user\')">Konto verwalten &amp; Mitspieler einladen &#8250;</button>';
+ }else{
+  h+='<div class="rt-cs">Anmelden, damit Runden ger\u00e4te\u00fcbergreifend in der Datenbank gespeichert werden</div>'+
+   '<span class="rt-lbl">E-Mail</span><input class="rt-inp" id="sb-em" type="email" autocomplete="email" style="margin-bottom:8px;">'+
+   '<span class="rt-lbl">Passwort</span><input class="rt-inp" id="sb-pw" type="password" autocomplete="current-password" style="margin-bottom:10px;">'+
+   '<div class="rt-row"><button class="rt-btn" onclick="sbAuth(\'in\')">Anmelden</button>'+
+   '<button class="rt-btn2" onclick="sbAuth(\'up\')">Registrieren</button></div>';
+ }
+ if(sbMsg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+sbMsg+'</div>';
+ h+='</div>';
+ return h;
+}
+/* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
+   Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
+   sehen stattdessen das Anmelde-/Registrierungsformular. */
+function RT_rUser(){
+ var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
+  '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
+  '<div class="rt-h1" style="font-size:18px;">Konto</div></div>';
+ if(!sbReady()){
+  h+='<div class="rt-note">Cloud-Sync ist noch nicht konfiguriert \u2013 kein Benutzerkonto verf\u00fcgbar.</div>';
+  return h;
+ }
+ if(!sbUser){
+  h+='<div class="rtc"><div class="rt-cs">Anmelden, damit Runden ger\u00e4te\u00fcbergreifend in der Datenbank gespeichert werden.</div>'+
+   '<span class="rt-lbl">E-Mail</span><input class="rt-inp" id="sb-em" type="email" autocomplete="email" style="margin-bottom:8px;">'+
+   '<span class="rt-lbl">Passwort</span><input class="rt-inp" id="sb-pw" type="password" autocomplete="current-password" style="margin-bottom:10px;">'+
+   '<div class="rt-row"><button class="rt-btn" onclick="sbAuth(\'in\')">Anmelden</button>'+
+   '<button class="rt-btn2" onclick="sbAuth(\'up\')">Registrieren</button></div>'+
+   (sbMsg?'<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+sbMsg+'</div>':'')+
+   '</div>';
+  return h;
+ }
+ var av=sbUser.user_metadata&&sbUser.user_metadata.avatar_url;
+ var dispName=(sbUser.user_metadata&&sbUser.user_metadata.display_name)||'';
+ h+='<div class="rtc" style="text-align:center;">'+
+  '<div style="position:relative;width:84px;height:84px;margin:0 auto 10px;">'+
+   '<div style="width:84px;height:84px;border-radius:50%;overflow:hidden;background:#1F8A4D;display:flex;align-items:center;justify-content:center;">'+
+    (av?'<img src="'+rtEsc(av)+'" style="width:100%;height:100%;object-fit:cover;">':'<span style="font-size:30px;font-weight:800;color:#fff;">'+(dispName?dispName.charAt(0).toUpperCase():sbUser.email.charAt(0).toUpperCase())+'</span>')+
+   '</div>'+
+   (RT_state.avatarBusy?'<div style="position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;font-size:11px;">...</div>':
+    '<label style="position:absolute;bottom:-2px;right:-2px;width:28px;height:28px;border-radius:50%;background:#fff;border:1.5px solid #DCE7D4;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;">&#128247;<input type="file" accept="image/*" style="display:none;" onchange="RT_avatarFile(event)"></label>')+
+  '</div>'+
+  '<div class="rt-cs" style="margin-bottom:0;">'+rtEsc(sbUser.email)+'</div>'+
+ '</div>';
+ h+='<div class="rtc"><div class="rt-ct">Name</div>'+
+  '<input class="rt-inp" id="usr-name" value="'+rtEsc(dispName)+'" placeholder="Anzeigename" style="margin-bottom:8px;">'+
+  '<button class="rt-btn2" onclick="RT_nameSave()">Speichern</button>'+
+  (RT_state.nameMsg?'<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(RT_state.nameMsg)+'</div>':'')+
+  '</div>';
+ h+='<div class="rtc"><div class="rt-ct">Eigenes Handicap</div>'+
+  '<div class="rt-cs">Wird bei einer neuen Runde als Standard-HI vorbelegt, statt jedes Mal 54 eintragen zu m\u00fcssen.</div>'+
+  '<input class="rt-inp" id="usr-hcp" type="number" step="0.1" min="-10" max="54" value="'+rtEsc(RT_ownHandicapStored())+'" placeholder="z.\u2009B. 24.5" style="margin-bottom:8px;">'+
+  '<button class="rt-btn2" onclick="RT_hcpSave()">Speichern</button>'+
+  (RT_state.hcpMsg?'<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(RT_state.hcpMsg)+'</div>':'')+
+  '</div>';
+ h+='<div class="rtc"><div class="rt-ct">Passwort \u00e4ndern</div>'+
+  '<span class="rt-lbl">Neues Passwort</span><input class="rt-inp" id="usr-pw1" type="password" autocomplete="new-password" style="margin-bottom:8px;">'+
+  '<span class="rt-lbl">Wiederholen</span><input class="rt-inp" id="usr-pw2" type="password" autocomplete="new-password" style="margin-bottom:10px;">'+
+  '<button class="rt-btn2" onclick="RT_pwSave()">Passwort \u00e4ndern</button>'+
+  (RT_state.pwMsg?'<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(RT_state.pwMsg)+'</div>':'')+
+  '</div>';
+ /* Manuelles Einloesen eines Einladungscodes - unabhaengig davon, ob der ?join=-Link beim
+    Registrieren/Anmelden korrekt durchgereicht wurde (z.B. bei E-Mail-Bestaetigung, verlorenen
+    Parametern durch Weiterleitungen, oder wenn schon ein Konto bestand und ganz normal ueber
+    das Anmeldeformular eingeloggt wurde statt ueber den Einladungslink). Damit haengt das
+    Herstellen der Verbindung nicht mehr allein vom exakten Link-Klick ab. */
+ h+='<div class="rtc"><div class="rt-ct">Einladungscode einl\u00f6sen</div>'+
+  '<div class="rt-cs">Hast du einen Einladungslink/-code von jemandem erhalten? Code hier eintragen, um die Verkn\u00fcpfung herzustellen.</div>'+
+  '<div class="rt-row"><input class="rt-inp" id="manual-invite-code" placeholder="Einladungscode" style="flex:1;">'+
+  '<button class="rt-btn2" style="flex:none;width:auto;" onclick="RT_manualClaim()">'+(RT_state.claimBusy?'...':'\u00dcbernehmen')+'</button></div>'+
+  (AG_msg?'<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(AG_msg)+'</div>':'')+
+  '</div>';
+ if(RT_connections===null){ RT_loadConnections(); }
+ else if(RT_connections.length){
+  h+='<div class="rtc"><div class="rt-ct">Meine Verbindungen</div>'+
+   '<div class="rt-cs">Diese Personen sind mit deinem Konto verkn\u00fcpft.</div>';
+  RT_connections.forEach(function(c){
+   var who=c.other_display_name||c.other_email;
+   var desc=c.direction==='incoming'
+    ? 'Du spielst als <b>'+rtEsc(c.player_name)+'</b> in Runden von '+rtEsc(who)
+    : rtEsc(who)+' spielt als <b>'+rtEsc(c.player_name)+'</b> in deinen Runden';
+   h+='<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;">'+
+    '<span style="width:8px;height:8px;border-radius:50%;background:#1F8A4D;flex:none;"></span>'+
+    '<div style="flex:1;">'+desc+'</div></div>';
+  });
+  h+='</div>';
+ }
+ h+='<div class="rtc"><div class="rt-ct">Mitspieler einladen</div>'+
+  '<div class="rt-cs">Lade Mitspieler ein, damit gemeinsam gespielte Runden auch in ihrem eigenen, privaten Profil erscheinen.</div>';
+ /* Der Kontoinhaber selbst darf sich nicht "einladen" - Abgleich gegen RT_myDisplayName(),
+    denselben Namen, der auch als Standardspieler beim Anlegen einer neuen Runde vorbelegt
+    wird (siehe RT_defSu). Fr\u00fcher war hier fest "mark" hinterlegt - das war nur fuer Marks
+    eigenes Konto korrekt und h\u00e4tte bei jedem anderen Konto (z.B. einem eingeladenen
+    Mitspieler mit eigenem Account) nicht gegriffen. */
+ var plSaved=(RT_getSavedPlayers()||[]).filter(function(sp){
+ return !RT_isSelfName(sp.name);
+});
+ if(!plSaved.length){h+='<div class="rt-note">Noch keine einladbaren Mitspieler. Lege sie beim Anlegen einer Runde \u00fcber "+ Neuer Spieler" an.</div>';}
+ else plSaved.forEach(function(sp){
+ if(RT_needsSelfConfirm(sp.name)){ h+=RT_selfConfirmHtml(sp.name); return; }
+  var st=PL_statusFor(sp.name);
+  var linked=st&&st.linked_user_id;
+  var emailMode=RT_state.plEmailFor===sp.name;
+  h+='<div style="margin-top:8px;">';
+  h+='<div style="display:flex;gap:8px;align-items:center;">'+
+   '<div style="flex:none;width:72px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+rtEsc(sp.name)+'</div>';
+  if(linked)h+='<div style="flex:1;text-align:center;">'+
+   '<span class="rt-btn2" style="display:inline-block;width:auto;padding:8px 16px;background:#1F8A4D;border-color:#1F8A4D;color:#fff;font-weight:700;">verknüpft &#10003;</span>'+
+   '</div>';
+  else h+='<button class="rt-btn2" style="flex:1;width:auto;" onclick="PL_showEmail(\''+rtJsEsc(sp.name)+'\')">'+(emailMode?'Abbrechen':(st?'Erneut per E-Mail senden':'Einladen'))+'</button>';
+  if(!linked&&st)h+='<button class="rt-btn3" style="flex:none;padding:8px 10px;" onclick="PL_copy(\'+st.invite_code+\')" title="Link kopieren">&#128279;</button>';
+  h+='</div>';
+  if(!linked&&emailMode){
+   h+='<div style="display:flex;gap:8px;align-items:center;margin-top:6px;padding-left:80px;">'+
+    '<input class="rt-inp" id="'+PL_domId(sp.name)+'" type="email" placeholder="E-Mail von '+rtEsc(sp.name)+'" style="flex:1;">'+
+    '<button class="rt-btn" style="flex:none;width:auto;padding:10px 14px;" onclick="PL_sendInvite(\''+rtJsEsc(sp.name)+'\')">Senden</button>'+
+    '</div>';
+  }
+  h+='</div>';
+ });
+ if(PL_msg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(PL_msg)+'</div>';
+ h+='</div>';
+ h+='<div class="rtc" style="margin-top:10px;"><div class="rt-ct">Einstellungen</div>'+
+  '<div style="font-size:12.5px;font-weight:600;">Putts/Straf/Sand zählen Schlag mit</div>'+
+  '<div class="rt-cs">Erhöht beim Zaehlen automatisch auch die Schlagzahl (und umgekehrt beim Verringern).</div>'+
+  '<button class="rt-btn2" style="width:100%;" onclick="RT_toggleAutoCount()">'+(RT_autoCountOn()?'An':'Aus')+'</button>'+
+  '</div>';
+  h+='<div class="rtc" style="border-top-color:#B03A3A;margin-top:10px;">'+
+ '<button class="rt-btn2" style="width:100%;color:#B03A3A;border-color:#E0BCBC;font-weight:700;" '+(RT_state.logoutBusy?'disabled':'')+' onclick="sbOut()">'+(RT_state.logoutBusy?'<span class="rt-spin"></span>Pr\u00fcft Sync\u2026':'Abmelden')+'</button></div>';
+ if(RT_state.ask==='logout_unsynced'){
+  h+='<div class="rt-warn" style="margin-top:8px;">Nicht alle Runden konnten synchronisiert werden ('+rtEsc(RT_state.logoutErr||'')+'). Ein Abmelden w\u00fcrde diese Daten unwiederbringlich l\u00f6schen.'+
+   '<div class="rt-row" style="margin-top:8px;"><button class="rt-btn2" onclick="sbOut()">Erneut versuchen</button>'+
+   '<button class="rt-btn2" style="color:#B03A3A;border-color:#E0BCBC;" onclick="sbOutForce()">Trotzdem abmelden</button></div></div>';
+ }
+ h+='<div class="rtc" style="margin-top:10px;"><div class="rt-ct">Rechtliches</div><div class="rt-cs" style="display:flex;flex-direction:column;gap:6px;"><a href="/impressum" target="_blank" style="color:var(--gd);text-decoration:none;font-weight:600;">Impressum</a><a href="/datenschutz" target="_blank" style="color:var(--gd);text-decoration:none;font-weight:600;">Datenschutzerkl\u00e4rung</a><a href="/agb" target="_blank" style="color:var(--gd);text-decoration:none;font-weight:600;">AGB</a></div></div>';
+ h+='<div class="rtc" style="margin-top:10px;border-top-color:#D64550;"><div class="rt-ct" style="color:#B03A3A;">Konto l\u00f6schen</div><div class="rt-cs">L\u00f6scht dein Konto und alle deine Runden, Pl\u00e4tze und Verkn\u00fcpfungen unwiderruflich. Diese Aktion kann nicht r\u00fcckg\u00e4ngig gemacht werden.</div>'+
+ (RT_state.delAccMsg?'<div class="rt-warn" style="margin-bottom:10px;">'+rtEsc(RT_state.delAccMsg)+'</div>':'')+
+ '<button class="rt-btn2" style="color:#B03A3A;border-color:#E0BCBC;'+(RT_state.ask==='delaccount'?'background:#FBEAEA;font-weight:800;':'')+'" '+(RT_state.delAccBusy?'disabled':'')+' onclick="RT_deleteAccount()">'+(RT_state.delAccBusy?'<span class="rt-spin"></span>L\u00f6sche\u2026':(RT_state.ask==='delaccount'?'Wirklich unwiderruflich l\u00f6schen?':'Konto endg\u00fcltig l\u00f6schen'))+'</button>'+
+ '</div>';
+ return h;
+}
+/* Liefert {url,bg} fuer ein eigenes Lochbild (statt Live-Karte), falls der Platz
+   welche hinterlegt hat (courseObj.holeImg.F/B je 9 URLs) - sonst null. Generisches
+   Feature: greift fuer jeden Platz, der holeImg gepflegt hat, nicht nur Leverkusen. */
+function RT_holeImgFor(rd,c){
+ if(!rd) return null;
+ var ck=RT_courseKeyFromName(rd.courseName,rd);
+ var co=ck?RT_COURSES[ck]:null;
+ if(!co||!co.holeImg) return null;
+ var num=rd.nums[c];
+ var nine=num<=9?'F':'B';
+ var idx=num<=9?num-1:num-10;
+ var arr=co.holeImg[nine];
+ var url=arr&&arr[idx]?arr[idx]:null;
+ if(!url) return null;
+ return {url:url, bg:co.holeImgBg||'#EAF1E3'};
+}
+function RT_haversineM(lat1,lon1,lat2,lon2){
+ var R=6371000;
+ var dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+ var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+ var c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+ return R*c;
+}
+function RT_distUnit(){ return rtGet(RT_DISTUNIT_KEY)||'m'; }
+function RT_toggleDistUnit(){ rtSet(RT_DISTUNIT_KEY, RT_distUnit()==='yd'?'m':'yd'); RT_render(); }
+function RT_fmtDist(meters){
+ if(meters===null||meters===undefined||isNaN(meters)) return '–';
+ if(RT_distUnit()==='yd') return Math.round(meters*1.09361)+' yd';
+ return Math.round(meters)+' m';
+}
+function RT_getRefOverrides(){ return rtGet(RT_REFOV_KEY)||{}; }
+function RT_applyRefOverrides(){
+ var ov=RT_getRefOverrides();
+ Object.keys(ov).forEach(function(key){ if(RT_COURSES[key]) RT_COURSES[key].refs=ov[key]; });
+}
+function RT_ensureRefsObj(c){
+ if(!c.refs) c.refs={F:[null,null,null,null,null,null,null,null,null],B:[null,null,null,null,null,null,null,null,null]};
+ if(!c.refs.F) c.refs.F=[null,null,null,null,null,null,null,null,null];
+ if(!c.refs.B) c.refs.B=[null,null,null,null,null,null,null,null,null];
+}
+function RT_persistRefs(key){
+ var custom=RT_loadCustomCourses();
+ if(custom[key]){ custom[key].refs=RT_COURSES[key].refs; rtSet(RT_CUSTOM_KEY,custom); sbPushCourse(key,custom[key]); }
+ else{ var ov=RT_getRefOverrides(); ov[key]=RT_COURSES[key].refs; rtSet(RT_REFOV_KEY,ov); sbPushCourse(key,RT_COURSES[key]); }
+}
+function RT_refFor(rd,c){
+ var key=RT_courseKeyFromName(rd.courseName,rd); if(!key) return null;
+ var co=RT_COURSES[key]; if(!co||!co.refs) return null;
+ var num=rd.nums[c]; var nine=num<=9?'F':'B'; var idx=num<=9?num-1:num-10;
+ return (co.refs[nine]&&co.refs[nine][idx])||null;
+}
+var RT_curPos=null;
+var RT_geoWatchId=null;
+/* ---------- Native Standortfreigabe (Backlog B9) ----------
+   In einem Capacitor-Container laeuft die App in einem WKWebView bzw. WebView. Dort greift
+   navigator.geolocation erst, wenn das Betriebssystem der App selbst die Standortfreigabe
+   erteilt hat. Das Web-API loest den nativen Dialog nicht zuverlaessig aus - unter iOS
+   schlaegt der Zugriff sonst stumm fehl. Deshalb wird die Freigabe einmalig ueber das
+   Geolocation-Plugin angefordert, bevor der Watch startet.
+   Im Browser ist der ganze Block wirkungslos: window.Capacitor existiert dort nicht,
+   RT_nativeGeoState bleibt auf 'web' und es wird direkt weitergemacht. */
+var RT_nativeGeoState='unbekannt';
+function RT_nativeGeoPlugin(){
+ try{
+  var C=(typeof window!=='undefined')&&window.Capacitor;
+  if(!C) return null;
+  if(typeof C.isNativePlatform==='function'&&!C.isNativePlatform()) return null;
+  var G=C.Plugins&&C.Plugins.Geolocation;
+  return (G&&typeof G.requestPermissions==='function')?G:null;
+ }catch(e){ return null; }
+}
+function RT_ensureNativeGeo(){
+ var G=RT_nativeGeoPlugin();
+ if(!G){ RT_nativeGeoState='web'; return Promise.resolve(true); }
+ var step;
+ try{ step=(typeof G.checkPermissions==='function')?G.checkPermissions():Promise.resolve(null); }
+ catch(e){ step=Promise.resolve(null); }
+ return Promise.resolve(step).then(function(st){
+  var s=st&&(st.location||st.coarseLocation);
+  if(s==='granted'){ RT_nativeGeoState='granted'; return true; }
+  if(s==='denied'){ RT_nativeGeoState='denied'; return false; }
+  return G.requestPermissions({permissions:['location']}).then(function(res){
+   var r=res&&(res.location||res.coarseLocation);
+   RT_nativeGeoState=(r==='granted')?'granted':(r||'unbekannt');
+   return RT_nativeGeoState==='granted';
+  });
+ }).catch(function(e){
+  /* Bei einem Plugin-Fehler nicht blockieren: der Watch wird trotzdem versucht,
+     damit ein Fehler in der Bruecke nicht das ganze GPS lahmlegt. */
+  RT_nativeGeoState='fehler'; return true;
+ });
+}
+var RT_geoStarting=false;
+function RT_startGeoWatch(){
+ if(RT_geoWatchId!==null||RT_geoStarting||typeof navigator==='undefined'||!navigator.geolocation) return;
+ RT_geoStarting=true;
+ RT_ensureNativeGeo().then(function(ok){
+  RT_geoStarting=false;
+  if(RT_geoWatchId!==null) return;
+  if(!ok){ if(typeof RT_render==='function') RT_render(); return; }
+  RT_startGeoWatchNow();
+  if(typeof RT_render==='function') RT_render();
+ });
+}
+function RT_startGeoWatchNow(){
+ if(RT_geoWatchId!==null||typeof navigator==='undefined'||!navigator.geolocation) return;
+ RT_geoWatchId=navigator.geolocation.watchPosition(function(pos){
+  RT_curPos={lat:pos.coords.latitude,lng:pos.coords.longitude,acc:pos.coords.accuracy};
+  RT_updDistanceDisplays();
+ },function(err){},{enableHighAccuracy:true,maximumAge:2000,timeout:10000});
+}
+function RT_stopGeoWatch(){
+ if(RT_geoWatchId!==null&&typeof navigator!=='undefined'&&navigator.geolocation) navigator.geolocation.clearWatch(RT_geoWatchId);
+ RT_geoWatchId=null;
+ RT_curPos=null;
+}
+function RT_gpsAccText(){
+ if(RT_nativeGeoState==='denied') return 'Standortfreigabe für die App verweigert – in den Systemeinstellungen erlauben.';
+ if(!RT_curPos) return 'Warte auf GPS-Signal…'+(RT_nativeGeoState==='fehler'?' (Standortfreigabe unklar)':'');
+ return 'GPS-Genauigkeit: ±'+Math.round(RT_curPos.acc)+' m';
+}
+function RT_distToPoint(pt){
+ if(!RT_curPos||!pt) return '–';
+ return RT_fmtDist(RT_haversineM(RT_curPos.lat,RT_curPos.lng,pt.lat,pt.lng));
+}
+function rtSlugAttr(s){ return String(s).replace(/[^a-zA-Z0-9]/g,''); }
+function RT_lastBallPos(rd,c){
+ var pi=(typeof RT_myPlayerIndex==='function')?RT_myPlayerIndex(rd):0;
+ var p=rd.players[pi]||rd.players[0];
+ if(!p||!p.pins||!p.pins[c]||!p.pins[c].length) return null;
+ return p.pins[c][p.pins[c].length-1];
+}
+function RT_distListHtml(rd,c){
+ var ref=RT_refFor(rd,c); if(!ref) return '';
+ var lines=[];
+ var seenTee={};
+ rd.players.forEach(function(p){
+  if(seenTee[p.tee]) return; seenTee[p.tee]=true;
+  var pt=ref.tees&&ref.tees[p.tee];
+  if(pt) lines.push('<div class="tr"><span>Abschlag ('+rtEsc(p.tee)+')</span><b id="dist-tee-'+rtSlugAttr(p.tee)+'">'+RT_distToPoint(pt)+'</b></div>');
+ });
+ if(ref.pin) lines.push('<div class="tr"><span>Loch</span><b id="dist-pin">'+RT_distToPoint(ref.pin)+'</b></div>');
+ if(ref.mid) lines.push('<div class="tr"><span>Bahnmitte</span><b id="dist-mid">'+RT_distToPoint(ref.mid)+'</b></div>');
+ var lastBall=RT_lastBallPos(rd,c);
+ if(lastBall) lines.push('<div class="tr"><span>Letzte Balllage</span><b id="dist-ball">'+RT_distToPoint(lastBall)+'</b></div>');
+ return lines.join('');
+}
+/* Feste Distanzen zwischen den gespeicherten Markierungen der eigenen Spur (im Gegensatz
+   zu den Live-Werten darueber, die sich mit dem GPS mitbewegen). Je Lage: Laenge des Schlags
+   dorthin, Entfernung vom eigenen Abschlag und Rest zum Loch. Straf- und Putt-Marker bleiben
+   aussen vor - sie liegen meist auf derselben Stelle wie ein Schlag und wuerden die Liste
+   nur verdoppeln; Bunker-Marker (B) sind echte Lagen und daher enthalten. */
+function RT_shotDistRows(rd,c){
+ var ref=RT_refFor(rd,c); if(!ref) return [];
+ var pi=(typeof RT_myPlayerIndex==='function')?RT_myPlayerIndex(rd):0;
+ var pins=RT_pinsOf(rd,pi,c);
+ var tee=RT_grabberTeePoint(rd,c);
+ var pin=(ref.pin&&ref.pin.lat!==undefined&&ref.pin.lat!==null)?ref.pin:null;
+ var rows=[], prev=tee?{lat:tee.lat,lng:tee.lng}:null, num=0;
+ pins.forEach(function(p){
+  var t=p.type||'shot';
+  if(t!=='shot'&&t!=='sand') return;
+  if(p.lat===undefined||p.lat===null) return;
+  var lbl;
+  if(t==='sand') lbl='B';
+  else if(p.shot==='P') lbl='\u26f3';
+  else if(p.shot===1) lbl='A';
+  else { num=(typeof p.shot==='number')?p.shot:(num+1); lbl=String(num); }
+  rows.push({
+   label:lbl,
+   /* Der Abschlag selbst ist kein Schlag - dort bleibt die Schlagweite leer. */
+   shotLen:(lbl==='A')?null:(prev?RT_haversineM(prev.lat,prev.lng,p.lat,p.lng):null),
+   fromTee:tee?RT_haversineM(tee.lat,tee.lng,p.lat,p.lng):null,
+   toPin:pin?RT_haversineM(p.lat,p.lng,pin.lat,pin.lng):null
+  });
+  prev={lat:p.lat,lng:p.lng};
+ });
+ return rows;
+}
+function RT_shotDistListHtml(rd,c){
+ var rows=RT_shotDistRows(rd,c);
+ if(!rows.length) return '<div class="rt-cs" style="margin:0;">Noch keine Markierungen auf dieser Bahn.</div>';
+ var grid='display:grid;grid-template-columns:24px 1fr 1fr 1fr;gap:2px 6px;align-items:center;';
+ var h='<div style="'+grid+'font-size:10px;color:#8A9C8E;margin-bottom:2px;"><span></span><span>Schlag</span><span>ab Abschlag</span><span>zum Loch</span></div>';
+ rows.forEach(function(r){
+  h+='<div style="'+grid+'font-size:12px;color:#3C5546;padding:2px 0;">'
+   +'<b style="color:#143522;">'+r.label+'</b>'
+   +'<span>'+RT_fmtDist(r.shotLen)+'</span>'
+   +'<span>'+RT_fmtDist(r.fromTee)+'</span>'
+   +'<span>'+RT_fmtDist(r.toPin)+'</span>'
+   +'</div>';
+ });
+ return h;
+}
+function RT_updDistanceDisplays(){
+ var accEl=document.getElementById('gps-acc'); if(accEl) accEl.textContent=RT_gpsAccText();
+ var listEl=document.getElementById('dist-list');
+ if(listEl&&RT_round) listEl.innerHTML=RT_distListHtml(RT_round,RT_round.cur);
+}
+
+function RT_setTeeRef(teeName){
+ if(typeof navigator==='undefined'||!navigator.geolocation){ RT_state.saveWarn='Geolocation nicht verfügbar.'; RT_render(); return; }
+ navigator.geolocation.getCurrentPosition(function(pos){
+  var rd=RT_round; if(!rd) return;
+  var key=RT_courseKeyFromName(rd.courseName,rd);
+  if(!key){ RT_state.saveWarn='Referenzpunkte können nur für bekannte Plätze gespeichert werden.'; RT_render(); return; }
+  var co=RT_COURSES[key]; RT_ensureRefsObj(co);
+  var num=rd.nums[rd.cur]; var nine=num<=9?'F':'B'; var idx=num<=9?num-1:num-10;
+  var entry=co.refs[nine][idx]||{tees:{},pin:null,mid:null};
+  if(!entry.tees) entry.tees={};
+  entry.tees[teeName]={lat:pos.coords.latitude,lng:pos.coords.longitude};
+  co.refs[nine][idx]=entry;
+  RT_persistRefs(key);
+  RT_render();
+ },function(err){ RT_state.saveWarn='Standort konnte nicht ermittelt werden: '+(err.message||err); RT_render(); },{enableHighAccuracy:true,timeout:10000});
+}
+function RT_clearTeeRef(teeName){
+ var rd=RT_round; if(!rd) return;
+ var key=RT_courseKeyFromName(rd.courseName,rd); if(!key) return;
+ var co=RT_COURSES[key]; if(!co||!co.refs) return;
+ var num=rd.nums[rd.cur]; var nine=num<=9?'F':'B'; var idx=num<=9?num-1:num-10;
+ var entry=co.refs[nine][idx]; if(!entry||!entry.tees) return;
+ delete entry.tees[teeName];
+ RT_persistRefs(key);
+ RT_render();
+}
+function RT_setRefPoint(kind){
+ if(typeof navigator==='undefined'||!navigator.geolocation){ RT_state.saveWarn='Geolocation nicht verfügbar.'; RT_render(); return; }
+ navigator.geolocation.getCurrentPosition(function(pos){
+  var rd=RT_round; if(!rd) return;
+  var key=RT_courseKeyFromName(rd.courseName,rd);
+  if(!key){ RT_state.saveWarn='Referenzpunkte können nur für bekannte Plätze gespeichert werden.'; RT_render(); return; }
+  var co=RT_COURSES[key]; RT_ensureRefsObj(co);
+  var num=rd.nums[rd.cur]; var nine=num<=9?'F':'B'; var idx=num<=9?num-1:num-10;
+  var entry=co.refs[nine][idx]||{tees:{},pin:null,mid:null};
+  if(kind==='pin') entry.pin={lat:pos.coords.latitude,lng:pos.coords.longitude};
+  else if(kind==='mid') entry.mid={lat:pos.coords.latitude,lng:pos.coords.longitude};
+  co.refs[nine][idx]=entry;
+  RT_persistRefs(key);
+  RT_render();
+ },function(err){ RT_state.saveWarn='Standort konnte nicht ermittelt werden: '+(err.message||err); RT_render(); },{enableHighAccuracy:true,timeout:10000});
+}
+function RT_clearRefPoint(kind){
+ var rd=RT_round; if(!rd) return;
+ var key=RT_courseKeyFromName(rd.courseName,rd); if(!key) return;
+ var co=RT_COURSES[key]; if(!co||!co.refs) return;
+ var num=rd.nums[rd.cur]; var nine=num<=9?'F':'B'; var idx=num<=9?num-1:num-10;
+ var entry=co.refs[nine][idx]; if(!entry) return;
+ if(kind==='pin') entry.pin=null; else if(kind==='mid') entry.mid=null;
+ RT_persistRefs(key);
+ RT_render();
+}
+/* ==================== Ball-Tracking / Georeferenzierung (Phase 1-4) ==================== */
+
+/* Phase 1: Manuelle Koordinaten-Eingabe (Google-Maps-Format "Breite, Laenge") */
+function RT_parseCoord(str){
+ if(!str) return null;
+ var s=String(str).trim();
+ var m=s.match(/^(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)$/);
+ if(!m) return null;
+ var lat=parseFloat(m[1]), lng=parseFloat(m[2]);
+ if(isNaN(lat)||isNaN(lng)) return null;
+ if(lat<-90||lat>90||lng<-180||lng>180) return null;
+ return {lat:lat,lng:lng};
+}
+
+/* Gemeinsamer Zugriff auf den Referenzpunkte-Eintrag der aktuellen Bahn (legt bei Bedarf an) */
+function RT_refEntryFor(rd,c,createIfMissing){
+ var key=RT_courseKeyFromName(rd.courseName,rd); if(!key) return null;
+ var co=RT_COURSES[key]; if(!co) return null;
+ RT_ensureRefsObj(co);
+ var num=rd.nums[c]; var nine=num<=9?'F':'B'; var idx=num<=9?num-1:num-10;
+ var entry=co.refs[nine][idx];
+ if(!entry&&createIfMissing){ entry={tees:{},pin:null,mid:null}; co.refs[nine][idx]=entry; }
+ if(entry&&!entry.tees) entry.tees={};
+ return entry?{key:key,co:co,entry:entry,nine:nine,idx:idx}:null;
+}
+function RT_curRefCtx(){
+ var rd=RT_round; if(!rd) return null;
+ return RT_refEntryFor(rd,rd.cur,true);
+}
+
+function RT_setRefManual(kind,teeName,text){
+ var rd=RT_round; if(!rd) return;
+ var parsed=RT_parseCoord(text);
+ if(!parsed){ RT_state.saveWarn='Ung\u00fcltiges Koordinatenformat. Bitte "Breite, L\u00e4nge" (z.B. 50.983245, 7.365198) einf\u00fcgen.'; RT_render(); return; }
+ var ctx=RT_refEntryFor(rd,rd.cur,true); if(!ctx) return;
+ var e=ctx.entry;
+ var existingPx=null;
+ if(kind==='pin'){ existingPx=e.pin&&e.pin.px; e.pin={lat:parsed.lat,lng:parsed.lng}; if(existingPx) e.pin.px=existingPx; }
+ else if(kind==='mid'){ existingPx=e.mid&&e.mid.px; e.mid={lat:parsed.lat,lng:parsed.lng}; if(existingPx) e.mid.px=existingPx; }
+ else if(kind==='tee'&&teeName){ existingPx=e.tees[teeName]&&e.tees[teeName].px; e.tees[teeName]={lat:parsed.lat,lng:parsed.lng}; if(existingPx) e.tees[teeName].px=existingPx; }
+ RT_state.saveWarn='';
+ RT_persistRefs(ctx.key);
+ RT_render();
+}
+
+/* Phase 2: Kalibrierung ueber Bildklick */
+function RT_calibPoints(ref){
+ var pts=[];
+ if(ref.pin&&ref.pin.px) pts.push(ref.pin);
+ if(ref.mid&&ref.mid.px) pts.push(ref.mid);
+ if(ref.tees){ Object.keys(ref.tees).forEach(function(k){ if(ref.tees[k]&&ref.tees[k].px) pts.push(ref.tees[k]); }); }
+ return pts;
+}
+/* Aehnlichkeitstransformation (Rotation+Skalierung+Verschiebung) aus mind. 2 kalibrierten
+   Punkten via komplexer Division - projiziert GPS-Koordinaten auf normierte Bildposition
+   (Bruchteil 0..1 der jeweiligen .rt-holemap-Box, unabhaengig von tatsaechlicher Boxgroesse/Zoom). */
+/* Seitenverhaeltnis (Breite/Hoehe) der Box, auf die sich die gespeicherten Bild-
+   Fraktionen (px.x/px.y, jeweils 0..1) beziehen. Ohne diesen Faktor waeren x und y
+   unterschiedlich skaliert und die Aehnlichkeitstransformation/Peilung im Bild
+   verzerrt (Punkte abseits der Verbindungslinie der beiden Kalibrierpunkte wandern
+   weg, Rotationswinkel stimmt nicht). Bevorzugt der beim Kalibrieren gemessene Wert. */
+function RT_pxAspect(ref){
+ if(ref&&ref.pxAspect&&!isNaN(ref.pxAspect)&&ref.pxAspect>0.1) return ref.pxAspect;
+ try{
+  var el=document.querySelector('.rt-holemap');
+  if(el&&el.clientWidth>0&&el.clientHeight>0) return el.clientWidth/el.clientHeight;
+ }catch(e){}
+ var w=(typeof window!=='undefined'&&window.innerWidth)?(window.innerWidth-64):350;
+ return Math.max(0.2,w/180);
+}
+function RT_computeCalib(ref){
+ var pts=RT_calibPoints(ref);
+ if(pts.length<2) return null;
+ var a=pts[0], b=pts[1];
+ var latRad=a.lat*Math.PI/180;
+ var mPerDegLat=110540, mPerDegLng=111320*Math.cos(latRad);
+ function toM(pt){ return {x:(pt.lng-a.lng)*mPerDegLng, y:-(pt.lat-a.lat)*mPerDegLat}; }
+ var bm=toM(b);
+ var gpsLen2=bm.x*bm.x+bm.y*bm.y;
+ if(gpsLen2<1e-6) return null;
+ var A=RT_pxAspect(ref);
+ var pxDx=b.px.x-a.px.x, pxDy=(b.px.y-a.px.y)/A;
+ var Tx=(pxDx*bm.x+pxDy*bm.y)/gpsLen2;
+ var Ty=(pxDy*bm.x-pxDx*bm.y)/gpsLen2;
+ /* Rotation der Birdiekarte relativ zu echt Nord: Peilung A->B in der Realitaet (GPS) vs.
+    Peilung A->B im Bild (Pixel) vergleichen. Differenz = Grad, um die die Satellitenkarte
+    gedreht werden muss, damit "oben" auf der Karte demselben Blickwinkel entspricht wie
+    "oben" auf der Birdiekarte - macht Rotations-Automatik moeglich (siehe RT_initHoleMaps/
+    RT_initHoleFullMap), sobald mind. 2 Referenzpunkte bildkalibriert sind. */
+ var bearingReal=Math.atan2(bm.x,-bm.y)*180/Math.PI;
+ var bearingImg=Math.atan2(pxDx,-pxDy)*180/Math.PI;
+ var rotDeg=((bearingImg-bearingReal)%360+360)%360;
+ return {originLat:a.lat, originLng:a.lng, originPx:{x:a.px.x,y:a.px.y}, mPerDegLat:mPerDegLat, mPerDegLng:mPerDegLng, Tx:Tx, Ty:Ty, A:A, rotDeg:rotDeg};
+}
+function RT_projectLatLngToPx(calib,lat,lng){
+ if(!calib) return null;
+ var dxM=(lng-calib.originLng)*calib.mPerDegLng;
+ var dyM=-(lat-calib.originLat)*calib.mPerDegLat;
+ var px=calib.originPx.x+(calib.Tx*dxM-calib.Ty*dyM);
+ var py=calib.originPx.y+((calib.Ty*dxM+calib.Tx*dyM)*(calib.A||1));
+ return {x:px,y:py};
+}
+function RT_activeCalibLabel(){
+ var a=RT_state.calibActive; if(!a) return null;
+ if(a.kind==='pin') return 'Loch/Fahne';
+ if(a.kind==='mid') return 'Bahnmitte';
+ if(a.kind==='tee') return a.teeName;
+ return null;
+}
+function RT_setActiveCalibPoint(kind,teeName){
+ teeName=teeName||null;
+ var cur=RT_state.calibActive;
+ if(cur&&cur.kind===kind&&cur.teeName===teeName) RT_state.calibActive=null;
+ else RT_state.calibActive={kind:kind,teeName:teeName};
+ RT_render();
+}
+function RT_saveRefPx(kind,teeName,frac){
+ var ctx=RT_curRefCtx(); if(!ctx) return;
+ var e=ctx.entry;
+ var pt=(kind==='pin')?e.pin:(kind==='mid')?e.mid:(kind==='tee'&&teeName)?e.tees[teeName]:null;
+ if(!pt){ RT_state.saveWarn='Bitte zuerst GPS-Koordinaten f\u00fcr diesen Punkt setzen (GPS-Button oder manuell), bevor die Bildposition kalibriert wird.'; RT_render(); return; }
+ pt.px={x:frac.x,y:frac.y};
+ if(RT_state.calibPxAspect) e.pxAspect=RT_state.calibPxAspect;
+ RT_state.calibActive=null;
+ RT_persistRefs(ctx.key);
+ RT_render();
+}
+/* Referenzpunkt-Marker auf der Birdiekarte direkt verschiebbar machen: bisher liess sich
+   eine Bildposition nur neu SETZEN (Punkt aktivieren, dann ins Bild tippen). Jetzt kann
+   jeder bereits gesetzte Marker gegriffen und gezogen werden. Gearbeitet wird mit Pointer-
+   Events plus setPointerCapture, damit Maus und Touch denselben Pfad nehmen und der Zeiger
+   den Marker auch bei schnellen Bewegungen nicht verliert. */
+var RT_refDrag=null;
+var RT_suppressImgClick=false;
+function RT_refDragFrac(box,ev){
+ var r=box.getBoundingClientRect();
+ var fx=(ev.clientX-r.left)/r.width, fy=(ev.clientY-r.top)/r.height;
+ return {x:Math.max(0,Math.min(1,fx)), y:Math.max(0,Math.min(1,fy)), aspect:(r.height>0?(r.width/r.height):null)};
+}
+function RT_refDragStart(ev,el){
+ if(!el||!el.parentElement) return;
+ ev.preventDefault(); ev.stopPropagation();
+ RT_refDrag={el:el, box:el.parentElement, kind:el.getAttribute('data-kind'), teeName:(el.getAttribute('data-tee')||null), moved:false};
+ try{ el.setPointerCapture(ev.pointerId); }catch(e){}
+ el.style.cursor='grabbing'; el.style.zIndex='30';
+ el.addEventListener('pointermove',RT_refDragMove);
+ el.addEventListener('pointerup',RT_refDragEnd);
+ el.addEventListener('pointercancel',RT_refDragEnd);
+}
+function RT_refDragMove(ev){
+ if(!RT_refDrag) return;
+ ev.preventDefault();
+ RT_refDrag.moved=true;
+ var f=RT_refDragFrac(RT_refDrag.box,ev);
+ RT_refDrag.el.style.left=(f.x*100)+'%';
+ RT_refDrag.el.style.top=(f.y*100)+'%';
+}
+function RT_refDragEnd(ev){
+ if(!RT_refDrag) return;
+ var d=RT_refDrag; RT_refDrag=null;
+ try{
+  d.el.removeEventListener('pointermove',RT_refDragMove);
+  d.el.removeEventListener('pointerup',RT_refDragEnd);
+  d.el.removeEventListener('pointercancel',RT_refDragEnd);
+ }catch(e){}
+ d.el.style.cursor='grab'; d.el.style.zIndex='';
+ if(!d.moved) return;
+ /* Nach einem Drag darf der nachfolgende click auf die Bildbox nicht noch einmal die
+    Position des gerade aktiven Punkts setzen. */
+ RT_suppressImgClick=true;
+ setTimeout(function(){ RT_suppressImgClick=false; },350);
+ var f=RT_refDragFrac(d.box,ev);
+ RT_state.calibPxAspect=f.aspect;
+ RT_saveRefPx(d.kind,d.teeName,{x:f.x,y:f.y});
+}
+function RT_refImgClick(ev){
+ if(RT_suppressImgClick) return;
+ var active=RT_state.calibActive; if(!active) return;
+ var box=ev.currentTarget.getBoundingClientRect();
+ RT_state.calibPxAspect=(box.height>0)?(box.width/box.height):null;
+ var fx=(ev.clientX-box.left)/box.width;
+ var fy=(ev.clientY-box.top)/box.height;
+ fx=Math.max(0,Math.min(1,fx)); fy=Math.max(0,Math.min(1,fy));
+ RT_saveRefPx(active.kind,active.teeName,{x:fx,y:fy});
+}
+function RT_calibMarkersHtml(ref){
+ var h='';
+ var active=RT_state.calibActive;
+  function dot(pt,label,bg,fg,isActive,kind,teeName){
+  if(!pt||!pt.px) return '';
+  fg=fg||'#fff';
+  var fx=Math.max(0.02,Math.min(0.98,pt.px.x))*100, fy=Math.max(0.02,Math.min(0.98,pt.px.y))*100;
+  return '<div style="position:absolute;left:'+fx+'%;top:'+fy+'%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:'+(isActive?'#BF5AF2':bg)+';color:'+(isActive?'#fff':fg)+';font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);pointer-events:auto;cursor:grab;touch-action:none;" data-kind="'+kind+'" data-tee="'+rtEsc(teeName||'')+'" onpointerdown="RT_refDragStart(event,this)" title="Zum Verschieben ziehen">'+label+'</div>';
+ }
+ h+=dot(ref.pin,'\u26f3','#FFFFFF','#fff', !!(active&&active.kind==='pin'),'pin',null);
+ h+=dot(ref.mid,'M','#0A84FF','#fff', !!(active&&active.kind==='mid'),'mid',null);
+ if(ref.tees) Object.keys(ref.tees).forEach(function(k){ var bg=RT_teeColorFor(k); h+=dot(ref.tees[k],'T',bg,RT_teeTextColorFor(bg), !!(active&&active.kind==='tee'&&active.teeName===k),'tee',k); });
+ return h;
+}
+
+/* Phase 3: Schlag-fuer-Schlag-Tracking mit expliziten Schlagnummern (Luecken erlaubt) + "P" (eingelocht) */
+/* Ab hier werden Balllagen/Markierungen PRO SPIELER gefuehrt. Frueher lief das gesamte
+   Pin-System hart auf players[0]; dadurch teilten sich alle Mitspieler eine einzige
+   Markierungsspur. Jeder Zugriff laeuft jetzt ueber RT_pinsOf(rd,pi,c). */
+function RT_pinsOf(rd,pi,c){
+ RT_ensurePins(rd);
+ var p=rd.players[pi]||rd.players[0];
+ if(!p.pins[c]) p.pins[c]=[];
+ return p.pins[c];
+}
+function RT_ballShotSuggest(rd,c,pi){
+ var pins=RT_pinsOf(rd,(pi===undefined||pi===null)?0:pi,c);
+ var maxN=0;
+ pins.forEach(function(p){ if(typeof p.shot==='number'&&p.shot>maxN) maxN=p.shot; });
+ return maxN+1;
+}
+function RT_ballLabel(shot){
+ if(shot==='P') return 'P';
+ return String(shot);
+}
+/* Ein Button pro Spieler: setzt an der aktuellen GPS-Position die naechste Markierung.
+   Der Schlagzaehler bleibt davon unberuehrt - gezaehlt wird allein ueber die +/- Stepper. Der erste Klick ist der Abschlag (A),
+   danach 2..n. Liegt der Standort naeher als 8 m am Loch-Referenzpunkt, wird statt einer
+   Nummer das Einlochen (Fahne) gesetzt - anders koennte der Button nicht wissen, dass die
+   Bahn zu Ende ist. Bei Mitspielern ohne eigenes Geraet wird bewusst das GPS DIESES Geraets
+   verwendet; die Zuordnung erfolgt trotzdem zum jeweiligen Spieler. */
+var RT_HOLED_RADIUS_M=8;
+/* Button-Beschriftung verraet, was der naechste Klick setzt: A beim ersten Klick, danach
+   die naechste Nummer. Ob es stattdessen das Einlochen wird, entscheidet sich erst beim
+   Klick anhand der dann gemessenen Position - deshalb steht das nicht im Label. */
+function RT_markShotLabel(rd,c,pi){
+ var n=RT_ballShotSuggest(rd,c,pi);
+ return '\ud83d\udccd Markieren'+(n===1?' (A)':' ('+n+')');
+}
+function RT_markShot(pi){
+ var rd=RT_round; if(!rd) return;
+ if(typeof navigator==='undefined'||!navigator.geolocation){ RT_state.saveWarn='Geolocation nicht verf\u00fcgbar.'; RT_render(); return; }
+ var c=rd.cur;
+ navigator.geolocation.getCurrentPosition(function(pos){
+  var la=pos.coords.latitude, ln=pos.coords.longitude;
+  var ref=RT_refFor(rd,c);
+  var holed=false;
+  if(ref&&ref.pin&&ref.pin.lat!==undefined&&ref.pin.lat!==null){
+   holed=RT_haversineM(la,ln,ref.pin.lat,ref.pin.lng)<=RT_HOLED_RADIUS_M;
+  }
+  var pins=RT_pinsOf(rd,pi,c);
+  pins.push({lat:la,lng:ln,shot:(holed?'P':RT_ballShotSuggest(rd,c,pi))});
+  /* Backlog A2: Markieren setzt AUSSCHLIESSLICH die Position. Der Schlagzaehler wird hier
+     bewusst NICHT mehr erhoeht - das passiert allein ueber die +/- Stepper. Die fruehere
+     Kopplung erzeugte gefuehlte Phantomschlaege, sobald nur eine Balllage markiert wurde.
+     Die Marker-Nummerierung haengt an RT_ballShotSuggest() und damit an den vorhandenen
+     Pins, nicht an p.sc - sie bleibt deshalb unveraendert korrekt. */
+  rtSet(RT_ACT,rd);
+  RT_syncActiveToSaved();
+  RT_render();
+ },function(err){ RT_state.saveWarn='Standort konnte nicht ermittelt werden: '+(err.message||err); RT_render(); },{enableHighAccuracy:true,timeout:10000});
+}
+/* Phase 4: Pin-Overlay auf statischem Lochbild */
+function RT_teeColorFor(name){
+ var n=(name||'').toLowerCase();
+ if(n.indexOf('gelb')>=0) return '#E0B400';
+ if(n.indexOf('rot')>=0) return '#D64550';
+ if(n.indexOf('gr\u00fcn')>=0||n.indexOf('gruen')>=0) return '#1F8A4D';
+ if(n.indexOf('blau')>=0) return '#0A84FF';
+ if(n.indexOf('orange')>=0) return '#FF9F0A';
+ if(n.indexOf('schwarz')>=0) return '#1B1B1B';
+ if(n.indexOf('silber')>=0) return '#9AAB9E';
+ if(n.indexOf('wei')>=0) return '#FFFFFF';
+ return '#E9A820';
+}
+function RT_teeTextColorFor(bg){
+ return bg==='#FFFFFF'?'#143522':'#fff';
+}
+/* Eindeutige Zeichen je Markierungsart - bewusst KEIN dreifaches "P":
+   Abschlag = A (schwarz), Balllagen = 2..n (dunkelgruen), eingelocht = Fahne (schwarz),
+   Strafschlag = S (rot), Bunker = B (gelb), Putt = P (gruen). */
+function RT_pinMarkerVisual(pt,idx){
+ var type=pt.type||'shot';
+ if(type==='straf') return {label:'S', bg:'#D64550'};
+ if(type==='sand') return {label:'B', bg:'#E0B400'};
+ if(type==='putt') return {label:'P', bg:'#1F8A4D'};
+ if(pt.shot==='P') return {label:'\u26f3', bg:'#1B1B1B'};
+ if(pt.shot===1) return {label:'A', bg:'#1B1B1B'};
+ var lbl=(pt.shot!==undefined&&pt.shot!==null)?RT_ballLabel(pt.shot):String(idx+1);
+ return {label:lbl, bg:'rgba(20,53,34,.85)'};
+}
+
+function RT_pinsOverlayHtml(rd,c,rotComp,pi){
+ var ref=RT_refFor(rd,c); if(!ref) return '';
+ var calib=RT_computeCalib(ref); if(!calib) return '';
+ var pins=RT_pinsOf(rd,(pi===undefined||pi===null)?0:pi,c);
+ if(!pins.length) return '';
+ var h='';
+ pins.forEach(function(p,idx){
+  var px=RT_projectLatLngToPx(calib,p.lat,p.lng); if(!px) return;
+  var fx=Math.max(0.02,Math.min(0.98,px.x))*100, fy=Math.max(0.02,Math.min(0.98,px.y))*100;
+  var vis=RT_pinMarkerVisual(p,idx);
+  h+='<div style="position:absolute;left:'+fx+'%;top:'+fy+'%;transform:translate(-50%,-50%) rotate('+(rotComp||0)+'deg);width:20px;height:20px;border-radius:50%;background:'+vis.bg+';color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.35);border:1.5px solid #fff;pointer-events:none;">'+vis.label+'</div>';
+ });
+ return h;
+}
+
+/* Baustein fuer je einen Referenzpunkt (Tee/Pin/Mitte) in RT_refSetupHtml:
+   GPS-Button (bestehend) + manuelles Koordinatenfeld (neu) + Bildposition-Kalibrierungs-Toggle (neu) */
+function RT_refOverlayHtml(rd,c,rotComp){
+ var ref=RT_refFor(rd,c); if(!ref) return '';
+ var calib=RT_computeCalib(ref); if(!calib) return '';
+ var h='';
+ function dot(pt,label,bg,fg){
+  if(!pt) return;
+  fg=fg||'#fff';
+  var px=RT_projectLatLngToPx(calib,pt.lat,pt.lng); if(!px) return;
+  var fx=Math.max(0.02,Math.min(0.98,px.x))*100, fy=Math.max(0.02,Math.min(0.98,px.y))*100;
+  h+='<div style="position:absolute;left:'+fx+'%;top:'+fy+'%;transform:translate(-50%,-50%) rotate('+(rotComp||0)+'deg);width:20px;height:20px;border-radius:50%;background:'+bg+';color:'+fg+';font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.35);border:1.5px solid #fff;pointer-events:none;">'+label+'</div>';
+ }
+ dot(ref.pin,'\u26f3','#FFFFFF');
+ dot(ref.mid,'M','#0A84FF');
+ if(ref.tees) Object.keys(ref.tees).forEach(function(k){ var bg=RT_teeColorFor(k); dot(ref.tees[k],'T',bg,RT_teeTextColorFor(bg)); });
+ return h;
+}
+
+function RT_refPointRowHtml(kind,teeName,label,pt){
+ var hasGps=!!pt;
+ var hasPx=!!(pt&&pt.px);
+ var active=!!(RT_state.calibActive&&RT_state.calibActive.kind===kind&&(kind!=='tee'||RT_state.calibActive.teeName===teeName));
+ var setFn=kind==='tee' ? ("RT_setTeeRef('"+rtJsEsc(teeName)+"')") : ("RT_setRefPoint('"+kind+"')");
+ var clearFn=kind==='tee' ? ("RT_clearTeeRef('"+rtJsEsc(teeName)+"')") : ("RT_clearRefPoint('"+kind+"')");
+ var coordText=hasGps ? (pt.lat.toFixed(6)+', '+pt.lng.toFixed(6)) : '';
+ var teeArg=teeName?rtJsEsc(teeName):'';
+ var h='<div style="border:1px solid #E1EADA;border-radius:10px;padding:8px;margin-bottom:8px;'+(active?'background:#FBF3FF;border-color:#BF5AF2;':'background:#FBFDF9;')+'">';
+ h+='<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">'
+   +'<button class="rt-btn3" style="flex:1;text-align:left;border-radius:8px;padding:6px 10px;background:'+(hasGps?'#EAF6EE':'#F1F6EC')+'" onclick="'+setFn+'">'+(hasGps?'\u2705 ':'\ud83d\udccd ')+rtEsc(label)+' hier setzen</button>'
+   +(hasGps?('<button class="rt-btn3" onclick="'+clearFn+'">&#10005;</button>'):'')
+   +'</div>';
+ h+='<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">'
+   +'<input class="rt-inp" placeholder="Breite, L\u00e4nge (z.B. 50.983245, 7.365198)" value="'+rtEsc(coordText)+'" style="flex:1;font-size:12px;" onchange="RT_setRefManual(\''+kind+'\',\''+teeArg+'\',this.value)">'
+   +'<button class="rt-btn3" style="flex-shrink:0;padding:6px 10px;" title="Aktuelle GPS-Position hier eintragen" onclick="'+setFn+'">\ud83d\udccd</button>'
+   +'</div>';
+ if(hasGps||hasPx){
+  h+='<button class="rt-btn3" style="width:100%;'+(active?'background:#BF5AF2;color:#fff;':(hasPx?'background:#EAF6EE;':'background:#F1F6EC;'))+'" onclick="RT_setActiveCalibPoint(\''+kind+'\',\''+teeArg+'\')">'
+    +(hasPx?'\u2705 ':'\ud83d\uddbc\ufe0f ')+'Bildposition '+(active?'aktiv \u2013 im Bild unten antippen':(hasPx?'gesetzt (neu setzen)':'setzen'))+'</button>';
+ }
+ h+='</div>';
+ return h;
+}
+
+function RT_refSetupHtml(rd,c){
+ var key=RT_courseKeyFromName(rd.courseName,rd);
+ if(!key) return '<div class="rt-cs">Unbekannter Platz \u2013 keine Referenzpunkte m\u00f6glich.</div>';
+ var co=RT_COURSES[key]; RT_ensureRefsObj(co);
+ var num=rd.nums[c]; var nine=num<=9?'F':'B'; var idx=num<=9?num-1:num-10;
+ var ref=co.refs[nine][idx]||{tees:{},pin:null,mid:null};
+ if(!ref.tees) ref.tees={};
+ var h='<div style="margin-top:8px;">';
+ RT_teeOrderResolved(co).map(function(ti){return co.tees[ti];}).forEach(function(t){
+  h+=RT_refPointRowHtml('tee',t.name,t.name,ref.tees[t.name]);
+ });
+ h+=RT_refPointRowHtml('mid',null,'Bahnmitte',ref.mid);
+ h+=RT_refPointRowHtml('pin',null,'Loch/Fahne',ref.pin);
+ var rtImg=RT_holeImgFor(rd,c);
+ if(rtImg){
+  h+='<div style="margin-top:8px;">';
+  h+='<div class="rt-cs" style="margin-bottom:6px;">'+(RT_state.calibActive?('Bildposition f\u00fcr \u201e'+rtEsc(RT_activeCalibLabel())+'\u201c antippen'):'Zum Kalibrieren oben bei einem Punkt \u201eBildposition setzen\u201c antippen, dann hier im Bild antippen. Bereits gesetzte Marker lassen sich direkt im Bild verschieben. (Mind. 2 kalibrierte Punkte n\u00f6tig, damit Balllagen im Bild erscheinen.)')+'</div>';
+  h+='<div class="rt-holemap" style="cursor:'+(RT_state.calibActive?'crosshair':'default')+';" '+(RT_state.calibActive?'onclick="RT_refImgClick(event)"':'')+'>'
+    +'<img src="'+rtImg.url+'" alt="Lochkarte" style="width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;">'
+    +RT_calibMarkersHtml(ref)
+    +'</div>';
+  h+='</div>';
+ }
+ h+='</div>';
+ return h;
+}
+/* Einzelne Georghausen-Lochkarten wirken bei fester Kartenhoehe (180px) kleiner, weil ihr
+   Quellbild ein hoeheres/schmaleres Seitenverhaeltnis hat als der Durchschnitt (Ursache: die
+   Original-PDF-Seite hat die Bahn dort vertikaler angeordnet). Anstatt die Bilddateien zu
+   beschneiden (Informationsverlust) wird hier gezielt hochskaliert - Faktor ist manuell/optisch
+   austariert, nicht rein rechnerisch aus dem Seitenverhaeltnis abgeleitet, da z.B. Bahn 9 laut
+   reiner Hoehen-Formel schon "gross genug" waere, aber auf Wunsch trotzdem angehoben wurde. */
+var RT_HOLE_BIGGER={};
+var RT_holeFullMapInst=null;
+/* pi = Spieler, aus dessen Karte das Vollbild geoeffnet wurde. Ohne diese Angabe wuerden
+   im Vollbild immer die Markierungen des ersten Spielers gezeigt. */
+function RT_openHoleFull(url,title,pi){
+ RT_state.fullPi=(pi===undefined||pi===null)?0:pi;
+ var el=document.getElementById('hole-full'); if(!el)return;
+ el.style.display='block';
+ RT_renderHoleFull(url,title);
+}
+function RT_renderHoleFull(url,title){
+ var el=document.getElementById('hole-full'); if(!el)return;
+ var rd=RT_round;
+ var c=rd?rd.cur:null;
+ var holeKey=rd?RT_holeMapKey(rd,c):null;
+ var mapMode=!!(holeKey&&RT_state.mapModeOn&&RT_state.mapModeOn[holeKey]);
+ var toggleBtn=holeKey?('<button class="rt-btn3" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:64px;background:#fff;border:1.5px solid #DCE7D4;border-radius:100px;padding:8px 14px;font-size:12px;font-weight:700;color:#3C5546;z-index:2;" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?'\ud83d\uddbc\ufe0f Birdiekarte':'\ud83d\udef0\ufe0f Satellitenkarte')+'</button>'):'';
+ var body;
+ if(mapMode){
+  body='<div style="position:absolute;inset:0;overflow:hidden;"><div id="hole-full-map" style="position:absolute;width:160%;height:160%;left:-30%;top:-30%;transform-origin:center center;"></div></div>'+RT_grabberOverlayHtml();
+ }else{
+  var ov=(rd?RT_pinsOverlayHtml(rd,c,-RT_FULL_IMG_ROT,RT_state.fullPi||0):'');
+  body='<div id="hole-full-frame" style="position:relative;transform-origin:center center;"><img src="'+url+'" alt="Lochkarte" onload="RT_fitRotatedImg(this)" style="display:block;width:100%;height:100%;">'+ov+'</div>';
+ }
+ if(RT_holeFullMapInst){ try{RT_holeFullMapInst.remove();}catch(e){} RT_holeFullMapInst=null; }
+ el.innerHTML='<button class="rt-holefull-close" onclick="RT_closeHoleFull()">&#10005;</button>'+
+  toggleBtn+
+  '<div class="rt-holefull-title">'+rtEsc(title)+'</div>'+
+  '<div class="rt-holefull-card"><div class="rt-holefull-imgwrap">'+body+'</div></div>';
+ if(mapMode) RT_initHoleFullMap();
+}
+function RT_closeHoleFull(){
+ var el=document.getElementById('hole-full'); if(!el)return;
+ if(RT_holeFullMapInst){ try{RT_holeFullMapInst.remove();}catch(e){} RT_holeFullMapInst=null; }
+ el.style.display='none'; el.innerHTML='';
+}
+function RT_sizeRotatedMap(el,rotDeg){
+ /* Ein gedrehtes Rechteck deckt seinen aufrechten Container nicht mehr vollstaendig ab -
+    an den Ecken bleibt der helle Hintergrund stehen. Die feste Vorgabe von 160% reichte
+    nur bei kleinen Winkeln: bei einem hochkanten Ausschnitt (H/W ~ 2,9 auf dem iPhone)
+    projiziert schon eine Drehung um 15 Grad mehr Hoehe in die Breite, als 160% Breite
+    abdecken (|cos15|+2,9*|sin15| = 1,72 > 1,6). Deshalb wird die noetige Groesse aus
+    Winkel UND Seitenverhaeltnis berechnet:
+      Breite = W*|cos| + H*|sin|   Hoehe = W*|sin| + H*|cos|
+    Das Ergebnis liegt mittig ueber dem sichtbaren Bereich; der Ueberstand wird vom
+    Wrapper (overflow:hidden) abgeschnitten. Muss VOR L.map() laufen, damit Leaflet die
+    richtige Containergroesse kennt. Die kleine Karte braucht das nicht: ihr 500x500-px-
+    Quadrat deckt mit seinem Inkreis die Bildschirmdiagonale bei jedem Winkel ab. */
+ if(!el) return;
+ var wrap=el.parentNode; if(!wrap) return;
+ var W=wrap.clientWidth||0, H=wrap.clientHeight||0;
+ if(!W||!H) return;
+ var th=(rotDeg||0)*Math.PI/180;
+ var ac=Math.abs(Math.cos(th)), as=Math.abs(Math.sin(th));
+ var nw=Math.ceil(W*ac+H*as)+4, nh=Math.ceil(W*as+H*ac)+4;
+ el.style.width=nw+'px'; el.style.height=nh+'px';
+ el.style.left=Math.round((W-nw)/2)+'px'; el.style.top=Math.round((H-nh)/2)+'px';
+}
+async function RT_initHoleFullMap(){
+ var rd=RT_round; if(!rd) return;
+ var c=rd.cur;
+ var hfRef=RT_refFor(rd,c);
+ var hfCalib=hfRef?RT_computeCalib(hfRef):null;
+ var hfAutoRot=hfCalib?hfCalib.rotDeg:null;
+ var savedView=(rd.holeViews&&rd.holeViews[RT_holeMapKey(rd,c)])||RT_holeViews()[RT_holeMapKey(rd,c)];
+ if(!RT_savedViewUsable(rd,c,savedView)) savedView=null;
+ var basePos=null;
+ if(savedView){ var hfRotVal=(savedView.rot!==undefined&&savedView.rot!==null&&savedView.rot!==0)?savedView.rot:(hfAutoRot!==null?hfAutoRot:(savedView.rot||0)); basePos={lat:savedView.lat, lng:savedView.lng, zoom:savedView.zoom, rot:hfRotVal}; }
+ else{
+  var hfCtr=RT_holeCenter(rd,c);
+  if(hfCtr){ basePos={lat:hfCtr.lat, lng:hfCtr.lng, zoom:17, rot:(hfAutoRot!==null?hfAutoRot:0), fit:true}; }
+  else{
+   var ck=RT_courseKeyFromName(rd.courseName,rd);
+   var courseObj=ck?RT_COURSES[ck]:null;
+   var pos=null;
+   if(courseObj){
+    if(courseObj.lat!==undefined&&courseObj.lat!==null){ pos={lat:courseObj.lat, lon:courseObj.lon}; }
+    else if(courseObj.address){ pos=await RT_geocode(courseObj.address); }
+   }
+   if(pos) basePos={lat:pos.lat, lng:pos.lon, zoom:17, rot:(hfAutoRot!==null?hfAutoRot:0)};
+  }
+ }
+ if(rd!==RT_round||c!==RT_round.cur) return;
+ var el=document.getElementById('hole-full-map'); if(!el||!basePos||typeof L==='undefined') return;
+ if(RT_holeFullMapInst){ try{RT_holeFullMapInst.remove();}catch(e){} RT_holeFullMapInst=null; }
+ var rotF=((((basePos.rot||0)+RT_FULL_IMG_ROT)%360)+360)%360;
+ el.style.transform='rotate('+rotF+'deg)';
+ RT_sizeRotatedMap(el,rotF);
+ var map=L.map('hole-full-map',{zoomControl:true,attributionControl:true,zoomSnap:0.1}).setView([basePos.lat,basePos.lng],basePos.zoom);
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,attribution:'Tiles \u00a9 Esri'}).addTo(map);
+ RT_holeFullMapInst=map;
+ /* Leaflets eigenes Dragging MUSS hier ausgeschaltet werden: die Vollbildkarte laeuft ohne
+    Kartensperre (RT_applyMapLock gilt nur fuer die kleinen Karten), sonst wuerde Leaflet
+    parallel zu RT_setupRotDrag() weiter unkorrigiert - also schief - verschieben.
+    Pinch-Zoom bleibt bewusst bei Leaflet. */
+ try{ map.dragging.disable(); }catch(e){}
+ RT_setupRotDrag('full',map,el,function(){ return rotF; });
+ /* Die Bahn soll immer gleich im Bild liegen: eigener Abschlag unten in der Mitte, Fahne
+    knapp unter dem oberen Rand. Weil das Kartenzentrum in der Mitte des sichtbaren
+    Ausschnitts sitzt, ist der Mittelpunkt zwischen Abschlag und Fahne der richtige
+    Zielpunkt; der Zoom ergibt sich aus Bahnlaenge und sichtbarer Hoehe. Ein gespeicherter
+    Ausschnitt tritt dahinter zurueck - beim Spielen zaehlt der Blick die Bahn hinauf. */
+ var tpFit=RT_teePinFit(rd,c,el);
+ if(tpFit){ try{ map.setView([tpFit.lat,tpFit.lng],tpFit.zoom,{animate:false}); }catch(e){} }
+ else if(basePos.fit){ try{ var ffpts=RT_holePoints(rd,c); if(ffpts.length>1) map.fitBounds(L.latLngBounds(ffpts).pad(0.45)); else map.setZoom(18); }catch(e){} }
+ var layer=L.layerGroup().addTo(map);
+ /* Referenzpunkte bleiben im Spielbetrieb ausgeblendet - auf den Spielerkarten sollen nur
+    die selbst gesetzten Markierungen sichtbar sein (siehe RT_initHoleMaps). */
+ var pins=RT_pinsOf(rd,RT_state.fullPi||0,c);
+ pins.forEach(function(pt,idx){
+  var vis=RT_pinMarkerVisual(pt,idx);
+  var icon=L.divIcon({className:'',html:'<div style="width:22px;height:22px;border-radius:50%;background:'+vis.bg+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transform:rotate('+(-rotF)+'deg);">'+vis.label+'</div>',iconSize:[22,22],iconAnchor:[11,11]});
+  L.marker([pt.lat,pt.lng],{icon:icon,interactive:false}).addTo(layer);
+ });
+ RT_state.fullRot=rotF;
+ RT_clearFullGrabber();
+ /* Reihenfolge ist wichtig: erst invalidateSize, dann zeichnen. Andersherum bekommt der
+    SVG-Renderer der Boegen einen Ursprung, der nach der Groessenaenderung nicht mehr passt. */
+ setTimeout(function(){
+  try{map.invalidateSize();}catch(e){}
+  if(RT_state.grabberOn&&RT_state.grabberOn[RT_holeMapKey(rd,c)]) RT_setupFullGrabber();
+ },80);
+}
+/* Die Birdiekarten-Quellbilder liegen im Querformat vor und werden in der Vollbild-
+   ansicht per CSS um -90 Grad gedreht dargestellt (RT_fitRotatedImg). Diese reine
+   ANZEIGE-Drehung muss ueberall mitgerechnet werden: die Satellitenkarte im Vollbild
+   wird zusaetzlich um denselben Winkel gedreht (damit sie wie die Birdiekarte liegt),
+   und die Marker-Beschriftungen werden um den Gegenwinkel zurueckgedreht (damit sie
+   lesbar bleiben). */
+var RT_FULL_IMG_ROT=-90;
+function RT_fitRotatedImg(img){
+ var frame=img.parentElement;
+ var wrap=(frame&&frame.id==='hole-full-frame')?frame.parentElement:img.parentElement;
+ var vw=(wrap&&wrap.clientWidth)?wrap.clientWidth-16:window.innerWidth-32;
+ var vh=(wrap&&wrap.clientHeight)?wrap.clientHeight-16:window.innerHeight-110;
+ var iw=img.naturalWidth||1, ih=img.naturalHeight||1;
+ var scale=Math.min(vw/ih, vh/iw);
+ var dispW=Math.round(iw*scale), dispH=Math.round(ih*scale);
+ if(frame&&frame.id==='hole-full-frame'){
+  frame.style.width=dispW+'px'; frame.style.height=dispH+'px';
+  frame.style.transform='rotate(-90deg)';
+ }else{
+  img.style.width=dispW+'px'; img.style.height=dispH+'px';
+  img.style.transform='rotate(-90deg)';
+ }
+}
+async function RT_avatarFile(ev){
+ var f=ev.target.files&&ev.target.files[0]; if(!f||!sb||!sbUser)return;
+ var reader=new FileReader();
+ reader.onload=function(e){
+  var img=new Image();
+  img.onload=function(){
+   var maxW=400;
+   var scale=Math.min(1,maxW/img.width);
+   var w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+   var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+   var ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+   if(!cv.toBlob){ return; }
+   cv.toBlob(async function(blob){
+    if(!blob) return;
+    RT_state.avatarBusy=true; RT_render();
+    try{
+     var path=sbUser.id+'-'+Date.now()+'.jpg';
+     var up=await sb.storage.from('avatars').upload(path,blob,{contentType:'image/jpeg',upsert:true});
+     if(up.error)throw up.error;
+     var pub=sb.storage.from('avatars').getPublicUrl(path);
+     var r=await sb.auth.updateUser({data:{avatar_url:pub.data.publicUrl}});
+     if(r.error)throw r.error;
+     sbUser=r.data.user;
+    }catch(err){
+     RT_state.nameMsg='Profilbild-Upload fehlgeschlagen: '+(err.message||err);
+    }
+    RT_state.avatarBusy=false; RT_render();
+   },'image/jpeg',0.85);
+  };
+  img.src=e.target.result;
+ };
+ reader.readAsDataURL(f);
+}
+async function RT_nameSave(){
+ if(!sb||!sbUser)return;
+ var name=(document.getElementById('usr-name').value||'').trim();
+ try{
+  var r=await sb.auth.updateUser({data:{display_name:name}});
+  if(r.error)throw r.error;
+  sbUser=r.data.user;
+  RT_state.nameMsg='Gespeichert.';
+ }catch(e){ RT_state.nameMsg='Fehler: '+(e.message||e); }
+ RT_render();
+}
+async function RT_pwSave(){
+ if(!sb||!sbUser)return;
+ var p1=document.getElementById('usr-pw1').value, p2=document.getElementById('usr-pw2').value;
+ if(p1.length<6){ RT_state.pwMsg='Mindestens 6 Zeichen.'; RT_render(); return; }
+ if(p1!==p2){ RT_state.pwMsg='Passw\u00f6rter stimmen nicht \u00fcberein.'; RT_render(); return; }
+ try{
+  var r=await sb.auth.updateUser({password:p1});
+  if(r.error)throw r.error;
+  RT_state.pwMsg='Passwort ge\u00e4ndert.';
+ }catch(e){ RT_state.pwMsg='Fehler: '+(e.message||e); }
+ RT_render();
+}
+
+async function RT_deleteAccount(){
+ if(!sb||!sbUser)return;
+ if(RT_state.ask!=='delaccount'){ RT_state.ask='delaccount'; RT_state.delAccMsg=''; RT_render(); return; }
+ RT_state.ask='';
+ RT_state.delAccBusy=true; RT_render();
+ try{
+  var s=await sb.auth.getSession();
+  var token=s.data&&s.data.session&&s.data.session.access_token;
+  if(!token) throw new Error('Keine aktive Sitzung gefunden.');
+  var r=await fetch('/api/account/delete',{method:'POST',headers:{'Authorization':'Bearer '+token}});
+  var j={}; try{ j=await r.json(); }catch(e){}
+  if(!r.ok) throw new Error(j.error||('Fehler ('+r.status+')'));
+  try{await sb.auth.signOut();}catch(e){}
+  sbUser=null;
+  RT_clearLocalSyncedData();
+  try{ localStorage.removeItem(RT_LAST_UID_KEY); localStorage.removeItem(AG_KEY); }catch(e){}
+  RT_state.delAccBusy=false;
+  RT_state.delAccMsg='';
+  RT_state.screen='home';
+  RT_render();
+  AG_render();
+ }catch(e){
+  RT_state.delAccBusy=false;
+  RT_state.delAccMsg='L\u00f6schen fehlgeschlagen: '+(e.message||e);
+  RT_render();
+ }
+}
+
+var RT_KEY='golflog_runden_v1', RT_ACT='golflog_aktiv_v1', RT_AUTOCOUNT_KEY='golflog_autocount_v1', RT_CUSTOM_KEY='golflog_custom_courses_v1', RT_SIOV_KEY='golflog_si_overrides_v1', RT_PAROV_KEY='golflog_par_overrides_v1', RT_NAMEOV_KEY='golflog_name_overrides_v1', RT_TEEOV_KEY='golflog_tee_overrides_v1', RT_PHOTOOV_KEY='golflog_photo_overrides_v1', RT_ADDROV_KEY='golflog_addr_overrides_v1', RT_PLAYERSAV_KEY='golflog_saved_players_v1', RT_HISTDEL_KEY='golflog_deleted_historical_v1', RT_OWNHI_KEY='golflog_own_hi_v1', RT_REFOV_KEY='golflog_ref_overrides_v1', RT_DISTUNIT_KEY='golflog_dist_unit_v1', RT_TEEORDOV_KEY='golflog_tee_order_v1', RT_PLATZORDER_KEY='golflog_platz_order_v1';
+/* Eigenes Handicap des Kontoinhabers: bei angemeldeten Nutzern in sbUser.user_metadata.handicap
+   (geräteübergreifend synchron, analog zu display_name/avatar_url), sonst lokal als Fallback.
+   Ersetzt den frueher hart codierten Standardwert 54 ueberall dort, wo eine neue Runde fuer den
+   Kontoinhaber ("Mark"-Standardspieler) angelegt wird - siehe RT_defSu(). */
+function RT_ownHandicapStored(){
+ var mv=sbUser&&sbUser.user_metadata?sbUser.user_metadata.handicap:undefined;
+ if(mv!==undefined&&mv!==null&&mv!=='') return mv;
+ var local=rtGet(RT_OWNHI_KEY);
+ return (local!==null&&local!==undefined)?local:'';
+}
+function RT_ownHandicap(){
+ var v=RT_ownHandicapStored();
+ var num=parseFloat(v);
+ return (v!==''&&!isNaN(num))?num:54;
+}
+/* Anzeigename des angemeldeten Kontoinhabers fuer den Standardspieler bei einer neuen Runde -
+   ersetzt den zuvor hart codierten Namen "Mark", der bei JEDEM Konto (auch bei anderen Nutzern
+   wie einem eingeladenen Mitspieler) fest als Spieler-1-Name vorbelegt war. Faellt zurueck auf
+   den lokalen Teil der E-Mail-Adresse, wenn kein Anzeigename gesetzt ist, und auf "Ich" im
+   Gastmodus (nicht angemeldet). */
+function RT_myDisplayName(){
+ if(sbUser){
+  var dn=sbUser.user_metadata&&sbUser.user_metadata.display_name;
+  if(dn&&dn.trim())return dn.trim();
+  if(sbUser.email)return sbUser.email.split('@')[0];
+ }
+ return 'Ich';
+}
+var RT_SELFNAME_KEY='golflog_selfname_decisions_v1';
+function RT_selfNameDecisions(){ return rtGet(RT_SELFNAME_KEY)||{}; }
+function RT_setSelfNameDecision(name,val){
+ var d=RT_selfNameDecisions(); d[name]=val; rtSet(RT_SELFNAME_KEY,d); RT_render();
+}
+function RT_normName(s){ return (s||'').trim().toLowerCase(); }
+/* Erkennt AEHNLICHE (nicht exakte) Namensuebereinstimmungen mit dem eigenen Anzeigenamen -
+   z.B. "Mark" vs. "Mark Maetschke". Grundlage: gleicher erster Vorname ODER Teilstring-
+   Enthaltensein in eine der beiden Richtungen. Bewusst KEIN automatischer Ausschluss (Verwechs-
+   lungsgefahr bei echten Namensvettern) - stattdessen Nachfragelogik ueber RT_needsSelfConfirm(). */
+function RT_namesLikelySame(a,b){
+ var na=RT_normName(a), nb=RT_normName(b);
+ if(!na||!nb) return false;
+ if(na===nb) return true;
+ var fa=na.split(' ')[0], fb=nb.split(' ')[0];
+ if(fa&&fb&&fa===fb) return true;
+ if(na.indexOf(nb)>=0||nb.indexOf(na)>=0) return true;
+ return false;
+}
+/* True, wenn dieser gespeicherte Name als "ich selbst" gilt - entweder exakt identisch mit dem
+   aktuellen Anzeigenamen, oder vom Nutzer bereits explizit als "das bin ich" bestaetigt (siehe
+   RT_confirmSelfName). Wird genutzt, um Kontakte aus der Einladen-/Mitspieler-Auswahl herauszu-
+   filtern, damit man sich nicht selbst einladen kann. */
+function RT_isSelfName(name){
+ var my=RT_myDisplayName();
+ if(RT_normName(name)===RT_normName(my)) return true;
+ var decisions=RT_selfNameDecisions();
+ return decisions[name]==='self';
+}
+/* True, wenn ein gespeicherter Name AEHNLICH (aber nicht exakt gleich) dem eigenen Anzeigenamen
+   ist und noch keine Entscheidung (self/other) dazu getroffen wurde - loest dann eine Rueckfrage
+   in der UI aus (siehe RT_selfConfirmHtml), statt stillschweigend zu entscheiden. */
+function RT_needsSelfConfirm(name){
+ if(RT_normName(name)===RT_normName(RT_myDisplayName())) return false;
+ var decisions=RT_selfNameDecisions();
+ if(decisions[name]) return false;
+ return RT_namesLikelySame(name, RT_myDisplayName());
+}
+function RT_confirmSelfName(name,val){
+ RT_setSelfNameDecision(name,val);
+}
+/* Baut die Rueckfrage-Box fuer einen Namen mit Verwechslungsgefahr - gemeinsam genutzt von
+   RT_rUser() (Mitspieler einladen) und RT_rSetup() (Kontakte-Chips). */
+function RT_selfConfirmHtml(name){
+ return '<div style="margin-top:8px;padding:10px 12px;background:#FFF6E2;border:1px solid #EFDDB0;border-radius:12px;">'+
+  '<div style="font-size:12px;color:#7A5C00;margin-bottom:8px;">Ist "'+rtEsc(name)+'" eigentlich du selbst (\u00e4hnelt deinem Anzeigenamen "'+rtEsc(RT_myDisplayName())+'", ist aber nicht exakt gleich)?</div>'+
+  '<div style="display:flex;gap:8px;">'+
+   '<button class="rt-btn2" style="flex:1;padding:8px;font-size:12px;" onclick="RT_confirmSelfName(\''+rtJsEsc(name)+'\',\'self\')">Ja, das bin ich</button>'+
+   '<button class="rt-btn2" style="flex:1;padding:8px;font-size:12px;" onclick="RT_confirmSelfName(\''+rtJsEsc(name)+'\',\'other\')">Nein, andere Person</button>'+
+  '</div></div>';
+}
+async function RT_hcpSave(){
+ var raw=(document.getElementById('usr-hcp').value||'').trim().replace(',','.');
+ if(raw!==''){
+  var num=parseFloat(raw);
+  if(isNaN(num)||num<-10||num>54){ RT_state.hcpMsg='Bitte eine Zahl zwischen -10 und 54 eingeben.'; RT_render(); return; }
+ }
+ var val=raw===''?null:parseFloat(raw);
+ rtSet(RT_OWNHI_KEY,val);
+ if(sb&&sbUser){
+  try{
+   var r=await sb.auth.updateUser({data:{handicap:val}});
+   if(r.error)throw r.error;
+   sbUser=r.data.user;
+   RT_state.hcpMsg='Gespeichert.';
+  }catch(e){ RT_state.hcpMsg='Fehler: '+(e.message||e); }
+ }else{
+  RT_state.hcpMsg='Nur lokal gespeichert (nicht angemeldet).';
+ }
+ RT_render();
+}
+var RT_siOverrides=null;
+function RT_getSiOverrides(){ if(!RT_siOverrides) RT_siOverrides=rtGet(RT_SIOV_KEY)||{}; return RT_siOverrides; }
+var RT_parOverrides=null;
+function RT_getParOverrides(){ if(!RT_parOverrides) RT_parOverrides=rtGet(RT_PAROV_KEY)||{}; return RT_parOverrides; }
+var RT_MEM={};
+function rtSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){RT_MEM[k]=v;}}
+function rtGet(k){try{var r=localStorage.getItem(k);if(r!==null)return JSON.parse(r);}catch(e){}return RT_MEM[k]!==undefined?RT_MEM[k]:null;}
+function rtDel(k){try{localStorage.removeItem(k);}catch(e){}delete RT_MEM[k];}
+function rtEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function rtJsEsc(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+/* Dezimalwerte (v.a. Course Rating) in reinen Text-/Anzeigekontexten immer mit Komma statt
+   Punkt darstellen - deutsche Schreibweise. NICHT auf <input type="number">-Felder anwenden,
+   deren value-Attribut laut HTML5-Spec zwingend einen Punkt braucht; der Browser zeigt dort
+   ohnehin automatisch die lokale Schreibweise an. */
+function rtDe(v){ return (v===null||v===undefined||v==='')?v:String(v).replace('.',','); }
+
+var RT_HIDDEN_KEY='golflog_hidden_presets';
+function RT_hiddenPresets(){ return rtGet(RT_HIDDEN_KEY)||[]; }
+/* Frueher ueber HV_D-Halbcodes (RT_PRESET_HALVES) UND exakten Namensvergleich geprueft - beides
+   war zerbrechlich: sobald der in einer Runde gespeicherte courseName nicht EXAKT dem vollen
+   Preset-Namen entsprach (z.B. "Gut Waldhof" vs. dem hinterlegten "GC Hamburg Gut Waldhof
+   (A-B)"), erkannte die Pruefung eine tatsaechlich gespielte Runde nicht - ein einmal
+   ausgeblendetes Preset (RT_hidePreset) konnte dann nie wieder automatisch auftauchen, selbst
+   wenn dort weiter gespielt wurde. Nutzt jetzt dieselbe robuste, bereits an anderer Stelle
+   bewaehrte Namensaufloesung wie RT_courseKeyFromName (exakter Match, normalisierter Match,
+   Teilstring-Fallback in beide Richtungen). */
+function RT_isPlayed(key){
+ var saved=rtGet(RT_KEY)||[];
+ return saved.some(function(rd){ return RT_courseKeyFromName(rd.courseName,rd)===key; });
+}
+function RT_deleteCustomCourse(key){
+ var custom=RT_loadCustomCourses();
+ if(!custom[key])return;
+ delete custom[key];
+ rtSet(RT_CUSTOM_KEY,custom);
+ delete RT_COURSES[key];
+ sbDelCourse(key);
+ RT_render();
+}
+function RT_removeCoursePick(key){
+ if(RT_loadCustomCourses()[key]){ RT_deleteCustomCourse(key); }
+ else { RT_hidePreset(key); }
+}
+function RT_hidePreset(key){
+ var hidden=RT_hiddenPresets();
+ if(hidden.indexOf(key)===-1){ hidden.push(key); rtSet(RT_HIDDEN_KEY,hidden); }
+ RT_render();
+}
+
+/* Platz-Presets. CR/SL sind Startwerte und im Setup je Spieler editierbar. */
+var RT_COURSES={
+ georg:{name:'Georghausen', address:'Georghausen 8, 51789 Lindlar',
+  photoUrl:'https://raw.githubusercontent.com/Maetschke/fairwaypilot/main/assets/course-images/georghausen/cover.jpg',
+  nines:{
+   F:{lbl:'Front 9 (1\u20139)', nums:[1,2,3,4,5,6,7,8,9], par:[4,4,5,4,3,4,4,4,5], si:[2,7,1,4,8,6,3,9,5], si18:[3,9,1,7,15,13,5,17,11]},
+   B:{lbl:'Back 9 (10\u201318)', nums:[10,11,12,13,14,15,16,17,18], par:[3,5,4,4,3,4,3,5,4], si:[8,6,5,4,7,3,9,2,1], si18:[16,10,14,8,12,6,18,4,2]}
+  },
+  tees:[
+   {name:'Gelb (Herren)', cr:{F:36.2,B:35.4,A:71.1}, sl:{F:138,B:130,A:135}},
+   {name:'Rot M (Damen, kurz)', cr:{F:33.9,B:33.9,A:67.8}, sl:{F:125,B:125,A:125}},
+   {name:'Rot L (Damen)', cr:{F:36.5,B:36.9,A:73.4}, sl:{F:130,B:134,A:132}}
+  ]},
+ waldhof:{name:'GC Hamburg Gut Waldhof (A\u2013B)', address:'Am Waldhof 3, 24629 Kisdorf', lat:53.81383, lon:10.08614,
+  photoUrl:'https://www.gut-waldhof.de/uploads/3/2/1/1/32119905/platz-bersicht-18-loch-gut-waldhof-golfclub-hamburg_1_orig.jpg',
+  nines:{
+   F:{lbl:'A-Platz (1\u20139)', nums:[1,2,3,4,5,6,7,8,9], par:[4,4,3,4,5,4,4,4,4], si:null, si18:null},
+   B:{lbl:'B-Platz (10\u201318)', nums:[10,11,12,13,14,15,16,17,18], par:[4,3,4,4,5,3,5,4,4], si:null, si18:null}
+  },
+  tees:[
+   {name:'Gelb (Herren)', cr:{F:36.2,B:36.2,A:71.5}, sl:{F:131,B:131,A:131}},
+   {name:'Blau (Herren, Senior)', cr:{F:null,B:null,A:67.8}, sl:{F:null,B:null,A:123}},
+   {name:'Rot (Damen)', cr:{F:null,B:null,A:73.1}, sl:{F:null,B:null,A:129}}
+  ]},
+};
+/* Feste Preset-Keys, zentral gepflegt. Verhindert, dass ein alter/kollidierender
+   RT_CUSTOM_KEY-Eintrag mit demselben Key (z.B. eine sehr alte, von Hand angelegte
+   "waldhof"-Kachel aus einer Zeit vor dem Preset) zusaetzlich als eigener Kachel-Chip
+   auftaucht (siehe RT_platzChips) - beide Chips wuerden sonst dieselben Daten anzeigen
+   und jede Aenderung an einem wuerde sofort auch am anderen sichtbar werden. */
+var RT_PRESET_KEYS={georg:1,waldhof:1};
+/* Neue Nutzer (noch NIE zuvor auf diesem Geraet aktiv, weder RT_HIDDEN_KEY noch RT_KEY
+   vorhanden) sollen zunaechst nur Georghausen in der Platzauswahl sehen. Gut Waldhof wird
+   dafuer beim allerersten Laden einmalig in die lokale Hidden-Preset-Liste (RT_HIDDEN_KEY)
+   aufgenommen - dieselbe Liste, die auch das X-Icon in RT_platzChips befuellt. Wer dort
+   bereits gespielt hat oder die Kachel spaeter selbst wieder einblenden moechte, ist davon
+   NICHT betroffen: RT_isPlayed()-Check in RT_rCoursePick zeigt Waldhof automatisch wieder,
+   sobald eine Runde dort existiert (z.B. bei Mark/Eva/Carsten unveraendert sichtbar). */
+(function(){
+ try{
+  if(localStorage.getItem(RT_HIDDEN_KEY)===null && localStorage.getItem(RT_KEY)===null){
+   localStorage.setItem(RT_HIDDEN_KEY, JSON.stringify(['waldhof']));
+  }
+ }catch(e){}
+})();
+
+var RT_state={screen:'home', viewId:null, resMsg:'', busy:false, ask:''};
+var RT_round=rtGet(RT_ACT)||null;
+var RT_su=null;
+var RT_editingExisting=false;
+var RT_editSourceRound=null;
+
+/* Gespeicherte, ueber \"+ Spieler\" angelegte Mitspieler (siehe RT_persistPlayer) - werden bei\n   jeder neuen Runde automatisch mit vorbelegt (Name + zuletzt genutztes HI), damit man sie\n   nicht jedes Mal neu eintippen muss. Der Abschlag startet immer beim ersten verfuegbaren\n   Tee des jeweiligen Platzes und kann pro Runde angepasst werden. Über \"Entfernen\" lassen sie\n   sich aus der jeweils AKTUELLEN Runde wieder herausnehmen, ohne das gespeicherte Profil zu\n   loeschen - beim naechsten Mal tauchen sie wieder auf. */
+/* Namen aus der (Cloud-synchronisierten) Rundenhistorie ableiten - Fallback/Ergaenzung zur rein
+   lokalen golflog_saved_players_v1-Liste. Diese war bislang NUR im localStorage des jeweiligen
+   Geraets/Browsers gespeichert, nicht cloud-synchronisiert - nach Browserwechsel oder geloeschten
+   Website-Daten waren bereits gespielte Mitspieler (z.B. Eva, Carsten) dadurch aus der
+   Kontakte-Auswahl verschwunden, obwohl sie in den (synchronisierten) Runden weiter auftauchen.
+   Diese Funktion rekonstruiert die fehlenden Kontakte direkt aus den vorhandenen Rundendaten. */
+function RT_historicPlayerNames(){
+ var rounds=rtGet(RT_KEY)||[];
+ var byName={};
+ rounds.forEach(function(rd){
+  (rd.players||[]).forEach(function(p){
+   var nm=(p&&p.name||'').trim();
+   if(!nm||RT_isSelfName(nm)||byName[nm])return;
+   var hi=parseFloat(p.hi);
+   byName[nm]={name:nm, hi:isNaN(hi)?54:hi, teeName:null, teeHalf:null};
+  });
+ });
+ return byName;
+}
+function RT_getSavedPlayers(){
+ var byName={};
+ (rtGet(RT_PLAYERSAV_KEY)||[]).forEach(function(sp){ if(sp&&sp.name) byName[sp.name]=sp; });
+ var hist=RT_historicPlayerNames();
+ Object.keys(hist).forEach(function(nm){ if(!byName[nm]) byName[nm]=hist[nm]; });
+ return Object.keys(byName).map(function(nm){ return byName[nm]; });
+}
+function RT_setSavedPlayers(list){ rtSet(RT_PLAYERSAV_KEY,list); }
+/* Versucht, fuer einen Spieler den zuletzt gespeicherten Abschlag (per Name) im GERADE
+   gewaehlten Platz wiederzufinden und zu setzen. Kein Fund (z.B. Platzwechsel ohne
+   gleichnamigen Abschlag) -> Tee bleibt unveraendert (Standard: erster Abschlag). */
+function RT_applySavedTee(p,courseKey){
+ if(!p||!courseKey) return;
+ var c=RT_COURSES[courseKey]; if(!c||!c.tees) return;
+ var saved=RT_getSavedPlayers().find(function(sp){ return sp.name===p.name; });
+ if(!saved||!saved.teeName) return;
+ var ti=c.tees.findIndex(function(t){ return t.name===saved.teeName; });
+ /* Nur die Abschlagfarbe (teeName) ist eine dauerhaft sinnvolle, personenbezogene Praeferenz -
+    z.B. Carsten spielt immer Gelb. Welche Haelfte (Front/Back/18) gespielt wird, ist dagegen
+    eine EIGENSCHAFT DER RUNDE, nicht der Person: p.teeHalf wird deshalb bewusst NICHT aus alten
+    gespeicherten Runden wiederhergestellt (das fuehrte sonst dazu, dass ein neu hinzugefuegter
+    Spieler noch die Halbierung einer laengst vergangenen Runde zeigte, obwohl die aktuelle Runde
+    z.B. 18 Loch spielt). p.teeHalf bleibt daher auf dem Wert stehen, den der Aufrufer vorher
+    gesetzt hat (ueblicherweise null = folgt RT_su.holes der aktuellen Runde). */
+ if(ti>=0){ p.tee=ti; }
+}
+function RT_persistPlayer(i){
+ if(!RT_su||!RT_su.players||!RT_su.players[i]) return;
+ var p=RT_su.players[i];
+ var name=(p.name||'').trim();
+ if(!name) return;
+ var hi=parseFloat(p.hi);
+ var list=RT_getSavedPlayers();
+ var idx=list.findIndex(function(sp){ return sp.name===name; });
+ /* Tee-Index gilt nur innerhalb des jeweils gewaehlten Platzes - darum wird der Tee-NAME
+    gespeichert (platzuebergreifend sinnvoll) und beim naechsten Mal im dann aktuellen
+    Platz per Name nachgeschlagen (siehe RT_applySavedTee). */
+ var teeName=null;
+ var key=RT_su.course; var c=key&&RT_COURSES[key];
+ if(c&&p.tee>=0&&c.tees[p.tee]) teeName=c.tees[p.tee].name;
+ var entry={name:name, hi:isNaN(hi)?54:hi, teeName:teeName, teeHalf:p.teeHalf||null};
+ if(idx>=0) list[idx]=entry; else list.push(entry);
+ RT_setSavedPlayers(list);
+}
+function RT_playerMove(i,dir){
+ if(!RT_su||!RT_su.players)return;
+ var np=i+dir; if(np<0||np>=RT_su.players.length)return;
+ var tmp=RT_su.players[i]; RT_su.players[i]=RT_su.players[np]; RT_su.players[np]=tmp;
+ RT_render();
+}function RT_defSu(){
+ /* Neue Runden starten bewusst NUR mit dem Standardspieler - bekannte Mitspieler werden NICHT
+    mehr automatisch mitgenommen (siehe Kontakt-Chips im Spieler-Abschnitt: dort waehlt man
+    aktiv per Klick aus, wer bei dieser Runde dabei ist).
+    Segment-Standard: 18 Loch vor Front vor Back (Georghausen hat einen echten Back-9, also 'A'). */
+ var defHoles='A';
+ var players=[{name:RT_myDisplayName(), hi:RT_ownHandicap(), tee:RT_hardestTeeIdx('georg',defHoles), teeHalf:null, cr:null, sl:null}];
+ RT_applySavedTee(players[0],'georg');
+ return {course:'georg', holes:defHoles, date:RT_today(), time:RT_nowTime(),
+  players:players,
+  custName:'', custPar:'', custSi:'', siEdit:{}, parEdit:{}};
+}
+
+/* Spielvorgabe: 9L = HI/2 x SL/113 + (CR9 - Par9); 18L = HI x SL/113 + (CR - Par) */
+function RT_ph(hi,cr,sl,parSum,cnt){
+ if(hi===null||cr===null||sl===null||isNaN(hi)||isNaN(cr)||isNaN(sl))return null;
+ var h=cnt===9?hi/2:hi;
+ return Math.round(h*sl/113+(cr-parSum));
+}
+function RT_courseData(){
+ var c=RT_COURSES[RT_su.course]; if(!c)return null;
+ var m=RT_su.holes, d={name:c.name};
+ function siOf(nk,use18){
+  var nn=c.nines[nk];
+  var f=nk+(use18?'18':'9');
+  var base=use18?(nn.si18||nn.si):(nn.si);
+  var ov=RT_getSiOverrides()[RT_su.course];
+  if(ov&&ov[f])base=ov[f];
+  if(RT_su.siEdit[f])base=RT_su.siEdit[f];
+  return base;
+ }
+ function parOf(nk){
+  var nn=c.nines[nk];
+  var f=nk+'9';
+  var base=nn.par;
+  var ov=RT_getParOverrides()[RT_su.course];
+  if(ov&&ov[f])base=ov[f];
+  if(RT_su.parEdit[f])base=RT_su.parEdit[f];
+  return base;
+ }
+ if(m==='A'){
+  d.par=parOf('F').concat(parOf('B'));
+  d.si=(siOf('F',true)||[]).concat(siOf('B',true)||[]);
+  d.nums=c.nines.F.nums.concat(c.nines.B.nums);
+  d.cnt=18; d.lbl='18 Loch';
+  if(d.si.length!==18)d.si=null;
+ }else{
+  var n=c.nines[m];
+  d.par=parOf(m).slice(); d.si=siOf(m,false); d.nums=n.nums.slice(); d.cnt=9; d.lbl=n.lbl;
+  if(d.si&&d.si.length!==9)d.si=null;
+ }
+ d.parSum=d.par.reduce(function(s,v){return s+v;},0);
+ d.tees=c.tees;
+ return d;
+}
+/* p.teeHalf erzwingt fuer diesen Spieler Front (\'F\') oder Back (\'B\'), unabhaengig von der\n   rundenweiten Loecher-Auswahl (RT_su.holes) - z.B. wenn alle gemeinsam 18 Loch spielen, ein\n   Spieler seine Spielvorgabe aber ausdruecklich mit der Front- oder Back-CR/Slope berechnet\n   haben moechte. Ist kein Override gesetzt, gilt wie bisher die rundenweite Auswahl. */
+function RT_pCr(p,cd){
+ if(p.cr!==null&&p.cr!==''&&!isNaN(parseFloat(p.cr)))return parseFloat(p.cr);
+ var t=cd.tees[p.tee]; if(!t)return null;
+ var side=(RT_su.holes==='A')?'A':(p.teeHalf||RT_su.holes);
+ var v=t.cr[side]; return (v===undefined||v===null)?null:v;
+}
+function RT_pSl(p,cd){
+ if(p.sl!==null&&p.sl!==''&&!isNaN(parseFloat(p.sl)))return parseFloat(p.sl);
+ var t=cd.tees[p.tee]; if(!t)return null;
+ var side=(RT_su.holes==='A')?'A':(p.teeHalf||RT_su.holes);
+ var v=t.sl[side]; return (v===undefined||v===null)?null:v;
+}
+
+/* ---------- Screens ---------- */
+/* ---------- Platzkarte (OpenStreetMap via Leaflet, kostenlos, kein API-Key) ---------- */
+var RT_GEO_KEY='golflog_geocode_cache_v1';
+var RT_leafletMap=null;
+function RT_geoCache(){ return rtGet(RT_GEO_KEY)||{}; }
+async function RT_geocode(address){
+ var cache=RT_geoCache();
+ if(cache[address]) return cache[address];
+ try{
+  var resp=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(address),
+   {headers:{'Accept':'application/json'}});
+  var data=await resp.json();
+  if(data&&data[0]){
+   var pos={lat:parseFloat(data[0].lat), lon:parseFloat(data[0].lon)};
+   cache[address]=pos; rtSet(RT_GEO_KEY,cache);
+   return pos;
+  }
+ }catch(e){}
+ return null;
+}
+function RT_clearMap(){
+ if(RT_leafletMap){ try{RT_leafletMap.remove();}catch(e){} RT_leafletMap=null; }
+}
+async function RT_initMap(){
+ RT_clearMap();
+ var el=document.getElementById('platz-map');
+ if(!el) return;
+ if(typeof L==='undefined'){ el.style.display='none'; return; }
+ var c=RT_COURSES[RT_su.course];
+ if(!c){ el.style.display='none'; return; }
+ var pos=null;
+ if(c.lat!==undefined&&c.lat!==null&&c.lon!==undefined&&c.lon!==null){ pos={lat:c.lat, lon:c.lon}; }
+ else if(c.address){ pos=await RT_geocode(c.address); }
+ if(!pos){ el.style.display='none'; return; }
+ el.style.display='block';
+ try{
+  RT_leafletMap=L.map('platz-map',{zoomControl:false,attributionControl:true,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,touchZoom:false})
+   .setView([pos.lat,pos.lon],15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(RT_leafletMap);
+  L.marker([pos.lat,pos.lon]).addTo(RT_leafletMap);
+ }catch(e){ el.style.display='none'; }
+}
+/* ---------- Loch-Karte in der laufenden Runde: Kartenausschnitt je Loch merken, Ball-Lagen als
+   nummerierte Pins festhalten ---------- */
+var RT_HOLEVIEW_KEY='golflog_holeviews_v1';
+function RT_holeViews(){ return rtGet(RT_HOLEVIEW_KEY)||{}; }
+function RT_holeMapKey(rd,holeIdx){
+ var key=RT_courseKeyFromName(rd.courseName,rd)||rd.courseName||'unk';
+ return key+'-h'+rd.nums[holeIdx];
+}
+function RT_saveHoleView(rd,holeIdx,lat,lng,zoom,rot){
+ var v=RT_holeViews();
+ var key=RT_holeMapKey(rd,holeIdx);
+ var existing=v[key]||{};
+ var entry={lat:lat,lng:lng,zoom:zoom,rot:(rot!==undefined?rot:(existing.rot||0))};
+ v[key]=entry;
+ rtSet(RT_HOLEVIEW_KEY,v);
+ /* Zusaetzlich auf der Runde selbst ablegen, damit die Kartenausrichtung Teil der
+    synchronisierten Rundendaten wird (sbPushRound sendet die komplette Runde) und
+    damit auf anderen Geraeten beim Oeffnen dieser Runde sichtbar ist. */
+ if(rd){
+  rd.holeViews=rd.holeViews||{};
+  rd.holeViews[key]=entry;
+  if(rd===RT_round) rtSet(RT_ACT,RT_round);
+ }
+}
+/* Rechnet einen Klick/Tap-Punkt (in Seitenkoordinaten) auf die korrekte geografische Position
+   um, auch wenn der Kartencontainer per CSS gedreht ist - Leaflet selbst kennt die CSS-Drehung
+   nicht und wuerde sonst an der falschen Stelle einen Pin setzen. */
+function RT_correctedLatLng(map,containerEl,rotDeg,clientX,clientY){
+ var rect=containerEl.getBoundingClientRect();
+ var cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+ var dx=clientX-cx, dy=clientY-cy;
+ var rad=-rotDeg*Math.PI/180;
+ var ux=dx*Math.cos(rad)-dy*Math.sin(rad);
+ var uy=dx*Math.sin(rad)+dy*Math.cos(rad);
+ /* Container-Mittelpunkt braucht BEIDE Achsen. Vorher wurde die Breite auch als Hoehe
+    benutzt (S/2 fuer x und y) - bei der quadratischen kleinen Karte (500x500) faellt das
+    nicht auf, bei der hochkanten Vollbildkarte lag der angenommene Mittelpunkt um
+    mehrere hundert Pixel daneben. Deshalb konnte bisher nur mit Differenzen gerechnet
+    werden (konstanter Versatz kuerzt sich weg); absolute Positionen waren unbrauchbar. */
+ var W=containerEl.offsetWidth||500, H=containerEl.offsetHeight||W;
+ return map.containerPointToLatLng(L.point(W/2+ux,H/2+uy));
+}
+/* Leaflet kennt die CSS-Rotation des Kartencontainers nicht: es verschiebt den Karten-Pane
+   um exakt den Zeiger-Versatz in Bildschirmkoordinaten. Da der Pane aber mitgedreht ist,
+   wandert der Ausschnitt sichtbar um genau diesen Drehwinkel schief - ein Wischen nach
+   rechts verschiebt die Karte je nach Rotation nach oben oder unten. Deshalb wird Leaflets
+   eigenes Dragging abgeschaltet und hier durch ein Panning ersetzt, das den Zeigerpunkt
+   vorher per RT_correctedLatLng() zurueckdreht - also in echte Koordinaten uebersetzt.
+   Verschoben wird dann um die Differenz zweier so bestimmter Punkte; beide werden im selben
+   Kartenzustand berechnet, wodurch das Delta unabhaengig vom laufenden Pan korrekt bleibt. */
+var RT_suppressMapClick={};
+function RT_setupRotDrag(key,map,el,getRot){
+ if(!map||!el||el.dataset.rotdrag==='1') return;
+ el.dataset.rotdrag='1';
+ var st=null, active={};
+ function nActive(){ return Object.keys(active).length; }
+ el.addEventListener('pointerdown',function(ev){
+  active[ev.pointerId]=1;
+  /* Zweiter Finger = Pinch-Zoom, den macht Leaflet weiterhin selbst. */
+  if(nActive()>1){ st=null; return; }
+  if(ev.target&&ev.target.closest&&ev.target.closest('.leaflet-marker-icon')) return;
+  st={x:ev.clientX,y:ev.clientY,moved:false};
+ });
+ el.addEventListener('pointermove',function(ev){
+  if(!st||nActive()>1) return;
+  if(!st.moved&&(Math.abs(ev.clientX-st.x)+Math.abs(ev.clientY-st.y))<3) return;
+  st.moved=true;
+  ev.preventDefault();
+  var rot=getRot()||0;
+  var a=RT_correctedLatLng(map,el,rot,st.x,st.y);
+  var b=RT_correctedLatLng(map,el,rot,ev.clientX,ev.clientY);
+  if(!a||!b) return;
+  var ctr=map.getCenter();
+  map.setView([ctr.lat+(a.lat-b.lat), ctr.lng+(a.lng-b.lng)], map.getZoom(), {animate:false});
+  st.x=ev.clientX; st.y=ev.clientY;
+ });
+ function endDrag(ev){
+  delete active[ev.pointerId];
+  if(!st) return;
+  var moved=st.moved; st=null;
+  /* Nach einem Pan darf der folgende Kartenklick keine Balllage setzen. */
+  if(moved){ RT_suppressMapClick[key]=true; setTimeout(function(){ RT_suppressMapClick[key]=false; },300); }
+ }
+ el.addEventListener('pointerup',endDrag);
+ el.addEventListener('pointercancel',endDrag);
+}
+function RT_rotateMap(pi,delta){
+ var inst=RT_holeMapInst[pi]; if(!inst) return;
+ var rd=RT_round; if(!rd) return;
+ var c=rd.cur;
+ inst.rot=((inst.rot||0)+delta+360)%360;
+ if(inst.el) inst.el.style.transform='rotate('+inst.rot+'deg)';
+ var ctr=inst.map.getCenter();
+ RT_saveHoleView(rd,c,ctr.lat,ctr.lng,inst.map.getZoom(),inst.rot);
+ RT_redrawPins(pi);
+}
+/* Kartensperre: verhindert, dass ein Tap auf die Lochkarte (z.B. um einen Pin zu setzen)
+   versehentlich den Kartenausschnitt verschiebt. Gesperrt ist der Ausgangszustand bei jedem
+   Laden der Karte; ueber das Schloss-Icon (gleiche Zeile wie die Rotationsbuttons, rechts-
+   buendig) kann gezielt entsperrt werden, um Ausschnitt/Zoom anzupassen. Pins setzen per
+   einfachem Tap funktioniert unabhaengig vom Sperrzustand, da das ueber den click-Handler
+   laeuft, nicht ueber Leaflets dragging. */
+function RT_applyMapLock(pi){
+ var inst=RT_holeMapInst[pi]; if(!inst||!inst.map) return;
+ var m=inst.map;
+ if(inst.locked){
+  m.dragging.disable(); m.touchZoom.disable(); m.doubleClickZoom.disable();
+  m.scrollWheelZoom.disable(); if(m.boxZoom)m.boxZoom.disable(); if(m.keyboard)m.keyboard.disable();
+ }else{
+  /* dragging bewusst NICHT aktivieren: das Verschieben laeuft rotationskorrigiert
+     ueber RT_setupRotDrag(). */
+  m.touchZoom.enable(); m.doubleClickZoom.disable();
+  m.scrollWheelZoom.enable(); if(m.boxZoom)m.boxZoom.enable(); if(m.keyboard)m.keyboard.enable();
+ }
+}
+/* Baut NUR die kleine Steuerzeile unter der Lochkarte (Rotations-Buttons, Pins-zuruecksetzen,
+   Schloss-Icon). Wird sowohl beim ersten Rendern der Karte verwendet als auch fuer gezielte
+   Updates (siehe RT_toggleMapLock) - letzteres bewusst OHNE RT_render(), da ein volles
+   RT_render() auf dem Play-Screen RT_initHoleMaps() erneut ausloest, was JEDE Lochkarte
+   (inkl. der gerade erst entsperrten) wieder frisch mit locked:true aufbaut und die Sperre
+   damit sofort ungewollt zurueckgesetzt haette - genau das war der Grund, warum Entsperren
+   bisher wirkungslos blieb. */
+function RT_mapCtrlHtml(pi){
+ var rd=RT_round; if(!rd) return '';
+ var p=rd.players[pi], c=rd.cur;
+ var pinN=(p.pins&&p.pins[c])?p.pins[c].length:0;
+ var mapLocked=!RT_holeMapInst[pi]||RT_holeMapInst[pi].locked!==false;
+ return '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">'+
+   '<div style="display:flex;gap:6px;">'+
+    (mapLocked?'':(
+     '<button class="rt-rotbtn" onclick="RT_rotateMap('+pi+',-15)" title="Karte drehen">&#8634;</button>'+
+     '<button class="rt-rotbtn" onclick="RT_rotateMap('+pi+',15)" title="Karte drehen">&#8635;</button>'
+    ))+
+   '</div>'+
+   '<div style="display:flex;gap:6px;align-items:center;">'+
+    '<button id="pin-reset-'+pi+'" class="rt-btn3" style="padding:2px 6px;display:'+(pinN?'inline-block':'none')+';" onclick="RT_clearPins('+pi+')">Pins zur\u00fccksetzen</button>'+
+    '<button class="rt-rotbtn" onclick="RT_toggleMapLock('+pi+')" title="'+(mapLocked?'Karte entsperren':'Karte sperren')+'">'+(mapLocked?'&#128274;':'&#128275;')+'</button>'+
+   '</div>'+
+  '</div>';
+}
+function RT_toggleMapLock(pi){
+ var inst=RT_holeMapInst[pi]; if(!inst) return;
+ inst.locked=!inst.locked;
+ RT_applyMapLock(pi);
+ var el=document.getElementById('map-ctrl-'+pi);
+ if(el) el.innerHTML=RT_mapCtrlHtml(pi);
+}
+function RT_ensurePins(rd){
+ if(!rd)return;
+ rd.players.forEach(function(p){
+  if(!p.pins)p.pins=[];
+  while(p.pins.length<rd.cnt)p.pins.push([]);
+ });
+}
+/* GPX-Import: liest eine .gpx-Datei (z.B. aus einer GPS-Tracking-App), extrahiert alle
+   <wpt>-Wegpunkte samt Zeitstempel, sortiert sie chronologisch und verteilt sie der Reihe
+   nach auf die Bahnen der aktuellen Runde (Bahn 1 bekommt die zeitlich ersten Wegpunkte usw.).
+   Ergebnis landet bei den Pins des eigenen Spielers - dieselbe Struktur, die auch manuell per Kartentipp
+   befuellt wird (siehe RT_redrawPins), und erscheint damit automatisch als nummerierte Pins
+   auf der jeweiligen Lochkarte. */
+function RT_gpxFile(ev){
+ var f=ev.target.files&&ev.target.files[0];
+ ev.target.value='';
+ if(!f)return;
+ var reader=new FileReader();
+ reader.onload=function(e){
+  try{
+   var xml=new DOMParser().parseFromString(String(e.target.result),'text/xml');
+   if(xml.getElementsByTagName('parsererror').length) throw new Error('Datei ist kein gültiges GPX/XML.');
+   var wpts=Array.prototype.slice.call(xml.getElementsByTagName('wpt')).map(function(w){
+    var timeEl=w.getElementsByTagName('time')[0];
+    return {lat:parseFloat(w.getAttribute('lat')), lng:parseFloat(w.getAttribute('lon')),
+     time:timeEl?timeEl.textContent:null};
+   }).filter(function(p){return !isNaN(p.lat)&&!isNaN(p.lng);});
+   if(!wpts.length){ RT_state.saveWarn='Keine Wegpunkte in der Datei gefunden.'; RT_render(); return; }
+   wpts.sort(function(a,b){ return (a.time||'')<(b.time||'')?-1:(a.time||'')>(b.time||'')?1:0; });
+   RT_applyGpxWaypoints(wpts);
+  }catch(err){
+   RT_state.saveWarn='GPX konnte nicht gelesen werden: '+(err.message||err);
+   RT_render();
+  }
+ };
+ reader.readAsText(f);
+}
+/* Berechnet aus einer Liste von {lat,lng}-Punkten Mittelpunkt + einen Zoom-Level, der alle
+   Punkte in den Kartenausschnitt einpasst (Standard-"Bounds-fit"-Formel via Web-Mercator-
+   Breitengrad-Radiant, ohne Leaflet-Instanz - wird direkt beim Import berechnet, bevor die
+   Karte ueberhaupt gerendert ist). Noetig, weil sonst ALLE Lochkarten weiterhin auf den einen
+   generischen Vereins-Standort zentriert blieben (siehe RT_initHoleMaps-Fallback) und die
+   importierten Pins je nach Lage der Bahn ausserhalb des sichtbaren Kartenausschnitts landen -
+   genau das fuehrte dazu, dass nach dem Import nicht alle Wegpunkte sichtbar waren. */
+function RT_fitPinsView(pins){
+ if(!pins||!pins.length) return null;
+ var lats=pins.map(function(p){return p.lat;}), lngs=pins.map(function(p){return p.lng;});
+ var minLat=Math.min.apply(null,lats), maxLat=Math.max.apply(null,lats);
+ var minLng=Math.min.apply(null,lngs), maxLng=Math.max.apply(null,lngs);
+ var center={lat:(minLat+maxLat)/2, lng:(minLng+maxLng)/2};
+ if((maxLat-minLat)<0.00005 && (maxLng-minLng)<0.00005) return {lat:center.lat,lng:center.lng,zoom:18};
+ function latRad(lat){ var s=Math.sin(lat*Math.PI/180); return Math.log((1+s)/(1-s))/2; }
+ function zoomForFraction(mapPx,worldPx,fraction){ if(fraction<=0) return 21; return Math.floor(Math.log(mapPx/worldPx/fraction)/Math.LN2); }
+ var mapDim=460;
+ var latFraction=Math.abs(latRad(maxLat)-latRad(minLat))/Math.PI;
+ var lngDiff=maxLng-minLng;
+ var lngFraction=(lngDiff<0?lngDiff+360:lngDiff)/360;
+ var z=Math.min(zoomForFraction(mapDim,256,latFraction),zoomForFraction(mapDim,256,lngFraction),19)-1;
+ z=Math.max(14,Math.min(19,z));
+ return {lat:center.lat,lng:center.lng,zoom:z};
+}
+function RT_applyGpxWaypoints(wpts){
+ var rd=RT_round; if(!rd)return;
+ RT_ensurePins(rd);
+ var gpxPi=(typeof RT_myPlayerIndex==='function')?RT_myPlayerIndex(rd):0;
+ var n=wpts.length, cnt=rd.cnt, perHole=Math.max(1,Math.floor(n/cnt)), idx=0;
+ var touchedHoles=[];
+ for(var h=0; h<cnt; h++){
+  var take = (h===cnt-1) ? (n-idx) : Math.min(perHole,n-idx);
+  var slice=wpts.slice(idx, idx+take);
+  idx+=take;
+  if(slice.length){
+   slice.forEach(function(w){ RT_pinsOf(rd,gpxPi,h).push({lat:w.lat, lng:w.lng}); });
+   touchedHoles.push(h);
+  }
+ }
+ touchedHoles.forEach(function(h){
+  var view=RT_fitPinsView(RT_pinsOf(rd,gpxPi,h));
+  if(view) RT_saveHoleView(rd,h,view.lat,view.lng,view.zoom);
+ });
+ rtSet(RT_ACT, rd);
+ RT_state.saveWarn='';
+ RT_render();
+}
+var RT_holeMapInst={};
+function RT_clearHoleMaps(){
+ Object.keys(RT_holeMapInst).forEach(function(pi){
+  try{ RT_holeMapInst[pi].map.remove(); }catch(e){}
+ });
+ RT_holeMapInst={};
+}
+/* Alle bekannten geografischen Punkte DIESER Bahn: Abschlaege, Bahnmitte, Loch und
+   bereits gesetzte Balllagen. Grundlage dafuer, die Satellitenkarte auf die Bahn zu
+   zentrieren statt auf die Platz-/Clubhaus-Koordinate. */
+function RT_holePoints(rd,c){
+ var out=[];
+ var ref=RT_refFor(rd,c);
+ if(ref){
+  if(ref.pin&&ref.pin.lat) out.push([ref.pin.lat,ref.pin.lng]);
+  if(ref.mid&&ref.mid.lat) out.push([ref.mid.lat,ref.mid.lng]);
+  if(ref.tees) Object.keys(ref.tees).forEach(function(k){ var t=ref.tees[k]; if(t&&t.lat) out.push([t.lat,t.lng]); });
+ }
+ (rd.players||[]).forEach(function(pl){
+  var pins=(pl.pins&&pl.pins[c])||[];
+  pins.forEach(function(p){ if(p&&p.lat) out.push([p.lat,p.lng]); });
+ });
+ return out;
+}
+function RT_holeCenter(rd,c){
+ var pts=RT_holePoints(rd,c); if(!pts.length) return null;
+ var la=0,ln=0; pts.forEach(function(p){ la+=p[0]; ln+=p[1]; });
+ return {lat:la/pts.length, lng:ln/pts.length, n:pts.length};
+}
+/* Grober Meter-Abstand zweier Koordinaten (aequirektangulaere Naeherung, fuer wenige
+   hundert Meter voellig ausreichend). */
+function RT_roughDist(aLat,aLng,bLat,bLng){
+ var dy=(bLat-aLat)*110540;
+ var dx=(bLng-aLng)*111320*Math.cos(aLat*Math.PI/180);
+ return Math.sqrt(dx*dx+dy*dy);
+}
+/* Ein gespeicherter Kartenausschnitt wird nur uebernommen, wenn er ueberhaupt in der Naehe
+   dieser Bahn liegt. Sonst stammt er noch aus der Zeit, als die Karte pauschal auf die
+   Platzkoordinate (= Clubhaus) zentriert wurde - dann lieber neu auf die Bahn zentrieren. */
+function RT_savedViewUsable(rd,c,savedView){
+ if(!savedView||savedView.lat===undefined||savedView.lat===null) return false;
+ var ctr=RT_holeCenter(rd,c); if(!ctr) return true;
+ return RT_roughDist(ctr.lat,ctr.lng,savedView.lat,savedView.lng)<120;
+}
+async function RT_initHoleMaps(){
+ RT_clearHoleMaps();
+ var rd=RT_round; if(!rd) return;
+ var c=rd.cur;
+ var hmKey=RT_holeMapKey(rd,c);
+ var hmMapMode=!!(RT_state.mapModeOn&&RT_state.mapModeOn[hmKey]);
+ if(RT_holeImgFor(rd,c)&&!hmMapMode) return;
+ RT_ensurePins(rd);
+ if(typeof L==='undefined') return;
+ var savedView=(rd.holeViews&&rd.holeViews[RT_holeMapKey(rd,c)])||RT_holeViews()[RT_holeMapKey(rd,c)];
+ if(!RT_savedViewUsable(rd,c,savedView)) savedView=null;
+ var hmRef=RT_refFor(rd,c);
+ var hmCalib=hmRef?RT_computeCalib(hmRef):null;
+ var hmAutoRot=hmCalib?hmCalib.rotDeg:null;
+ var basePos=null;
+ if(savedView){ var hmRotVal=(savedView.rot!==undefined&&savedView.rot!==null&&savedView.rot!==0)?savedView.rot:(hmAutoRot!==null?hmAutoRot:(savedView.rot||0)); basePos={lat:savedView.lat, lng:savedView.lng, zoom:savedView.zoom, rot:hmRotVal}; }
+ else{
+  var hmCtr=RT_holeCenter(rd,c);
+  if(hmCtr){ basePos={lat:hmCtr.lat, lng:hmCtr.lng, zoom:17, rot:(hmAutoRot!==null?hmAutoRot:0), fit:true}; }
+  else{
+   var ck=RT_courseKeyFromName(rd.courseName,rd);
+   var courseObj=ck?RT_COURSES[ck]:null;
+   var pos=null;
+   if(courseObj){
+    if(courseObj.lat!==undefined&&courseObj.lat!==null){ pos={lat:courseObj.lat, lon:courseObj.lon}; }
+    else if(courseObj.address){ pos=await RT_geocode(courseObj.address); }
+   }
+   if(pos) basePos={lat:pos.lat, lng:pos.lon, zoom:17, rot:(hmAutoRot!==null?hmAutoRot:0)};
+  }
+ }
+ /* Nach dem await erneut pruefen: Nutzer koennte inzwischen die Bahn gewechselt haben. */
+ if(rd!==RT_round||c!==RT_round.cur) return;
+ rd.players.forEach(function(p,pi){
+  var el=document.getElementById('hole-map-'+pi);
+  if(!el) return;
+  if(!basePos){ el.style.display='none'; return; }
+  el.style.display='block';
+  var map=L.map('hole-map-'+pi,{zoomControl:true,attributionControl:true}).setView([basePos.lat,basePos.lng],basePos.zoom);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,attribution:'Tiles &copy; Esri'}).addTo(map);
+  var layer=L.layerGroup().addTo(map);
+  var refLayer=L.layerGroup().addTo(map);
+  var rot0=basePos.rot||0;
+  el.style.transform='rotate('+rot0+'deg)';
+  RT_holeMapInst[pi]={map:map,layer:layer,refLayer:refLayer,rot:rot0,el:el,locked:true};
+  if(basePos.fit){ try{ var fpts=RT_holePoints(rd,c); if(fpts.length>1) map.fitBounds(L.latLngBounds(fpts).pad(0.45)); else map.setZoom(18); }catch(e){} }
+  RT_applyMapLock(pi);
+  RT_setupRotDrag('h'+pi,map,el,function(){ var i2=RT_holeMapInst[pi]; return i2?(i2.rot||0):0; });
+  RT_redrawPins(pi);
+  /* Referenzpunkte werden waehrend des Spiels bewusst NICHT mehr eingeblendet - auf den
+     Spielerkarten sollen nur die selbst gesetzten Markierungen zu sehen sein. Sichtbar
+     sind sie weiterhin im Referenzpunkte-Editor (RT_calibMarkersHtml). */
+  map.on('moveend zoomend', function(){
+   var ctr=map.getCenter();
+   RT_saveHoleView(rd,c,ctr.lat,ctr.lng,map.getZoom());
+  });
+  map.on('click', function(e){
+   if(RT_suppressMapClick['h'+pi]) return;
+   if(!p.pins[c])p.pins[c]=[];
+   var inst=RT_holeMapInst[pi];
+   var rot=(inst&&inst.rot)||0;
+   var oe=e.originalEvent;
+   var ll;
+   if(oe&&typeof oe.clientX==='number'&&rot){
+    ll=RT_correctedLatLng(map,(inst&&inst.el)||el,rot,oe.clientX,oe.clientY);
+   }else{
+    ll=e.latlng;
+   }
+   p.pins[c].push({lat:ll.lat, lng:ll.lng});
+   rtSet(RT_ACT,RT_round);
+   RT_redrawPins(pi);
+   RT_updPinHint(pi);
+  });
+ });
+}
+function RT_redrawPins(pi){
+ var inst=RT_holeMapInst[pi]; if(!inst) return;
+ var rd=RT_round, p=rd.players[pi], c=rd.cur;
+ var rot=inst.rot||0;
+ inst.layer.clearLayers();
+ var pins=p.pins[c]||[];
+ pins.forEach(function(pt,idx){
+  /* Zahl/Icon im Pin immer gegen die Kartendrehung gegenrotieren, damit es lesbar aufrecht bleibt. */
+  var vis=RT_pinMarkerVisual(pt,idx);
+  var icon=L.divIcon({className:'',html:'<div style="width:22px;height:22px;border-radius:50%;background:'+vis.bg+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);transform:rotate('+(-rot)+'deg);">'+vis.label+'</div>',iconSize:[22,22],iconAnchor:[11,11]});
+  var m=L.marker([pt.lat,pt.lng],{icon:icon}).addTo(inst.layer);
+  m.on('click', function(ev){
+   if(ev.originalEvent)L.DomEvent.stopPropagation(ev.originalEvent);
+   if(!window.confirm('Wollen Sie diese Lage wirklich löschen?')) return;
+   pins.splice(idx,1);
+   rtSet(RT_ACT,RT_round);
+   RT_redrawPins(pi);
+   RT_updPinHint(pi);
+  });
+ });
+}
+function RT_drawRefMarkers(pi){
+ var inst=RT_holeMapInst[pi]; if(!inst||!inst.refLayer) return;
+ var rd=RT_round; if(!rd) return;
+ var c=rd.cur;
+ var ref=RT_refFor(rd,c); if(!ref) return;
+ inst.refLayer.clearLayers();
+ var rot=inst.rot||0;
+ function mk(pt,label,bg,fg){
+  if(!pt) return;
+  fg=fg||'#fff';
+  var icon=L.divIcon({className:'',html:'<div style="width:20px;height:20px;border-radius:50%;background:'+bg+';color:'+fg+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transform:rotate('+(-rot)+'deg);">'+label+'</div>',iconSize:[20,20],iconAnchor:[10,10]});
+  L.marker([pt.lat,pt.lng],{icon:icon,interactive:false}).addTo(inst.refLayer);
+ }
+ mk(ref.pin,'\u26f3','#FFFFFF');
+ mk(ref.mid,'M','#0A84FF');
+ if(ref.tees) Object.keys(ref.tees).forEach(function(k){ var bg=RT_teeColorFor(k); mk(ref.tees[k],'T',bg,RT_teeTextColorFor(bg)); });
+}
+/* Ausgangspunkt der Grabber-Distanzringe: bewusst der ABSCHLAG dieser Bahn - und zwar
+   der Abschlag, den ICH in dieser Runde spiele (Tee-Name aus meinem Spieler-Eintrag,
+   nachgeschlagen in den Referenzpunkten der Bahn). Die Ringe beantworten damit die Frage
+   "wie weit muss ich vom Tee aus schlagen" und bleiben ueber die ganze Bahn stabil,
+   statt mit dem eigenen Standort mitzuwandern. Nur wenn kein Abschlagpunkt hinterlegt
+   ist, wird auf GPS bzw. die bisherigen Ersatzpunkte zurueckgefallen. */
+/* ---------- Wind (Backlog A4) ----------
+   Quelle: Open-Meteo ueber die eigene Worker-Route /api/wind. Kein Schluessel, keine
+   Registrierung, und weil der Worker dazwischensteht, sieht der Dienst nie die IP des
+   Spielers. Bezugspunkt ist die Bahn selbst (Loch, sonst Abschlag), nicht der GPS-Standort:
+   so steht der Wind auch dann, wenn noch kein Signal da ist, und der Wert wechselt nicht
+   bei jedem Schritt. */
+var RT_wind={data:null,ts:0,key:'',loading:false,err:null};
+var RT_WIND_TTL_MS=10*60*1000;
+function RT_windRefPoint(rd,c){
+ var ref=RT_refFor(rd,c);
+ if(ref){
+  if(ref.pin&&ref.pin.lat!==undefined&&ref.pin.lat!==null) return {lat:ref.pin.lat,lng:ref.pin.lng};
+  if(ref.mid&&ref.mid.lat!==undefined&&ref.mid.lat!==null) return {lat:ref.mid.lat,lng:ref.mid.lng};
+  var t=RT_grabberTeePoint(rd,c); if(t) return {lat:t.lat,lng:t.lng};
+ }
+ if(RT_curPos) return {lat:RT_curPos.lat,lng:RT_curPos.lng};
+ return null;
+}
+function RT_windFetch(rd,c,force){
+ var p=RT_windRefPoint(rd,c); if(!p) return;
+ var key=p.lat.toFixed(3)+','+p.lng.toFixed(3);
+ var fresh=(RT_wind.key===key)&&RT_wind.data&&((Date.now()-RT_wind.ts)<RT_WIND_TTL_MS);
+ if(RT_wind.loading||(fresh&&!force)) return;
+ RT_wind.loading=true; RT_wind.err=null;
+ fetch('/api/wind?lat='+encodeURIComponent(p.lat)+'&lng='+encodeURIComponent(p.lng))
+  .then(function(r){ return r.json(); })
+  .then(function(j){
+   RT_wind.loading=false;
+   if(!j||j.error||j.spd===undefined||j.spd===null){ RT_wind.err='nicht verfügbar'; }
+   else { RT_wind.data=j; RT_wind.ts=Date.now(); RT_wind.key=key; }
+   RT_render();
+  })
+  .catch(function(e){ RT_wind.loading=false; RT_wind.err='nicht verfügbar'; RT_render(); });
+}
+/* Spielrichtung: von der letzten eigenen Balllage (sonst vom eigenen Abschlag) zum Loch.
+   Damit dreht sich die Nadel mit, sobald man die Bahn hinunterspielt. */
+function RT_playBearing(rd,c){
+ var ref=RT_refFor(rd,c); if(!ref||!ref.pin||ref.pin.lat===undefined||ref.pin.lat===null) return null;
+ var from=RT_lastBallPos(rd,c)||RT_grabberTeePoint(rd,c)||(RT_curPos?{lat:RT_curPos.lat,lng:RT_curPos.lng}:null);
+ if(!from) return null;
+ var la=(from.lat+ref.pin.lat)/2*Math.PI/180;
+ var dn=(ref.pin.lat-from.lat)*111320;
+ var de=(ref.pin.lng-from.lng)*111320*Math.cos(la);
+ if(Math.abs(dn)<1&&Math.abs(de)<1) return null;
+ return (Math.atan2(de,dn)*180/Math.PI+360)%360;
+}
+/* dir ist die Richtung, AUS der der Wind kommt. Der Wind weht also nach dir+180.
+   Relativ zur Spielrichtung ergibt sich daraus, ob er schiebt, bremst oder versetzt. */
+function RT_windRelDeg(rd,c){
+ if(!RT_wind.data||RT_wind.data.dir===undefined||RT_wind.data.dir===null) return null;
+ var b=RT_playBearing(rd,c); if(b===null) return null;
+ var d=((RT_wind.data.dir+180)-b+540)%360-180;
+ return d;
+}
+function RT_windLabel(d){
+ if(d===null) return '';
+ var a=Math.abs(d);
+ var seite=(a>12&&a<168)?(d>0?' von links':' von rechts'):'';
+ if(a<=35) return 'Rückenwind'+seite;
+ if(a>=145) return 'Gegenwind'+seite;
+ if(a<=80||a>=100) return (a<90?'Rückenwind schräg':'Gegenwind schräg')+seite;
+ return 'Seitenwind'+seite;
+}
+function RT_windStrengthText(s){
+ if(s===undefined||s===null) return '';
+ if(s<2) return 'windstill';
+ if(s<8) return 'kaum spürbar';
+ if(s<16) return 'leicht';
+ if(s<25) return 'spürbar';
+ if(s<35) return 'stark';
+ return 'sehr stark';
+}
+/* Nadel: oben ist immer die Spielrichtung. Der Pfeil zeigt, wohin der Wind weht. */
+function RT_windArrowSvg(d,spd){
+ var col=(spd>=25)?'#D64550':(spd>=12?'#B7791F':'#1F8A4D');
+ return '<svg viewBox="0 0 40 40" width="34" height="34" style="flex:none;">'+
+  '<circle cx="20" cy="20" r="18" fill="#F1F6EC" stroke="#DFE8DA"/>'+
+  '<path d="M20 5 L20 11" stroke="#9AAB9E" stroke-width="1.5" stroke-linecap="round"/>'+
+  '<g transform="rotate('+d.toFixed(1)+' 20 20)">'+
+   '<path d="M20 31 L20 12 M20 12 L15.5 17 M20 12 L24.5 17" fill="none" stroke="'+col+
+   '" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'+
+  '</g></svg>';
+}
+function RT_windCardHtml(rd,c){
+ var h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 10px;'+
+  'background:#F8FBF5;border:1px solid #EDF2E9;border-radius:11px;">';
+ if(RT_wind.loading&&!RT_wind.data){
+  return h+'<div style="font-size:11.5px;color:#8A9C8E;">Wind wird geladen…</div></div>';
+ }
+ if(!RT_wind.data){
+  return h+'<div style="font-size:11.5px;color:#8A9C8E;flex:1;">Wind '+(RT_wind.err||'nicht verfügbar')+'</div>'+
+   '<button class="rt-btn3" style="padding:4px 10px;font-size:11px;width:auto;margin:0;" onclick="RT_windFetch(RT_round,RT_round.cur,true)">Erneut</button></div>';
+ }
+ var w=RT_wind.data;
+ var spd=Math.round(w.spd);
+ var d=RT_windRelDeg(rd,c);
+ var alt=Math.round((Date.now()-RT_wind.ts)/60000);
+ h+=(d===null?'':RT_windArrowSvg(d,spd));
+ h+='<div style="flex:1;min-width:0;">';
+ h+='<div style="font-size:12.5px;font-weight:700;color:#143522;">'+
+    (d===null?('Wind '+spd+' km/h'):(RT_windLabel(d)+' · '+spd+' km/h'))+'</div>';
+ var sub=RT_windStrengthText(w.spd);
+ if(w.gust!==undefined&&w.gust!==null&&(w.gust-w.spd)>=8) sub+=' · Böen '+Math.round(w.gust)+' km/h';
+ if(w.temp!==undefined&&w.temp!==null) sub+=' · '+Math.round(w.temp)+'°C';
+ if(alt>=10) sub+=' · vor '+alt+' min';
+ h+='<div style="font-size:10.5px;color:#8A9C8E;">'+sub+'</div>';
+ h+='</div>';
+ h+='<button class="rt-btn3" style="padding:4px 8px;font-size:11px;width:auto;margin:0;flex:none;" onclick="RT_windFetch(RT_round,RT_round.cur,true)" title="Wind aktualisieren">&#8635;</button>';
+ return h+'</div>';
+}
+function RT_grabberTeePoint(rd,c){
+ var ref=RT_refFor(rd,c); if(!ref||!ref.tees) return null;
+ var norm=function(x){ return (x||'').trim().toLowerCase(); };
+ var mi=(typeof RT_myPlayerIndex==='function')?RT_myPlayerIndex(rd):0;
+ var me=rd.players&&(rd.players[mi]||rd.players[0]);
+ var want=norm(me&&me.tee);
+ var keys=Object.keys(ref.tees);
+ if(want){
+  for(var i=0;i<keys.length;i++){
+   var t=ref.tees[keys[i]];
+   if(t&&t.lat!==undefined&&t.lat!==null&&norm(keys[i])===want) return {lat:t.lat,lng:t.lng,teeName:keys[i]};
+  }
+ }
+ for(var j=0;j<keys.length;j++){
+  var t2=ref.tees[keys[j]];
+  if(t2&&t2.lat!==undefined&&t2.lat!==null) return {lat:t2.lat,lng:t2.lng,teeName:keys[j]};
+ }
+ return null;
+}
+function RT_grabberCenter(rd,c){
+ var tee=RT_grabberTeePoint(rd,c);
+ if(tee) return {lat:tee.lat,lng:tee.lng,teeName:tee.teeName};
+ if(RT_curPos) return {lat:RT_curPos.lat,lng:RT_curPos.lng};
+ var lastBall=RT_lastBallPos(rd,c);
+ if(lastBall) return {lat:lastBall.lat,lng:lastBall.lng};
+ var ref=RT_refFor(rd,c);
+ if(ref&&ref.mid) return {lat:ref.mid.lat,lng:ref.mid.lng};
+ if(ref&&ref.pin) return {lat:ref.pin.lat,lng:ref.pin.lng};
+ return null;
+}
+/* Distanz-Grabber (Vollbild-Satellitenkarte).
+   Fruehere Fassung: fuenf volle L.circle auf der KLEINEN Karte, Ziehpunkt an Leaflets
+   L.Draggable. Beides ist entfallen - die kleine Karte zeigt nur noch Markierungen, und
+   das Ziehen laeuft jetzt rotationskorrigiert, weil die Vollbildkarte per CSS gedreht ist
+   (Leaflet kennt diese Rotation nicht; siehe RT_setupRotDrag).
+   Dargestellt werden Kreis-AUSSCHNITTE um den eigenen Abschlag in Richtung Fahne. */
+function RT_grabDest(lat,lng,brgDeg,dM){
+ var R=6371000, br=brgDeg*Math.PI/180, la=lat*Math.PI/180, lo=lng*Math.PI/180, dr=dM/R;
+ var la2=Math.asin(Math.sin(la)*Math.cos(dr)+Math.cos(la)*Math.sin(dr)*Math.cos(br));
+ var lo2=lo+Math.atan2(Math.sin(br)*Math.sin(dr)*Math.cos(la), Math.cos(dr)-Math.sin(la)*Math.sin(la2));
+ return [la2*180/Math.PI, lo2*180/Math.PI];
+}
+function RT_grabBearing(a,b){
+ var la1=a.lat*Math.PI/180, la2=b.lat*Math.PI/180, dl=(b.lng-a.lng)*Math.PI/180;
+ var y=Math.sin(dl)*Math.cos(la2);
+ var x=Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dl);
+ return (Math.atan2(y,x)*180/Math.PI+360)%360;
+}
+/* Bis 150 m in 25er-Schritten, danach 50er - sonst haette Bahn 3 (509 m) zwanzig Boegen. */
+function RT_grabRadii(totalM){
+ var out=[], r=25, cap=(totalM||250);
+ while(r<=cap&&out.length<24){ out.push(r); r+=(r<150?25:50); }
+ return out;
+}
+/* Zielausschnitt fuer die Vollbildkarte aus eigenem Abschlag und Fahne. Rueckgabe ist der
+   Mittelpunkt beider Punkte plus die Zoomstufe, bei der die Bahnlaenge rund 86 Prozent der
+   sichtbaren Hoehe einnimmt. 156543.03392 ist die Aufloesung in m/px bei Zoom 0 am Aequator,
+   der Kosinus korrigiert die Breitengrad-Stauchung von Web Mercator. */
+function RT_teePinFit(rd,c,el){
+ if(typeof RT_grabberCenter!=='function') return null;
+ var center=RT_grabberCenter(rd,c);
+ var ref=RT_refFor(rd,c);
+ var pin=(ref&&ref.pin&&ref.pin.lat!==undefined&&ref.pin.lat!==null)?ref.pin:null;
+ if(!center||!pin) return null;
+ var d=RT_haversineM(center.lat,center.lng,pin.lat,pin.lng);
+ if(!d||d<30) return null;
+ var wrap=(el&&el.parentElement)?el.parentElement:null;
+ var H=(wrap&&wrap.clientHeight)||(el&&el.clientHeight)||520;
+ var mLat=(center.lat+pin.lat)/2, mLng=(center.lng+pin.lng)/2;
+ var mpp=d/(H*0.86);
+ var z=Math.log(156543.03392*Math.cos(mLat*Math.PI/180)/mpp)/Math.LN2;
+ if(!isFinite(z)) return null;
+ z=Math.max(14,Math.min(20,Math.round(z*10)/10));
+ return {lat:mLat,lng:mLng,zoom:z};
+}
+function RT_grabberOverlayHtml(){
+ var rd=RT_round; if(!rd) return '';
+ var on=!!(RT_state.grabberOn&&RT_state.grabberOn[RT_holeMapKey(rd,rd.cur)]);
+ var lbl='position:absolute;left:0;background:#12261B;color:#fff;padding:7px 14px 7px 12px;'+
+   'border-radius:0 10px 10px 0;font-size:26px;font-weight:800;line-height:1;'+
+   'box-shadow:0 2px 8px rgba(0,0,0,.4);display:'+(on?'block':'none')+';';
+ return '<div id="rt-grab-ui" style="position:absolute;inset:0;pointer-events:none;z-index:1150;">'+
+  '<button id="rt-grab-toggle" onclick="RT_toggleGrabber()" style="position:absolute;right:14px;'+
+   'top:50%;transform:translateY(-50%);pointer-events:auto;width:48px;height:48px;border:none;'+
+   'border-radius:15px;font-size:21px;line-height:1;cursor:pointer;color:#fff;'+
+   'box-shadow:0 2px 8px rgba(0,0,0,.45);background:'+(on?'#FFFFFF':'rgba(255,255,255,.55)')+';">\ud83c\udfaf</button>'+
+  '<div id="rt-grab-far" style="'+lbl+'top:32%;">\u2013</div>'+
+  '<div id="rt-grab-near" style="'+lbl+'top:60%;">\u2013</div>'+
+ '</div>';
+}
+function RT_clearFullGrabber(){
+ if(RT_state.grabLayer){ try{RT_state.grabLayer.remove();}catch(e){} RT_state.grabLayer=null; }
+ var map=RT_holeFullMapInst;
+ if(map){
+  var doomed=[];
+  try{ map.eachLayer(function(l){ if(l&&l._rtGrab) doomed.push(l); }); }catch(e){}
+  doomed.forEach(function(l){ try{map.removeLayer(l);}catch(e){} });
+  try{ var pn=map.getPane('rtgrab'); if(pn) pn.innerHTML=''; }catch(e){}
+ }
+ ['rt-grab-far','rt-grab-near'].forEach(function(id){
+  var el=document.getElementById(id); if(el) el.style.display='none';
+ });
+}
+function RT_setupFullGrabber(){
+ var map=RT_holeFullMapInst; if(!map) return;
+ var el=document.getElementById('hole-full-map'); if(!el) return;
+ var rd=RT_round; if(!rd) return;
+ var c=rd.cur, rotF=RT_state.fullRot||0;
+ var center=RT_grabberCenter(rd,c);
+ var ref=RT_refFor(rd,c);
+ var pin=(ref&&ref.pin)?{lat:ref.pin.lat,lng:ref.pin.lng}:null;
+ RT_clearFullGrabber();
+ if(!center) return;
+ /* Eigener Leaflet-Pane nur fuer den Grabber: dadurch laesst sich beim Aufraeumen der
+    komplette Zeichenbereich per DOM leeren. Das greift auch bei Layern, die eine frühere
+    Code-Fassung angelegt hat und die keine Objektreferenz mehr besitzen. */
+ if(!map.getPane('rtgrab')){ var pn0=map.createPane('rtgrab'); if(pn0) pn0.style.zIndex=650; }
+ var layer=L.layerGroup().addTo(map);
+ layer._rtGrab=true;
+ RT_state.grabLayer=layer;
+ /* Kleiner Punkt am Ringmittelpunkt: der Ausgangspunkt ist der kalibrierte Abschlag-
+    Referenzpunkt, NICHT die eigene Markierung 'A' - beide koennen ein paar Meter
+    auseinanderliegen, und ohne sichtbaren Mittelpunkt wirkt das wie ein Fehler. */
+ L.marker([center.lat,center.lng],{pane:'rtgrab',interactive:false,icon:L.divIcon({className:'',
+  iconSize:[14,14],iconAnchor:[7,7],
+  html:'<div style="width:14px;height:14px;border-radius:50%;background:#fff;'+
+   'border:2px solid #12261B;box-shadow:0 1px 3px rgba(0,0,0,.5);"></div>'})}).addTo(layer);
+ var brg=pin?RT_grabBearing(center,pin):0;
+ var total=pin?RT_haversineM(center.lat,center.lng,pin.lat,pin.lng):250;
+ /* Boegen NICHT als L.polyline: in der per CSS gedrehten Vollbildkarte erhaelt Leaflets
+    Vektor-Renderer keine Kartenereignisse - die Pfade werden nie neu projiziert, kleben an
+    ihrer ersten Bildschirmposition und wandern beim Verschieben nicht mit. Marker dagegen
+    positioniert Leaflet einzeln und zuverlaessig. Der komplette Faecher steckt deshalb als
+    Inline-SVG in EINEM divIcon, das am Ringmittelpunkt verankert ist. Im SVG wird in reinen
+    Pixeln um die Bildmitte gezeichnet, Winkel 0 zeigt nach Norden - die Kartendrehung
+    uebernimmt der Container. */
+ var arcMarker=null;
+ function RT_grabMpp(){
+  return 156543.03392*Math.cos(center.lat*Math.PI/180)/Math.pow(2,map.getZoom());
+ }
+ function RT_grabArcSvg(gp){
+  var mpp=RT_grabMpp(), radii=RT_grabRadii(total);
+  var maxM=radii.length?radii[radii.length-1]:250;
+  if(gp){ maxM=Math.max(maxM,RT_haversineM(center.lat,center.lng,gp.lat,gp.lng)); }
+  if(pin) maxM=Math.max(maxM,total);
+  var R=maxM/mpp, S=Math.min(Math.round(2*R+60),8000), cx=S/2, cy=S/2;
+  function px(brgDeg,dM){
+   var t=brgDeg*Math.PI/180, rr=dM/mpp;
+   return [cx+rr*Math.sin(t), cy-rr*Math.cos(t)];
+  }
+  var parts=[];
+  radii.forEach(function(r){
+   var d='';
+   for(var a=-40;a<=40;a+=2.5){
+    var p=px(brg+a,r);
+    d+=(d?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);
+   }
+   var hundred=(r%100===0);
+   parts.push('<path d="'+d+'" fill="none" stroke="'+(hundred?'#2F86FF':'#FFFFFF')+
+    '" stroke-width="'+(hundred?2.6:1.8)+'" stroke-opacity="'+(hundred?.95:.85)+'" stroke-linecap="round"/>');
+  });
+  var ptsL=[px(0,0)];
+  if(gp){ var dg=RT_haversineM(center.lat,center.lng,gp.lat,gp.lng); ptsL.push(px(RT_grabBearing(center,gp),dg)); }
+  if(pin) ptsL.push(px(brg,total));
+  var dl=ptsL.map(function(p,i){ return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); }).join('');
+  parts.push('<path d="'+dl+'" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-opacity=".95"/>');
+  return {svg:'<svg width="'+S+'" height="'+S+'" viewBox="0 0 '+S+' '+S+
+   '" style="display:block;overflow:visible;">'+parts.join('')+'</svg>', size:S};
+ }
+ function RT_grabDrawArcs(gp){
+  var o=RT_grabArcSvg(gp);
+  var ic=L.divIcon({className:'',html:o.svg,iconSize:[o.size,o.size],iconAnchor:[o.size/2,o.size/2]});
+  if(arcMarker){ arcMarker.setIcon(ic); }
+  else{ arcMarker=L.marker([center.lat,center.lng],{pane:'rtgrab',interactive:false,icon:ic}).addTo(layer); }
+ }
+ RT_grabRadii(total).forEach(function(r){
+  var lp=RT_grabDest(center.lat,center.lng,brg,r);
+  L.marker(lp,{pane:'rtgrab',interactive:false,icon:L.divIcon({className:'',iconSize:[46,18],iconAnchor:[23,9],
+   html:'<div style="transform:rotate('+(-rotF)+'deg);text-align:center;color:#fff;font-size:12px;'+
+    'font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.85);">'+r+'</div>'})}).addTo(layer);
+ });
+ /* Startpunkt bewusst NICHT am GPS-Standort: ausserhalb des Platzes stuende der Ziehpunkt
+    kilometerweit weg und die beiden Distanzen waeren sinnlos. Er startet auf halber
+    Strecke zwischen eigenem Abschlag und Fahne. */
+ var start=pin?{lat:(center.lat+pin.lat)/2,lng:(center.lng+pin.lng)/2}:center;
+ RT_grabDrawArcs(start);
+ map.on('zoomend',function(){ if(arcMarker) RT_grabDrawArcs(marker?marker.getLatLng():start); });
+ var marker=L.marker([start.lat,start.lng],{pane:'rtgrab',icon:L.divIcon({className:'',iconSize:[46,46],iconAnchor:[23,23],
+   html:'<div style="width:46px;height:46px;border-radius:50%;border:3px solid #fff;'+
+    'box-shadow:0 1px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;">'+
+    '<div style="width:5px;height:5px;border-radius:50%;background:#fff;"></div></div>'})}).addTo(layer);
+ function upd(){
+  var p=marker.getLatLng();
+  var dTee=RT_haversineM(center.lat,center.lng,p.lat,p.lng);
+  var dPin=pin?RT_haversineM(p.lat,p.lng,pin.lat,pin.lng):null;
+  var f=document.getElementById('rt-grab-far'), n=document.getElementById('rt-grab-near');
+  if(f){ f.style.display='block'; f.innerHTML=RT_grabNum(dPin); }
+  if(n){ n.style.display='block'; n.innerHTML=RT_grabNum(dTee); }
+  RT_grabDrawArcs(p);
+ }
+ /* Ziehen rotationskorrigiert und ABSOLUT: seit RT_correctedLatLng beide Achsen richtig
+    rechnet, laesst sich der Zeigerpunkt direkt in Koordinaten uebersetzen. Beim Anfassen
+    wird einmal der Versatz zwischen Ziehpunkt und Fingerposition gemerkt und danach
+    konstant gehalten - der Marker springt also nicht unter den Finger, bleibt aber exakt
+    unter ihm. Die frueher noetige Delta-Summierung entfaellt; sie hat pro Bewegungsereignis
+    einen Rundungsfehler aufaddiert, wodurch der Ziehpunkt bei schnellem Ziehen wegdriftete. */
+ var gEl=marker.getElement();
+ if(gEl){
+  gEl.style.touchAction='none'; gEl.style.cursor='grab';
+  var st=null;
+  gEl.addEventListener('pointerdown',function(ev){
+   ev.preventDefault(); ev.stopPropagation();
+   try{gEl.setPointerCapture(ev.pointerId);}catch(e){}
+   var p0=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY);
+   var mp=marker.getLatLng();
+   st=p0?{dLat:mp.lat-p0.lat,dLng:mp.lng-p0.lng}:{dLat:0,dLng:0};
+  });
+  gEl.addEventListener('pointermove',function(ev){
+   if(!st) return;
+   ev.preventDefault(); ev.stopPropagation();
+   var p=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY);
+   if(!p) return;
+   marker.setLatLng([p.lat+st.dLat, p.lng+st.dLng]);
+   upd();
+  });
+  function endG(ev){ if(!st) return; st=null; ev.stopPropagation(); }
+  gEl.addEventListener('pointerup',endG);
+  gEl.addEventListener('pointercancel',endG);
+ }
+ upd();
+ /* Groesse und Renderer-Ursprung nach dem Zeichnen erzwingen: laeuft der Aufbau vor dem
+    invalidateSize() der Karte, kennt der Renderer noch die alte Containergroesse. */
+ setTimeout(function(){ try{ map.invalidateSize(); map.fire('moveend'); }catch(e){} },0);
+}
+function RT_grabNum(m){
+ if(m===null||m===undefined||isNaN(m)) return '\u2013';
+ var v=(RT_distUnit()==='yd')?Math.round(m*1.09361):Math.round(m);
+ var u=(RT_distUnit()==='yd')?'yd':'m';
+ return v+'<span style="font-size:12px;font-weight:700;vertical-align:super;margin-left:2px;">'+u+'</span>';
+}
+function RT_toggleGrabber(){
+ var rd=RT_round; if(!rd) return;
+ var key=RT_holeMapKey(rd,rd.cur);
+ if(!RT_state.grabberOn) RT_state.grabberOn={};
+ RT_state.grabberOn[key]=!RT_state.grabberOn[key];
+ var on=!!RT_state.grabberOn[key];
+ var b=document.getElementById('rt-grab-toggle');
+ if(b) b.style.background=on?'#FFFFFF':'rgba(255,255,255,.55)';
+ /* Bewusst KEIN RT_render(): das Vollbild wuerde neu aufgebaut und die Karte neu
+    initialisiert - Ausschnitt und Zoom waeren weg. */
+ if(on) RT_setupFullGrabber(); else RT_clearFullGrabber();
+}
+function RT_updPinHint(pi){
+ var rd=RT_round; if(!rd)return;
+ var p=rd.players[pi], c=rd.cur;
+ var n=(p.pins&&p.pins[c])?p.pins[c].length:0;
+ var hintEl=document.getElementById('pin-hint-'+pi);
+ if(hintEl) hintEl.textContent='Karte antippen = Lage setzen \u00b7 Markierung antippen = entfernen';
+ var btn=document.getElementById('pin-reset-'+pi);
+ if(btn) btn.style.display = n? 'inline-block':'none';
+}
+function RT_clearPins(pi){
+ var rd=RT_round; if(!rd)return;
+ var p=rd.players[pi], c=rd.cur;
+ if(p.pins) p.pins[c]=[];
+ rtSet(RT_ACT,RT_round);
+ RT_redrawPins(pi);
+ RT_updPinHint(pi);
+}
+function RT_toggleHoleView(){
+ var rd=RT_round; if(!rd) return;
+ var key=RT_holeMapKey(rd,rd.cur);
+ if(!RT_state.mapModeOn) RT_state.mapModeOn={};
+ RT_state.mapModeOn[key]=!RT_state.mapModeOn[key];
+ RT_render();
+}
+function RT_render(){
+ var r=document.getElementById('rt-root'); if(!r)return;
+ if(RT_state.screen==='setup'){ r.innerHTML=RT_rSetup(); RT_initMap(); }
+ else if(RT_state.screen==='coursePick')r.innerHTML=RT_rCoursePick();
+ else if(RT_state.screen==='play'){ r.innerHTML=RT_rPlay(); RT_initHoleMaps(); RT_startGeoWatch(); }
+ else if(RT_state.screen==='view')r.innerHTML=RT_rView();
+ else if(RT_state.screen==='user')r.innerHTML=RT_rUser();
+ else r.innerHTML=RT_rHome();
+}
+function RT_go(s){if(s!=='play')RT_stopGeoWatch();RT_state.screen=s;RT_state.ask='';RT_render();var _ap=document.getElementById('app');if(_ap)_ap.scrollTop=0;}
+
+function RT_userIcon(){
+ var av=sbUser&&sbUser.user_metadata&&sbUser.user_metadata.avatar_url;
+ var initial=sbUser&&sbUser.user_metadata&&sbUser.user_metadata.display_name?sbUser.user_metadata.display_name.charAt(0).toUpperCase():(sbUser&&sbUser.email?sbUser.email.charAt(0).toUpperCase():'');
+ var inner=av?'<img src="'+rtEsc(av)+'" style="width:100%;height:100%;object-fit:cover;">':
+  (sbUser?'<span style="font-size:15px;font-weight:800;color:#fff;">'+initial+'</span>':'<span style="font-size:16px;">&#128100;</span>');
+ var bg=sbUser?'#1F8A4D':'#DCE7D4';
+ /* showTab('runde') zuerst, weil das Konto-Menue (RT_rUser via RT_go('user')) in #rt-root
+    gerendert wird, das nur innerhalb des Tabs "Runde" sichtbar ist - so funktioniert das Icon
+    auch, wenn es auf den Tabs "Handicap" oder "Schlag-Detail" angezeigt wird. */
+ return '<button onclick="showTab(\'runde\');RT_go(\'user\')" title="Benutzermen\u00fc" style="flex:none;width:38px;height:38px;border-radius:50%;border:none;background:'+bg+';overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;">'+inner+'</button>';
+}
+function RT_rHome(){
+ var saved=rtGet(RT_KEY)||[];
+ saved=saved.filter(function(r){return !r.hidden;});
+ var h='<div style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;">'+
+   '<div><div class="rt-h1">Fairway<em>Pilot</em></div>'+
+   '<div class="rt-sub">Scorecard w\u00e4hrend der Runde erfassen</div></div>'+
+   RT_userIcon()+
+   '</div>';
+ if(RT_round&&!RT_round.done){
+  h+='<div class="rtc rtc-hd"><div class="rt-ct">Aktive Runde</div>'+
+   '<div class="rt-cs">'+rtEsc(RT_round.courseName)+' &middot; '+RT_fmtDT(RT_round)+' &middot; Bahn '+RT_round.nums[RT_round.cur]+'</div>'+
+   '<button class="rt-btn" onclick="RT_go(\'play\')">Runde fortsetzen</button>'+
+   (RT_state.ask==='discard'?'<button class="rt-btn3" style="width:100%;margin-top:4px;color:#B03A3A;font-weight:800;" onclick="RT_discard()">Wirklich verwerfen? Erneut tippen</button>':'<button class="rt-btn3" style="width:100%;margin-top:4px;" onclick="RT_discard()">Aktive Runde verwerfen</button>')+'</div>';
+ }else{
+  h+='<div class="rtc rtc-hd"><div class="rt-ct">Neue Runde</div>'+
+   '<div class="rt-cs">Platz, Spieler und Abschl\u00e4ge festlegen &ndash; dann Loch f\u00fcr Loch eintragen</div>'+
+   '<button class="rt-btn" onclick="RT_newRound()">Neue Runde starten</button></div>';
+ }
+ h+='<div class="rtc"><div class="rt-ct">Gespeicherte Runden</div>';
+ if(!saved.length){
+  h+='<div style="font-size:12px;color:#8A9C8E;padding:14px 0 6px;text-align:center;">Noch keine Runden gespeichert.<br>Deine erste Runde erscheint hier.</div>';
+ }else{
+  h+='<div class="rt-cs">'+saved.length+' Runde'+(saved.length>1?'n':'')+' &middot; auf diesem Ger\u00e4t gespeichert</div>';
+  var sortedSaved=saved.slice().sort(function(a,b){
+   if(a.date!==b.date) return b.date>a.date?1:-1;
+   var at=a.time||'', bt=b.time||'';
+   return bt>at?1:bt<at?-1:0;
+  });
+  /* Rundenkarte im Stil einer Scorecard-Kachel: Hintergrundbild des Platzes, Logo oben
+     rechts, unten Datum/Platz/Loecher und rechts die eigene Schlagzahl mit hochgestellter
+     Stableford-Punktzahl. Gezeigt wird die auf Netto-Doppel-Bogey gedeckelte Schlagzahl (t.br), also der handicaprelevante Wert - die Bruttosumme (t.brRaw) steht weiterhin in der Detailansicht unter Gesamtanzahl Schlaege. Gezeigt werden bewusst nur die eigenen Werte (RT_myPlayerIndex),
+     nicht die aller Mitspieler. */
+  sortedSaved.forEach(function(rd){
+   var mi=(typeof RT_myPlayerIndex==='function')?RT_myPlayerIndex(rd):0;
+   var me=rd.players[mi]||rd.players[0];
+   var t=RT_totals(me,rd);
+   var holes=(rd.cnt===18)?'18':String(rd.cnt);
+   var bg=RT_roundBgUrl(rd);
+   h+='<div class="rt-rcard" onclick="RT_openView(\''+rd.id+'\')">'+
+    '<img src="'+bg+'" alt="" loading="lazy" onerror="RT_imgErr(this)">'+
+    '<div class="rt-rcard-sh"></div>'+
+    '<div class="rt-rcard-logo"><img src="/logo-mark.png" alt="">FairwayPilot</div>'+
+    '<div class="rt-rcard-body">'+
+     '<div class="rt-rcard-txt">'+
+      '<div class="d">'+RT_fmtDT(rd)+'</div>'+
+      '<div class="c">'+rtEsc(rd.courseName)+'</div>'+
+      '<div class="m">'+holes+' L\u00d6CHER &middot; PAR '+rd.par.reduce(function(a,b){return a+b;},0)+'</div>'+
+     '</div>'+
+     '<div class="rt-rcard-sc">'+t.br+'<sup>'+t.stbf+'</sup></div>'+
+    '</div>'+
+   '</div>';
+  });
+ }
+ h+='</div>';
+  return h;
+}
+
+function RT_newRound(){RT_su=RT_defSu();RT_su.course=null;RT_editingExisting=false;RT_editSourceRound=null;RT_go('coursePick');}
+
+function RT_pickCourse(k){RT_suCourse(k);RT_go('setup');}
+function RT_imgErr(el){el.style.display='none';}
+/* True, wenn der aktuell angemeldete Nutzer von jemand anderem eingeladen wurde (mindestens
+   eine eingehende Verbindung ueber player_links, siehe get_my_connections/RT_loadConnections).
+   Wird genutzt, um die Platzauswahl fuer eingeladene Mitspieler auf die Plaetze zu beschraenken,
+   an denen sie tatsaechlich mitgespielt haben - Marks eigene Preset-Sammlung (Georghausen,
+   Waldhof) ist fuer einen eingeladenen Mitspieler sonst irrelevanter Ballast bzw.
+   zeigt unnoetig Details aus Marks Umgebung. RT_connections===null bedeutet "noch nicht
+   geladen" - in diesem Zwischenzustand bewusst NICHT einschraenken (sicherer Default: lieber
+   kurzzeitig die volle Liste zeigen als faelschlich alles auszublenden). */
+function RT_isInvitedUser(){
+ return !!(RT_connections&&RT_connections.some(function(c){ return c.direction==='incoming'; }));
+}
+
+function RT_rCoursePick(){
+ var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">'+
+  '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
+  '<div><div class="rt-h1" style="font-size:19px;">Platz w\u00e4hlen</div>'+
+  '<div class="rt-sub">Wo wird gespielt?</div></div></div>';
+ var restrictToPlayed=RT_isInvitedUser();
+ RT_platzChips().forEach(function(ch,pIdx,pArr){
+  var k=ch[0];
+  if(k==='other'){
+   h+='<div class="rtc" style="cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="RT_pickCourse(\''+k+'\')">'+
+    '<div style="width:54px;height:54px;border-radius:12px;background:#EAF6EE;display:flex;align-items:center;justify-content:center;font-size:22px;color:#1F8A4D;flex:none;">&#10133;</div>'+
+    '<div><div class="rt-ct" style="margin:0;">Anderer Platz</div><div class="rt-cs" style="margin:0;">Platz suchen oder manuell anlegen</div></div>'+
+    '</div>';
+   return;
+  }
+  var c=RT_COURSES[k];
+  if(!c)return;
+  if(restrictToPlayed){
+   if(!RT_isPlayed(k))return;
+  }else if(RT_hiddenPresets().indexOf(k)!==-1&&!RT_isPlayed(k))return;
+  h+='<div class="rtc" style="padding:0;overflow:hidden;cursor:pointer;position:relative;" onclick="RT_pickCourse(\''+k+'\')">'+
+   (RT_isPlayed(k)?'':'<button class="rt-btn3" style="position:absolute;top:8px;right:8px;z-index:2;width:28px;height:28px;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;" onclick="event.stopPropagation();RT_removeCoursePick(\''+k+'\')">&#10005;</button>')+(pArr.length>2?'<div style="position:absolute;top:8px;left:8px;z-index:2;display:flex;gap:4px;">'+
+  (pIdx>0?'<button class="rt-btn3" style="width:28px;height:28px;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="event.stopPropagation();RT_platzMove(\''+k+'\',-1)"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+
+  (pIdx<pArr.length-2?'<button class="rt-btn3" style="width:28px;height:28px;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="event.stopPropagation();RT_platzMove(\''+k+'\',1)"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+
+ '</div>':'')+
+   (c.photoUrl?'<img src="'+c.photoUrl+'" loading="lazy" style="width:100%;height:150px;object-fit:cover;display:block;background:#EAF1E3;" onerror="RT_imgErr(this)">':'')+
+   '<div style="padding:14px 14px 15px;">'+
+   '<div class="rt-ct" style="margin:0;">'+rtEsc(ch[1])+'</div>'+
+   (c.address?'<div class="rt-cs" style="margin:6px 0 0;">'+rtEsc(c.address)+'</div>':'')+
+   '</div></div>';
+ });
+ return h;
+}
+
+function RT_rSetup(){
+ var cd=RT_courseData();
+ var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">'+
+  '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="'+(RT_editingExisting?'RT_cancelEditSetup()':'RT_go(\'home\')')+'">&#8249;</button>'+
+  '<div><div class="rt-h1" style="font-size:19px;">'+(RT_editingExisting?'Runde bearbeiten':'Neue Runde')+'</div>'+
+  '<div class="rt-sub">'+(RT_editingExisting&&RT_editSourceRound?rtEsc(RT_editSourceRound.courseName):(RT_COURSES[RT_su.course]?rtEsc(RT_COURSES[RT_su.course].name):(RT_su.course==='other'?'Anderer Platz':'Wann und wo gespielt wurde')))+'</div></div></div>';
+ if(RT_COURSES[RT_su.course]){
+  var pc=RT_COURSES[RT_su.course];
+  h+='<div class="rtc" style="padding:0;overflow:hidden;">'+
+   '<div style="width:100%;height:150px;background:#EAF1E3;position:relative;">'+
+    (pc.photoUrl?'<img src="'+pc.photoUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)">':'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#8A9C8E;">Kein Platzbild hinterlegt</div>')+
+    '<label style="position:absolute;bottom:8px;right:8px;background:rgba(20,53,34,.72);color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:100px;cursor:pointer;display:flex;align-items:center;">'+
+     (RT_state.photoBusy==='photoUrl'?'<span class="rt-spin"></span>Lädt hoch…':(pc.photoUrl?'Platzbild ändern':'Platzbild hochladen'))+
+     '<input type="file" accept="image/*" style="display:none;" onchange="RT_photoFile(event,\'photoUrl\')" '+(RT_state.photoBusy?'disabled':'')+'></label>'+
+   '</div>'+
+   '<div style="padding:14px 14px 15px;">'+
+    '<span class="rt-lbl">Platzname</span><input class="rt-inp" id="rt-coursename" value="'+rtEsc(pc.name)+'" onchange="RT_renameCourse(this.value)" style="margin-bottom:10px;">'+
+    '<span class="rt-lbl">Adresse</span><input class="rt-inp" id="rt-courseaddr" value="'+rtEsc(pc.address||'')+'" placeholder="Straße, PLZ Ort" onchange="RT_renameAddress(this.value)">'+
+   '</div>'+
+   /* Zweites, separates Bild: Hintergrund der Rundenkarten auf der Startseite. Ohne eigenes
+      Bild wird eines von fuenf mitgelieferten Golfmotiven verwendet (RT_roundBgUrl). */
+   '<div style="width:100%;height:150px;background:#EAF1E3;position:relative;border-top:1px solid #EDF2E9;">'+
+    '<img src="'+RT_bgForKey(RT_su.course,pc.name)+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)">'+
+    '<div style="position:absolute;left:10px;bottom:8px;color:#fff;font-size:11px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.6);">'+(pc.bgUrl?'Eigenes Rundenbild':'Standardbild (zufällig gewählt)')+'</div>'+
+    '<label style="position:absolute;bottom:8px;right:8px;background:rgba(20,53,34,.72);color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:100px;cursor:pointer;display:flex;align-items:center;">'+
+     (RT_state.photoBusy==='bgUrl'?'<span class="rt-spin"></span>Lädt hoch…':(pc.bgUrl?'Rundenbild ändern':'Rundenbild hochladen'))+
+     '<input type="file" accept="image/*" style="display:none;" onchange="RT_photoFile(event,\'bgUrl\')" '+(RT_state.photoBusy?'disabled':'')+'></label>'+
+   '</div>'+
+
+  '</div>';
+ }
+ /* Datum & Uhrzeit - eigene Dropdown-Auswahl statt nativer type="date"/"time"-Felder:
+    iOS oeffnet bei diesen Eingabetypen ein natives, vom Web-Code nicht beeinflussbares
+    Auswahl-Overlay in Systembreite. Mit Select-Dropdowns bleibt die gesamte Bedienung
+    innerhalb der Seite und in Seitenbreite. */
+ h+='<div class="rtc"><div class="rt-ct">Datum &amp; Uhrzeit</div><div class="rt-cs">Wann wurde die Runde gespielt?</div>'+
+  RT_dateTimeSelects()+
+  '</div>';
+ /* Platz */
+ var RT_platzKnown=RT_su.course&&RT_su.course!=='other';
+ if(RT_editingExisting||!RT_platzKnown){
+  h+='<div class="rtc"><div class="rt-ct">Platz</div><div class="rt-cs">'+(RT_editingExisting?'Preset w\u00e4hlen oder anderen Platz recherchieren':'Eigenen Platz anlegen')+'</div>';
+  if(RT_editingExisting){
+   h+='<div class="rt-chiprow">';
+   RT_platzChips().forEach(function(c){
+  var on=(c[0]==='other'?RT_su.course==='other':RT_su.course===c[0]);
+  if(c[0]==='other'){
+   h+='<button class="rt-chip'+(on?' on':'')+'" onclick="RT_suCourse(\''+c[0]+'\')">'+c[1]+'</button>';
+   return;
+  }
+  var played=RT_isPlayed(c[0]);
+  var hidden=RT_hiddenPresets().indexOf(c[0])!==-1;
+  if(hidden&&!played) return;
+  h+='<button class="rt-chip'+(on?' on':'')+'" style="position:relative;'+(played?'':'padding-right:24px;')+'" onclick="RT_suCourse(\''+c[0]+'\')">'+c[1]+
+   (played?'':'<span onclick="event.stopPropagation();RT_hidePreset(\''+c[0]+'\')" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:15px;height:15px;border-radius:50%;background:rgba(0,0,0,.18);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;line-height:1;">&#10005;</span>')+
+   '</button>';
+ });
+   h+='</div>';
+  }
+  if(RT_su.course==='other'){
+  h+='<div style="margin-top:12px;"><span class="rt-lbl">Platzname</span>'+
+   '<input class="rt-inp" id="rt-cname" value="'+rtEsc(RT_su.custName)+'" placeholder="z.\u2009B. GC Refrath" oninput="RT_su.custName=this.value">'+
+   '<button class="rt-btn" style="margin-top:8px;" '+(RT_state.busy?'disabled':'')+' onclick="RT_research()">'+
+   (RT_state.busy?'<span class="rt-spin"></span>Recherchiere\u2026':'Platzdaten aus dem Netz laden')+'</button>';
+  if(RT_state.resMsg)h+='<div class="rt-'+(RT_state.resOk?'note':'warn')+'" style="margin-top:8px;margin-bottom:0;">'+RT_state.resMsg+'</div>';
+  h+='<div style="margin-top:10px;"><span class="rt-lbl">Oder manuell: Par je Bahn (Komma-getrennt)</span>'+
+   '<input class="rt-inp" value="'+rtEsc(RT_su.custPar)+'" placeholder="4,4,5,4,3,4,4,4,5" oninput="RT_su.custPar=this.value">'+
+   '<span class="rt-lbl" style="margin-top:8px;">HCP-SI je Bahn (Komma-getrennt)</span>'+
+   '<input class="rt-inp" value="'+rtEsc(RT_su.custSi)+'" placeholder="2,7,1,4,8,6,3,9,5" oninput="RT_su.custSi=this.value">'+
+   '<button class="rt-btn2" style="margin-top:8px;" onclick="RT_custManual()">Manuellen Platz \u00fcbernehmen</button></div>';
+  h+='</div>';
+ }
+ h+='</div>';
+  h+='</div>';
+ }
+ if(RT_editingExisting){
+  /* Platz-Vorschau: Foto (aus der Recherche) + Standortkarte, sofern vorhanden */
+ var pvC=RT_COURSES[RT_su.course];
+ if(pvC&&(pvC.address||pvC.lat!==undefined)){
+  h+='<div class="rtc rt-mapwrap" style="padding:0;">'+
+   '<div id="platz-map" style="width:100%;height:170px;background:#EAF1E3;"></div>'+
+   '</div>';
+ }
+  }
+if(cd){
+  /* Löcher */
+  var c=RT_COURSES[RT_su.course];
+  h+='<div class="rtc"><div class="rt-ct">L\u00f6cher</div><div class="rt-seg" style="margin-bottom:0;">';
+  [['F',c.nines.F.lbl],['B',c.nines.B.lbl],['A','18 Loch']].forEach(function(o){
+   h+='<button class="'+(RT_su.holes===o[0]?'on':'')+'" onclick="RT_suHoles(\''+o[0]+'\')">'+o[1]+'</button>';
+  });
+  h+='</div>';
+  h+='<div style="font-size:11px;color:#7B8E80;margin-top:8px;">Par '+cd.parSum+'</div>';
+  var parStr=cd.par?cd.par.join(','):'';
+  h+='<div style="font-size:10px;color:#8A9C8E;margin-top:8px;margin-bottom:4px;">Par je Bahn &ndash; bei Bedarf anpassen</div>';
+  h+='<input class="rt-inp" placeholder="Par Komma-getrennt, z.\u2009B. 4,4,5,4,3,4,4,4,5" value="'+parStr+'" oninput="RT_suPar(this.value)">';
+  var siStr=cd.si?cd.si.join(','):'';
+  if(!cd.si){
+   h+='<div class="rt-warn" style="margin-top:8px;margin-bottom:4px;">HCP-SI f\u00fcr diese Auswahl fehlt. Bitte je Bahn eintragen (1 = schwerste Bahn) &ndash; sonst gleichm\u00e4\u00dfige Verteilung.</div>';
+  }else{
+   h+='<div style="font-size:10px;color:#8A9C8E;margin-top:8px;margin-bottom:4px;">HCP-SI je Bahn (1 = schwerste Bahn) &ndash; bei Bedarf anpassen</div>';
+  }
+  h+='<input class="rt-inp" placeholder="SI Komma-getrennt, z.\u2009B. 5,11,7,\u2026" value="'+siStr+'" oninput="RT_suSi(this.value)">';
+  h+='</div>';
+  /* Abschläge: CR/Slope je Abschlag, wie von der Recherche geliefert. Bei Plätzen mit zwei
+     Neunen zusätzlich getrennte Front/Back-Werte, da CR/Slope je Neun real unterschiedlich
+     ausfallen (z.B. Georghausen Gelb F 36,2/SL 138 vs. B 35,4/SL 130) und 9-Loch-Runden
+     genau diese hälftenspezifischen Werte für die Spielvorgabe brauchen. */
+  h+='<div class="rtc"><div class="rt-ct">Abschläge</div><div class="rt-cs">Course Rating und Slope je Abschlag – wie recherchiert, bei Bedarf anpassen. Front, Back und 18 Loch sind unabhängige, amtlich ausgewiesene Werte – bitte alle drei einzeln aus der Course-Rating-Tabelle eintragen.</div>';
+  var teeHasTwoNines = c.nines && c.nines.B && c.nines.B.lbl !== '–';
+  var teeOrd=RT_teeOrderResolved(c);
+  teeOrd.forEach(function(ti,pos){
+   var t=c.tees[ti];
+   h+='<div style="margin-bottom:'+(teeHasTwoNines?'16':'20')+'px;">'+
+    ((teeOrd.length>1||c.tees.length>1)?'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+(teeOrd.length>1?'<div style="display:flex;gap:6px;">'+(pos>0?'<button class="rt-btn3" style="background:rgba(20,53,34,.85);width:26px;height:26px;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeMove('+pos+',-1)" title="Nach oben"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+(pos<teeOrd.length-1?'<button class="rt-btn3" style="background:rgba(20,53,34,.85);width:26px;height:26px;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeMove('+pos+',1)" title="Nach unten"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+'</div>':'<div></div>')+(c.tees.length>1?'<button class="rt-btn3" style="background:rgba(176,58,58,.85);width:26px;height:26px;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeRemove('+ti+')" title="Abschlag entfernen">&#10005;</button>':'')+'</div>':'')+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-items:flex-end;">'+
+     '<div style="grid-column:span 2;"><span class="rt-lbl">Abschlag</span><input class="rt-inp" value="'+rtEsc(t.name)+'" oninput="RT_teeName('+ti+',this.value)"></div>'+
+     '<div><span class="rt-lbl">CR (18L)</span><input class="rt-inp" id="tee-cr-'+ti+'" type="text" inputmode="decimal" value="'+rtDe((t.cr&&t.cr.A!==null&&t.cr.A!==undefined)?t.cr.A:'')+'" oninput="RT_teeNum('+ti+',\'cr\',this.value.replace(\',\',\'.\'))"></div>'+
+     '<div><span class="rt-lbl">Slope (18L)</span><input class="rt-inp" id="tee-sl-'+ti+'" type="number" value="'+((t.sl&&t.sl.A!==null&&t.sl.A!==undefined)?t.sl.A:'')+'" oninput="RT_teeNum('+ti+',\'sl\',this.value)"></div>'+
+    '</div>';
+   if(teeHasTwoNines){
+    h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;">'+
+     '<div><span class="rt-lbl">CR Front</span><input class="rt-inp" id="tee-crF-'+ti+'" type="text" inputmode="decimal" value="'+rtDe((t.cr&&t.cr.F!==null&&t.cr.F!==undefined)?t.cr.F:'')+'" oninput="RT_teeSide('+ti+',\'cr\',\'F\',this.value.replace(\',\',\'.\'))"></div>'+
+     '<div><span class="rt-lbl">Slope Front</span><input class="rt-inp" id="tee-slF-'+ti+'" type="number" value="'+((t.sl&&t.sl.F!==null&&t.sl.F!==undefined)?t.sl.F:'')+'" oninput="RT_teeSide('+ti+',\'sl\',\'F\',this.value)"></div>'+
+     '<div><span class="rt-lbl">CR Back</span><input class="rt-inp" id="tee-crB-'+ti+'" type="text" inputmode="decimal" value="'+rtDe((t.cr&&t.cr.B!==null&&t.cr.B!==undefined)?t.cr.B:'')+'" oninput="RT_teeSide('+ti+',\'cr\',\'B\',this.value.replace(\',\',\'.\'))"></div>'+
+     '<div><span class="rt-lbl">Slope Back</span><input class="rt-inp" id="tee-slB-'+ti+'" type="number" value="'+((t.sl&&t.sl.B!==null&&t.sl.B!==undefined)?t.sl.B:'')+'" oninput="RT_teeSide('+ti+',\'sl\',\'B\',this.value)"></div>'+
+    '</div>';
+   }
+   h+='</div>';
+  });
+  h+='<button class="rt-btn2" onclick="RT_teeAdd()">+ Abschlag</button>';
+  h+='</div>';
+  /* Spieler */
+  h+='<div class="rtc"><div class="rt-ct">Spieler</div><div class="rt-cs">HI, Abschlag und CR/Slope je Spieler &ndash; Spielvorgabe wird live berechnet</div>';
+  RT_su.players.forEach(function(p,i,pArr){
+   var cr=RT_pCr(p,cd), sl=RT_pSl(p,cd);
+   var neutral=(cr===null||sl===null);
+   var ph=RT_ph(parseFloat(p.hi),cr!==null?cr:cd.parSum,sl!==null?sl:113,cd.parSum,cd.cnt);
+   h+='<div class="rt-plc" style="position:relative;">'+
+    (pArr.length>1?'<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px;">'+(i>0?'<button class="rt-btn3" style="width:26px;height:26px;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_playerMove('+i+',-1)" title="Nach oben"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+(i<pArr.length-1?'<button class="rt-btn3" style="width:26px;height:26px;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_playerMove('+i+',1)" title="Nach unten"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+'</div>':'')+
+    '<div class="rt-row" style="margin-bottom:8px;">'+
+     '<div style="flex:2;"><span class="rt-lbl">Name</span><input class="rt-inp" value="'+rtEsc(p.name)+'" oninput="RT_su.players['+i+'].name=this.value;RT_updStart()" onchange="RT_persistPlayer('+i+')"></div>'+
+     '<div><span class="rt-lbl">HI</span><input class="rt-inp" type="number" step="0.1" value="'+p.hi+'" oninput="RT_suNum('+i+',\'hi\',this.value)" onchange="RT_persistPlayer('+i+')"></div>'+
+    '</div>'+
+    '<div style="margin-bottom:8px;"><span class="rt-lbl">Abschlag</span><select class="rt-inp" onchange="RT_suTee('+i+',this.value)">';
+   var teeHasTwoNinesP = c.nines && c.nines.B && c.nines.B.lbl !== '–' && RT_su.holes!=='A';
+   RT_teeOrderResolved(c).forEach(function(ti){
+    var t=cd.tees[ti];
+    var curSel=(!p.teeHalf)?'':p.teeHalf;
+    h+='<option value="'+ti+'"'+(p.tee===ti&&!p.teeHalf?' selected':'')+'>'+rtEsc(t.name)+'</option>';
+    if(teeHasTwoNinesP){
+     h+='<option value="'+ti+':F"'+(p.tee===ti&&p.teeHalf==='F'?' selected':'')+'>'+rtEsc(t.name)+' \u2013 Front</option>';
+     h+='<option value="'+ti+':B"'+(p.tee===ti&&p.teeHalf==='B'?' selected':'')+'>'+rtEsc(t.name)+' \u2013 Back</option>';
+    }
+   });
+   h+='<option value="-1"'+(p.tee===-1?' selected':'')+'>Manuell (CR/SL unten)</option></select></div>'+
+    '<div class="rt-row" style="margin-bottom:8px;">'+
+     '<div><span class="rt-lbl">CR ('+(p.teeHalf==='F'?c.nines.F.lbl:p.teeHalf==='B'?c.nines.B.lbl:cd.lbl)+')</span><input class="rt-inp" type="number" step="0.1" value="'+(cr!==null?cr:'')+'" oninput="RT_suNum('+i+',\'cr\',this.value)"></div>'+
+     '<div><span class="rt-lbl">Slope</span><input class="rt-inp" type="number" value="'+(sl!==null?sl:'')+'" oninput="RT_suNum('+i+',\'sl\',this.value)"></div>'+
+    '</div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+     '<div class="rt-ph" id="rt-ph-'+i+'">Spielvorgabe: '+(ph!==null?ph:'&ndash;')+(neutral&&ph!==null?' <span style="font-weight:500;color:#8A9C8E;">neutral</span>':'')+'</div>'+
+     (RT_su.players.length>1?'<button class="rt-btn3" onclick="RT_suRm('+i+')">Entfernen</button>':'')+
+    '</div></div>';
+  });
+  var savedNotInRound=RT_getSavedPlayers().filter(function(sp){
+   if(RT_isSelfName(sp.name)) return false;
+   return !RT_su.players.some(function(p){ return p.name===sp.name; });
+  });
+  if(savedNotInRound.length){
+   h+='<div class="rt-cs" style="margin-bottom:6px;">Kontakte \u2013 antippen f\u00fcr diese Runde dazunehmen</div>';
+   h+='<div class="rt-chiprow" style="margin-bottom:8px;">';
+   savedNotInRound.forEach(function(sp){
+    if(RT_needsSelfConfirm(sp.name)){ h+=RT_selfConfirmHtml(sp.name); return; }
+    if(RT_state.ask==='delplayer'+sp.name){
+     h+='<span style="display:inline-flex;align-items:center;gap:6px;background:#FBEAEA;border:1.5px solid #E8B4B4;border-radius:100px;padding:6px 6px 6px 12px;font-size:12px;color:#8A3A3A;">'+
+      '"'+rtEsc(sp.name)+'" endg\u00fcltig l\u00f6schen?'+
+      '<button style="background:#C0392B;color:#fff;border:none;border-radius:100px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;" onclick="RT_deleteSavedPlayer(\''+rtJsEsc(sp.name)+'\')">Ja</button>'+
+      '<button style="background:none;border:none;color:#8A3A3A;font-size:11px;font-weight:600;cursor:pointer;" onclick="RT_state.ask=\'\';RT_render();">Nein</button>'+
+     '</span>';
+    }else{
+     h+='<span style="display:inline-flex;align-items:center;">'+
+      '<button class="rt-chip" style="border-top-right-radius:0;border-bottom-right-radius:0;border-right:none;" onclick="RT_suAddSaved(\''+rtJsEsc(sp.name)+'\')">+ '+rtEsc(sp.name)+'</button>'+
+      '<button style="background:#F1F6EC;border:1.5px solid #DCE7D4;border-left:1px solid #DCE7D4;border-top-right-radius:100px;border-bottom-right-radius:100px;color:#8A9C8E;font-size:11px;font-weight:700;padding:8px 10px 8px 6px;cursor:pointer;font-family:inherit;" onclick="RT_deleteSavedPlayer(\''+rtJsEsc(sp.name)+'\')" title="Kontakt dauerhaft l\u00f6schen">&#10005;</button>'+
+     '</span>';
+    }
+   });
+   h+='</div>';
+  }
+  h+='<div class="rt-row"><button class="rt-btn2" onclick="RT_suAdd()">+ Neuer Spieler</button></div></div>';
+  var ready=RT_su.players.every(function(p){
+   return p.name&&!isNaN(parseFloat(p.hi));
+  });
+  var anyNeutral=RT_su.players.some(function(p){return RT_pCr(p,cd)===null||RT_pSl(p,cd)===null;});
+  if(anyNeutral)h+='<div class="rt-warn">Kein CR/Slope hinterlegt \u2013 die Spielvorgabe wird neutral berechnet (CR = Par, Slope 113). Werte k\u00f6nnen oben eingetragen werden.</div>';
+  h+='<button class="rt-btn" id="rt-start" '+(ready?'':'disabled ')+'onclick="'+(RT_editingExisting?'RT_applyEdit()':'RT_start()')+'">'+(RT_editingExisting?'\u00dcbernehmen':'Runde starten')+'</button>';
+  h+='<div id="rt-starthint" style="font-size:11px;color:#8A9C8E;text-align:center;margin-top:6px;margin-bottom:12px;display:'+(ready?'none':'block')+';">Name und HI f\u00fcr alle Spieler ausf\u00fcllen</div>';
+  if(ready) h+='<div style="margin-bottom:12px;"></div>';
+ }
+ return h;
+}
+/* Ermittelt fuer einen Platz+Segment (F/B/A) den Abschlag mit dem hoechsten Course Rating -
+   "schwerste Variante" wird beim Hinzufuegen eines Spielers als Standard vorausgewaehlt statt
+   einfach immer der erste Abschlag in der Liste. Faellt auf Index 0 zurueck, wenn keine CR-Werte
+   fuer das Segment vorliegen (z.B. bei manuell angelegten Plaetzen ohne vollstaendige Daten). */
+function RT_hardestTeeIdx(courseKey, side){
+ var cc=courseKey&&RT_COURSES[courseKey];
+ if(!cc||!cc.tees||!cc.tees.length) return 0;
+ /* CR allein ist kein verlaesslicher "Schwierigkeits"-Vergleich ueber Geschlechter-Abschlaege
+    hinweg - ein Damen-Abschlag kann bei kuerzerer Laenge einen HOEHEREN CR haben als der
+    Herren-Abschlag (z.B. Georghausen: Rot L/Damen 73,4 vs. Gelb/Herren 71,1), waere hier aber
+    ein falscher Standard fuer einen erkennbar maennlichen Spieler. Deshalb: "schwerste Variante"
+    zunaechst NUR unter den Nicht-Damen-Abschlaegen suchen (das sind in diesem Code durchgehend
+    auch die technisch als Index 0 gefuehrten Standard-/Herren-Abschlaege); nur falls ein Platz
+    ausschliesslich Damen-Abschlaege hat, auf die volle Liste zurueckfallen. */
+ function hardestIn(list){
+  var bestIdx=-1, bestCr=-Infinity;
+  list.forEach(function(t,i){
+   var v=t.cr&&t.cr[side]!=null&&t.cr[side]!==undefined?parseFloat(t.cr[side]):null;
+   if(v!=null&&!isNaN(v)&&v>bestCr){ bestCr=v; bestIdx=i; }
+  });
+  return bestIdx;
+ }
+ var nonDamenIdx=[];
+ cc.tees.forEach(function(t,i){ if(t.name.toLowerCase().indexOf('damen')<0) nonDamenIdx.push(i); });
+ if(nonDamenIdx.length){
+  var sub=nonDamenIdx.map(function(i){ return cc.tees[i]; });
+  var bi=hardestIn(sub);
+  return bi>=0?nonDamenIdx[bi]:nonDamenIdx[0];
+ }
+ var bi2=hardestIn(cc.tees);
+ return bi2>=0?bi2:0;
+}
+function RT_suCourse(k){
+ RT_su.course=k;
+ if(k!=='other'){
+  var cc=RT_COURSES[k];
+  /* Prioritaet 18 Loch vor Front vor Back: sobald ein echter Back-9 vorhanden ist, gilt
+     18 Loch als "schwerste"/vollstaendigste Variante und wird vorausgewaehlt. Nur reine
+     9-Loch-Plaetze (kein Back-9, Label \u2013) starten mit Front. */
+  var hasBack=cc&&cc.nines&&cc.nines.B&&cc.nines.B.lbl!=='\u2013';
+  RT_su.holes=hasBack?'A':'F';
+ }
+ if(k!=='other'){ RT_su.players.forEach(function(p){ p.tee=RT_hardestTeeIdx(k,RT_su.holes); p.teeHalf=null; RT_applySavedTee(p,k); }); }
+ if(k==='other'){ RT_su.custName=''; RT_su.custPar=''; RT_su.custSi=''; RT_su.siEdit={}; RT_su.parEdit={}; RT_state.resMsg=''; }
+ RT_render();
+}
+function RT_suHoles(v){RT_su.holes=v;RT_render();}
+/* Prueft, ob a eine gueltige Permutation von 1..n ist (jeder Wert von 1 bis n genau einmal) -
+   nur dann ist es ein plausibler Stroke-Index. Verhindert die Art von Datenkorruption, die
+   z.B. bei Kuerten/Kaanapali passiert ist: 18er-Skala-Werte wurden ungeprueft als 9-Loch-SI
+   uebernommen. */
+function RT_isValidSiPerm(a,n){
+ if(!a||a.length!==n) return false;
+ var seen={};
+ for(var i=0;i<a.length;i++){
+  var v=a[i];
+  if(v<1||v>n||seen[v]) return false;
+  seen[v]=true;
+ }
+ return true;
+}
+function RT_suSi(v){
+ var a=v.split(',').map(function(x){return parseInt(x.trim(),10);}).filter(function(x){return !isNaN(x);});
+ var cd0=RT_COURSES[RT_su.course];var need=RT_su.holes==='A'?18:9;
+ if(a.length!==need) return;
+ if(RT_su.holes==='A'){
+  if(!RT_isValidSiPerm(a,18)){
+   RT_state.resMsg='Ung\u00fcltiger SI: es werden genau die Werte 1 bis 18 je einmal erwartet (18-Loch-Runde).';
+   RT_render();
+   return;
+  }
+  RT_su.siEdit['F18']=a.slice(0,9);RT_su.siEdit['B18']=a.slice(9);
+ }else{
+  if(!RT_isValidSiPerm(a,9)){
+   RT_state.resMsg='Ung\u00fcltiger SI: es werden genau die Werte 1 bis 9 je einmal erwartet (9-Loch-Auswahl). Tipp: bei einer 18-Loch-Runde bitte "18 Loch" ausw\u00e4hlen, um die 1-18-Skala einzugeben.';
+   RT_render();
+   return;
+  }
+  RT_su.siEdit[RT_su.holes+'9']=a;
+ }
+ RT_persistSi();
+ RT_render();
+}
+/* Einmal eingetragene SI-Werte dauerhaft merken (bis zur naechsten Aenderung), pro Platz.
+   Gilt fuer alle Plaetze (Presets wie eigene/recherchierte); bei eigenen Plaetzen zusaetzlich
+   direkt im Platzobjekt speichern, damit es auch per Cloud-Sync auf andere Geraete kommt. */
+function RT_persistSi(){
+ var key=RT_su.course;
+ if(!key||key==='other') return;
+ var ov=RT_getSiOverrides();
+ ov[key]=ov[key]||{};
+ ['F9','B9','F18','B18'].forEach(function(f){
+  if(RT_su.siEdit[f]) ov[key][f]=RT_su.siEdit[f].slice();
+ });
+ rtSet(RT_SIOV_KEY, ov);
+ var custom=RT_loadCustomCourses();
+ if(custom[key]){
+  ['F9','B9','F18','B18'].forEach(function(f){
+   if(!RT_su.siEdit[f]) return;
+   var nk=f.charAt(0), use18=f.indexOf('18')>=0;
+   if(use18) custom[key].nines[nk].si18=RT_su.siEdit[f].slice();
+   else custom[key].nines[nk].si=RT_su.siEdit[f].slice();
+  });
+  RT_COURSES[key]=custom[key];
+  rtSet(RT_CUSTOM_KEY, custom);
+  sbPushCourse(key, custom[key]);
+ }else{
+  /* Auch fuer Presets: RT_applySiOverrides() spielt ov[key] bereits in RT_COURSES ein (siehe
+     Aufrufer), zusaetzlich jetzt auch in die Cloud sichern - sonst geht eine per Hand
+     eingetragene SI-Korrektur an einem Preset beim naechsten Abmelden wieder verloren.
+     RT_applySiOverrides() MUSS hier zuerst laufen: RT_COURSES[key] wird bei Presets nicht
+     direkt mutiert, sondern die SI-Werte kommen normalerweise erst zur Laufzeit ueber ein
+     separates Overlay (siehe siOf() in RT_courseData) - ohne diesen Zwischenschritt wuerden
+     die ALTEN, nicht korrigierten Werte in die Cloud gepusht. */
+  RT_applySiOverrides();
+  sbPushCourse(key, RT_COURSES[key]);
+ }
+}
+function RT_suPar(v){
+ var a=v.split(',').map(function(x){return parseInt(x.trim(),10);}).filter(function(x){return !isNaN(x);});
+ var need=RT_su.holes==='A'?18:9;
+ if(a.length!==need) return;
+ if(a.some(function(x){return x<3||x>6;})){
+  RT_state.resMsg='Ungültiger Par: nur Werte zwischen 3 und 6 pro Loch erlaubt.';
+  RT_render();
+  return;
+ }
+ if(RT_su.holes==='A'){
+  RT_su.parEdit['F9']=a.slice(0,9);RT_su.parEdit['B9']=a.slice(9);
+ }else{
+  RT_su.parEdit[RT_su.holes+'9']=a;
+ }
+ RT_persistPar();
+ RT_render();
+}
+/* Einmal eingetragene Par-Werte dauerhaft merken (bis zur naechsten Aenderung), pro Platz -
+   analog zu RT_persistSi. Gilt fuer alle Plaetze; bei eigenen Plaetzen zusaetzlich direkt
+   im Platzobjekt speichern, damit es auch per Cloud-Sync auf andere Geraete kommt. */
+function RT_persistPar(){
+ var key=RT_su.course;
+ if(!key||key==='other') return;
+ var ov=RT_getParOverrides();
+ ov[key]=ov[key]||{};
+ ['F9','B9'].forEach(function(f){
+  if(RT_su.parEdit[f]) ov[key][f]=RT_su.parEdit[f].slice();
+ });
+ rtSet(RT_PAROV_KEY, ov);
+ var custom=RT_loadCustomCourses();
+ if(custom[key]){
+  ['F9','B9'].forEach(function(f){
+   if(!RT_su.parEdit[f]) return;
+   var nk=f.charAt(0);
+   custom[key].nines[nk].par=RT_su.parEdit[f].slice();
+  });
+  RT_COURSES[key]=custom[key];
+  rtSet(RT_CUSTOM_KEY, custom);
+  sbPushCourse(key, custom[key]);
+ }else{
+  RT_applyParOverrides();
+  sbPushCourse(key, RT_COURSES[key]);
+ }
+}
+function RT_suNum(i,f,v){RT_su.players[i][f]=v===''?null:v;RT_updPh(i);}
+function RT_updPh(i){
+ var cd=RT_courseData(); if(!cd)return;
+ var p=RT_su.players[i];
+ var cr=RT_pCr(p,cd), sl=RT_pSl(p,cd);
+ var neutral=(cr===null||sl===null);
+ var ph=RT_ph(parseFloat(p.hi),cr!==null?cr:cd.parSum,sl!==null?sl:113,cd.parSum,cd.cnt);
+ var el=document.getElementById('rt-ph-'+i);
+ if(el)el.innerHTML='Spielvorgabe: '+(ph!==null?ph:'&ndash;')+(neutral&&ph!==null?' <span style="font-weight:500;color:#8A9C8E;">neutral</span>':'');
+ RT_updStart();
+}
+function RT_updStart(){
+ var btn=document.getElementById('rt-start'); if(!btn)return;
+ var ready=RT_su.players.every(function(p){return p.name&&!isNaN(parseFloat(p.hi));});
+ btn.disabled=!ready;
+ var hint=document.getElementById('rt-starthint');
+ if(hint)hint.style.display=ready?'none':'block';
+}
+function RT_suTee(i,v){
+ var p=RT_su.players[i];
+ var parts=v.split(':');
+ p.tee=parseInt(parts[0],10);
+ p.teeHalf=parts[1]||null;
+ p.cr=null;p.sl=null;
+ RT_persistPlayer(i);
+ RT_render();
+}
+function RT_suAdd(){RT_su.players.push({name:'',hi:54,tee:RT_hardestTeeIdx(RT_su.course,RT_su.holes),teeHalf:null,cr:null,sl:null});RT_render();}
+/* Fuegt einen bereits bekannten/gespeicherten Mitspieler (Name, HI, zuletzt genutzter
+   Abschlag) direkt zur aktuellen Runde hinzu, statt eine leere Spielerkarte zu erzeugen -
+   siehe die Schnellauswahl-Chips ueber "+ Neuer Spieler". */
+function RT_suAddSaved(name){
+ var sp=RT_getSavedPlayers().find(function(x){ return x.name===name; });
+ if(!sp) return;
+ var p={name:sp.name, hi:(sp.hi!==undefined&&sp.hi!==null&&!isNaN(sp.hi))?sp.hi:54, tee:RT_hardestTeeIdx(RT_su.course,RT_su.holes), teeHalf:null, cr:null, sl:null};
+ RT_applySavedTee(p, RT_su.course);
+ RT_su.players.push(p);
+ RT_render();
+}
+function RT_suRm(i){RT_su.players.splice(i,1);RT_render();}
+/* Kontakt dauerhaft aus der gespeicherten Mitspieler-Liste entfernen (nicht nur aus der
+   aktuellen Runde) - erfordert zwei Taps zur Bestaetigung, analog zum Runde-loeschen-Muster,
+   da dies unwiderruflich ist (Name/HI/zuletzt genutzter Abschlag gehen verloren). */
+function RT_deleteSavedPlayer(name){
+ if(RT_state.ask!=='delplayer'+name){ RT_state.ask='delplayer'+name; RT_render(); return; }
+ var list=RT_getSavedPlayers().filter(function(sp){ return sp.name!==name; });
+ RT_setSavedPlayers(list);
+ RT_state.ask='';
+ RT_render();
+}
+function RT_custManual(){
+ var par=RT_su.custPar.split(',').map(function(x){return parseInt(x.trim(),10);}).filter(function(x){return !isNaN(x);});
+ var si=RT_su.custSi.split(',').map(function(x){return parseInt(x.trim(),10);}).filter(function(x){return !isNaN(x);});
+ if(par.length!==9&&par.length!==18){RT_state.resOk=false;RT_state.resMsg='Par-Liste braucht 9 oder 18 Werte.';RT_render();return;}
+ RT_buildCust(RT_su.custName||'Eigener Platz',par,si.length===par.length?si:null,[],null);
+}
+/* Platz-IDs neu angelegter Plaetze: einheitlich 'custom-<platzname>'.
+   Umlaute und Akzente werden vorher transliteriert - ohne das wird jedes Sonderzeichen zu
+   einem Bindestrich, wodurch aus "Kuerten" ein 'custom-k-rten' wird (so entstanden die
+   bestehenden, unschoenen Alt-IDs). Ausserdem wird erst gekuerzt und DANN ein eventuell
+   entstandener Binde­strich am Ende entfernt, damit keine IDs auf '-' enden.
+   Die Funktion bleibt bewusst rein deterministisch, weil sie auch zum Wiederfinden eines
+   bereits angelegten Platzes verwendet wird (RT_hydrateCustomCourses). */
+function RT_translitId(name){
+ var s=(name||'').toLowerCase();
+ var map={'\u00e4':'ae','\u00f6':'oe','\u00fc':'ue','\u00df':'ss','\u00e0':'a','\u00e1':'a','\u00e2':'a','\u00e3':'a','\u00e5':'a',
+  '\u00e8':'e','\u00e9':'e','\u00ea':'e','\u00eb':'e','\u00ec':'i','\u00ed':'i','\u00ee':'i','\u00ef':'i',
+  '\u00f2':'o','\u00f3':'o','\u00f4':'o','\u00f5':'o','\u00f8':'o','\u00f9':'u','\u00fa':'u','\u00fb':'u',
+  '\u00f1':'n','\u00e7':'c','\u00fd':'y'};
+ return s.replace(/[^a-z0-9]/g,function(ch){ return (map[ch]!==undefined)?map[ch]:ch; });
+}
+function RT_slugifyId(name){
+ var slug=RT_translitId(name).replace(/[^a-z0-9]+/g,'-').replace(/(^-+|-+$)/g,'');
+ slug=slug.slice(0,30).replace(/-+$/,'');
+ return 'custom-'+(slug||'platz');
+}
+/* Beim ANLEGEN zusaetzlich gegen Kollisionen absichern: zwei Plaetze mit gleichem Namen
+   wuerden sonst dieselbe ID bekommen und einander ueberschreiben. */
+function RT_newCourseId(name){
+ var base=RT_slugifyId(name);
+ var taken=RT_loadCustomCourses()||{};
+ if(!taken[base]&&!RT_COURSES[base]) return base;
+ for(var i=2;i<100;i++){
+  var cand=base+'-'+i;
+  if(!taken[cand]&&!RT_COURSES[cand]) return cand;
+ }
+ return base+'-'+Date.now();
+}
+function RT_loadCustomCourses(){ return rtGet(RT_CUSTOM_KEY)||{}; }
+function RT_hydrateCustomCourses(){
+ var all=RT_loadCustomCourses();
+ var legacy=rtGet('golflog_platz_v1');
+ if(legacy&&legacy.name){
+  var legacyId=RT_slugifyId(legacy.name);
+  if(!all[legacyId]){ all[legacyId]=legacy; rtSet(RT_CUSTOM_KEY,all); }
+  rtDel('golflog_platz_v1');
+ }
+ Object.keys(all).forEach(function(id){ RT_COURSES[id]=all[id]; });
+ RT_applySiOverrides();
+ RT_applyParOverrides();
+ RT_applyKnownAddresses();
+ RT_applyNameOverrides();
+ RT_applyAddrOverrides();
+ RT_applyTeeOverrides();
+ RT_applyTeeOrderOverrides();
+ RT_applyPhotoOverrides();
+ RT_applyRefOverrides();
+ RT_fixKuertenSI();
+}
+/* Einmalige, robuste Korrektur der amtlichen 18-Loch-Stroke-Index-Werte fuer GC Kuerten
+   (Meisterschaftsplatz) - unabhaengig davon, UNTER WELCHEM KEY der Platz tatsaechlich
+   vorliegt. Es kann parallel mehrere Objekte fuer denselben realen Platz geben: das feste
+   Preset "kuerten" UND/ODER einen separat recherchierten/umbenannten eigenen Eintrag
+   (z.B. "Golf-Club Kuerten", eigene ID) - beide muessten dieselben korrekten Werte haben.
+   Erkennung ueber Name ODER Adresse plus Par-Summe 72 (Meisterschaftsplatz, nicht andere
+   Kuerten-Varianten), damit nichts Falsches getroffen wird. Korrigiert werden: das aktuell
+   im Speicher geladene Objekt, eine ggf. persistierte eigene Kopie (golflog_custom_courses_v1)
+   und ein eventuell noch vorhandener, veralteter SI-Override (golflog_si_overrides_v1). */
+function RT_fixKuertenSI(){
+ /* Korrigiert sowohl den Stroke Index (si18) als auch die PAR-Zuordnung je Bahn fuer JEDEN
+    Kuerten-artigen Platzeintrag - manche recherchierten/eigenen Kopien hatten nicht nur ein
+    falsches SI, sondern zusaetzlich die Par-Werte den falschen Loechern zugeordnet (Summe pro
+    Neun stimmte zufaellig trotzdem, daher fiel es nicht sofort auf). Amtliche Werte laut
+    Course-Rating-Tabelle des Clubs. */
+ var correctF18=[13,7,17,5,11,1,9,3,15], correctB18=[12,4,18,8,10,16,2,14,6];
+ var correctParF=[4,4,3,5,5,4,4,4,3], correctParB=[5,4,3,5,4,4,4,3,4];
+ function looksLikeKuerten(c){
+  if(!c||!c.nines||!c.nines.F||!c.nines.B) return false;
+  var nameMatch=c.name&&/k.rten/i.test(c.name);
+  var addrMatch=c.address&&/johannesberg\s*13/i.test(c.address);
+  if(!nameMatch&&!addrMatch) return false;
+  var parSumF=(c.nines.F.par||[]).reduce(function(s,v){return s+v;},0);
+  var parSumB=(c.nines.B.par||[]).reduce(function(s,v){return s+v;},0);
+  return (parSumF+parSumB)===72;
+ }
+ var custom=RT_loadCustomCourses();
+ var customChanged=false;
+ var ov=RT_getSiOverrides();
+ var ovChanged=false;
+ Object.keys(RT_COURSES).forEach(function(key){
+  var c=RT_COURSES[key];
+  if(!looksLikeKuerten(c)) return;
+  c.nines.F.si18=correctF18.slice();
+  c.nines.B.si18=correctB18.slice();
+  c.nines.F.par=correctParF.slice();
+  c.nines.B.par=correctParB.slice();
+  if(custom[key]&&custom[key].nines){
+   custom[key].nines.F.si18=correctF18.slice();
+   custom[key].nines.B.si18=correctB18.slice();
+   custom[key].nines.F.par=correctParF.slice();
+   custom[key].nines.B.par=correctParB.slice();
+   customChanged=true;
+   sbPushCourse(key,custom[key]);
+  }
+  if(ov[key]){
+   if(ov[key].F18&&JSON.stringify(ov[key].F18)!==JSON.stringify(correctF18)){ delete ov[key].F18; ovChanged=true; }
+   if(ov[key].B18&&JSON.stringify(ov[key].B18)!==JSON.stringify(correctB18)){ delete ov[key].B18; ovChanged=true; }
+  }
+ });
+ if(customChanged) rtSet(RT_CUSTOM_KEY, custom);
+ if(ovChanged) rtSet(RT_SIOV_KEY, ov);
+ RT_fixInvalidNineSi();
+}
+/* Generische Reparatur fuer JEDEN Platz (nicht nur Kuerten): das 9-Loch-relative SI-Feld
+   (nines.F/B.si, Werte 1-9) ist bei manchen recherchierten/eigenen Plaetzen keine gueltige
+   Permutation von 1-9 - z.B. wurden bei Kuerten-Back und Kaanapali-Back versehentlich
+   18er-Skala-Werte (bis 18) direkt als 9-Loch-SI gespeichert (vermutlich durch manuelle
+   SI-Eingabe im falschen Loecher-Modus, siehe RT_suSi-Validierung). Betroffen ist nur der
+   9-Loch-Solo-Spielmodus dieser Neun sowie das HI-Differenzial beim Aufteilen einer 18-Loch-
+   Runde - der Haupt-Rundenwert (18-Loch, RT_totals) ist NICHT betroffen, da der dort
+   verwendete si18 unabhaengig und bereits korrekt ist. Reparatur: aus dem verlaesslichen
+   si18 einer Haelfte per Rang-Normierung (RT_si9) ein gueltiges 1-9-SI neu ableiten. */
+function RT_fixInvalidNineSi(){
+ var custom=RT_loadCustomCourses();
+ var customChanged=false;
+ Object.keys(RT_COURSES).forEach(function(key){
+  var c=RT_COURSES[key];
+  if(!c||!c.nines) return;
+  ['F','B'].forEach(function(side){
+   var n=c.nines[side];
+   if(!n) return;
+   var valid=n.si&&n.si.length===9&&(function(){
+    var seen={}; for(var i=0;i<9;i++){var v=n.si[i]; if(v<1||v>9||seen[v])return false; seen[v]=true;} return true;
+   })();
+   if(valid) return;
+   if(!n.si18||n.si18.length!==9) return;
+   var repaired=RT_si9(n.si18.slice());
+   n.si=repaired;
+   if(custom[key]&&custom[key].nines&&custom[key].nines[side]){
+    custom[key].nines[side].si=repaired.slice();
+    customChanged=true;
+    sbPushCourse(key,custom[key]);
+   }
+  });
+ });
+ if(customChanged) rtSet(RT_CUSTOM_KEY, custom);
+}
+/* Bekannte reale Plaetze bekommen eine Adresse fuer die Kartenvorschau nachgetragen,
+   auch wenn sie als eigener/recherchierter Eintrag (nicht als fester Preset) angelegt
+   wurden - z.B. der separat recherchierte "Golf-Club Kuerten e.V. Bergerhoehe...". */
+var RT_KNOWN_ADDR=[
+ {re:/georghausen/i, addr:'Georghausen 8, 51789 Lindlar'},
+ {re:/waldhof/i, addr:'Am Waldhof 3, 24629 Kisdorf'},
+ {re:/k.rten/i, addr:'Johannesberg 13, 51515 K\u00fcrten'}
+];
+function RT_applyKnownAddresses(){
+ Object.keys(RT_COURSES).forEach(function(key){
+  var c=RT_COURSES[key];
+  if(!c||!c.name||c.address||c.lat!==undefined) return;
+  for(var i=0;i<RT_KNOWN_ADDR.length;i++){
+   if(RT_KNOWN_ADDR[i].re.test(c.name)){ c.address=RT_KNOWN_ADDR[i].addr; break; }
+  }
+ });
+}
+/* Dauerhaft gespeicherte SI-Overrides (siehe RT_persistSi) direkt in die geladenen
+   Platzobjekte einspielen - fuer Presets UND eigene/recherchierte Plaetze. Laeuft beim
+   Start und stellt sicher, dass einmal eingetragene SI-Werte nach einem Neuladen der
+   Seite sofort wieder da sind, unabhaengig vom siOf()-Laufzeit-Fallback. */
+function RT_getNameOverrides(){ return rtGet(RT_NAMEOV_KEY)||{}; }
+/* Manuell umbenannte Platznamen (Presets UND eigene Plaetze) dauerhaft ueber die
+   geladenen Platzobjekte legen - laeuft beim Start und nach jedem Cloud-Pull, damit
+   ein Preset-Name oder ein veralteter Cloud-Stand die Umbenennung nicht ueberschreibt. */
+function RT_applyNameOverrides(){
+ var ov=RT_getNameOverrides();
+ Object.keys(ov).forEach(function(key){ if(RT_COURSES[key]) RT_COURSES[key].name=ov[key]; });
+}
+function RT_getTeeOverrides(){ return rtGet(RT_TEEOV_KEY)||{}; }
+function RT_applyTeeOverrides(){
+ var ov=RT_getTeeOverrides();
+ Object.keys(ov).forEach(function(key){ if(RT_COURSES[key]) RT_COURSES[key].tees=ov[key]; });
+}
+function RT_getTeeOrderOverrides(){ return rtGet(RT_TEEORDOV_KEY)||{}; }
+function RT_applyTeeOrderOverrides(){
+ var ov=RT_getTeeOrderOverrides();
+ Object.keys(ov).forEach(function(key){ if(RT_COURSES[key]) RT_COURSES[key].teeOrder=ov[key]; });
+}
+/* Liefert die Anzeigereihenfolge der Abschlaege eines Platzes als Liste ECHTER Array-Indizes
+   (nicht als neu sortiertes tees-Array!). Wichtig: p.tee (Spielerauswahl, auch in bereits
+   gespeicherten Runden) speichert einen INDEX in c.tees - wuerde man c.tees selbst umsortieren,
+   wuerde das rueckwirkend die Abschlag-Zuordnung aller alten Runden verfaelschen. Deshalb bleibt
+   c.tees unveraendert; c.teeOrder ist nur eine reine Anzeige-Reihenfolge dieser Indizes. */
+function RT_teeOrderResolved(c){
+ var n=c.tees.length;
+ var ord=(c.teeOrder||[]).filter(function(i){ return typeof i==='number'&&isFinite(i)&&i>=0&&i<n; });
+ var seen={}; ord=ord.filter(function(i){ if(seen[i])return false; seen[i]=true; return true; });
+ for(var i=0;i<n;i++){ if(ord.indexOf(i)===-1) ord.push(i); }
+ return ord;
+}
+function RT_teeMove(pos,dir){
+ var key=RT_su&&RT_su.course; var c=key&&RT_COURSES[key]; if(!c)return;
+ var ord=RT_teeOrderResolved(c);
+ var np=pos+dir; if(np<0||np>=ord.length)return;
+ var tmp=ord[pos]; ord[pos]=ord[np]; ord[np]=tmp;
+ c.teeOrder=ord;
+ RT_persistTees();
+ RT_render();
+}
+function RT_persistTees(){
+ var key=RT_su&&RT_su.course; if(!key||!RT_COURSES[key])return;
+ var custom=RT_loadCustomCourses();
+ if(custom[key]){
+  custom[key].tees=RT_COURSES[key].tees;
+  custom[key].teeOrder=RT_COURSES[key].teeOrder;
+  rtSet(RT_CUSTOM_KEY,custom);
+  sbPushCourse(key,custom[key]);
+ }else{
+  var ov=RT_getTeeOverrides();
+  ov[key]=RT_COURSES[key].tees;
+  rtSet(RT_TEEOV_KEY,ov);
+  var tord=RT_getTeeOrderOverrides();
+  tord[key]=RT_COURSES[key].teeOrder;
+  rtSet(RT_TEEORDOV_KEY,tord);
+  /* Auch fuer Presets in die Cloud sichern - RT_COURSES[key].tees ist hier bereits durch den
+     Aufrufer (RT_teeName/RT_teeNum/RT_teeSide/...) direkt aktualisiert. */
+  sbPushCourse(key,RT_COURSES[key]);
+ }
+}
+function RT_teeName(i,v){
+ var key=RT_su&&RT_su.course; var c=key&&RT_COURSES[key]; if(!c)return;
+ var t=c.tees[i]; if(!t)return;
+ t.name=v;
+ RT_persistTees();
+}
+/* Aktualisiert nach einer CR/Slope-Aenderung an einem Abschlag NUR die davon abhaengigen\n   Anzeigen gezielt per DOM-Update - statt RT_render() (kompletter Neuaufbau von #rt-root),\n   das jedes Eingabefeld als neues Element ersetzt und damit den Fokus killt (Nutzer muesste\n   nach jedem einzelnen Zeichen erneut ins Feld tippen). So bleibt der Fokus im gerade\n   editierten Feld erhalten, waehrend Spielvorgabe-Anzeigen und abgeleitete Werte live\n   mitlaufen. */
+function RT_teeSyncDisplay(ti,t){
+ var setVal=function(id,val){
+  var el=document.getElementById(id);
+  if(el && document.activeElement!==el) el.value=(val!==null&&val!==undefined)?val:'';
+ };
+ setVal('tee-cr-'+ti, rtDe(t.cr&&t.cr.A!==null&&t.cr.A!==undefined?t.cr.A:''));
+ setVal('tee-sl-'+ti, t.sl&&t.sl.A!==null&&t.sl.A!==undefined?t.sl.A:'');
+ setVal('tee-crF-'+ti, rtDe(t.cr&&t.cr.F!==null&&t.cr.F!==undefined?t.cr.F:''));
+ setVal('tee-slF-'+ti, t.sl&&t.sl.F!==null&&t.sl.F!==undefined?t.sl.F:'');
+ setVal('tee-crB-'+ti, rtDe(t.cr&&t.cr.B!==null&&t.cr.B!==undefined?t.cr.B:''));
+ setVal('tee-slB-'+ti, t.sl&&t.sl.B!==null&&t.sl.B!==undefined?t.sl.B:'');
+ if(RT_su&&RT_su.players) RT_su.players.forEach(function(p,i){ RT_updPh(i); });
+}
+/* WICHTIG: CR/Slope fuer Front, Back und 18-Loch (A) sind in echten Course-Rating-Tabellen\n   DREI unabhaengig zertifizierte Werte - kein einfacher Automatismus wie \"A=F+B\" oder\n   \"F=B=A/2\" trifft in der Praxis zu (z.B. Georghausen Gelb: F 36,2/SL138, B 35,4/SL130,\n   aber 18L amtlich 71,1/SL135 statt rechnerisch 71,6/134). Deshalb wird hier NICHTS mehr\n   automatisch aus einem Feld in ein anderes uebertragen - jedes der drei Felder wird beim\n   Eintippen ausschliesslich fuer sich selbst gespeichert. */
+function RT_teeNum(i,f,v){
+ var key=RT_su&&RT_su.course; var c=key&&RT_COURSES[key]; if(!c)return;
+ var t=c.tees[i]; if(!t)return;
+ var val=v===''?null:parseFloat(v);
+ var obj=f==='sl'?t.sl:t.cr;
+ if(!obj){ obj={F:null,B:null,A:null}; if(f==='sl')t.sl=obj; else t.cr=obj; }
+ obj.A=val;
+ RT_persistTees();
+ RT_teeSyncDisplay(i,t);
+}
+function RT_teeSide(i,f,side,v){
+ var key=RT_su&&RT_su.course; var c=key&&RT_COURSES[key]; if(!c)return;
+ var t=c.tees[i]; if(!t)return;
+ var val=v===''?null:parseFloat(v);
+ var obj=f==='sl'?t.sl:t.cr;
+ if(!obj){ obj={F:null,B:null,A:null}; if(f==='sl')t.sl=obj; else t.cr=obj; }
+ obj[side]=val;
+ RT_persistTees();
+ RT_teeSyncDisplay(i,t);
+}
+function RT_teeAdd(){
+ var key=RT_su&&RT_su.course; var c=key&&RT_COURSES[key]; if(!c)return;
+ c.tees.push({name:'Neuer Abschlag',cr:{F:null,B:null,A:null},sl:{F:null,B:null,A:null}});
+ RT_persistTees();
+ RT_render();
+}
+function RT_teeRemove(i){
+ var key=RT_su&&RT_su.course; var c=key&&RT_COURSES[key]; if(!c)return;
+ if(c.tees.length<=1)return;
+ c.tees.splice(i,1);
+ if(c.teeOrder){
+  c.teeOrder=c.teeOrder.filter(function(x){return x!==i;}).map(function(x){return x>i?x-1:x;});
+ }
+ RT_persistTees();
+ RT_render();
+}
+function RT_getPhotoOverrides(){ return rtGet(RT_PHOTOOV_KEY)||{}; }
+/* Altbestand speicherte je Platz nur einen String (das Platzfoto). Neu ist ein Objekt
+   {photoUrl,bgUrl}; beide Formen werden gelesen, damit vorhandene Fotos erhalten bleiben. */
+function RT_applyPhotoOverrides(){
+ var ov=RT_getPhotoOverrides();
+ Object.keys(ov).forEach(function(key){
+  if(!RT_COURSES[key]) return;
+  var v=ov[key];
+  if(typeof v==='string'){ RT_COURSES[key].photoUrl=v; return; }
+  if(v&&v.photoUrl) RT_COURSES[key].photoUrl=v.photoUrl;
+  if(v&&v.bgUrl) RT_COURSES[key].bgUrl=v.bgUrl;
+ });
+}
+function RT_getAddrOverrides(){ return rtGet(RT_ADDROV_KEY)||{}; }
+function RT_applyAddrOverrides(){
+ var ov=RT_getAddrOverrides();
+ Object.keys(ov).forEach(function(key){ if(RT_COURSES[key]) RT_COURSES[key].address=ov[key]; });
+}
+/* field ist 'photoUrl' (Platzfoto in der Platz-Box) oder 'bgUrl' (Hintergrund der
+   Rundenkarten). Beide laufen durch denselben Upload-/Speicherpfad. */
+/* Hintergrund einer Rundenkarte: eigenes Bild des Platzes, sonst eines aus fuenf
+   mitgelieferten Golfmotiven. Die Auswahl wird NICHT bei jedem Rendern neu gewuerfelt,
+   sondern deterministisch aus dem Platz abgeleitet - sonst wechselte das Bild bei jedem
+   Scrollen. Damit sieht ein Platz ohne eigenes Foto immer gleich aus, verschiedene
+   Plaetze aber unterschiedlich. */
+var RT_BG_BASE='https://raw.githubusercontent.com/Maetschke/fairwaypilot/main/assets/round-bg/';
+var RT_BG_POOL=['course-1.jpg','course-2.jpg','course-3.jpg','course-4.jpg','course-5.jpg'];
+function RT_bgForKey(key,fallbackName){
+ var co=key?RT_COURSES[key]:null;
+ if(co&&co.bgUrl) return co.bgUrl;
+ var seed=key||fallbackName||'x';
+ var hsh=0;
+ for(var i=0;i<seed.length;i++){ hsh=(hsh*31+seed.charCodeAt(i))>>>0; }
+ return RT_BG_BASE+RT_BG_POOL[hsh%RT_BG_POOL.length];
+}
+function RT_roundBgUrl(rd){
+ var key=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(rd.courseName,rd):null;
+ return RT_bgForKey(key,rd.courseName);
+}
+function RT_setPhoto(dataUrl,field){
+ field=field||'photoUrl';
+ var key=RT_su&&RT_su.course; if(!key||key==='other'||!RT_COURSES[key])return;
+ RT_COURSES[key][field]=dataUrl;
+ var custom=RT_loadCustomCourses();
+ if(custom[key]){
+  custom[key][field]=dataUrl;
+  rtSet(RT_CUSTOM_KEY,custom);
+  sbPushCourse(key,custom[key]);
+ }else{
+  /* Auch fuer feste Presets (Georghausen, Waldhof) lokal UND in die Cloud sichern -
+     vorher landete das nur in RT_PHOTOOV_KEY (rein lokal), wurde nie ueber sbPushCourse
+     synchronisiert und ging beim naechsten Abmelden (RT_clearLocalSyncedData loescht diesen
+     Key bewusst aus Datenschutzgruenden) unwiederbringlich verloren. */
+  var ov=RT_getPhotoOverrides();
+  ov[key]=(typeof ov[key]==='object'&&ov[key])?ov[key]:{};
+  if(typeof ov[key]==='string') ov[key]={photoUrl:ov[key]};
+  ov[key][field]=dataUrl;
+  rtSet(RT_PHOTOOV_KEY,ov);
+  sbPushCourse(key,RT_COURSES[key]);
+ }
+ RT_render();
+}
+function RT_photoFile(ev,field){
+ field=field||'photoUrl';
+ var f=ev.target.files&&ev.target.files[0]; if(!f)return;
+ var key=RT_su&&RT_su.course; if(!key||key==='other')return;
+ var reader=new FileReader();
+ reader.onload=function(e){
+  var img=new Image();
+  img.onload=function(){
+   var maxW=1200;
+   var scale=Math.min(1,maxW/img.width);
+   var w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+   var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+   var ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+   if(sb&&sbUser&&cv.toBlob){
+    cv.toBlob(async function(blob){
+     if(!blob){ RT_setPhoto(cv.toDataURL('image/jpeg',0.72),field); return; }
+     RT_state.photoBusy=field; RT_render();
+     try{
+      var path=key+'-'+field+'-'+Date.now()+'.jpg';
+      var up=await sb.storage.from('course-photos').upload(path,blob,{contentType:'image/jpeg',upsert:true});
+      if(up.error)throw up.error;
+      var pub=sb.storage.from('course-photos').getPublicUrl(path);
+      RT_state.photoBusy=false;
+      RT_setPhoto(pub.data.publicUrl,field);
+     }catch(err){
+      /* Cloud-Upload fehlgeschlagen (z.B. offline) - lokal als Fallback speichern, damit das\n         Foto trotzdem sofort sichtbar ist; beim naechsten Login/Sync erneut versuchen. */
+      RT_state.photoBusy=false;
+      RT_setPhoto(cv.toDataURL('image/jpeg',0.72),field);
+     }
+    },'image/jpeg',0.85);
+   }else{
+    /* Nicht angemeldet oder kein Blob-Support: Foto nur lokal (Base64) speichern - fuer\n       dauerhaften, geraeteuebergreifenden Speicher bitte zuerst anmelden (Konto & Cloud-Sync). */
+    RT_setPhoto(cv.toDataURL('image/jpeg',0.72),field);
+   }
+  };
+  img.src=e.target.result;
+ };
+ reader.readAsDataURL(f);
+}
+/* Platz umbenennen: aktualisiert den Namen ueberall - im Platzobjekt (Presets per
+   dauerhaftem Override, eigene Plaetze direkt im Custom-Store inkl. Cloud-Push) sowie
+   rueckwirkend in allen bereits gespeicherten Runden mit dem alten Namen. */
+function RT_renameAddress(newAddr){
+ var key=RT_su&&RT_su.course;
+ if(!key||!RT_COURSES[key])return;
+ newAddr=(newAddr||'').trim();
+ var oldAddr=RT_COURSES[key].address||'';
+ if(newAddr===oldAddr){RT_render();return;}
+ RT_COURSES[key].address=newAddr||undefined;
+ var custom=RT_loadCustomCourses();
+ if(custom[key]){
+  custom[key].address=newAddr||undefined;
+  rtSet(RT_CUSTOM_KEY,custom);
+  sbPushCourse(key,custom[key]);
+ }else{
+  var ov=RT_getAddrOverrides();
+  ov[key]=newAddr;
+  rtSet(RT_ADDROV_KEY,ov);
+  sbPushCourse(key,RT_COURSES[key]);
+ }
+ RT_clearMap();
+ RT_render();
+}
+function RT_renameCourse(newName){
+ var key=RT_su&&RT_su.course;
+ if(!key||!RT_COURSES[key])return;
+ newName=(newName||'').trim();
+ var oldName=RT_COURSES[key].name;
+ if(!newName||newName===oldName){RT_render();return;}
+ RT_COURSES[key].name=newName;
+ var custom=RT_loadCustomCourses();
+ if(custom[key]){
+  custom[key].name=newName;
+  rtSet(RT_CUSTOM_KEY,custom);
+  sbPushCourse(key,custom[key]);
+ }else{
+  var ov=RT_getNameOverrides();
+  ov[key]=newName;
+  rtSet(RT_NAMEOV_KEY,ov);
+  sbPushCourse(key,RT_COURSES[key]);
+ }
+ var saved=rtGet(RT_KEY)||[];
+ var changed=false;
+ saved.forEach(function(rd){ if(rd.courseName===oldName){ rd.courseName=newName; changed=true; sbPushRound(rd); } });
+ if(changed) rtSet(RT_KEY,saved);
+ if(RT_editSourceRound&&RT_editSourceRound.courseName===oldName) RT_editSourceRound.courseName=newName;
+ if(RT_round&&RT_round.courseName===oldName) RT_round.courseName=newName;
+ RT_render();
+}
+function RT_applySiOverrides(){
+ var ov=RT_getSiOverrides();
+ Object.keys(ov).forEach(function(key){
+  var c=RT_COURSES[key]; if(!c||!c.nines) return;
+  var o=ov[key];
+  if(o.F9&&c.nines.F) c.nines.F.si=o.F9.slice();
+  if(o.B9&&c.nines.B) c.nines.B.si=o.B9.slice();
+  if(o.F18&&c.nines.F) c.nines.F.si18=o.F18.slice();
+  if(o.B18&&c.nines.B) c.nines.B.si18=o.B18.slice();
+ });
+}
+function RT_applyParOverrides(){
+ var ov=RT_getParOverrides();
+ Object.keys(ov).forEach(function(key){
+  var c=RT_COURSES[key]; if(!c||!c.nines) return;
+  var o=ov[key];
+  if(o.F9&&c.nines.F) c.nines.F.par=o.F9.slice();
+  if(o.B9&&c.nines.B) c.nines.B.par=o.B9.slice();
+ });
+}
+function RT_getPlatzOrder(){ return rtGet(RT_PLATZORDER_KEY)||[]; }
+function RT_setPlatzOrder(arr){ rtSet(RT_PLATZORDER_KEY, arr); }
+function RT_platzChips(){
+ var chips=[['georg','Georghausen'],['waldhof','Gut Waldhof']];
+ var custom=RT_loadCustomCourses();
+ Object.keys(custom).forEach(function(id){
+  if(RT_PRESET_KEYS[id])return; /* alter/kollidierender Custom-Eintrag mit Preset-Key: nicht doppelt anzeigen */
+  var nm=custom[id].name;
+  chips.push([id, nm.length>16?nm.slice(0,16)+'\u2026':nm]);
+ });
+ /* Anzeigereihenfolge: per RT_platzMove persistierte Reihenfolge hat Vorrang, neue Plaetze werden
+    hinten angehaengt. Rein lokale UI-Praeferenz (kein Cloud-Sync), betrifft nur die Darstellung,
+    nicht die eigentlichen Platzdaten. */
+ var keys=chips.map(function(ch){return ch[0];});
+ var savedOrd=RT_getPlatzOrder().filter(function(k){return keys.indexOf(k)!==-1;});
+ var seen={}; savedOrd=savedOrd.filter(function(k){ if(seen[k])return false; seen[k]=true; return true; });
+ keys.forEach(function(k){ if(savedOrd.indexOf(k)===-1) savedOrd.push(k); });
+ var byKey={}; chips.forEach(function(ch){ byKey[ch[0]]=ch; });
+ chips=savedOrd.map(function(k){return byKey[k];});
+ chips.push(['other','Anderer Platz']);
+ return chips;
+}
+function RT_platzMove(key,dir){
+ var chips=RT_platzChips().filter(function(ch){return ch[0]!=='other';});
+ var keys=chips.map(function(ch){return ch[0];});
+ var pos=keys.indexOf(key); if(pos<0)return;
+ var np=pos+dir; if(np<0||np>=keys.length)return;
+ var tmp=keys[pos]; keys[pos]=keys[np]; keys[np]=tmp;
+ RT_setPlatzOrder(keys);
+ RT_render();
+}
+function RT_buildCust(name,par,si,tees,address){
+ var n9=par.length===9;
+ var id=RT_newCourseId(name);
+ var courseObj={name:name,
+  address:address||undefined,
+  nines:{
+   F:{lbl:n9?'9 Loch (1\u20139)':'Front 9 (1\u20139)',nums:[1,2,3,4,5,6,7,8,9],par:par.slice(0,9),
+      si:si?RT_si9(si.slice(0,9)):null, si18:si&&!n9?si.slice(0,9):null},
+   B:n9?{lbl:'\u2013',nums:[10,11,12,13,14,15,16,17,18],par:par.slice(0,9),si:si?RT_si9(si.slice(0,9)):null,si18:null}
+       :{lbl:'Back 9 (10\u201318)',nums:[10,11,12,13,14,15,16,17,18],par:par.slice(9),
+         si:si?RT_si9(si.slice(9)):null, si18:si?si.slice(9):null}
+  },
+  tees:tees.length?tees:[{name:'Standard',cr:{F:null,B:null,A:null},sl:{F:null,B:null,A:null}}]};
+ RT_COURSES[id]=courseObj;
+ var allCustom=RT_loadCustomCourses();
+ allCustom[id]=courseObj;
+ rtSet(RT_CUSTOM_KEY, allCustom);
+ sbPushCourse(id, courseObj);
+ RT_su.course=id; RT_su.holes=n9?'F':'A';
+ RT_state.resOk=true; RT_state.resMsg='Platz \u00fcbernommen: '+rtEsc(name)+' ('+par.length+' Loch). Erscheint jetzt dauerhaft in der Platzliste.';
+ RT_render();
+}
+function RT_si9(a){ /* 18er-SI-Segment auf Rang 1-9 innerhalb der 9 normieren */
+ var sorted=a.slice().sort(function(x,y){return x-y;});
+ return a.map(function(v){return sorted.indexOf(v)+1;});
+}
+async function RT_research(){
+ var name=(RT_su.custName||'').trim();
+ if(!name){RT_state.resOk=false;RT_state.resMsg='Bitte zuerst einen Platznamen eingeben.';RT_render();return;}
+ RT_state.busy=true;RT_state.resMsg='';RT_render();
+ try{
+  var resp=await fetch('/api/research',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({name:name})});
+  var data=await resp.json();
+  if(!resp.ok||data.error) throw new Error(data.error||('Server-Fehler ('+resp.status+')'));
+  var js=data.result;
+  var par=(js.par||[]).map(Number), si=(js.si||[]).map(Number);
+  if(par.length!==9&&par.length!==18)throw new Error('Unvollst\u00e4ndige Par-Liste erhalten ('+par.length+' statt 9 oder 18 Werte). Bitte erneut versuchen oder Par unten manuell eintragen.');
+  var tees=(js.tees||[]).filter(function(t){return t&&t.name&&!isNaN(parseFloat(t.cr))&&!isNaN(parseFloat(t.slope));})
+   .map(function(t){
+    var cr=parseFloat(t.cr),sl=parseFloat(t.slope);
+    if(par.length===18)return{name:t.name,cr:{F:Math.round(cr/2*10)/10,B:Math.round(cr/2*10)/10,A:cr},sl:{F:sl,B:sl,A:sl}};
+    return{name:t.name,cr:{F:cr,B:cr,A:cr*2},sl:{F:sl,B:sl,A:sl}};
+   });
+  RT_buildCust(js.name||name,par,si.length===par.length?si:null,tees,(js.address&&String(js.address).trim())||null);
+  if(js.siRejected){RT_state.resMsg+=' Gefundene SI-Werte waren keine g\u00fcltige Permutation (1\u2013'+par.length+' je genau einmal) und wurden verworfen \u2013 bitte pr\u00fcfen/eintragen.';RT_state.resOk=true;}
+  else if(si.length!==par.length){RT_state.resMsg+=' SI wurde nicht sicher gefunden \u2013 bitte pr\u00fcfen/eintragen.';RT_state.resOk=true;}
+ }catch(e){
+  RT_state.resOk=false;
+  RT_state.resMsg='Recherche fehlgeschlagen: '+rtEsc(e.message||'Unbekannter Fehler')+'. Par/SI unten manuell eintragen; der Platz wird dauerhaft gespeichert.';
+ }
+ RT_state.busy=false;RT_render();
+}
+
+function RT_start(){
+ var cd=RT_courseData(); if(!cd)return;
+ var si=cd.si;
+ if(!si){si=[];for(var i=0;i<cd.cnt;i++)si.push(i+1);}
+ RT_round={id:'r'+Date.now(), date:RT_su.date||RT_today(), time:RT_su.time||'', courseName:cd.name, lbl:cd.lbl+' \u00b7 Par '+cd.parSum,
+  par:cd.par, si:si, nums:cd.nums, cnt:cd.cnt, parSum:cd.parSum, cur:0, done:false, holeViews:{},
+  ownerHint:sbUser?sbUser.id:null, autoCount:RT_autoCountOn(),
+  players:RT_su.players.map(function(p){
+   var cr=RT_pCr(p,cd), sl=RT_pSl(p,cd);
+   if(cr===null)cr=cd.parSum; if(sl===null)sl=113;
+   var teeName=p.tee>=0&&cd.tees[p.tee]?cd.tees[p.tee].name:'Manuell';
+   var mk=function(v){var a=[];for(var i=0;i<cd.cnt;i++)a.push(v);return a;};
+   var mkEmpty=function(){var a=[];for(var i=0;i<cd.cnt;i++)a.push([]);return a;};
+   return{name:p.name, hi:parseFloat(p.hi), tee:teeName, cr:cr, sl:sl,
+    ph:RT_ph(parseFloat(p.hi),cr,sl,cd.parSum,cd.cnt),
+    sc:mk(null), pu:mk(null), fw:mk(null), pe:mk(0), sa:mk(0), cx:mk(0), pins:mkEmpty()};
+  })};
+ rtSet(RT_ACT,RT_round);
+ RT_go('play');
+}
+function RT_discard(){
+ if(RT_state.ask!=='discard'){RT_state.ask='discard';RT_render();return;}
+ RT_state.ask='';RT_round=null;rtDel(RT_ACT);RT_render();
+}
+
+/* Stableford je Loch (nutzt SC_netPar aus dem Bestand) */
+function RT_stbfH(p,h,rd){
+ rd=rd||RT_round;
+ if(p.cx[h])return null;
+ if(p.sc[h]===null)return null;
+ var np=SC_netPar(rd.par[h],p.ph,rd.si[h],rd.cnt);
+ return Math.max(0,2-(p.sc[h]-np));
+}
+function RT_cap(p,h,rd){
+ rd=rd||RT_round;
+ return SC_netPar(rd.par[h],p.ph,rd.si[h],rd.cnt)+2;
+}
+function RT_totals(p,rd){
+ rd=rd||RT_round;
+ var br=0,brRaw=0,st=0,pu=0,puC=0,pe=0,sa=0,fwC=0,fwT=0,played=0;
+ for(var h=0;h<rd.cnt;h++){
+  var cap=RT_cap(p,h,rd);
+  if(p.sc[h]!==null&&!p.cx[h]){
+   /* Gespielt und nicht gestrichen: echte Schlagzahl zaehlt, Deckel nur bei "gewertet" */
+   brRaw+=p.sc[h]; played++; br+=Math.min(p.sc[h],cap);
+  }else{
+   /* Nicht ausgefuellt ODER gestrichen: konservativ mit NDB-Max ansetzen - genau wie
+      bei der Handicap-Berechnung, statt die Bahn einfach wegzulassen. */
+   brRaw+=cap; br+=cap;
+  }
+  var s=RT_stbfH(p,h,rd); if(s!==null)st+=s;
+  if(p.pu[h]!==null&&p.pu[h]>0){pu+=p.pu[h];puC++;}
+  pe+=p.pe[h];sa+=p.sa[h];
+  if(p.fw[h]){fwT++;if(p.fw[h]==='C')fwC++;}
+ }
+ return{br:br,brRaw:brRaw,stbf:st,played:played,avgPu:puC?(pu/puC).toFixed(1):'\u2013',pe:pe,sa:sa,
+  fwPct:fwT?Math.round(fwC/fwT*100):null};
+}
+
+function RT_rPlay(){
+ var rd=RT_round; if(!rd)return RT_rHome();
+ var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'+
+  '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="'+(RT_editingExisting?'RT_cancelEdit()':'RT_go(\'home\')')+'">&#8249;</button>'+
+  '<div style="flex:1;min-width:0;"><div class="rt-h1" style="font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+rtEsc(rd.courseName)+'</div>'+
+  '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
+ /* Bahnen-Leiste */
+ h+='<div class="rt-holes">';
+ for(var i=0;i<rd.cnt;i++){
+  var done=rd.players.every(function(p){return p.sc[i]!==null||p.cx[i];});
+  h+='<button class="rt-hb'+(i===rd.cur?' cur':done?' done':'')+'" onclick="RT_setHole('+i+')">'+
+   '<span class="n">'+rd.nums[i]+'</span><span class="p">Par '+rd.par[i]+'</span></button>';
+ }
+ h+='</div>';
+ var c=rd.cur;
+ var rtImg=RT_holeImgFor(rd,c);
+ var holeKey=RT_holeMapKey(rd,c);
+ var mapMode=!!(RT_state.mapModeOn&&RT_state.mapModeOn[holeKey]);
+ RT_windFetch(rd,c);
+ h+='<div class="rtc rtc-hd"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">'+
+  '<div class="rt-ct" style="margin:0;">Bahn '+rd.nums[c]+'</div>'+
+  '<div style="font-size:11px;color:#7B8E80;">Par '+rd.par[c]+' &middot; SI '+rd.si[c]+'</div></div>'+
+  RT_windCardHtml(rd,c)+
+  (rtImg?('<div style="margin-bottom:10px;"><button class="rt-btn3" style="padding:6px 10px;background:#F1F6EC;border-radius:8px;" onclick="RT_toggleHoleView()">'+(mapMode?'\ud83d\uddbc\ufe0f Birdiekarte anzeigen':'\ud83d\udef0\ufe0f Satellitenkarte anzeigen')+'</button></div>'):'');
+ rd.players.forEach(function(p,pi){
+  var np=SC_netPar(rd.par[c],p.ph,rd.si[c],rd.cnt);
+  var st=RT_stbfH(p,c);
+  var tot=RT_totals(p);
+  var stCol=st===null?'background:#F1F6EC;color:#9AAB9E;':st>=3?'background:#EAF6EE;color:#187040;':st===2?'background:#EEF4FB;color:#2F6BAE;':st===1?'background:#FBF3E4;color:#8A6A1F;':'background:#FBEAEA;color:#B03A3A;';
+  h+='<div class="rt-plc" style="margin-bottom:10px;">'+
+   '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+    '<div class="rt-pts" style="background:#EAF6EE;color:#187040;">'+tot.stbf+'</div>'+
+    '<div style="flex:1;text-align:center;"><span style="font-size:13.5px;font-weight:800;color:#143522;">'+rtEsc(p.name)+'</span>'+
+    ' <span style="font-size:10px;color:#8A9C8E;">SV '+p.ph+' &middot; Netto-Par '+np+' &middot; NDB-Max '+(np+2)+'</span>'+(p.sc[c]!==null&&!p.cx[c]&&p.sc[c]>np+2?'<div style="font-size:10px;font-weight:700;color:#B7791F;margin-top:2px;">'+p.sc[c]+' notiert &middot; gewertet mit '+(np+2)+'</div>':'')+'</div>'+
+    '<div class="rt-pts" style="'+stCol+'">'+(st===null?'\u2013':st)+'</div></div>'+
+   '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">'+
+    '<div class="rt-step"><button class="rt-sbtn" onclick="RT_sc('+pi+',-1)">&minus;</button>'+
+    '<div class="rt-sval">'+(p.sc[c]===null?'\u2013':p.sc[c])+'</div>'+
+    '<button class="rt-sbtn" onclick="RT_sc('+pi+',1)">+</button>'+
+    '<span style="font-size:10px;color:#8A9C8E;">Schl\u00e4ge</span></div>'+
+    '<button class="rt-cxb'+(p.cx[c]?' on':'')+'" onclick="RT_cx('+pi+')">Streichen</button></div>'+
+   '<div style="display:flex;justify-content:space-between;flex-wrap:nowrap;align-items:center;margin-bottom:'+(rd.par[c]>=4?'8':'0')+'px;">'+
+    '<div class="rt-mini"><span style="font-size:10px;color:#8A9C8E;">Straf</span>'+
+     '<button class="rt-mbtn" onclick="RT_mini('+pi+',\'pe\',-1)">&minus;</button><span class="rt-mval">'+p.pe[c]+'</span><button class="rt-mbtn" onclick="RT_mini('+pi+',\'pe\',1)">+</button></div>'+'<div class="rt-mini"><span style="font-size:10px;color:#8A9C8E;">Sand</span>'+
+     '<button class="rt-mbtn" onclick="RT_mini('+pi+',\'sa\',-1)">&minus;</button><span class="rt-mval">'+p.sa[c]+'</span><button class="rt-mbtn" onclick="RT_mini('+pi+',\'sa\',1)">+</button></div>'+'<div class="rt-mini"><span style="font-size:10px;color:#8A9C8E;">Putts</span>'+
+     '<button class="rt-mbtn" onclick="RT_mini('+pi+',\'pu\',-1)">&minus;</button><span class="rt-mval">'+(p.pu[c]===null?'\u2013':p.pu[c])+'</span><button class="rt-mbtn" onclick="RT_mini('+pi+',\'pu\',1)">+</button></div>'+
+   '</div>';
+  if(rd.par[c]>=4){
+   h+='<div style="display:flex;gap:6px;align-items:center;"><span style="font-size:10px;color:#8A9C8E;flex:none;">Fairway</span>';
+   [['L','L','onL'],['C','&#9711;','on'],['R','R','onR'],['S','&#8595;','onS']].forEach(function(o){
+    h+='<button class="rt-fwb'+(p.fw[c]===o[0]?' '+o[2]:'')+'" onclick="RT_fwSet('+pi+',\''+o[0]+'\')">'+o[1]+'</button>';
+   });
+   h+='</div>';
+  }
+  var pinN=(p.pins&&p.pins[c])?p.pins[c].length:0;
+  if(rtImg&&!mapMode){
+   var rtScale=RT_HOLE_BIGGER[rd.nums[c]]||1;
+   h+='<div class="rt-holemap" onclick="RT_openHoleFull(\''+rtImg.url+'\',\'Bahn '+rd.nums[c]+'\','+pi+')"><img src="'+rtImg.url+'" alt="Lochkarte" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block;transform:scale('+rtScale+');">'+RT_pinsOverlayHtml(rd,c,0,pi)+'<div class="rt-holemap-tap">&#8599;</div></div>';
+  }else{
+   h+='<div class="rt-holemap" style="position:relative;"><div class="rt-holemap-inner" id="hole-map-'+pi+'"></div>'+(rtImg?'<div class="rt-holemap-tap" style="z-index:1200;pointer-events:auto;" onclick="event.stopPropagation();RT_openHoleFull(\''+rtImg.url+'\',\'Bahn '+rd.nums[c]+'\','+pi+')">&#8599;</div>':'')+'</div>';
+   h+='<div id="map-ctrl-'+pi+'">'+RT_mapCtrlHtml(pi)+'</div>';
+   h+='<div id="pin-hint-'+pi+'" style="font-size:9.5px;color:#8A9C8E;margin-top:4px;">Karte antippen = Lage setzen &middot; Markierung antippen = entfernen</div>';
+  }
+  /* Ein Button je Spieler, links unter der Karte: setzt die naechste Markierung an der
+     aktuellen GPS-Position und zaehlt zugleich einen Schlag hoch (A, dann 2..n, am Loch
+     die Fahne). Ersetzt den frueheren Schlag-Stepper in der Distanzen-Box, der fuer alle
+     Spieler gemeinsam galt. */
+  h+='<div style="display:flex;margin-top:8px;"><button class="rt-btn2" style="margin:0;padding:9px 16px;font-size:12px;" onclick="RT_markShot('+pi+')">'+RT_markShotLabel(rd,c,pi)+'</button></div>';
+  h+='<div style="font-size:10.5px;color:#8A9C8E;margin-top:8px;padding-top:8px;border-top:1px solid #EDF2E9;">Runde: <b style="color:#143522;">'+tot.brRaw+'</b> Schl\u00e4ge'+(tot.br!==tot.brRaw?' <span style="color:#B7791F;font-weight:700;">(gew. '+tot.br+')</span>':'')+' &middot; <b style="color:#187040;">'+tot.stbf+'</b> Stbf ('+tot.played+'/'+rd.cnt+' Bahnen)</div>';
+  h+='</div>';
+ });
+ h+='</div>';
+ /* Distanzen-Karte wie Referenzpunkte/Wegpunkte aufgebaut und standardmaessig zugeklappt:
+    waehrend des Spiels braucht man sie nur punktuell. RT_state.distOpen ist beim Start
+    undefined, also geschlossen. */
+ h+='<div class="rtc" id="gps-card" style="padding:12px 14px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;'+(RT_state.distOpen?'margin-bottom:10px;':'')+'">'+
+  '<div><div class="rt-ct" style="margin:0;">Distanzen</div>'+
+  '<div class="rt-cs" style="margin:0;">Live-Entfernungen zu Abschlag und Loch sowie jede markierte Balllage der Bahn</div></div>'+
+  '<button class="rt-btn2" style="margin:0;padding:9px 14px;font-size:12px;white-space:nowrap;flex:none;width:auto;min-width:120px;text-align:center;" onclick="RT_state.distOpen=!RT_state.distOpen;RT_render();">'+(RT_state.distOpen?'Zuklappen':'Anzeigen')+'</button>'+
+  '</div>';
+ if(RT_state.distOpen){
+  h+='<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button class="rt-btn3" onclick="RT_toggleDistUnit()">'+(RT_distUnit()==='yd'?'yd':'m')+'</button></div>';
+ var rtRef=RT_refFor(rd,c);
+ if(!rtRef||!((rtRef.tees&&Object.keys(rtRef.tees).length)||rtRef.pin||rtRef.mid)){
+  h+='<div class="rt-cs" style="margin-bottom:8px;">Noch keine Referenzpunkte für diese Bahn gesetzt.</div>';
+ }else{
+  h+='<div id="dist-list" style="font-size:12px;color:#3C5546;margin-bottom:8px;">'+RT_distListHtml(rd,c)+'</div>';
+ }
+ h+='<div style="font-size:10px;color:#8A9C8E;margin-bottom:8px;" id="gps-acc">'+RT_gpsAccText()+'</div>';
+  h+='<div style="border-top:1px solid #EDF2E9;padding-top:8px;">'+RT_shotDistListHtml(rd,c)+'</div>';
+ }
+ h+='</div>';
+ /* Referenzpunkte-Editor als eigene Karte im Aufbau der Distanzen-Karte (Titel links,
+    Aktionsbutton rechts), standardmaessig zugeklappt: er wird nur beim Einrichten einer
+    Bahn gebraucht und soll den Scoring-Screen nicht zumuellen. RT_state.refSetupOpen ist
+    beim Start undefined, also geschlossen. */
+ h+='<div class="rtc" id="ref-card" style="padding:12px 14px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;'+(RT_state.refSetupOpen?'margin-bottom:10px;':'')+'">'+
+  '<div><div class="rt-ct" style="margin:0;">Referenzpunkte</div>'+
+  '<div class="rt-cs" style="margin:0;">Legt Abschläge, Bahnmitte und Loch fest – Grundlage für Distanzen, Kartenausrichtung und Ballpositionen</div></div>'+
+  '<button class="rt-btn2" style="margin:0;padding:9px 14px;font-size:12px;white-space:nowrap;flex:none;width:auto;min-width:120px;text-align:center;" onclick="RT_state.refSetupOpen=!RT_state.refSetupOpen;RT_render();">'+(RT_state.refSetupOpen?'Zuklappen':'Bearbeiten')+'</button>'+
+  '</div>';
+ if(RT_state.refSetupOpen){ h+=RT_refSetupHtml(rd,c); }
+ h+='</div>';
+ h+='<div class="rtc" style="padding:12px 14px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">'+
+  '<div><div class="rt-ct" style="margin:0;">Wegpunkte (GPX)</div>'+
+  '<div class="rt-cs" style="margin:0;">Ordnet die Wegpunkte zeitlich den Bahnen zu und zeigt sie als Pins auf der Lochkarte</div></div>'+
+  '<label class="rt-btn2" style="margin:0;padding:9px 14px;font-size:12px;white-space:nowrap;flex:none;width:auto;min-width:120px;text-align:center;cursor:pointer;">Importieren'+
+   '<input id="rt-gpx-input" type="file" accept=".gpx" style="display:none;" onchange="RT_gpxFile(event)"></label>'+
+  '</div></div>';
+
+ /* Navigation */
+ if(RT_state.saveWarn) h+='<div class="rt-warn">'+rtEsc(RT_state.saveWarn)+'</div>';
+ h+='<div class="rt-row" style="margin-bottom:10px;">'+
+  '<button class="rt-btn2" '+(c===0?'style="visibility:hidden;"':'')+' onclick="RT_nav(-1)">&#8249; Bahn '+(c>0?rd.nums[c-1]:'')+'</button>'+
+  (c<rd.cnt-1?'<button class="rt-btn" onclick="RT_nav(1)">Bahn '+rd.nums[c+1]+' &#8250;</button>'
+             :'<button class="rt-btn" onclick="RT_finish()">'+(RT_editingExisting?'Speichern':'Runde beenden')+'</button>')+
+  '</div>';
+ if(c<rd.cnt-1)h+='<button class="rt-btn2" style="width:100%;margin-bottom:12px;" onclick="RT_finish()">'+(RT_editingExisting?'Speichern':'Runde vorzeitig beenden &amp; speichern')+'</button>';
+ else h+='<div style="margin-bottom:12px;"></div>';
+ return h;
+}
+/* Prueft, ob fuer eine Bahn bei ALLEN Spielern ein Ergebnis erfasst ist (Schlagzahl gesetzt\n   oder Bahn gestrichen) - Grundlage fuer die automatische Cloud-Speicherung beim Bahnwechsel. */
+function RT_holeComplete(rd,idx){
+ return rd.players.every(function(p){ return p.sc[idx]!==null || p.cx[idx]; });
+}
+/* Nach vollstaendiger Eingabe einer Bahn UND Wechsel zur naechsten Bahn automatisch in der\n   Cloud sichern (zusaetzlich zur ohnehin sofortigen lokalen Speicherung ueber rtSet). So geht\n   der Fortschritt auch bei Abbruch/Wechsel des Geraets mitten in der Runde nicht verloren. */
+function RT_autosaveHole(rd,prevIdx){
+ if(rd.cur===prevIdx) return;
+ if(!RT_holeComplete(rd,prevIdx)) return;
+ if(!sb||!sbUser) return;
+ sbPushRound(rd);
+}
+function RT_setHole(i){
+ var rd=RT_round; if(!rd)return;
+ var prev=rd.cur;
+ rd.cur=i;
+ rtSet(RT_ACT,rd);
+ RT_autosaveHole(rd,prev);
+ RT_render();
+}
+function RT_nav(d){
+ var rd=RT_round; if(!rd)return;
+ var prev=rd.cur;
+ rd.cur=Math.max(0,Math.min(rd.cnt-1,rd.cur+d));
+ rtSet(RT_ACT,rd);
+ RT_autosaveHole(rd,prev);
+ RT_render();
+ var _ap=document.getElementById('app');if(_ap)_ap.scrollTop=0;
+}
+/* Einstellung: Zaehlen von Putts/Strafschlaegen/Sandschlaegen automatisch als
+   Schlag mitzaehlen. Default an (true), abschaltbar in den Kontoeinstellungen. */
+function RT_autoCountOn(){
+ var v=rtGet(RT_AUTOCOUNT_KEY);
+ return v===null?true:!!v;
+}
+function RT_toggleAutoCount(){
+ rtSet(RT_AUTOCOUNT_KEY,!RT_autoCountOn());
+ RT_render();
+}
+/* Die Einstellung wird beim Anlegen/erneuten Speichern EINER Runde als rd.autoCount fest
+   eingefroren (siehe RT_start/RT_applyEdit) - eine spaetere Aenderung des globalen Schalters
+   (Kontoeinstellungen) wirkt sich dadurch NIE auf bereits gezaehlte Schlaege bereits existie-
+   render Runden aus, auch nicht auf eine gerade laufende Runde bei einer Aenderung mitten im
+   Spiel - RT_mini() liest ausschliesslich diesen eingefrorenen Wert, nie den globalen Live-
+   Schalter direkt. Alte Runden ohne dieses Feld (vor diesem Fix angelegt) fallen auf true
+   zurueck - das war der bisherige Standardwert von RT_autoCountOn() bei unveraendertem Schalter. */
+function RT_roundAutoCount(rd){
+ return (rd&&rd.autoCount!==undefined&&rd.autoCount!==null)?rd.autoCount:true;
+}
+/* Sobald die erste Eingabe in einer neuen Runde erfolgt, gilt sie als gespeichert:
+   Eintrag in der lokalen Liste (RT_KEY) UND einmaliger Cloud-Push. Bei jeder weiteren
+   Eingabe wird der lokale Eintrag aktuell gehalten (kein erneuter sofortiger Cloud-Push
+   pro Klick, das uebernimmt weiterhin RT_autosaveHole beim Lochwechsel). */
+function RT_syncActiveToSaved(){
+ var rd=RT_round; if(!rd) return;
+ var saved=rtGet(RT_KEY)||[];
+ var idx=-1;
+ for(var i=0;i<saved.length;i++){ if(saved[i].id===rd.id){ idx=i; break; } }
+ var isNew=idx<0;
+ if(idx>=0) saved[idx]=rd; else saved.push(rd);
+ rtSet(RT_KEY,saved);
+ if(isNew&&sb&&sbUser) sbPushRound(rd);
+}
+function RT_addTrackedPoint(type,shotNum,pi){
+ var rd=RT_round; if(!rd) return;
+ if(!RT_curPos) return;
+ var c=rd.cur;
+ var entry={lat:RT_curPos.lat,lng:RT_curPos.lng,type:type};
+ if(shotNum!==undefined&&shotNum!==null) entry.shot=shotNum;
+ RT_pinsOf(rd,pi||0,c).push(entry);
+}
+function RT_removeLastTrackedPoint(type,pi){
+ var rd=RT_round; if(!rd) return;
+ var c=rd.cur;
+ var pins=RT_pinsOf(rd,pi||0,c);
+ if(!pins) return;
+ for(var i=pins.length-1;i>=0;i--){
+  var t=pins[i].type||'shot';
+  if(t===type){ pins.splice(i,1); break; }
+ }
+}
+function RT_sc(pi,d){
+ var p=RT_round.players[pi],c=RT_round.cur;
+ if(p.sc[c]===null){p.sc[c]=d>0?1:Math.max(1,RT_round.par[c]-1);}
+ else{var nv=p.sc[c]+d;p.sc[c]=nv<1?null:nv;}
+ if(d>0){ RT_addTrackedPoint('shot',RT_ballShotSuggest(RT_round,c,pi),pi); }
+ else{ RT_removeLastTrackedPoint('shot',pi); }
+ rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
+}
+function RT_mini(pi,f,d){
+ var p=RT_round.players[pi],c=RT_round.cur;
+ if(f==='pu'){p.pu[c]=p.pu[c]===null?(d>0?1:0):Math.max(0,p.pu[c]+d);}
+ else{p[f][c]=Math.max(0,p[f][c]+d);}
+ if((f==='pu'||f==='pe'||f==='sa')&&RT_roundAutoCount(RT_round)){
+ if(p.sc[c]===null){ if(d>0)p.sc[c]=1; }
+ else{ var nv=p.sc[c]+d; p.sc[c]=nv<1?null:nv; }
+ }
+ var trackType=(f==='pe')?'straf':(f==='sa')?'sand':(f==='pu')?'putt':null;
+ if(trackType){
+  if(d>0){ RT_addTrackedPoint(trackType,null,pi); }
+  else{ RT_removeLastTrackedPoint(trackType,pi); }
+ }
+ rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
+}
+function RT_fwSet(pi,v){
+ var p=RT_round.players[pi],c=RT_round.cur;
+ p.fw[c]=p.fw[c]===v?null:v;
+ rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
+}
+function RT_cx(pi){
+ var p=RT_round.players[pi],c=RT_round.cur;
+ p.cx[c]=p.cx[c]?0:1;
+ rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
+}
+function RT_validateRound(rd){
+ for(var h=0; h<rd.cnt; h++){
+  for(var pi=0; pi<rd.players.length; pi++){
+   var p=rd.players[pi];
+   var score=p.sc[h]===null?0:p.sc[h];
+   var putts=p.pu[h]>0?p.pu[h]:0;
+   var sum=putts+p.pe[h]+p.sa[h];
+   if(sum>score) return {ok:false, hole:rd.nums[h], player:p.name};
+  }
+ }
+ return {ok:true};
+}
+function RT_finish(){
+ var check=RT_validateRound(RT_round);
+ if(!check.ok){
+  RT_state.saveWarn='Bahn '+check.hole+' bei '+check.player+': Putts + Strafschl\u00e4ge + Sandschl\u00e4ge d\u00fcrfen zusammen nicht mehr sein als die Schl\u00e4ge.';
+  RT_render();
+  return;
+ }
+ RT_state.saveWarn='';
+ RT_round.done=true;
+ if(RT_round.historical) RT_round.promoted=true;
+ var saved=rtGet(RT_KEY)||[];
+ var idx=-1;
+ for(var i=0;i<saved.length;i++){ if(saved[i].id===RT_round.id){ idx=i; break; } }
+ if(idx>=0){ saved[idx]=RT_round; } else { saved.push(RT_round); }
+ RT_editingExisting=false;
+ rtSet(RT_KEY,saved);
+ sbPushRound(RT_round);
+ rtDel(RT_ACT);
+ if(RT_round.promoted) RT_hydrateHistoricalData();
+ RT_state.viewId=RT_round.id;
+ RT_round=null;
+ RT_go('view');
+}
+/* Loest einen Platz-Schluessel auf - bevorzugt ueber rd.courseKey (stabile ID, seit kurzem bei
+   jeder neu angelegten/bearbeiteten Runde direkt mitgespeichert, siehe RT_applyEdit/
+   RT_seedHistoricalRounds), erst danach ueber den Namen. Der Namensvergleich ist zusaetzlich
+   robust gegen Gross-/Kleinschreibung, Leerzeichen und Satzzeichen, damit kleine Abweichungen
+   (z.B. nach einer Umbenennung ueber das Platzname-Feld) die Zuordnung nicht mehr brechen -
+   genau das hat vorher z.B. bei "Gut Waldhof" (Runde) vs. dem Platznamen im Code Probleme
+   gemacht. Aeltere Runden ohne courseKey heilen sich beim naechsten Bearbeiten+Speichern
+   automatisch, weil RT_applyEdit den Schluessel dann ergaenzt. */
+function RT_courseKeyFromName(name, rd){
+ if(rd&&rd.courseKey&&RT_COURSES[rd.courseKey]) return rd.courseKey;
+ var keys=Object.keys(RT_COURSES);
+ for(var i=0;i<keys.length;i++){ if(RT_COURSES[keys[i]].name===name) return keys[i]; }
+ var norm=function(s){ return (s||'').toLowerCase().replace(/[^a-z0-9\u00e4\u00f6\u00fc\u00df]/g,''); };
+ var nn=norm(name);
+ if(!nn) return null;
+ for(var j=0;j<keys.length;j++){ if(norm(RT_COURSES[keys[j]].name)===nn) return keys[j]; }
+ /* Dritte Stufe: Substring-Vergleich in beide Richtungen. Faengt Faelle ab, in denen ein
+    Platz stark gekuerzt umbenannt wurde (z.B. Rundenname "Gut Waldhof" vs. hinterlegter
+    Platzname "GC Hamburg Gut Waldhof (A-B)") und diese Umbenennung nur lokal auf einem
+    Geraet als Override existiert, aber nicht (mehr) greift - z.B. auf einem neuen Geraet
+    oder nach dem Leeren des lokalen Speichers. Bevorzugt den laengsten Treffer, um bei
+    mehreren Kandidaten den spezifischsten zu waehlen. */
+ var best=null, bestLen=0;
+ for(var k=0;k<keys.length;k++){
+  var cn=norm(RT_COURSES[keys[k]].name);
+  if(!cn) continue;
+  if(cn.indexOf(nn)>=0||nn.indexOf(cn)>=0){
+   var len=Math.min(cn.length,nn.length);
+   if(len>bestLen){ best=keys[k]; bestLen=len; }
+  }
+ }
+ return best;
+}
+function RT_arrEq(a,b){
+ if(!a||!b||a.length!==b.length) return false;
+ for(var i=0;i<a.length;i++){ if(a[i]!==b[i]) return false; }
+ return true;
+}
+function RT_holesSelFromRound(rd,key){
+ if(rd.cnt===18) return 'A';
+ var c=RT_COURSES[key];
+ if(c){
+  if(RT_arrEq(rd.nums,c.nines.F.nums)) return 'F';
+  if(RT_arrEq(rd.nums,c.nines.B.nums)) return 'B';
+ }
+ return (rd.nums&&rd.nums[0]===1)?'F':'B';
+}
+function RT_editRound(id,direct){
+ var saved=rtGet(RT_KEY)||[];
+ var rd=null;
+ for(var i=0;i<saved.length;i++)if(saved[i].id===id)rd=saved[i];
+ if(!rd)return;
+ if(RT_isForeignLocked(rd))return;
+ RT_editSourceRound=JSON.parse(JSON.stringify(rd));
+ var key=RT_courseKeyFromName(rd.courseName,rd);
+ var holesSel=key?RT_holesSelFromRound(rd,key):(rd.cnt===18?'A':((rd.nums&&rd.nums[0]===1)?'F':'B'));
+ RT_su={
+  course:key||'other', holes:holesSel, date:rd.date||RT_today(), time:rd.time||'',
+  players:rd.players.map(function(p){
+   var teeIdx=-1, cr=p.cr, sl=p.sl;
+   if(key){
+    var tees=RT_COURSES[key].tees;
+    for(var ti=0;ti<tees.length;ti++){
+     if(tees[ti].name===p.tee){
+      teeIdx=ti;
+      /* Nur als "automatisch vom Abschlag" behandeln (cr/sl auf null, damit das Eingabefeld
+         den Abschlags-Standardwert zeigt), wenn der gespeicherte Wert TATSAECHLICH dem
+         Abschlags-Standard fuer diese Loch-Auswahl entspricht. Weicht er ab, wurde er beim
+         urspruenglichen Anlegen manuell ueberschrieben - dieser Wert muss erhalten bleiben,
+         sonst geht die manuelle CR/Slope-Aenderung beim Bearbeiten verloren. */
+      var tCr=tees[ti].cr[holesSel], tSl=tees[ti].sl[holesSel];
+      var matchesTee = tCr!==undefined && tCr!==null && tSl!==undefined && tSl!==null &&
+        Math.abs(tCr-p.cr)<0.01 && Math.abs(tSl-p.sl)<0.01;
+      if(matchesTee){ cr=null; sl=null; }
+      break;
+     }
+    }
+   }
+   return {name:p.name, hi:p.hi, tee:teeIdx, cr:cr, sl:sl};
+  }),
+  custName:key?'':rd.courseName, custPar:'', custSi:'', siEdit:{}, parEdit:{}
+ };
+ /* WICHTIG: RT_su.siEdit hier NICHT aus rd.si vorbelegen. RT_su.siEdit wirkt als Override,
+    der die aktuellen (korrekten) Platz-SI-Werte in RT_courseData() verdraengt (siehe siOf()).
+    Wuerde das gespeicherte SI der Runde hier automatisch als "manuelle Aenderung" uebernommen,
+    wuerde jede zukuenftige Korrektur der Platzdaten (z.B. si18) beim erneuten Bearbeiten+
+    Speichern sofort wieder durch den alten Rundenwert ueberschrieben - genau das hat zuvor
+    verhindert, dass ein erneutes Speichern die korrekte SI-Zuordnung uebernimmt. Mit leerem
+    siEdit greifen automatisch die aktuellen Platz-SI-Werte (bzw. ein bewusst gesetzter
+    Platz-weiter Override ueber RT_persistSi), die dann beim Speichern frisch uebernommen
+    werden. Wer wirklich rundenspezifisch abweichende SI braucht, kann sie im Loecher-Feld
+    weiterhin manuell eintragen. */
+ RT_editingExisting=true;
+ RT_state.saveWarn='';
+ if(direct){ RT_applyEdit(); } else { RT_go('setup'); }
+}
+function RT_cancelEditSetup(){
+ RT_editingExisting=false;
+ RT_su=null;
+ RT_editSourceRound=null;
+ RT_go('view');
+}
+function RT_applyEdit(){
+ var cd=RT_courseData(); if(!cd)return;
+ var si=cd.si;
+ if(!si){si=[];for(var i=0;i<cd.cnt;i++)si.push(i+1);}
+ var src=RT_editSourceRound;
+ var mk=function(v){var a=[];for(var i=0;i<cd.cnt;i++)a.push(v);return a;};
+ var newPlayers=RT_su.players.map(function(p,pi){
+  var cr=RT_pCr(p,cd), sl=RT_pSl(p,cd);
+  if(cr===null)cr=cd.parSum; if(sl===null)sl=113;
+  var teeName=p.tee>=0&&cd.tees[p.tee]?cd.tees[p.tee].name:'Manuell';
+  var srcP=src&&src.players[pi];
+  var sc=mk(null),pu=mk(null),fw=mk(null),pe=mk(0),sa=mk(0),cx=mk(0);
+  var pins=[];for(var pj=0;pj<cd.cnt;pj++)pins.push([]);
+  if(srcP&&src.nums){
+   for(var hh=0; hh<cd.nums.length; hh++){
+    var num=cd.nums[hh];
+    var oldIdx=src.nums.indexOf(num);
+    if(oldIdx>=0){
+     sc[hh]=srcP.sc[oldIdx]; pu[hh]=srcP.pu[oldIdx]; fw[hh]=srcP.fw[oldIdx];
+     pe[hh]=srcP.pe[oldIdx]; sa[hh]=srcP.sa[oldIdx]; cx[hh]=srcP.cx[oldIdx];
+     if(srcP.pins&&srcP.pins[oldIdx]) pins[hh]=srcP.pins[oldIdx].slice();
+    }
+   }
+  }
+  return{name:p.name, hi:parseFloat(p.hi), tee:teeName, cr:cr, sl:sl,
+   ph:RT_ph(parseFloat(p.hi),cr,sl,cd.parSum,cd.cnt),
+   sc:sc, pu:pu, fw:fw, pe:pe, sa:sa, cx:cx, pins:pins};
+ });
+ RT_round={id:src?src.id:('r'+Date.now()), date:RT_su.date||(src?src.date:RT_today()), time:RT_su.time||(src?src.time:''),
+  courseName:cd.name, courseKey:RT_su.course, lbl:cd.lbl+' \u00b7 Par '+cd.parSum,
+  par:cd.par, si:si, nums:cd.nums, cnt:cd.cnt, parSum:cd.parSum, cur:0, done:(src?!!src.done:false), holeViews:(src&&src.holeViews)?src.holeViews:{},
+  ownerHint:(src&&src.ownerHint)?src.ownerHint:(sbUser?sbUser.id:null),
+ autoCount:(src&&src.autoCount!==undefined&&src.autoCount!==null)?src.autoCount:RT_autoCountOn(),
+  historical:src?src.historical:undefined, histSrc:src?src.histSrc:undefined, promoted:src?src.promoted:undefined,
+  players:newPlayers};
+ RT_state.saveWarn='';
+ RT_go('play');
+}
+function RT_editFromDetail(id){
+ showTab('runde');
+ RT_openView(id);
+}
+/* Ein Platz kann in den Runden unter mehreren Schreibweisen stehen (z.B. "Georghausen" in
+   aelteren und "Schloss Georghausen" in neueren Runden). Ohne Normalisierung entstuenden
+   daraus ZWEI Serien mit zwei Farben fuer denselben Platz. Deshalb wird der Name zuerst
+   ueber RT_courseKeyFromName() auf den hinterlegten Platz aufgeloest und dessen kanonischer
+   Name als Grundlage fuer Code und Label verwendet. */
+function RT_slugCourseCode(name,isFront){
+ var key=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(name):null;
+ if(key&&RT_COURSES[key]&&RT_COURSES[key].name) name=RT_COURSES[key].name;
+ /* Beide Schreibvarianten je Platz, damit die in HV_COURSE_META fest hinterlegten Farben
+    auch dann greifen, wenn der Platz unter seinem Kurznamen gefuehrt wird. */
+ var known={
+  'Schloss Georghausen': isFront?'Front':'Back',
+  'Georghausen': isFront?'Front':'Back',
+  'GC Hamburg Gut Waldhof (A\u2013B)': isFront?'WalF':'WalB',
+  'Gut Waldhof': isFront?'WalF':'WalB',
+  'GC K\u00fcrten (Meisterschaftsplatz)': isFront?'KueF':'KueB',
+  'K\u00fcrten': isFront?'KueF':'KueB',
+  'Kaanapali': isFront?'KawF':'KawB'
+ };
+ if(known[name]) return known[name];
+ var slug=(name||'Custom').replace(/[^A-Za-z0-9]/g,'').slice(0,6)||'Custom';
+ var code=slug+(isFront?'F':'B');
+ if(!HV_COURSE_META[code]){
+  var lbl=(name&&name.length>16)?name.slice(0,16)+'\u2026':(name||'Eigener Platz');
+  HV_COURSE_META[code]={label:lbl+(isFront?' F':' B'), color:RT_colorForCode(code)};
+ }
+ return code;
+}
+/* Liefert die HALBEN-spezifischen CR/Slope-Werte (F oder B) fuer die Handicap-Umrechnung.
+   p.cr/p.sl sind bei 18-Loch-Runden die AGGREGIERTEN 18-Loch-Werte des gewaehlten Abschlags -
+   die duerfen NICHT 1:1 fuer eine 9-Loch-Haelfte verwendet werden. Deshalb hier ueber den
+   Platz-/Abschlagsnamen die korrekten Front/Back-Werte nachschlagen; nur falls das nicht
+   moeglich ist (z.B. unbekannter/gestrichener Platz), auf p.cr/p.sl zurueckfallen. */
+function RT_halfCrSl(rd,p,isFront){
+ var key=RT_courseKeyFromName(rd.courseName,rd);
+ if(key&&RT_COURSES[key]){
+  var tees=RT_COURSES[key].tees||[];
+  for(var i=0;i<tees.length;i++){
+   if(tees[i].name===p.tee){
+    var side=isFront?'F':'B';
+    var cr=tees[i].cr[side], sl=tees[i].sl[side];
+    if(cr!==undefined&&cr!==null&&sl!==undefined&&sl!==null) return {cr:cr, sl:sl};
+    break;
+   }
+  }
+ }
+ /* Kein passender Abschlag gefunden (z.B. Tee "Manuell") - p.cr/p.sl sind dann die fuer die
+    GESAMTE Runde eingetragenen Werte. War die Runde urspruenglich 18 Loch, ist das eine
+    18-Loch-CR, die fuer die Aufteilung in zwei 9-Loch-Haelften halbiert werden muss (Course
+    Rating ist naeherungsweise additiv ueber beide Neunen: CR18 = CR-Front + CR-Back) - sonst
+    entsteht eine grotesk ueberhoehte 9-Loch-Spielvorgabe (z.B. 69 statt ~33) und dadurch
+    massiv zu viele Stableford-Punkte. Der Slope Rating bleibt unveraendert, da er die
+    relative Schwierigkeit beschreibt und nicht mit der Lochzahl skaliert. */
+ var crFallback=p.cr;
+ if(rd.cnt!==9 && crFallback!==null && crFallback!==undefined && !isNaN(crFallback)){
+  crFallback=Math.round(crFallback/2*10)/10;
+ }
+ return {cr:crFallback, sl:p.sl};
+}
+function RT_convertHalf(rd,p,startIdx,isFront){
+ var code=RT_slugCourseCode(rd.courseName,isFront);
+ var par=rd.par.slice(startIdx,startIdx+9);
+ var si=rd.si.slice(startIdx,startIdx+9);
+ var scores=p.sc.slice(startIdx,startIdx+9);
+ var crossed=p.cx.slice(startIdx,startIdx+9);
+ var puttsRaw=p.pu.slice(startIdx,startIdx+9);
+ var putts=puttsRaw.map(function(v){return v===null?-1:v;});
+ var fw=p.fw.slice(startIdx,startIdx+9);
+ var pen=p.pe.slice(startIdx,startIdx+9);
+ var sand=p.sa.slice(startIdx,startIdx+9);
+ var crsl=RT_halfCrSl(rd,p,isFront);
+ var cr=crsl.cr, sl=crsl.sl;
+ var halfParSum=par.reduce(function(s,v){return s+v;},0);
+ /* STABLEFORD-PUNKTE dieser Haelfte entsprechen jetzt exakt der Out-/In-Aufteilung der
+    tatsaechlichen Rundenberechnung: echte Spielvorgabe (p.ph) + echtes SI dieser Haelfte im
+    ORIGINALEN Rundenkontext (rd.cnt, z.B. 18 Loch mit 1-18-Index) - keine unabhaengige
+    9-Loch-Neuberechnung mehr. Das entspricht 1:1 der Out-/In-Netto-Punkte auf der amtlichen
+    Scorekarte des Clubs. War die Runde selbst schon 9 Loch, ist p.ph/rd.cnt ohnehin bereits
+    9-Loch-basiert. */
+ var stbfPh=p.ph, stbfHoles=rd.cnt;
+ /* Nur fuer das separate HANDICAP-DIFFERENZIAL (WHS-Fortschreibung je Neun, siehe "hi" im
+    hvEntry unten - fliesst in den HI-Verlauf ein) gilt weiterhin eine EIGENSTAENDIGE
+    9-Loch-Spielvorgabe mit der 9-Loch-RELATIVEN Stroke-Index-Reihenfolge dieser Haelfte
+    (1-9, nicht 1-18) - das ist WHS-konform fuer die Umrechnung eines Splits, hat aber ab
+    jetzt keinen Einfluss mehr auf die angezeigten Stableford-Punkte. */
+ var hiPh=(rd.cnt===9)?p.ph:RT_ph(p.hi,cr,sl,halfParSum,9);
+ if(hiPh===null||isNaN(hiPh))hiPh=p.ph;
+ var courseKey=RT_courseKeyFromName(rd.courseName,rd);
+ var courseObj=courseKey&&RT_COURSES[courseKey];
+ var nineObj=courseObj&&courseObj.nines&&courseObj.nines[isFront?'F':'B'];
+ var hiSi=(nineObj&&nineObj.si)||si;
+ /* Ungespielte oder gestrichene Loecher NIE als 0 Schlaege werten (waere ein Phantom-Bestwert).
+    Stattdessen konservativ mit dem NDB-Deckel (Netto-Doppelbogey-Max) ansetzen - genau wie
+    RT_cap() es fuer die laufende Rundenanzeige bereits tut. Eine komplett ungespielte Haelfte
+    erzeugt gar keinen Handicap-Eintrag. */
+ var grossSum=0, stbfSum=0, playedCount=0;
+ for(var i=0;i<9;i++){
+  var npHi=SC_netPar(par[i],hiPh,hiSi[i],9);
+  var cap=npHi+2;
+  if(scores[i]===null||scores[i]===undefined||crossed[i]){
+   grossSum+=cap;
+   continue;
+  }
+  playedCount++;
+  grossSum+=Math.min(scores[i],cap);
+  var npStbf=(rd.cnt===9)?npHi:SC_netPar(par[i],stbfPh,si[i],stbfHoles);
+  stbfSum+=Math.max(0,2-(scores[i]-npStbf));
+ }
+ if(playedCount===0) return null;
+ /* WHS-konforme 9-auf-18-Loch-Hochrechnung (Rule 5.1b, seit Jan. 2024): das 9-Loch-
+    Score-Differential dieser Haelfte wird NICHT verdoppelt, sondern mit einem „Expected
+    Score“ fuer die nicht gespielte Haelfte addiert. Der Expected-Score-Wert haengt vom
+    aktuellen Handicap-Index des Spielers ab (p.hi, wie bei Rundenanlage/-bearbeitung erfasst) -
+    naeherungsweise: ExpectedScore9 = 0,52 * HI + 1,2 (offiziell nicht als geschlossene Formel
+    veroeffentlicht, aber anhand des USGA-Beispiels HI 14,0: 7,2 + 8,48 = 15,68 ~ 15,7 verifiziert).
+    Ersetzt die vorherige grobe Naeherung (*2*0.96), die weder die offizielle Verdopplungslogik
+    noch eine feste Konstante aus dem WHS-Regelwerk war. */
+ var refHi=(p.hi!==undefined&&p.hi!==null&&!isNaN(p.hi))?p.hi:54;
+ var nineDiff=sl?((113/sl)*(grossSum-cr)):0;
+ var expected9=0.52*refHi+1.2;
+ var hi=sl?(nineDiff+expected9):0;
+ var dd=rd.date.slice(8,10), mm=rd.date.slice(5,7);
+ var lblShort=dd+'.'+mm+'.';
+ var meta=HV_COURSE_META[code];
+ var hvEntry={date:rd.date, time:rd.time, lbl:lblShort, half:code, s:grossSum, cr:cr, sl:sl,
+  hi:Math.round(hi*10)/10, col:meta.color, stbf:stbfSum, rtId:rd.id};
+ var scEntry={id:'rt-'+rd.id+'-'+code, date:rd.date, time:rd.time, lbl:lblShort+' '+rd.date.slice(0,4), half:code,
+  scores:scores, crossed:crossed, putts:putts, fw:fw, pen:pen, sand:sand, stbf:stbfSum, rtId:rd.id,
+  par:par, si:si, ch:stbfPh, chHoles:stbfHoles};
+ return {hv:hvEntry, sc:scEntry};
+}
+function RT_convertRound(rd){
+ /* WICHTIG: nicht blind players[0] nehmen - bei einer von einem anderen Nutzer erstellten,
+    geteilten Runde waere das der Ersteller, nicht ich. RT_myPlayerIndex() loest das ueber
+    RT_roundOwners/RT_myPlayerNameByOwner korrekt auf (siehe sbPull/RT_loadMyPlayerNames). */
+ var idx=RT_myPlayerIndex(rd);
+ if(idx<0) return {hv:[],sc:[]};
+ var p=rd.players&&rd.players[idx]; if(!p) return {hv:[],sc:[]};
+ var hv=[], sc=[];
+ if(rd.cnt===9){
+  var isFront=rd.nums[0]===1;
+  var conv=RT_convertHalf(rd,p,0,isFront);
+  if(conv){hv.push(conv.hv); sc.push(conv.sc);}
+ }else{
+  var convF=RT_convertHalf(rd,p,0,true);
+  var convB=RT_convertHalf(rd,p,9,false);
+  if(convB){hv.push(convB.hv); sc.push(convB.sc);}
+  if(convF){hv.push(convF.hv); sc.push(convF.sc);}
+ }
+ return {hv:hv, sc:sc};
+}
+function RT_pairHistorical(){
+ var hvPool=HV_D_STATIC.map(function(hv,i){ return {hv:hv, idx:i}; });
+ var pairs={};
+ SC_STATIC.forEach(function(sc){
+  var pos=hvPool.findIndex(function(p){ return p.hv.date===sc.date && p.hv.half===sc.half; });
+  if(pos>=0){ pairs[sc.id]=hvPool[pos].idx; hvPool.splice(pos,1); }
+  else{ pairs[sc.id]=null; }
+ });
+ return pairs;
+}
+function RT_seedHistoricalRounds(){
+ var pairs=RT_pairHistorical();
+ var rounds=rtGet(RT_KEY)||[];
+ var existingIds={}; rounds.forEach(function(rd){existingIds[rd.id]=true;});
+ /* Explizit vom Nutzer geloeschte historische Hole19-Runden (siehe RT_delete) duerfen beim
+    naechsten Laden NICHT erneut eingespielt werden - sonst waere Loeschen fuer diese Runden
+    wirkungslos, weil sie beim naechsten Seitenaufruf automatisch wieder auftauchen. */
+ var deletedHist={}; (rtGet(RT_HISTDEL_KEY)||[]).forEach(function(id){deletedHist[id]=true;});
+ var changed=false;
+ SC_STATIC.forEach(function(sc){
+  var id='hist-'+sc.id;
+  if(existingIds[id]||deletedHist[id]) return;
+  var hvIdx=pairs[sc.id];
+  var hv=(hvIdx!==null&&hvIdx!==undefined)?HV_D_STATIC[hvIdx]:null;
+  var par=SC_PAR[sc.half]||SC_PAR.Front;
+  var si=SC_SI[sc.half]||SC_SI.Front;
+  var ph=SC_CH[sc.half]||32;
+  var meta=HV_COURSE_META[sc.half];
+  var courseLabel=meta?meta.label:sc.half;
+  var parSum=par.reduce(function(s,v){return s+v;},0);
+  rounds.push({
+   id:id, date:sc.date, courseName:courseLabel,
+   lbl:'Historische Runde \u00b7 Par '+parSum,
+   par:par, si:si, nums:[1,2,3,4,5,6,7,8,9], cnt:9, parSum:parSum,
+   cur:0, done:true, historical:true, histSrc:sc.id,
+   players:[{name:RT_myDisplayName(), hi:hv?hv.hi:RT_ownHandicap(), tee:'Historisch', cr:hv?hv.cr:null, sl:hv?hv.sl:null, ph:ph,
+    sc:sc.scores.slice(), pu:sc.putts.map(function(v){return v<0?null:v;}), fw:sc.fw.slice(),
+    pe:sc.pen.slice(), sa:sc.sand.slice(), cx:sc.crossed.slice()}]
+  });
+  changed=true;
+ });
+ if(changed) rtSet(RT_KEY, rounds);
+}
+/* Handicap und Schlag-Detail leiten sich AUSSCHLIESSLICH aus den tatsaechlich gespeicherten
+   Runden ab (rtGet(RT_KEY)) - nicht mehr aus den eingebetteten Hole19-Importdaten
+   (HV_D_STATIC/SC_STATIC). Die Importdaten dienen nur noch als einmalige Ausgangsbefuellung
+   (siehe RT_seedHistoricalRounds) fuer neu angelegte Geraete; sobald eine historische Runde
+   in den gespeicherten Runden existiert, zeigt die App exakt deren aktuellen Stand - auch
+   waehrend sie noch teilweise leer und haendisch in Bearbeitung ist. Historische Runden
+   werden dafuer unabhaengig vom "promoted"-Flag konvertiert; normale (nicht-historische)
+   Runden weiterhin nur nach explizitem "Runde beenden" (promoted), damit frisch gespielte
+   Runden vor der Uebernahme ins Handicap noch geprueft/korrigiert werden koennen. */
+function RT_hydrateHistoricalData(){
+ var rounds=rtGet(RT_KEY)||[];
+ rounds=rounds.filter(function(r){return !r.hidden;});
+ var hv=[], sc=[];
+ rounds.forEach(function(rd){
+  if(!rd.historical && !rd.promoted) return;
+  var conv=RT_convertRound(rd);
+  hv=hv.concat(conv.hv);
+  sc=sc.concat(conv.sc);
+ });
+ HV_D=hv;
+ SC=sc;
+}
+function RT_promoteRound(id){
+ var saved=rtGet(RT_KEY)||[];
+ var idx=-1;
+ for(var i=0;i<saved.length;i++){ if(saved[i].id===id){ idx=i; break; } }
+ if(idx<0) return;
+ if(RT_isForeignRound(saved[idx])) return;
+ saved[idx].promoted=true;
+ rtSet(RT_KEY,saved);
+ /* WICHTIG: auch in die Cloud pushen - ohne das ging die Befoerderung (promoted:true) beim
+     naechsten sbPull() (z.B. beim Start einer neuen Runde oder App-Neustart) wieder verloren,
+     weil sbPull() den kompletten lokalen RT_KEY-Stand durch den (hier nie aktualisierten)
+     Cloud-Stand ersetzt. Die Runde verschwand dadurch scheinbar wieder aus Schlag-Detail/
+     HI-Verlauf und wirkte erneut unbeendet, obwohl nur die Cloud-Synchronisierung fehlte. */
+ sbPushRound(saved[idx]);
+ RT_hydrateHistoricalData();
+ RT_render();
+}
+function RT_cancelEdit(){
+ RT_editingExisting=false;
+ RT_round=null;
+ RT_state.saveWarn='';
+ RT_go('view');
+}
+
+function RT_openView(id){RT_state.viewId=id;RT_go('view');}
+function RT_rView(){
+ var saved=rtGet(RT_KEY)||[];
+ var rd=null;
+ for(var i=0;i<saved.length;i++)if(saved[i].id===RT_state.viewId)rd=saved[i];
+ if(!rd)return RT_rHome();
+ var foreign=RT_isForeignRound(rd);
+ var foreignLocked=foreign&&!!rd.done;
+ var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
+  '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
+  '<div style="flex:1;min-width:0;"><div class="rt-h1" style="font-size:18px;">'+rtEsc(rd.courseName)+'</div>'+
+  '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
+ if(foreignLocked)h+='<div class="rt-note" style="margin-bottom:10px;">Diese Runde wurde von einem anderen Konto geteilt \u2013 hier nur ansehbar, nicht bearbeitbar.</div>';
+ else if(foreign)h+='<div class="rt-note" style="margin-bottom:10px;">Gemeinsame laufende Runde \u2013 du kannst hier deine eigenen Schl\u00e4ge eintragen, solange die Runde noch nicht beendet ist.</div>';
+ rd.players.forEach(function(p){
+  var t=RT_totals(p,rd);
+  h+='<div class="rtc rtc-hd"'+(foreignLocked?'':' style="cursor:pointer;" onclick="RT_editRound(\''+rd.id+'\',true)"')+'><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">'+
+   '<div class="rt-ct" style="margin:0;">'+rtEsc(p.name)+'</div>'+
+   '<div style="font-size:10.5px;color:#8A9C8E;">'+rtEsc(p.tee)+' &middot; HI '+p.hi+' &middot; SV '+p.ph+'</div></div>'+
+   '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;text-align:center;">'+
+    '<div><div style="font-size:19px;font-weight:800;color:#143522;">'+t.br+'</div><div style="font-size:8.5px;color:#8A9C8E;">SCHL\u00c4GE</div></div>'+
+    '<div><div style="font-size:19px;font-weight:800;color:#187040;">'+t.stbf+'</div><div style="font-size:8.5px;color:#8A9C8E;">STABLEFORD</div></div>'+
+    '<div><div style="font-size:19px;font-weight:800;color:#2F6BAE;">'+t.avgPu+'</div><div style="font-size:8.5px;color:#8A9C8E;">PUTTS/LOCH</div></div>'+
+    '<div><div style="font-size:19px;font-weight:800;color:#B7791F;">'+(t.fwPct===null?'\u2013':t.fwPct+'%')+'</div><div style="font-size:8.5px;color:#8A9C8E;">FW MITTE</div></div>'+
+   '</div><div class="rt-hgrid">';
+  for(var hh=0;hh<rd.cnt;hh++){
+   var st=RT_stbfH(p,hh,rd);
+   var stC=st===null?'#9AAB9E':st>=3?'#187040':st===2?'#2F6BAE':st===1?'#8A6A1F':'#B03A3A';
+   var capped=p.sc[hh]!==null&&!p.cx[hh]&&p.sc[hh]>RT_cap(p,hh,rd);
+   h+='<div class="rt-hg"><div class="a">'+rd.nums[hh]+'</div>'+
+    '<div class="p">Par '+rd.par[hh]+'</div>'+
+    '<div class="b" style="'+(p.cx[hh]?'text-decoration:line-through;color:#B03A3A;':capped?'color:#B7791F;':'')+'">'+(p.sc[hh]===null?'\u2013':p.sc[hh])+'</div>'+
+    '<div class="c" style="color:'+stC+';">'+(st===null?'\u2013':st)+'</div></div>';
+  }
+  h+='</div><div style="font-size:9.5px;color:#9AAB9E;margin-top:6px;">Zeile: Bahn &middot; Brutto (durchgestrichen = gestrichen, orange = \u00fcber NDB-Deckel) &middot; Stbf-Punkte'+' &middot; <b style="color:#B7791F;">Gesamtanzahl Schl\u00e4ge: '+t.brRaw+'</b>'+
+   (t.pe||t.sa?' &middot; '+t.pe+' Straf / '+t.sa+' Sand':'')+'</div></div>';
+ });
+ /* Hinweis nur solange zeigen, wie noch NICHT synchronisiert wurde - nach dem
+    Bearbeiten/Speichern (rd.promoted) ist die Info nicht mehr noetig. */
+
+ if(!foreignLocked){
+  h+='<div class="rt-row" style="margin-bottom:8px;"><button class="rt-btn" onclick="RT_editRound(\''+rd.id+'\',true)">Runde starten</button></div>';
+  if(!foreign){
+   h+='<div class="rt-row"><button class="rt-btn2" onclick="RT_editRound(\''+rd.id+'\')">Bearbeiten</button>'+
+    (rd.historical||rd.promoted?'':'<button class="rt-btn2" onclick="RT_promoteRound(\''+rd.id+'\')">Runde beenden</button>')+'</div>'+
+    '<div class="rt-row" style="margin-top:8px;margin-bottom:12px;"><button class="rt-btn2" style="color:#B03A3A;border-color:#E0BCBC;'+(RT_state.ask==='del'+rd.id?'background:#FBEAEA;font-weight:800;':'')+'" onclick="RT_delete(\''+rd.id+'\')">'+(RT_state.ask==='del'+rd.id?'Wirklich l\u00f6schen?':'Runde l\u00f6schen')+'</button></div>';
+  }
+ }
+ return h;
+}
+function RT_delete(id){
+ var saved=rtGet(RT_KEY)||[];
+ var existing=saved.find(function(r){return r.id===id;});
+ if(existing&&RT_isForeignRound(existing)) return;
+ if(RT_state.ask!=='del'+id){RT_state.ask='del'+id;RT_render();return;}
+ if(id.indexOf('hist-')===0){
+  var deletedHist=rtGet(RT_HISTDEL_KEY)||[];
+  if(deletedHist.indexOf(id)===-1){ deletedHist.push(id); rtSet(RT_HISTDEL_KEY,deletedHist); }
+ }else if(existing){
+  existing.hidden=true;
+  rtSet(RT_KEY,saved);
+  sbPushRound(existing);
+ }
+ RT_hydrateHistoricalData();
+ RT_go('home');
+}
+function RT_export(id){
+ var saved=rtGet(RT_KEY)||[],rd=null;
+ for(var i=0;i<saved.length;i++)if(saved[i].id===id)rd=saved[i];
+ if(!rd)return;
+ var blob=new Blob([JSON.stringify(rd,null,2)],{type:'application/json'});
+ var a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='golflog_'+rd.date+'.json';
+ document.body.appendChild(a);a.click();a.remove();
+}
+function RT_today(){
+ var d=new Date();
+ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+function RT_nowTime(){
+ var d=new Date();
+ return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+}
+function RT_fmtD(s){return s.slice(8,10)+'.'+s.slice(5,7)+'.'+s.slice(0,4);}
+function RT_fmtDT(rd){return RT_fmtD(rd.date)+(rd.time?' &middot; '+rd.time+' Uhr':'');}
+
+var RT_MONTHNAMES=['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+/* Eigene Datum/Uhrzeit-Auswahl per <select>-Dropdowns statt input type="date"/"time" - siehe
+   RT_rSetup. Baut die drei Datums- und zwei Zeit-Dropdowns anhand von RT_su.date/RT_su.time. */
+function RT_dateTimeSelects(){
+ var ds=(RT_su.date||RT_today()).split('-');
+ var y=parseInt(ds[0],10), m=parseInt(ds[1],10), d=parseInt(ds[2],10);
+ var ts=(RT_su.time||RT_nowTime()).split(':');
+ var hh=parseInt(ts[0],10), mi=parseInt(ts[1],10);
+ var nowY=parseInt(RT_today().slice(0,4),10);
+ var h='<div class="rt-row" style="margin-bottom:8px;">';
+ h+='<div style="flex:1;"><span class="rt-lbl">Tag</span><select class="rt-inp" onchange="RT_suDatePart(\'d\',this.value)">';
+ for(var day=1;day<=31;day++) h+='<option value="'+day+'"'+(day===d?' selected':'')+'>'+day+'</option>';
+ h+='</select></div>';
+ h+='<div style="flex:2;"><span class="rt-lbl">Monat</span><select class="rt-inp" onchange="RT_suDatePart(\'m\',this.value)">';
+ RT_MONTHNAMES.forEach(function(name,idx){ var mv=idx+1; h+='<option value="'+mv+'"'+(mv===m?' selected':'')+'>'+name+'</option>'; });
+ h+='</select></div>';
+ h+='<div style="flex:1.3;"><span class="rt-lbl">Jahr</span><select class="rt-inp" onchange="RT_suDatePart(\'y\',this.value)">';
+ for(var yr=nowY-3;yr<=nowY+1;yr++) h+='<option value="'+yr+'"'+(yr===y?' selected':'')+'>'+yr+'</option>';
+ h+='</select></div>';
+ h+='</div>';
+ h+='<div class="rt-row">';
+ h+='<div style="flex:1;"><span class="rt-lbl">Stunde</span><select class="rt-inp" onchange="RT_suTimePart(\'h\',this.value)">';
+ for(var hr=0;hr<24;hr++){ var hs=('0'+hr).slice(-2); h+='<option value="'+hs+'"'+(hr===hh?' selected':'')+'>'+hs+'</option>'; }
+ h+='</select></div>';
+ h+='<div style="flex:1;"><span class="rt-lbl">Minute</span><select class="rt-inp" onchange="RT_suTimePart(\'i\',this.value)">';
+ for(var min=0;min<60;min++){ var ms=('0'+min).slice(-2); h+='<option value="'+ms+'"'+(min===mi?' selected':'')+'>'+ms+'</option>'; }
+ h+='</select></div>';
+ h+='</div>';
+ return h;
+}
+function RT_suDatePart(part,val){
+ var ds=(RT_su.date||RT_today()).split('-');
+ var y=ds[0], m=ds[1], d=ds[2];
+ if(part==='y') y=val;
+ else if(part==='m') m=('0'+val).slice(-2);
+ else d=('0'+val).slice(-2);
+ /* Tag an die tatsaechliche Laenge des gewaehlten Monats anpassen (z.B. 31.02. gibt es nicht) */
+ var dim=new Date(parseInt(y,10), parseInt(m,10), 0).getDate();
+ if(parseInt(d,10)>dim) d=('0'+dim).slice(-2);
+ RT_su.date=y+'-'+m+'-'+d;
+ RT_render();
+}
+function RT_suTimePart(part,val){
+ var ts=(RT_su.time||RT_nowTime()).split(':');
+ var h=ts[0], mi=ts[1];
+ if(part==='h') h=val; else mi=val;
+ RT_su.time=h+':'+mi;
+ RT_render();
+}
+
+var RT_curTab='runde';
+function showTab(tab){
+ RT_curTab=tab;
+  document.getElementById('tab-hi').style.display      = tab==='hi'     ? 'block' : 'none';
+  document.getElementById('tab-detail').style.display  = tab==='detail' ? 'block' : 'none';
+  document.getElementById('tab-runde').style.display   = tab==='runde'  ? 'block' : 'none';
+  ['hi','detail','runde'].forEach(function(t){
+    var btn=document.getElementById('tbtn-'+t);
+    var lbl=document.getElementById('tlbl-'+t);
+    if(btn){ btn.style.background = t===tab ? 'rgba(31,138,77,.12)' : 'none'; }
+    if(lbl){ lbl.style.color = t===tab ? '#1F8A4D' : 'rgba(93,112,96,.95)'; }
+  });
+  if(tab==='runde'){ RT_render(); }
+  if(tab==='hi'||tab==='detail'){
+    /* Vor jedem Anzeigen von Handicap/Schlag-Detail HV_D/SC komplett neu aus dem
+       aktuellen Stand der gespeicherten Runden aufbauen. Das ist die verlaessliche
+       Absicherung dafuer, dass Aenderungen an einer Runde IMMER ueberall ankommen,
+       unabhaengig davon, ob der Speichervorgang selbst bereits synchronisiert hat. */
+    RT_hydrateHistoricalData();
+  }
+  if(tab==='hi'){
+    var hiSub=document.getElementById('hi-subtitle');
+    if(hiSub) hiSub.textContent='HI-Verlauf '+RT_myDisplayName();
+    var hiChartSub=document.getElementById('hi-chart-sub');
+    if(hiChartSub) hiChartSub.textContent='Ungedeckelt \u00b7 9L x2 \u00b7 HI '+rtDe(RT_ownHandicap())+' = eigenes Handicap';
+    var hiIcon=document.getElementById('hi-usericon');
+    if(hiIcon) hiIcon.innerHTML=RT_userIcon();
+    HV_renderLegend();
+    HV_renderSegButtons();
+    HV_renderRangeButtons();
+    HV_renderKPIs();
+    HV_renderChart();
+    HV_renderTable();
+  }
+  if(tab==='detail'){
+    var detailIcon=document.getElementById('detail-usericon');
+    if(detailIcon) detailIcon.innerHTML=RT_userIcon();
+    RD_renderSegButtons();
+    GD_renderRangeButtons();
+    GD_renderKPIs();
+    renderRounds('all');
+    renderPenChart();
+    renderFW();
+    renderSandChart();
+    renderPuttsChart();
+    renderMetrics();
+    renderPerf();
+  }
+}
+
+RT_hydrateCustomCourses();
+/* RT_seedHistoricalRounds() NICHT MEHR automatisch bei jedem Laden ausfuehren: das hat
+   Marks persoenliche Hole19-Importhistorie (32 Runden, fest im Code hinterlegt) bei JEDEM
+   neuen Nutzer (z.B. eingeladenen Mitspielern wie Carsten) lokal eingespielt, noch bevor
+   ueberhaupt ein Login stattfand - beim naechsten Cloud-Sync wurden diese Runden dann
+   faelschlich in DEREN eigenes Konto gepusht. Marks eigene Migration ist laengst
+   abgeschlossen (liegt sicher in seinem Account) - die Funktion wird daher nicht mehr
+   automatisch aufgerufen. */
+RT_hydrateHistoricalData();
+showTab('runde');
+sbInit();
+AG_render();
+function adjustFooterPadding(){
+  var nav=document.getElementById('bottom-nav'); if(!nav) return;
+  var h=nav.getBoundingClientRect().height;
+  var pad=Math.max(0,Math.ceil(h)-9);
+  ['tab-hi','tab-detail','tab-runde'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.style.paddingBottom=pad+'px';
+  });
+}
+adjustFooterPadding();
+window.addEventListener('resize',adjustFooterPadding);
+window.addEventListener('load',adjustFooterPadding);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(adjustFooterPadding);
+setTimeout(adjustFooterPadding,300);

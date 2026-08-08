@@ -1,0 +1,14 @@
+{
+  "name": "fairwaypilot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "FairwayPilot Cloudflare Worker - modularer src/-Build via esbuild.",
+  "scripts": {
+    "build": "node build/build.mjs",
+    "check": "node --check worker.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>FairwayPilot – dein Weg zum besseren Handicap</title>
+<meta name="description" content="FairwayPilot zeigt dir nach jeder Runde, woran es liegt und wo du dich verbesserst. Handicap-Entwicklung, Runden-Tracking und Statistiken – direkt im Browser, ohne App-Store.">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/icon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FairwayPilot">
+<meta name="theme-color" content="#1F8A4D">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
+html{-webkit-text-size-adjust:100%;}
+:root{
+  --g:#34C759;--gd:#1F8A4D;--b:#0A84FF;--p:#BF5AF2;--a:#FF9F0A;
+  --tx:#16301F;--tx2:rgba(43,66,50,.85);--tx3:rgba(93,112,96,.95);
+  --gl:#FFFFFF;--glb:#E1EADA;
+  --blur:blur(26px) saturate(180%);
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+html,body{min-height:100%;background:#F5F8F0;color:var(--tx);font-family:'Inter',-apple-system,sans-serif;overflow-x:hidden;}
+.bg{position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,#F8FBF3 0%,#ECF2E4 100%);overflow:hidden;}
+.o{position:absolute;border-radius:50%;filter:blur(70px);animation:ob 18s ease-in-out infinite;}
+.o1{width:400px;height:400px;background:radial-gradient(circle,rgba(52,199,89,.16) 0%,transparent 70%);top:-80px;left:-60px;opacity:.55;}
+.o2{width:360px;height:360px;background:radial-gradient(circle,rgba(10,132,255,.09) 0%,transparent 70%);top:35%;right:-70px;animation-delay:-7s;opacity:.5;}
+.o3{width:300px;height:300px;background:radial-gradient(circle,rgba(191,90,242,.07) 0%,transparent 70%);bottom:10%;left:5%;animation-delay:-13s;opacity:.45;}
+@keyframes ob{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(28px,-22px) scale(1.06)}66%{transform:translate(-22px,32px) scale(.94)}}
+.wrap{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:calc(var(--st) + 20px) 20px calc(var(--sb) + 40px);}
+.card{background:var(--gl);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--glb);border-top:3px solid var(--gd);border-radius:22px;padding:22px 20px;margin-bottom:16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(27,46,32,.04),0 10px 26px -20px rgba(27,46,32,.22);}
+.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(52,199,89,.12);color:var(--gd);font-size:13px;font-weight:700;padding:5px 12px 5px 6px;border-radius:100px;margin-bottom:14px;}
+.badge img{width:22px;height:22px;border-radius:6px;display:block;}
+h1{font-size:30px;font-weight:800;letter-spacing:-.6px;line-height:1.15;background:linear-gradient(135deg,#143522,#2F5C42);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+h1 em{-webkit-text-fill-color:var(--g);font-style:normal;}
+.sub{font-size:15px;font-weight:600;color:var(--gd);margin-bottom:10px;}
+.lead{font-size:14.5px;line-height:1.55;color:var(--tx2);margin-bottom:20px;}
+.cta{display:block;width:100%;text-align:center;background:linear-gradient(135deg,var(--g),var(--gd));color:#fff;font-size:16px;font-weight:700;padding:16px;border-radius:16px;text-decoration:none;box-shadow:0 10px 24px -10px rgba(31,138,77,.5);border:none;cursor:pointer;}
+.cta.secondary{background:none;color:var(--gd);border:1.5px solid var(--glb);box-shadow:none;}
+.cta-note{text-align:center;font-size:12px;color:var(--tx3);margin-top:10px;}
+h2{font-size:20px;font-weight:800;letter-spacing:-.3px;color:var(--tx);margin-bottom:4px;}
+.section-lead{font-size:13.5px;color:var(--tx3);margin-bottom:16px;}
+.benefits{display:grid;gap:12px;margin-top:6px;}
+.benefit{display:flex;gap:14px;align-items:flex-start;}
+.benefit .ico{flex:none;width:44px;height:44px;border-radius:13px;background:rgba(52,199,89,.13);display:flex;align-items:center;justify-content:center;font-size:20px;}
+.benefit h3{font-size:15px;font-weight:700;margin-bottom:2px;}
+.benefit p{font-size:13px;color:var(--tx3);line-height:1.45;}
+.shot-frame{border-radius:18px;border:1px solid var(--glb);background:linear-gradient(160deg,#EEF4E7,#E3ECDA);aspect-ratio:9/16;max-width:220px;margin:8px auto 4px;display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:12px;text-align:center;padding:20px;}
+.steps{counter-reset:step;display:grid;gap:14px;margin-top:6px;}
+.step{display:flex;gap:14px;align-items:flex-start;}
+.step .num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--gd);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.step h3{font-size:14.5px;font-weight:700;margin-bottom:2px;}
+.step p{font-size:13px;color:var(--tx3);line-height:1.45;}
+.install-block{margin-top:14px;}
+.install-tab{display:flex;gap:8px;margin-bottom:12px;}
+.install-tab button{flex:1;padding:9px;border-radius:12px;border:1.5px solid var(--glb);background:#fff;font-family:inherit;font-size:13px;font-weight:700;color:var(--tx3);cursor:pointer;}
+.install-tab button.on{background:var(--gd);border-color:var(--gd);color:#fff;}
+.install-steps{display:none;}
+.install-steps.on{display:block;}
+.install-steps ol{padding-left:18px;}
+.install-steps li{font-size:13.5px;color:var(--tx2);line-height:1.7;}
+.install-steps b{color:var(--tx);}
+.quote{background:rgba(52,199,89,.07);border-left:3px solid var(--g);border-radius:0 14px 14px 0;padding:14px 16px;margin-bottom:12px;}
+.quote p{font-size:13.5px;line-height:1.5;color:var(--tx2);font-style:italic;margin-bottom:6px;}
+.quote span{font-size:12px;color:var(--tx3);font-weight:600;}
+.faq-item{border-bottom:1px solid var(--glb);padding:14px 0;}
+.faq-item:last-child{border-bottom:none;}
+.faq-item h3{font-size:14.5px;font-weight:700;margin-bottom:5px;}
+.faq-item p{font-size:13px;color:var(--tx3);line-height:1.5;}
+footer{text-align:center;font-size:11.5px;color:var(--tx3);padding:10px 4px 0;}
+footer a{color:var(--gd);text-decoration:none;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="bg"><div class="o o1"></div><div class="o o2"></div><div class="o o3"></div></div>
+<div class="wrap">
+
+  <div class="card">
+    <span class="badge"><img src="/icon-32.png" alt="FairwayPilot"> FairwayPilot</span>
+    <h1>Dein Golf-<em>Handicap</em> im Griff – nicht nur auf dem Papier.</h1>
+    <div class="sub">FairwayPilot – dein Weg zum besseren Handicap</div>
+    <p class="lead">FairwayPilot zeigt dir nach jeder Runde, woran es liegt und wo du dich verbesserst. Keine Excel-Tabellen, keine Rätselei – nur klare Zahlen zu deinem Spiel, direkt im Browser.</p>
+    <a href="#install" class="cta">App jetzt einrichten</a>
+    <div class="cta-note">Kein App Store nötig – läuft direkt im Browser auf deinem Handy.</div>
+  </div>
+
+  <div class="card">
+    <h2>Warum FairwayPilot</h2>
+    <div class="benefits">
+      <div class="benefit">
+        <div class="ico">📈</div>
+        <div><h3>Handicap-Entwicklung verstehen</h3><p>Sieh auf einen Blick, wie sich dein Handicap über Wochen und Monate entwickelt – und welche Runden den Unterschied gemacht haben.</p></div>
+      </div>
+      <div class="benefit">
+        <div class="ico">⛳</div>
+        <div><h3>Runden einfach tracken</h3><p>Score, Stableford-Punkte und Statistiken pro Loch – in wenigen Sekunden erfasst, direkt auf dem Platz oder danach.</p></div>
+      </div>
+      <div class="benefit">
+        <div class="ico">🎯</div>
+        <div><h3>Fortschritte klar sehen</h3><p>Keine losen Zettel, keine vergessenen Runden. Alle Daten an einem Ort, übersichtlich aufbereitet.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="text-align:center;">
+    <h2 style="margin-bottom:2px;">So sieht's aus</h2>
+    <p class="section-lead">Dein Handicap-Verlauf auf einen Blick</p>
+    <div class="shot-frame">Screenshot folgt</div>
+  </div>
+
+  <div class="card">
+    <h2>So funktioniert es</h2>
+    <div class="steps" style="margin-top:12px;">
+      <div class="step"><div class="num">1</div><div><h3>Runde anlegen</h3><p>Platz wählen, loslegen. FairwayPilot kennt Par und Stroke Index deines Golfclubs.</p></div></div>
+      <div class="step"><div class="num">2</div><div><h3>Scores erfassen</h3><p>Trage deine Schläge Loch für Loch ein – live während der Runde oder im Nachhinein.</p></div></div>
+      <div class="step"><div class="num">3</div><div><h3>Entwicklung sehen</h3><p>Nach der Runde siehst du sofort, wie sie sich auf dein Handicap auswirkt.</p></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-bottom:12px;">Was Golfer sagen</h2>
+    <div class="quote"><p>„Ich weiß jetzt endlich, an welchen Löchern ich wirklich Schläge verliere."</p><span>— M., Handicap 18</span></div>
+    <div class="quote" style="margin-bottom:0;"><p>„Seit ich meine Runden mit FairwayPilot tracke, sehe ich meinen Fortschritt schwarz auf weiß."</p><span>— S., Handicap 24</span></div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-bottom:6px;">Häufige Fragen</h2>
+    <div class="faq-item"><h3>Ist FairwayPilot kostenlos?</h3><p>Ja, FairwayPilot ist aktuell kostenlos nutzbar.</p></div>
+    <div class="faq-item"><h3>Muss ich etwas aus dem App Store laden?</h3><p>Nein. FairwayPilot läuft direkt im Browser und lässt sich wie eine App auf deinem Home-Bildschirm einrichten – ganz ohne App Store.</p></div>
+    <div class="faq-item"><h3>Brauche ich Internet auf dem Platz?</h3><p>Deine Runde lässt sich auch ohne durchgehende Verbindung erfassen; sobald du wieder online bist, wird alles synchronisiert.</p></div>
+  </div>
+
+  <div class="card" id="install">
+    <h2>Jetzt einrichten</h2>
+    <p class="section-lead">In unter einer Minute auf deinem Home-Bildschirm.</p>
+    <div class="install-block">
+      <div class="install-tab">
+        <button type="button" class="on" data-tab="ios" onclick="GPswitchTab('ios')">iPhone</button>
+        <button type="button" data-tab="android" onclick="GPswitchTab('android')">Android</button>
+      </div>
+      <div class="install-steps on" id="tab-ios">
+        <ol>
+          <li>Öffne FairwayPilot in <b>Safari</b>.</li>
+          <li>Tippe unten auf das <b>Teilen-Symbol</b> (Quadrat mit Pfeil nach oben).</li>
+          <li>Wähle <b>„Zum Home-Bildschirm"</b>.</li>
+          <li>Tippe rechts oben auf <b>„Hinzufügen"</b> – fertig.</li>
+        </ol>
+      </div>
+      <div class="install-steps" id="tab-android">
+        <ol>
+          <li>Öffne FairwayPilot in <b>Chrome</b>.</li>
+          <li>Tippe oben rechts auf das <b>Menü</b> (drei Punkte).</li>
+          <li>Wähle <b>„App installieren"</b> bzw. <b>„Zum Startbildschirm hinzufügen"</b>.</li>
+          <li>Bestätige mit <b>„Installieren"</b> – fertig.</li>
+        </ol>
+      </div>
+    </div>
+    <a href="/" class="cta" style="margin-top:16px;">Zu FairwayPilot</a>
+    <a href="/" class="cta secondary" style="margin-top:10px;">Ohne Installation im Browser öffnen</a>
+  </div>
+
+  <footer>
+    FairwayPilot · <a href="/">fairwaypilot.com</a><br>
+    <a href="/impressum">Impressum</a> · <a href="/datenschutz">Datenschutz</a> · <a href="/agb">AGB</a>
+  </footer>
+</div>
+<script>
+function GPswitchTab(t){
+  document.querySelectorAll('.install-tab button').forEach(function(b){b.classList.toggle('on', b.dataset.tab===t);});
+  document.querySelectorAll('.install-steps').forEach(function(s){s.classList.toggle('on', s.id==='tab-'+t);});
+}
+if(/Android/i.test(navigator.userAgent)){ GPswitchTab('android'); }
+</script>
+</body>
+</html>

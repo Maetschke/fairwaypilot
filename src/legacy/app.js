@@ -2200,6 +2200,16 @@ function RT_openHoleFull(url,title,pi){
  el.style.display='block';
  RT_renderHoleFull(url,title);
 }
+function RT_holeFullNav(delta){
+ var rd=RT_round; if(!rd||!rd.nums) return;
+ var n=rd.nums.length;
+ var ni=rd.cur+delta;
+ if(ni<0||ni>=n) return;
+ var pi=RT_state.fullPi||0;
+ RT_setHole(ni);
+ var img=(typeof RT_holeImgFor==='function')?RT_holeImgFor(rd,ni):null;
+ RT_openHoleFull(img?img.url:'','Bahn '+rd.nums[ni],pi);
+}
 function RT_renderHoleFull(url,title){
  var el=document.getElementById('hole-full'); if(!el)return;
  var rd=RT_round;
@@ -2215,10 +2225,13 @@ function RT_renderHoleFull(url,title){
   body='<div id="hole-full-frame" style="position:relative;transform-origin:center center;"><img src="'+url+'" alt="Lochkarte" onload="RT_fitRotatedImg(this)" style="display:block;width:100%;height:100%;">'+ov+'</div>';
  }
  if(RT_holeFullMapInst){ try{RT_holeFullMapInst.remove();}catch(e){} RT_holeFullMapInst=null; }
+ var _ni=rd?rd.cur:0, _nn=(rd&&rd.nums)?rd.nums.length:0;
+ function _navBtn(dir,dis,glyph){ return '<button onclick="RT_holeFullNav('+dir+')" '+(dis?'disabled ':'')+'style="width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid #DCE7D4;font-size:22px;line-height:1;color:'+(dis?'#C2CFC0':'#3C5546')+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(20,53,34,.18);">'+glyph+'</button>'; }
+ var navBar=rd?('<div style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);display:flex;align-items:center;gap:16px;z-index:3;">'+_navBtn(-1,_ni<=0,'\u2039')+_navBtn(1,_ni>=_nn-1,'\u203a')+'</div>'):'';
  el.innerHTML='<button class="rt-holefull-close" onclick="RT_closeHoleFull()">&#10005;</button>'+
   toggleBtn+
   '<div class="rt-holefull-title">'+rtEsc(title)+'</div>'+
-  '<div class="rt-holefull-card"><div class="rt-holefull-imgwrap">'+body+'</div></div>';
+  '<div class="rt-holefull-card"><div class="rt-holefull-imgwrap">'+body+'</div></div>'+navBar;
  if(mapMode) RT_initHoleFullMap();
 }
 function RT_closeHoleFull(){

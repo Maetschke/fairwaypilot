@@ -3397,20 +3397,45 @@ function RT_teePinFit(rd,c,el){
  z=Math.max(14,Math.min(20,Math.round(z*10)/10));
  return {lat:mLat,lng:mLng,zoom:z};
 }
+function RT_windOverlayContent(rd,c){
+ var w=RT_wind.data;
+ if(!w){ return '<span style="font-size:12px;color:#fff;padding:2px 4px;">Wind nicht verfügbar</span>'; }
+ var spd=Math.round(w.spd);
+ var d=RT_windRelDeg(rd,c);
+ var txt=(d===null?('Wind '+spd+' km/h'):(RT_windLabel(d)+' · '+spd+' km/h'));
+ if(w.temp!==undefined&&w.temp!==null) txt+=' · '+Math.round(w.temp)+'°C';
+ return (d===null?'':RT_windArrowSvg(d,spd))+'<span style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;">'+txt+'</span>';
+}
 function RT_grabberOverlayHtml(){
  var rd=RT_round; if(!rd) return '';
- var on=!!(RT_state.grabberOn&&RT_state.grabberOn[RT_holeMapKey(rd,rd.cur)]);
+ var key=RT_holeMapKey(rd,rd.cur);
+ var on=!!(RT_state.grabberOn&&RT_state.grabberOn[key]);
+ var windOn=!!(RT_state.windOn&&RT_state.windOn[key]);
  var lbl='position:absolute;left:0;background:#12261B;color:#fff;padding:7px 14px 7px 12px;'+
    'border-radius:0 10px 10px 0;font-size:26px;font-weight:800;line-height:1;'+
    'box-shadow:0 2px 8px rgba(0,0,0,.4);display:'+(on?'block':'none')+';';
+ var btn='pointer-events:auto;width:48px;height:48px;border:none;border-radius:15px;cursor:pointer;'+
+   'box-shadow:0 2px 8px rgba(0,0,0,.45);background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;';
  return '<div id="rt-grab-ui" style="position:absolute;inset:0;pointer-events:none;z-index:1150;">'+
-  '<button id="rt-grab-toggle" onclick="RT_toggleGrabber()" style="position:absolute;right:14px;'+
-   'top:50%;transform:translateY(-50%);pointer-events:auto;width:48px;height:48px;border:none;'+
-   'border-radius:15px;font-size:21px;line-height:1;cursor:pointer;color:#fff;'+
-   'box-shadow:0 2px 8px rgba(0,0,0,.45);background:'+(on?'#FFFFFF':'rgba(255,255,255,.55)')+';">\ud83c\udfaf</button>'+
-  '<div id="rt-grab-far" style="'+lbl+'top:32%;">\u2013</div>'+
-  '<div id="rt-grab-near" style="'+lbl+'top:60%;">\u2013</div>'+
+  '<div style="position:absolute;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px;">'+
+   '<button id="rt-wind-toggle" onclick="RT_toggleWind()" style="'+btn+'opacity:'+(windOn?'1':'0.45')+';"><img src="'+RT_IC_WIND+'" style="width:34px;height:34px;display:block;"></button>'+
+   '<button id="rt-grab-toggle" onclick="RT_toggleGrabber()" style="'+btn+'opacity:'+(on?'1':'0.45')+';"><img src="'+RT_IC_ENTF+'" style="width:34px;height:34px;display:block;"></button>'+
+  '</div>'+
+  '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 66px);left:50%;transform:translateX(-50%);pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:center;gap:8px;background:rgba(18,38,27,.85);border-radius:14px;padding:5px 13px 5px 6px;box-shadow:0 2px 8px rgba(0,0,0,.4);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
+  '<div id="rt-grab-far" style="'+lbl+'top:32%;">–</div>'+
+  '<div id="rt-grab-near" style="'+lbl+'top:60%;">–</div>'+
  '</div>';
+}
+function RT_toggleWind(){
+ var rd=RT_round; if(!rd) return;
+ var key=RT_holeMapKey(rd,rd.cur);
+ if(!RT_state.windOn) RT_state.windOn={};
+ RT_state.windOn[key]=!RT_state.windOn[key];
+ var on=!!RT_state.windOn[key];
+ var b=document.getElementById('rt-wind-toggle');
+ if(b) b.style.opacity=on?'1':'0.45';
+ var ov=document.getElementById('rt-wind-ui');
+ if(ov){ ov.innerHTML=RT_windOverlayContent(rd,rd.cur); ov.style.display=on?'flex':'none'; }
 }
 function RT_clearFullGrabber(){
  if(RT_state.grabLayer){ try{RT_state.grabLayer.remove();}catch(e){} RT_state.grabLayer=null; }
@@ -3569,7 +3594,7 @@ function RT_toggleGrabber(){
  RT_state.grabberOn[key]=!RT_state.grabberOn[key];
  var on=!!RT_state.grabberOn[key];
  var b=document.getElementById('rt-grab-toggle');
- if(b) b.style.background=on?'#FFFFFF':'rgba(255,255,255,.55)';
+ if(b) b.style.opacity=on?'1':'0.45';
  /* Bewusst KEIN RT_render(): das Vollbild wuerde neu aufgebaut und die Karte neu
     initialisiert - Ausschnitt und Zoom waeren weg. */
  if(on) RT_setupFullGrabber(); else RT_clearFullGrabber();

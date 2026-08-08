@@ -5834,7 +5834,7 @@ function RT_LRN_renderHub(){
     return '<div title="'+RT_LRN_esc(b.d)+'" style="width:60px;text-align:center;opacity:'+(has?'1':'.32')+';filter:'+(has?'none':'grayscale(1)')+';"><div style="height:46px;display:flex;align-items:center;justify-content:center;line-height:0;"><img src="/learning/badges/'+b.id+'.png" alt="" style="width:44px;height:44px;object-fit:contain;"></div><div style="font-size:9px;color:#5d7060;margin-top:3px;line-height:1.1;">'+RT_LRN_esc(b.t)+'</div></div>';
   }).join('');
   var badgeSec='<div class="lrncard" style="margin-top:6px;"><div class="lrnsec-h" style="margin-top:0;">Abzeichen ('+badges.length+'/'+RT_LRN_BADGES.length+')</div>'
-    +'<div style="display:flex;flex-wrap:wrap;gap:14px 4px;justify-content:space-between;">'+badgeHtml+'</div></div>';
+    +'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px 4px;justify-items:center;">'+badgeHtml+'</div></div>';
   RT_LRN_set('<div class="lrnhead" style="justify-content:space-between;"><div class="lrntitle">Lernen</div></div>'+header+body+badgeSec);
 }
 
@@ -6191,7 +6191,7 @@ var RT_CM={courses:null,map:null,layer:null,labels:null,mk:{},userLL:null,sel:nu
 var RT_CM_DIFF=['','sehr leicht','leicht','mittel','schwer','sehr schwer'];
 function RT_cmOpen(){ RT_go('courseMap'); }
 function RT_rCourseMap(){
- return '<div id="cm-wrap" style="position:fixed;inset:0;z-index:1000;background:#e6edef;">'
+ return '<div id="cm-wrap" style="position:fixed;inset:0;z-index:1000;background:#5f6e50;">'
   +'<div id="cm-map" style="position:absolute;inset:0;"></div>'
   +'<button onclick="RT_go(\'coursePick\')" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;z-index:1002;width:40px;height:40px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25);font-size:20px;color:#143522;cursor:pointer;">&#8249;</button>'
   +'<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translateX(-50%);z-index:1002;background:#fff;border-radius:100px;padding:8px 15px;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:13px;font-weight:700;color:#143522;">Golfplätze in Deutschland</div>'
@@ -6202,10 +6202,11 @@ function RT_rCourseMap(){
 function RT_cmInit(){
  if(typeof L==='undefined'){ return; }
  var el=document.getElementById('cm-map'); if(!el) return;
- var map=L.map('cm-map',{zoomControl:false,attributionControl:false}).setView([51.2,10.4],6);
+ if(!document.getElementById('cm-style2')){ var _s2=document.createElement('style'); _s2.id='cm-style2'; _s2.textContent='#cm-map .leaflet-container{background:#5f6e50;}'; document.head.appendChild(_s2); }
+ var map=L.map('cm-map',{zoomControl:false,attributionControl:false,preferCanvas:true}).setView([51.2,10.4],6);
  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20}).addTo(map);
  RT_CM.map=map; RT_CM.layer=L.layerGroup().addTo(map); RT_CM.labels=L.layerGroup().addTo(map); RT_CM.mk={};
- map.on('moveend zoomend',RT_cmLabels);
+ map.on('moveend zoomend',RT_cmMarkers);
  map.on('click',function(){ RT_cmCloseSheet(); });
  // Standort des Nutzers
  try{ if(navigator.geolocation){ navigator.geolocation.getCurrentPosition(function(p){
@@ -6246,16 +6247,19 @@ function RT_cmLoadLists(){
 function RT_cmUserDot(){ if(!RT_CM.userLL||!RT_CM.layer||typeof L==='undefined') return; L.marker([RT_CM.userLL.lat,RT_CM.userLL.lng],{interactive:false,keyboard:false,zIndexOffset:1000,icon:L.divIcon({className:'',iconSize:[18,18],iconAnchor:[9,9],html:'<div style="width:14px;height:14px;border-radius:50%;background:#0A84FF;border:2px solid #fff;box-shadow:0 0 0 2px rgba(10,132,255,.35);"></div>'})}).addTo(RT_CM.layer); }
 function RT_cmMarkers(){
  var map=RT_CM.map; if(!map||!RT_CM.courses) return;
- var l=document.getElementById('cm-loading'); if(l) l.style.display='none';
  RT_CM.layer.clearLayers(); RT_CM.mk={};
- // Standort-Marker erneut, falls vorhanden
  if(RT_CM.userLL){ try{ RT_cmUserDot(); }catch(e){} }
- RT_CM.courses.forEach(function(c){
+ var bnds=null; try{ bnds=map.getBounds().pad(0.4); }catch(e){}
+ var n=0;
+ for(var i=0;i<RT_CM.courses.length;i++){ var c=RT_CM.courses[i];
+  if(c.lat==null||c.lon==null) continue;
+  if(bnds&&!bnds.contains([c.lat,c.lon])) continue;
   var st=(RT_CM.lists||{})[c.ref]||{}; var col=st.home?'#1F8A4D':(st.saved||st.bucket?'#e0913a':'#B03A3A');
   var m=L.circleMarker([c.lat,c.lon],{radius:7,color:'#fff',weight:2,fillColor:col,fillOpacity:.98});
-  m.on('click',function(e){ if(e&&e.originalEvent) e.originalEvent.stopPropagation(); RT_cmSelect(c); });
+  (function(cc){ m.on('click',function(e){ if(e&&e.originalEvent) e.originalEvent.stopPropagation(); RT_cmSelect(cc); }); })(c);
   m.addTo(RT_CM.layer); RT_CM.mk[c.ref]=m;
- });
+  if(++n>=400) break;
+ }
  RT_cmLabels();
 }
 function RT_cmLabels(){

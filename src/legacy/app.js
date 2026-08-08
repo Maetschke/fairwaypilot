@@ -5842,7 +5842,7 @@ function RT_LRN_renderHub(){
 function RT_LRN_renderGwList(){
   var mods=RT_LRN_data.golfwissen||[]; var cats={},order=[];
   mods.forEach(function(m,i){ if(!cats[m.kategorie]){ cats[m.kategorie]=[]; order.push(m.kategorie); } cats[m.kategorie].push(i); });
-  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">🏌️ Golfwissen</div></div>';
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle"><img src="/learning/rubrik/gw.png" alt="" style="width:24px;height:24px;object-fit:contain;vertical-align:-5px;margin-right:4px;">Golfwissen</div></div>';
   order.forEach(function(cat){
     html+='<div class="lrnsec-h">'+RT_LRN_esc(cat)+'</div>';
     cats[cat].forEach(function(i){ var m=mods[i]; var done=RT_LRN_doneMap()['gw:'+m.id];
@@ -5882,7 +5882,7 @@ function RT_LRN_renderLex(){
   var groups={},letters=[];
   filt.forEach(function(t,i){ var L=t.begriff.charAt(0).toUpperCase(); var idx=terms.indexOf(t); if(!groups[L]){ groups[L]=[]; letters.push(L); } groups[L].push(idx); });
   letters.sort();
-  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">📖 Lexikon</div></div>';
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle"><img src="/learning/rubrik/lx.png" alt="" style="width:24px;height:24px;object-fit:contain;vertical-align:-5px;margin-right:4px;">Lexikon</div></div>';
   html+='<input id="lrn-lexsearch" value="'+RT_LRN_esc(RT_LRN_lexQuery)+'" oninput="RT_LRN_lexInput(this.value)" placeholder="Begriff suchen …" style="width:100%;box-sizing:border-box;border:1.5px solid #e2e8e2;border-radius:13px;padding:12px 15px;font-size:15px;font-family:Inter,sans-serif;margin-bottom:12px;">';
   html+='<div style="font-size:12px;color:#5d7060;margin:0 2px 10px;">'+filt.length+' Begriff'+(filt.length===1?'':'e')+'</div>';
   if(!filt.length){ html+='<div class="lrncard" style="text-align:center;color:#5d7060;padding:26px;">Keine Treffer.</div>'; }
@@ -5920,7 +5920,7 @@ function RT_LRN_kapitelList(){ var q=RT_LRN_data.fragenkatalog||[]; var seen={},
 function RT_LRN_renderFkHome(){
   var wrong=RT_LRN_wrongMap(); var nWrong=0; for(var w in wrong){ if(wrong.hasOwnProperty(w)) nWrong++; }
   var q=RT_LRN_data.fragenkatalog||[]; var mastered=RT_LRN_countPrefix('q:');
-  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">❓ Fragenkatalog</div></div>';
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle"><img src="/learning/rubrik/fk.png" alt="" style="width:24px;height:24px;object-fit:contain;vertical-align:-5px;margin-right:4px;">Fragenkatalog</div></div>';
   html+='<div class="lrncard" style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:12px;">'+RT_LRN_ring(RT_LRN_totals.fragenkatalog?Math.round(mastered/RT_LRN_totals.fragenkatalog*100):0,54,'#e0913a',mastered+'')
     +'<div><div style="font-size:14px;font-weight:800;color:#1d3324;">'+mastered+' von '+q.length+' Fragen gemeistert</div><div style="font-size:12px;color:#5d7060;margin-top:2px;">Beantworte eine Frage richtig, um sie zu meistern.</div></div></div></div>';
   html+='<div class="lrnsec-h" style="margin-top:4px;">Modus wählen</div>';
@@ -5928,7 +5928,7 @@ function RT_LRN_renderFkHome(){
     +'<button class="lrnrubrik" style="display:block;text-align:center;margin:0;padding:16px 10px;" onclick="RT_LRN_startQuiz(\'lernen\',null)"><div style="font-size:24px;">📚</div><div style="font-size:14px;font-weight:700;color:#1d3324;margin-top:5px;">Lernen</div><div style="font-size:11px;color:#5d7060;">alle, mit Erklärung</div></button>'
     +'<button class="lrnrubrik" style="display:block;text-align:center;margin:0;padding:16px 10px;" onclick="RT_LRN_startQuiz(\'zufall\',null)"><div style="font-size:24px;">🎲</div><div style="font-size:14px;font-weight:700;color:#1d3324;margin-top:5px;">Zufall</div><div style="font-size:11px;color:#5d7060;">15 gemischte</div></button>'
     +'<button class="lrnrubrik" style="display:block;text-align:center;margin:0;padding:16px 10px;'+(nWrong?'':'opacity:.5;')+'" onclick="'+(nWrong?'RT_LRN_startQuiz(\'fehler\',null)':'')+'"><div style="font-size:24px;">🔁</div><div style="font-size:14px;font-weight:700;color:#1d3324;margin-top:5px;">Fehler</div><div style="font-size:11px;color:#5d7060;">'+nWrong+' offen</div></button>'
-    +'<button class="lrnrubrik" style="display:block;text-align:center;margin:0;padding:16px 10px;background:#f3eefb;" onclick="RT_LRN_go(\'pr\')"><div style="font-size:24px;">🎓</div><div style="font-size:14px;font-weight:700;color:#1d3324;margin-top:5px;">Prüfung</div><div style="font-size:11px;color:#5d7060;">im Platzreife-Bereich</div></button>'
+    +'<button class="lrnrubrik" style="display:block;text-align:center;margin:0;padding:16px 10px;background:#f3eefb;" onclick="RT_LRN_go(\'pr\')"><div style="height:28px;line-height:0;margin-bottom:2px;"><img src="/learning/rubrik/pr.png" alt="" style="width:28px;height:28px;object-fit:contain;"></div><div style="font-size:14px;font-weight:700;color:#1d3324;margin-top:5px;">Prüfung</div><div style="font-size:11px;color:#5d7060;">im Platzreife-Bereich</div></button>'
     +'</div>';
   html+='<div class="lrnsec-h">Nach Thema üben</div>';
   RT_LRN_kapitelList().forEach(function(k){
@@ -6008,7 +6008,7 @@ function RT_LRN_quizResult(){
 /* ---------- Platzreife ---------- */
 function RT_LRN_renderPrHome(){
   var d=RT_LRN_data.platzreife||{}; var kaps=d.kapitel||[]; var ex=RT_LRN_examRec();
-  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">🎓 Platzreife</div></div>';
+  var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle"><img src="/learning/rubrik/pr.png" alt="" style="width:24px;height:24px;object-fit:contain;vertical-align:-5px;margin-right:4px;">Platzreife</div></div>';
   html+='<button class="lrnrubrik" style="background:linear-gradient(135deg,#8e5bd0,#6f42c1);color:#fff;margin-bottom:14px;padding:16px;" onclick="RT_LRN_startExam()">'
     +'<div style="flex:1;"><div style="font-size:16px;font-weight:800;">Prüfung starten</div>'
     +'<div style="font-size:12.5px;opacity:.92;margin-top:3px;">'+(d.pruefung?d.pruefung.fragen_anzahl:20)+' Fragen · '+(d.pruefung?d.pruefung.zeit_minuten:20)+' Min · '+(d.pruefung?d.pruefung.bestehen_prozent:75)+'% zum Bestehen'+(ex.passed?' · bestanden ✓':(ex.best?(' · Best '+ex.best+'%'):''))+'</div></div>'
@@ -6079,7 +6079,7 @@ function RT_LRN_finishExam(timeUp){
 /* ---------- Videoakademie (Zwei-Klick, nocookie) ---------- */
 function RT_LRN_renderVideo(){
  var d=RT_LRN_data.videoakademie||{}; var cats=d.kategorien||[];
- var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle">🎬 Videoakademie</div></div>';
+ var html='<div class="lrnhead"><button class="lrnback" onclick="RT_LRN_go(\'hub\')">‹</button><div class="lrntitle"><img src="/learning/rubrik/video.png" alt="" style="width:24px;height:24px;object-fit:contain;vertical-align:-5px;margin-right:4px;">Videoakademie</div></div>';
  html+='<div style="margin:0 2px 12px;padding:11px 13px;background:#fbfaf3;border:1px solid #eee6c8;border-radius:12px;font-size:11.5px;line-height:1.5;color:#6b6444;">🔒 YouTube im Modus ohne Cookies. Ein Tipp auf das Video startet es direkt.</div>';
  cats.forEach(function(cat){
   html+='<div class="lrnsec-h">'+RT_LRN_esc(cat.kategorie)+'</div>';
@@ -6202,7 +6202,6 @@ function RT_rCourseMap(){
 function RT_cmInit(){
  if(typeof L==='undefined'){ return; }
  var el=document.getElementById('cm-map'); if(!el) return;
- if(!document.getElementById('cm-style')){ var _st=document.createElement('style'); _st.id='cm-style'; _st.textContent='#cm-map{background:#2e3b30;}#cm-map .leaflet-tile{width:256.5px !important;height:256.5px !important;}'; document.head.appendChild(_st); }
  var map=L.map('cm-map',{zoomControl:false,attributionControl:false}).setView([51.2,10.4],6);
  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20}).addTo(map);
  RT_CM.map=map; RT_CM.layer=L.layerGroup().addTo(map); RT_CM.labels=L.layerGroup().addTo(map); RT_CM.mk={};
@@ -6217,16 +6216,21 @@ function RT_cmInit(){
  RT_cmLoadLists();
  RT_cmLoadCourses();
 }
-function RT_cmLoadCourses(){
+function RT_cmLoadCourses(tries){
+ tries=tries||0;
  var cached=null; try{ cached=rtGet('fp_cm_courses_v2'); }catch(e){}
  var now=+new Date();
  if(cached&&cached.ts&&(now-cached.ts)<7*864e5&&cached.list&&cached.list.length>50){ RT_CM.courses=cached.list; RT_cmMarkers(); return; }
  RT_CM.loading=true;
+ var l0=document.getElementById('cm-loading'); if(l0){ l0.style.display='block'; l0.textContent='Lädt Plätze …'; }
  fetch('/api/courses').then(function(r){ return r.json(); }).then(function(j){
-  RT_CM.courses=(j&&j.courses)||[]; RT_CM.loading=false;
-  try{ rtSet('fp_cm_courses_v2',{ts:now,list:RT_CM.courses}); }catch(e){}
+  var list=(j&&j.courses)||[];
+  if(!list.length&&tries<2){ setTimeout(function(){ RT_cmLoadCourses(tries+1); },1500); return; }
+  RT_CM.courses=list; RT_CM.loading=false;
+  try{ if(list.length>50) rtSet('fp_cm_courses_v2',{ts:now,list:list}); }catch(e){}
   RT_cmMarkers();
- }).catch(function(){ RT_CM.loading=false; var l=document.getElementById('cm-loading'); if(l) l.textContent='Plätze konnten nicht geladen werden.'; });
+  var l=document.getElementById('cm-loading'); if(l){ l.style.display='block'; l.textContent=list.length+' Plätze'; setTimeout(function(){ var l2=document.getElementById('cm-loading'); if(l2) l2.style.display='none'; },1600); }
+ }).catch(function(){ if(tries<2){ setTimeout(function(){ RT_cmLoadCourses(tries+1); },1800); return; } RT_CM.loading=false; var l=document.getElementById('cm-loading'); if(l) l.textContent='Plätze konnten nicht geladen werden.'; });
 }
 function RT_cmLoadLists(){
  if(!(sbReady()&&sb&&sbUser)) return;
@@ -6248,7 +6252,7 @@ function RT_cmMarkers(){
  if(RT_CM.userLL){ try{ RT_cmUserDot(); }catch(e){} }
  RT_CM.courses.forEach(function(c){
   var st=(RT_CM.lists||{})[c.ref]||{}; var col=st.home?'#1F8A4D':(st.saved||st.bucket?'#e0913a':'#B03A3A');
-  var m=L.circleMarker([c.lat,c.lon],{radius:6,color:'#fff',weight:1.5,fillColor:col,fillOpacity:.95});
+  var m=L.circleMarker([c.lat,c.lon],{radius:7,color:'#fff',weight:2,fillColor:col,fillOpacity:.98});
   m.on('click',function(e){ if(e&&e.originalEvent) e.originalEvent.stopPropagation(); RT_cmSelect(c); });
   m.addTo(RT_CM.layer); RT_CM.mk[c.ref]=m;
  });

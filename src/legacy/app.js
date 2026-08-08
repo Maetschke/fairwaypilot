@@ -6396,7 +6396,7 @@ function RT_TRC_ensureStyle(){
   +'.trctitle{font-size:18px;font-weight:800;color:#143522;}'
   +'.trccard{background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-top:10px;}'
   +'.trcvid{position:relative;width:100%;background:#0b160f;border-radius:14px;overflow:hidden;line-height:0;}'
-  +'.trcvid video{display:block;width:100%;height:auto;max-height:60vh;margin:0 auto;background:#0b160f;}'
+  +'.trcvid video{display:block;width:100%;height:auto;background:#0b160f;}'
   +'.trcvid canvas{position:absolute;left:0;top:0;touch-action:none;cursor:crosshair;}'
   +'.trcrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;}'
   +'.trcb{border:1px solid #cfe0d2;background:#fff;color:#143522;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;flex:none;}'

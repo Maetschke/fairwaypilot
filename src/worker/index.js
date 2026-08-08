@@ -20,7 +20,6 @@ const MANIFEST_JSON = JSON.stringify({
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/build-check") { return new Response("src-build-ok v1", { headers: { "content-type": "text/plain" } }); }
     if (url.pathname === "/start" || url.pathname === "/landing") {
       return new Response(LANDING_HTML, { headers: { "content-type": "text/html; charset=utf-8" } });
     }

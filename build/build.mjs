@@ -29,6 +29,7 @@ await build({
   entryPoints: [r('src/worker/index.js')],
   bundle: true, format: 'esm', target: 'es2022',
   platform: 'neutral', legalComments: 'none',
+  loader: { '.png': 'base64' },
   outfile: r('worker.js'),
 });
 console.log('Build ok: worker.js geschrieben.');

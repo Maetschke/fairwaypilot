@@ -778,7 +778,8 @@ function renderRounds(filter){
     var fwC=fw.filter(function(f){return f==='C';}).length;
     var fwPct=fw.length?Math.round(fwC/fw.length*100):0;
     var col=(HV_COURSE_META[sc.half]&&HV_COURSE_META[sc.half].color)||'#8E8E93';
-    return '<div style="padding:12px 0;border-bottom:1px solid rgba(27,46,32,.07);cursor:pointer;" onclick="RT_editFromDetail(\''+(sc.rtId||('hist-'+sc.id))+'\')">'+
+    var scCourse=(HV_COURSE_META[sc.half]&&HV_COURSE_META[sc.half].label)||hn(sc.half); var scKey=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(scCourse):null; var scBg=RT_bgForKey(scKey,scCourse);
+    return '<div style="position:relative;overflow:hidden;padding:12px 0;border-bottom:1px solid rgba(27,46,32,.07);cursor:pointer;" onclick="RT_editFromDetail(\''+(sc.rtId||('hist-'+sc.id))+'\')">'+'<img src="'+scBg+'" alt="" loading="lazy" onerror="RT_imgErr(this)" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.07;z-index:0;pointer-events:none;">'+'<div style="position:relative;z-index:1;">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
       '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;">'+SC_label(sc)+'</div>'+
       '<div style="font-size:10px;color:'+col+';margin-top:1px;">'+hn(sc.half)+'</div></div>'+
@@ -787,7 +788,7 @@ function renderRounds(filter){
       '<div><div style="font-size:14px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:#34C759;">'+fwPct+'%</div><div style="font-size:8px;line-height:1.3;color:rgba(93,112,96,.95);">FW-M</div></div>'+
       '<div><div style="font-size:14px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:#FF453A;">'+pen+'</div><div style="font-size:8px;line-height:1.3;color:rgba(93,112,96,.95);">Pen</div></div>'+
       '<div><div style="font-size:14px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;color:#FF9F0A;">'+sand+'</div><div style="font-size:8px;line-height:1.3;color:rgba(93,112,96,.95);">Sand</div></div>'+
-      '</div></div>'+renderHoles(sc)+'</div>';
+      '</div></div>'+renderHoles(sc)+'</div></div>';
   }).join('');
   document.getElementById('round-list').innerHTML=html||'<div style="color:rgba(93,112,96,.95);padding:20px;text-align:center;">Keine Runden</div>';
   var rdHasPrev=RD_page>0, rdHasNext=rdStart+10<list.length;
@@ -1346,6 +1347,7 @@ var RT_connections=null;
    sichere RPC get_my_connections() - loest Marks Anliegen "Verbindungen sollten sichtbar
    sein", da bisher nur die eigenen ausgehenden Einladungen (player_links.owner_id=self)
    abgefragt wurden, nie die eingehende Seite. */
+function RT_connRoundCount(c){ if(c&&c.rounds_count!=null) return c.rounds_count; if(c&&c.round_count!=null) return c.round_count; var name=((c&&c.player_name)||'').trim().toLowerCase(); if(!name) return 0; var rounds=rtGet(RT_KEY)||[]; var n=0; rounds.forEach(function(rd){ if(rd&&rd.players&&rd.players.some(function(p){return p&&((p.name||'').trim().toLowerCase()===name);})) n++; }); return n; }
 async function RT_loadConnections(){
  if(!sb||!sbUser)return;
  try{
@@ -1499,9 +1501,10 @@ function RT_rUser(){
    '<div class="rt-cs">Diese Personen sind mit deinem Konto verkn\u00fcpft.</div>';
   RT_connections.forEach(function(c){
    var who=c.other_display_name||c.other_email;
+   var cnt=RT_connRoundCount(c); var email=c.other_email||c.other_display_name||who;
    var desc=c.direction==='incoming'
     ? 'Du spielst als <b>'+rtEsc(c.player_name)+'</b> in Runden von '+rtEsc(who)
-    : rtEsc(who)+' spielt als <b>'+rtEsc(c.player_name)+'</b> in deinen Runden';
+    : '<b>'+rtEsc(c.player_name)+'</b> spielt unter '+rtEsc(email)+' in '+cnt+' '+(cnt===1?'deiner Runde':'deiner Runden');
    h+='<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;">'+
     '<span style="width:8px;height:8px;border-radius:50%;background:#1F8A4D;flex:none;"></span>'+
     '<div style="flex:1;">'+desc+'</div></div>';
@@ -3914,7 +3917,7 @@ function RT_openFlagRadar(){
  }
  var rec=RT_dkiRecommend(Math.round(RT_FR.dist));
  var srcNote=origin?(origin.src==='gps'?'':(origin.src==='ball'?'Standort: letzte Balllage (kein GPS)':'Standort: Abschlag (kein GPS)')):'';
- var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 56px);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:16px;right:96px;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">'
+ var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 56px);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:12px;right:96px;pointer-events:none;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:14px;">'
    +'<div style="position:relative;width:min(64vw,248px);aspect-ratio:1/1;background:rgba(6,12,9,.80);border-radius:18px;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,.5);">'
      +'<div style="position:absolute;left:50%;top:-2px;transform:translateX(-50%);z-index:3;color:#fff;font-size:18px;text-shadow:0 1px 3px #000;">&#9660;</div>'
      +'<div id="rt-fr-rose" style="position:absolute;inset:8px;transition:transform .12s linear;">'+RT_frRoseSvg(RT_FR.brg)+'</div>'
@@ -3925,7 +3928,7 @@ function RT_openFlagRadar(){
        +(rec.empty?'':'<div style="margin-top:6px;background:rgba(31,138,77,.92);color:#fff;font-size:12px;font-weight:700;border-radius:100px;padding:4px 11px;">'+rec.best.l+' &#183; &#216; '+rec.best.d+' m</div>')
      +'</div>'
    +'</div>'
-   +'<div style="pointer-events:auto;text-align:center;max-width:min(64vw,248px);">'
+   +'<div style="pointer-events:auto;text-align:center;width:min(64vw,248px);">'
      +(srcNote?'<div style="font-size:11px;color:#cfe0d4;margin-bottom:8px;text-shadow:0 1px 3px #000;">'+srcNote+'</div>':'')
      +'<button id="rt-fr-act" onclick="RT_frStart()" style="border:none;background:#1F8A4D;color:#fff;font-size:14px;font-weight:700;font-family:inherit;border-radius:100px;padding:10px 20px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.4);">Kompass aktivieren</button>'
      +'<div id="rt-fr-msg" style="font-size:11px;color:#cfe0d4;margin-top:8px;text-shadow:0 1px 3px #000;"></div>'
@@ -4418,8 +4421,8 @@ function RT_setupFullGrabber(){
  if(pin&&total>0){
   var routeMarkers=[];
   function rUnit(m){ return (RT_distUnit()==='yd')?Math.round(m*1.09361):Math.round(m); }
-  function rLbl(obj){ var sorted=routeSorted(); var i=sorted.indexOf(obj); var prev=(i<=0)?center:sorted[i-1]; var seg=RT_haversineM(prev.lat,prev.lng,obj.lat,obj.lng); var toPin=RT_haversineM(obj.lat,obj.lng,pin.lat,pin.lng); return RT_grabNum(toPin)+'<span style="font-size:9px;font-weight:600;color:#9fb3a4;margin-left:5px;">&#916; '+rUnit(seg)+'</span>'; }
-  function rIcon(obj){ return L.divIcon({className:'',iconSize:[44,44],iconAnchor:[22,22],html:'<div style="width:44px;height:44px;transform:rotate('+(-rotF)+'deg);position:relative;">'+'<div style="position:absolute;left:14px;top:14px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #12261B;box-shadow:0 1px 4px rgba(0,0,0,.55);"></div>'+'<div class="simlbl" style="position:absolute;left:50%;top:-6px;transform:translateX(-50%);background:#12261B;color:#fff;font-size:11.5px;font-weight:800;border-radius:8px;padding:2px 7px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.5);">'+rLbl(obj)+'</div>'+'</div>'}); }
+  function rLbl(obj){ var sorted=routeSorted(); var i=sorted.indexOf(obj); var prev=(i<=0)?center:sorted[i-1]; var seg=RT_haversineM(prev.lat,prev.lng,obj.lat,obj.lng); var toPin=RT_haversineM(obj.lat,obj.lng,pin.lat,pin.lng); var uu=(RT_distUnit()==='yd')?'yd':'m'; return '<span style="font-size:13px;font-weight:800;">'+rUnit(toPin)+'<span style="font-size:10px;font-weight:700;margin-left:2px;">'+uu+'</span></span>'+'<span style="font-size:10px;font-weight:600;color:#9fb3a4;margin-left:6px;">&#916; '+rUnit(seg)+'</span>'; }
+  function rIcon(obj){ return L.divIcon({className:'',iconSize:[44,44],iconAnchor:[22,22],html:'<div style="width:44px;height:44px;transform:rotate('+(-rotF)+'deg);position:relative;">'+'<div style="position:absolute;left:14px;top:14px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #12261B;box-shadow:0 1px 4px rgba(0,0,0,.55);"></div>'+'<div class="simlbl" style="position:absolute;left:50%;top:33px;transform:translateX(-50%);background:#12261B;color:#fff;font-weight:800;border-radius:9px;padding:4px 10px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.5);">'+rLbl(obj)+'</div>'+'</div>'}); }
   function rWire(m,obj){ var e2=m.getElement(); if(!e2) return; e2.style.touchAction='none'; e2.style.cursor='grab'; var st=null,mv=false,sc=null;
    e2.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); try{e2.setPointerCapture(ev.pointerId);}catch(e){} var p0=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); st=p0?{dLat:obj.lat-p0.lat,dLng:obj.lng-p0.lng}:{dLat:0,dLng:0}; mv=false; sc={x:ev.clientX,y:ev.clientY}; });
    e2.addEventListener('pointermove',function(ev){ if(!st) return; ev.preventDefault(); ev.stopPropagation(); if(Math.abs(ev.clientX-sc.x)+Math.abs(ev.clientY-sc.y)>5) mv=true; var p=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); if(!p) return; obj.lat=p.lat+st.dLat; obj.lng=p.lng+st.dLng; m.setLatLng([obj.lat,obj.lng]); var lab=e2.querySelector('.simlbl'); if(lab) lab.innerHTML=rLbl(obj); RT_grabDrawArcs(); });
@@ -4856,7 +4859,7 @@ function RT_rSetup(){
       Bild wird eines von fuenf mitgelieferten Golfmotiven verwendet (RT_roundBgUrl). */
    '<div style="width:100%;height:150px;background:#EAF1E3;position:relative;border-top:1px solid #EDF2E9;">'+
     '<img src="'+RT_bgForKey(RT_su.course,pc.name)+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)">'+
-    '<div style="position:absolute;left:10px;bottom:8px;color:#fff;font-size:11px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.6);">'+(pc.bgUrl?'Eigenes Rundenbild':'Standardbild (zufällig gewählt)')+'</div>'+
+    (pc.bgUrl?'':'<div style="position:absolute;left:10px;bottom:8px;color:#fff;font-size:11px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.6);">Standardbild (zufällig gewählt)</div>')+
     '<label style="position:absolute;bottom:8px;right:8px;background:rgba(20,53,34,.72);color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:100px;cursor:pointer;display:flex;align-items:center;">'+
      (RT_state.photoBusy==='bgUrl'?'<span class="rt-spin"></span>Lädt hoch…':(pc.bgUrl?'Rundenbild ändern':'Rundenbild hochladen'))+
      '<input type="file" accept="image/*" style="display:none;" onchange="RT_photoFile(event,\'bgUrl\')" '+(RT_state.photoBusy?'disabled':'')+'></label>'+
@@ -7488,12 +7491,14 @@ function RT_TRC_render(){
      +'<div id="trc-analysis" style="margin-top:12px;"></div>'
    +'</div>'
    +'<div class="trccard">'
-     +'<div class="trcrow">'
-       +'<label class="trcb pri" style="display:inline-block;">Video importieren'
+     +'<div class="trcrow" style="flex-wrap:nowrap;gap:10px;">'
+       +'<label class="trcb pri" style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;">Video importieren'
          +'<input type="file" accept="video/*" style="display:none;" onchange="RT_TRC_pickFile(this)"></label>'
-       +'<button class="trcb" id="trc-rec" onclick="RT_TRC_toggleRec()">● Aufnehmen</button>'
+       +'<button class="trcb" id="trc-rec" onclick="RT_TRC_toggleRec()" style="flex:1;">● Aufnehmen</button>'
+     +'</div>'
+     +'<div class="trcrow" style="gap:10px;">'
        +'<span class="trcslab" style="min-width:auto;">Bildrate</span>'
-       +'<select class="trcb" id="trc-fps" onchange="RT_TRC_setFps(this.value)" style="padding:8px;">'
+       +'<select class="trcb" id="trc-fps" onchange="RT_TRC_setFps(this.value)" style="padding:8px;flex:none;">'
          +'<option value="24">24</option><option value="25">25</option>'
          +'<option value="30" selected>30</option><option value="50">50</option>'
          +'<option value="60">60</option></select>'
@@ -7932,7 +7937,510 @@ registerTab({id:'runde',label:'Runde',icon:'<img src="'+RT_IC_RUNDE+'" style="wi
 registerTab({id:'detail',label:'Schläge',icon:'<img src="'+RT_IC_DETAIL+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var detailIcon=document.getElementById('detail-usericon'); if(detailIcon) detailIcon.innerHTML=RT_userIcon(); RD_renderSegButtons(); GD_renderRangeButtons(); GD_renderKPIs(); renderRounds('all'); renderPenChart(); renderFW(); renderSandChart(); renderPuttsChart(); renderMetrics(); renderPerf(); }});
 registerTab({id:'hi',label:'Handicap',icon:'<img src="'+RT_IC_HI+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var hiSub=document.getElementById('hi-subtitle'); if(hiSub) hiSub.textContent='HI-Verlauf '+RT_myDisplayName(); var hiChartSub=document.getElementById('hi-chart-sub'); if(hiChartSub) hiChartSub.textContent='Ungedeckelt · 9L x2 · HI '+rtDe(RT_ownHandicap())+' = eigenes Handicap'; var hiIcon=document.getElementById('hi-usericon'); if(hiIcon) hiIcon.innerHTML=RT_userIcon(); HV_renderLegend(); HV_renderSegButtons(); HV_renderRangeButtons(); HV_renderKPIs(); HV_renderChart(); HV_renderTable(); }});
 registerTab({id:'lernen',label:'Lernen',icon:'<img src="'+RT_IC_LERNEN+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_LRN_mount('tab-lernen'); }});
-registerTab({id:'analyse',label:'Analyse',icon:'<img src="'+RT_IC_ANALYSE+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_TRC_mount('tab-analyse'); }});
+/* ============================================================================
+   Schwunganalyse (RT_SW) — KI-Videoanalyse des Golfschwungs (on-device)
+   ---------------------------------------------------------------------------
+   Läuft komplett auf dem Gerät: MediaPipe Pose Landmarker (33 Skelettpunkte)
+   wird per dynamischem Import geladen. Das Video wird Bild für Bild abgetastet,
+   Phasen (Adresse/Top/Treffmoment) werden erkannt und 11 Schwungmerkmale in
+   drei Phasen (Set-up / Rückschwung / Treffmoment) bewertet (Bestanden/Verbessern).
+   Ein regelbasierter KI-Coach liefert zu jedem Mangel eine Erklärung + Drill.
+   Kein Upload, keine Cloud – Videos verlassen das Gerät nicht.
+   ========================================================================== */
+var RT_SW={panel:'tab-analyse',video:null,url:null,hand:'R',angle:'fo',
+  busy:false,landmarker:null,frames:null,phases:null,result:null,sampleCanvas:null,detailTab:'setup'};
+var RT_SW_HIST_KEY='fp_swing_hist_v1';
+var RT_SW_TASKS_VER='0.10.14';
+
+/* ---- MediaPipe Pose-Verbindungen (Teilmenge für Overlay) ---- */
+var RT_SW_CONN=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],
+  [23,25],[25,27],[24,26],[26,28],[27,31],[28,32],[0,11],[0,12]];
+
+/* ---- Coach-Wissensbasis: zu jedem Merkmal Titel, Warum, Drill ---- */
+var RT_SW_COACH={
+ spine_setup:{t:'Wirbelsäulenwinkel (Set-up)',ph:'setup',
+  why:'Ein stabiler Wirbelsäulenwinkel im Stand ist die Grundlage für einen wiederholbaren Schwung. Steht der Oberkörper zu aufrecht oder kippt er seitlich weg, verändert sich der Schwungkreis und der saubere Treffpunkt wird zum Zufall.',
+  drill:'Stell dich seitlich zum Spiegel in die Ansprechposition. Neige dich aus der Hüfte (nicht aus dem Rücken) leicht nach vorn, Arme hängen locker. Halte diesen Winkel und mache 10 langsame Trockenschwünge, ohne dich aufzurichten.'},
+ stance_setup:{t:'Standbreite (Set-up)',ph:'setup',
+  why:'Die Standbreite bestimmt Balance und Rotationsfreiheit. Zu schmal kostet Stabilität und Kraft, zu breit blockiert die Hüftdrehung. Als Richtwert stehen die Fußaußenkanten etwa schulterbreit (beim Driver etwas breiter).',
+  drill:'Leg zwei Schläger als Rahmen auf den Boden: einen an die Fußspitzen, einen an die Fersen. Kontrolliere bei jedem Aufbau, dass die Füße schulterbreit stehen und die Gewichtsverteilung 50/50 ist.'},
+ leadarm_back:{t:'Führungsarm (Rückschwung)',ph:'back',
+  why:'Ein gestreckter Führungsarm am höchsten Punkt hält den Schwungradius konstant. Knickt er ein, verkürzt sich der Bogen, Timing und Energieübertragung leiden – häufige Ursache für dünne oder kraftlose Schläge.',
+  drill:'Klemme einen Handschuh oder ein kleines Handtuch zwischen Führungsarm und Brust. Schwinge langsam zum Top, ohne dass es herausfällt – das erzwingt einen verbundenen, gestreckten Führungsarm.'},
+ spine_back:{t:'Wirbelsäulenwinkel halten (Rückschwung)',ph:'back',
+  why:'Der im Stand eingestellte Winkel muss durch den Rückschwung erhalten bleiben. Richtest du dich auf oder tauchst ab, wandert der Tiefpunkt des Schwungs und der Ballkontakt wird unsauber.',
+  drill:'Trockenschwünge mit dem Rücken an einer Wand: Der Hinterkopf/das Gesäß behält bis zum Top den Kontakt zum eingestellten Winkel. Fühle, wie sich der Oberkörper dreht, ohne sich zu heben.'},
+ hipsway_back:{t:'Hüftschub (Rückschwung)',ph:'back',
+  why:'Zu viel seitliches Wegschieben der Hüfte im Rückschwung (statt Drehung) verlagert das Gewicht nach außen. Der Rückweg zum Ball wird ungenau – die Wahrscheinlichkeit für Fehlkontakt am Treffmoment steigt deutlich.',
+  drill:'Stell einen Alignment-Stick oder eine Poolnudel außen an die hintere Hüfte. Drehe im Rückschwung ein, ohne den Stick wegzudrücken – die Hüfte rotiert, statt seitlich auszuweichen.'},
+ head_back:{t:'Kopfbewegung (Rückschwung)',ph:'back',
+  why:'Ein ruhiger Kopf ist der Ankerpunkt des Schwungs. Wandert er im Rückschwung stark, verschiebt sich der gesamte Schwungmittelpunkt und die Konstanz am Ball leidet.',
+  drill:'Fixiere im Trockenschwung einen Punkt am Boden (oder Ball) mit den Augen. Ein Partner hält locker einen Finger an deinen Kopf – im Rückschwung darf sich der Kopf nur minimal davon lösen.'},
+ hiprot_back:{t:'Hüftdrehung (Rückschwung)',ph:'back',
+  why:'Die Hüftdrehung im Rückschwung erzeugt die Spannung zwischen Ober- und Unterkörper, aus der die Schlägerkopfgeschwindigkeit entsteht. Zu wenig Drehung kostet Weite, zu viel kann die Sequenz stören.',
+  drill:'Trockenschwünge, bei denen du bewusst die Gürtelschnalle nach hinten drehst, während die Füße fest stehen. Ziel: spürbare Drehung der Hüfte, ohne dass das vordere Knie kollabiert.'},
+ head_impact:{t:'Kopfbewegung (Treffmoment)',ph:'impact',
+  why:'Bleibt der Kopf bis zum Treffmoment stabil hinter dem Ball, triffst du zentraler und mit mehr Kontrolle. Ein vorzeitiges Anheben („nachschauen") führt zu Fett-/Dünn-Kontakt.',
+  drill:'Schlage halbe Bälle und behalte den Blick bewusst am Boden, bis der Ball weg ist. Erst danach den Kopf mit dem Durchschwung mitgehen lassen.'},
+ hiprot_impact:{t:'Hüftöffnung (Treffmoment)',ph:'impact',
+  why:'Im Treffmoment sollte die Hüfte bereits Richtung Ziel geöffnet sein. Ist sie noch geschlossen, arbeiten die Arme allein – das kostet Kraft und erzeugt oft einen offenen Schlägerkopf (Slice).',
+  drill:'Übe den Durchschwung aus einer bewusst früh öffnenden Hüfte: Aus dem Top zuerst mit dem vorderen Fuß in den Boden drücken und die Hüfte zum Ziel drehen, bevor die Arme fallen.'},
+ hipsway_impact:{t:'Hüftverlagerung (Treffmoment)',ph:'impact',
+  why:'Eine kontrollierte Verlagerung zum Ziel ist gut – ein Wegrutschen der Hüfte über das vordere Bein hinaus („Slide") verschiebt aber den Tiefpunkt und führt zu inkonstantem Kontakt.',
+  drill:'Schlage mit dem Gefühl, gegen einen festen vorderen Oberschenkel zu rotieren. Das vordere Bein wird zur Wand, über die sich der Körper dreht statt hinauszuschieben.'},
+ tempo_impact:{t:'Schwungtempo',ph:'impact',
+  why:'Gutes Tempo folgt etwa einem Verhältnis von 3:1 (Rückschwung zu Abschwung). Ein zu hastiger oder zu langsamer Abschwung zerstört die Sequenz und die Konstanz – Rhythmus schlägt rohe Kraft.',
+  drill:'Zähle im Rückschwung „eins-zwei" und im Abschwung „drei". Mache 10 Trockenschwünge mit diesem Rhythmus, dann übertrage ihn auf halbe Schläge, ohne schneller zu werden.'}
+};
+
+/* Reihenfolge/Wichtigkeit für Priorisierung (kleiner = wichtiger bei Gleichstand) */
+var RT_SW_IMPORTANCE=['hipsway_back','hiprot_impact','head_impact','tempo_impact',
+  'hiprot_back','hipsway_impact','head_back','spine_back','leadarm_back','spine_setup','stance_setup'];
+
+/* ---------- Styles ---------- */
+function RT_SW_ensureStyle(){
+ if(document.getElementById('sw-style'))return;
+ var s=document.createElement('style');s.id='sw-style';
+ s.textContent=''
+ +'.swwrap{padding:2px 0 20px;}'
+ +'.swcard{background:#fff;border:1px solid #eef0ea;border-radius:16px;padding:14px;margin:12px 2px;box-shadow:0 1px 4px rgba(20,40,25,.05);}'
+ +'.swb{border:none;border-radius:100px;background:#eef2ee;color:#143522;font-weight:700;font-family:inherit;font-size:13.5px;padding:10px 16px;cursor:pointer;min-height:44px;}'
+ +'.swb.pri{background:#1F8A4D;color:#fff;}'
+ +'.swb.wide{width:100%;}'
+ +'.swrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}'
+ +'.swhint{font-size:12px;color:#5d7060;line-height:1.5;margin-top:8px;}'
+ +'.swseg{display:flex;gap:6px;background:#e9efe9;border-radius:13px;padding:4px;margin:10px 2px;}'
+ +'.swseg button{flex:1;border:none;border-radius:10px;background:none;font-family:inherit;font-weight:700;font-size:14px;color:#5d7060;padding:9px 6px;cursor:pointer;min-height:40px;}'
+ +'.swseg button.on{background:#fff;color:#1F8A4D;box-shadow:0 1px 3px rgba(0,0,0,.12);}'
+ +'.swvid{position:relative;width:100%;border-radius:12px;overflow:hidden;background:#0b160f;}'
+ +'.swvid video{display:block;width:100%;height:auto;background:#0b160f;}'
+ +'.swchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#143522;}'
+ +'.swdot{width:9px;height:9px;border-radius:50%;display:inline-block;}'
+ +'.swtabs{display:flex;background:#2f6df6;border-radius:12px 12px 0 0;overflow:hidden;}'
+ +'.swtabs button{flex:1;border:none;background:#2f6df6;color:#fff;font-family:inherit;font-weight:700;font-size:13.5px;padding:12px 4px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}'
+ +'.swtabs button.on{background:#fff;color:#2f6df6;border-radius:10px 10px 0 0;}'
+ +'.swtbl{width:100%;border-collapse:collapse;}'
+ +'.swtbl th{text-align:left;font-size:12px;color:#8a9c8e;font-weight:700;padding:10px 6px;border-bottom:1px solid #eef0ea;}'
+ +'.swtbl td{font-size:14px;padding:12px 6px;border-bottom:1px solid #f2f4ef;color:#3a4a3f;vertical-align:middle;}'
+ +'.swkf{width:100%;border-radius:12px;display:block;background:#0b160f;}'
+ +'.swkflab{position:absolute;left:8px;top:8px;background:#2f6df6;color:#fff;font-size:11px;font-weight:800;border-radius:8px;padding:3px 9px;}'
+ +'.swprog{height:8px;border-radius:6px;background:#e6ece6;overflow:hidden;}'
+ +'.swprog>i{display:block;height:100%;width:0;background:#1F8A4D;transition:width .2s;}';
+ document.head.appendChild(s);
+}
+
+/* ---------- Mount / Shell ---------- */
+function RT_SW_mount(panelId){
+ RT_SW.panel=panelId||'tab-analyse';RT_SW_ensureStyle();RT_SW_render();
+}
+function RT_SW_render(){
+ var el=document.getElementById(RT_SW.panel);if(!el)return;
+ var handLbl=(RT_SW.hand==='R')?'Rechtshänder':'Linkshänder';
+ var h='<div class="swwrap">'
+  +'<div class="swcard">'
+   +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+     +'<div style="font-size:19px;font-weight:800;color:#143522;">Schwunganalyse</div>'
+     +'<div class="swchip" style="color:#8a9c8e;">KI · on-device</div>'
+   +'</div>'
+   +'<div class="swhint">Nimm deinen Schwung von vorne oder von der Seite auf (ganzer Körper im Bild, Hoch- oder Querformat). Die KI erkennt 33 Körperpunkte und bewertet 11 Schwungmerkmale – alles läuft nur auf deinem Gerät.</div>'
+   +'<div class="swvid" id="sw-stage">'
+     +'<video id="sw-video" playsinline preload="metadata" muted style="display:none;"></video>'
+     +'<div id="sw-empty" style="padding:38px 20px;text-align:center;color:#b9c8bd;">'
+       +'<div style="font-size:40px;line-height:1;margin-bottom:8px;">🏌️</div>'
+       +'<div style="font-size:14px;color:#5d7060;line-height:1.5;">Schwung-Video importieren oder aufnehmen,<br>dann „Analysieren" tippen.</div>'
+     +'</div>'
+   +'</div>'
+   +'<div class="swrow">'
+     +'<label class="swb pri" style="display:inline-flex;align-items:center;">Video importieren'
+       +'<input type="file" accept="video/*" style="display:none;" onchange="RT_SW_pickFile(this)"></label>'
+     +'<button class="swb" id="sw-rec" onclick="RT_SW_toggleRec()">● Aufnehmen</button>'
+   +'</div>'
+   +'<div class="swrow">'
+     +'<button class="swb" id="sw-hand" onclick="RT_SW_toggleHand()">'+handLbl+'</button>'
+     +'<div class="swseg" style="flex:1;margin:0;min-width:180px;">'
+       +'<button id="sw-ang-fo" class="'+(RT_SW.angle==='fo'?'on':'')+'" onclick="RT_SW_setAngle(\'fo\')">Von vorne</button>'
+       +'<button id="sw-ang-dtl" class="'+(RT_SW.angle==='dtl'?'on':'')+'" onclick="RT_SW_setAngle(\'dtl\')">Von der Seite</button>'
+     +'</div>'
+   +'</div>'
+   +'<div class="swrow" id="sw-analyze-row" style="display:none;">'
+     +'<button class="swb pri wide" id="sw-analyze" onclick="RT_SW_analyze()">Schwung analysieren</button>'
+   +'</div>'
+   +'<div id="sw-progress" style="display:none;margin-top:12px;">'
+     +'<div class="swhint" id="sw-progress-lab" style="margin-top:0;">KI wird geladen…</div>'
+     +'<div class="swprog" style="margin-top:6px;"><i id="sw-progress-bar"></i></div>'
+   +'</div>'
+   +'<div class="swhint">Aufnahmen benötigen die Kamerafreigabe und laufen ausschließlich lokal.</div>'
+  +'</div>'
+  +'<div id="sw-result"></div>'
+  +'<div class="swcard" id="sw-hist" style="display:none;"></div>'
+ +'</div>';
+ el.innerHTML=h;
+ RT_SW.video=document.getElementById('sw-video');
+ RT_SW_bind();
+ if(RT_SW.url){ RT_SW_attachSrc(RT_SW.url); }
+ if(RT_SW.result){ RT_SW_renderResult(RT_SW.result); }
+ RT_SW_renderHist();
+}
+function RT_SW_bind(){
+ var v=RT_SW.video;if(!v)return;
+ v.addEventListener('loadedmetadata',function(){
+   v.style.display='block';
+   var em=document.getElementById('sw-empty');if(em)em.style.display='none';
+   var ar=document.getElementById('sw-analyze-row');if(ar)ar.style.display='flex';
+ });
+}
+function RT_SW_toggleHand(){ RT_SW.hand=(RT_SW.hand==='R')?'L':'R'; var b=document.getElementById('sw-hand'); if(b)b.textContent=(RT_SW.hand==='R')?'Rechtshänder':'Linkshänder'; }
+function RT_SW_setAngle(a){ RT_SW.angle=a; var f=document.getElementById('sw-ang-fo'),d=document.getElementById('sw-ang-dtl'); if(f)f.className=(a==='fo')?'on':''; if(d)d.className=(a==='dtl')?'on':''; }
+function RT_SW_pickFile(inp){
+ var f=inp&&inp.files&&inp.files[0];if(!f)return;
+ if(RT_SW.url){try{URL.revokeObjectURL(RT_SW.url);}catch(e){}}
+ RT_SW.result=null; var rc=document.getElementById('sw-result'); if(rc)rc.innerHTML='';
+ RT_SW.url=URL.createObjectURL(f);
+ RT_SW_attachSrc(RT_SW.url);
+}
+function RT_SW_attachSrc(url){
+ var v=RT_SW.video;if(!v)return; v.src=url; try{v.load();}catch(e){}
+}
+
+/* ---------- Aufnahme (nutzt getUserMedia + MediaRecorder) ---------- */
+function RT_SW_toggleRec(){
+ var b=document.getElementById('sw-rec');
+ if(RT_SW._rec){ try{RT_SW._rec.stop();}catch(e){} return; }
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ RT_SW_toast('Kamera nicht verfügbar.'); return; }
+ navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280}},audio:false}).then(function(stream){
+   var chunks=[]; var mr; try{ mr=new MediaRecorder(stream); }catch(e){ RT_SW_toast('Aufnahme nicht unterstützt.'); stream.getTracks().forEach(function(t){t.stop();}); return; }
+   RT_SW._rec=mr; if(b){b.textContent='■ Stopp';b.classList.add('pri');}
+   mr.ondataavailable=function(ev){ if(ev.data&&ev.data.size)chunks.push(ev.data); };
+   mr.onstop=function(){ stream.getTracks().forEach(function(t){t.stop();}); RT_SW._rec=null; if(b){b.textContent='● Aufnehmen';b.classList.remove('pri');}
+     var blob=new Blob(chunks,{type:chunks[0]?chunks[0].type:'video/mp4'});
+     if(RT_SW.url){try{URL.revokeObjectURL(RT_SW.url);}catch(e){}}
+     RT_SW.result=null; var rc=document.getElementById('sw-result'); if(rc)rc.innerHTML='';
+     RT_SW.url=URL.createObjectURL(blob); RT_SW_attachSrc(RT_SW.url);
+   };
+   mr.start();
+ }).catch(function(){ RT_SW_toast('Kamerazugriff verweigert.'); });
+}
+
+/* ---------- MediaPipe laden ---------- */
+function RT_SW_loadLandmarker(){
+ if(RT_SW.landmarker) return Promise.resolve(RT_SW.landmarker);
+ var base='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@'+RT_SW_TASKS_VER;
+ return import(base+'/vision_bundle.mjs').then(function(vision){
+   return vision.FilesetResolver.forVisionTasks(base+'/wasm').then(function(fileset){
+     return vision.PoseLandmarker.createFromOptions(fileset,{
+       baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task',delegate:'GPU'},
+       runningMode:'VIDEO',numPoses:1});
+   });
+ }).then(function(lm){ RT_SW.landmarker=lm; return lm; });
+}
+
+/* ---------- Frame-Abtastung ---------- */
+function RT_SW_seek(v,t){ return new Promise(function(res){ var done=false; function on(){ if(done)return; done=true; v.removeEventListener('seeked',on); res(); } v.addEventListener('seeked',on); try{ v.currentTime=t; }catch(e){ done=true; res(); } setTimeout(function(){ if(!done){done=true; v.removeEventListener('seeked',on); res(); } },600); }); }
+
+function RT_SW_progress(p,lab){ var b=document.getElementById('sw-progress-bar'); if(b)b.style.width=Math.round(p*100)+'%'; if(lab){ var l=document.getElementById('sw-progress-lab'); if(l)l.textContent=lab; } }
+
+function RT_SW_sample(){
+ var v=RT_SW.video; var dur=v&&v.duration||0;
+ if(!dur||!v.videoWidth) return Promise.reject(new Error('Kein gültiges Video.'));
+ var n=Math.min(90,Math.max(24,Math.round(dur*20)));
+ var ratio=Math.min(1,480/v.videoWidth);
+ var oc=document.createElement('canvas'); oc.width=Math.round(v.videoWidth*ratio); oc.height=Math.round(v.videoHeight*ratio);
+ var octx=oc.getContext('2d');
+ RT_SW.sampleCanvas=oc;
+ var frames=[]; var lastTs=-1;
+ return RT_SW_loadLandmarker().then(function(lm){
+   var i=0;
+   function step(){
+     if(i>=n) return frames;
+     var t=dur*(i/(n-1));
+     return RT_SW_seek(v,t).then(function(){
+       try{ octx.drawImage(v,0,0,oc.width,oc.height); }catch(e){}
+       var ts=Math.round(t*1000); if(ts<=lastTs) ts=lastTs+1; lastTs=ts;
+       var res=null; try{ res=lm.detectForVideo(oc,ts); }catch(e){}
+       var lmk=(res&&res.landmarks&&res.landmarks[0])||null;
+       var wl=(res&&res.worldLandmarks&&res.worldLandmarks[0])||null;
+       frames.push({t:t,lm:lmk,wl:wl});
+       i++; RT_SW_progress(0.15+0.8*(i/n),'Schwung wird analysiert … '+Math.round(i/n*100)+'%');
+       return step();
+     });
+   }
+   RT_SW_progress(0.12,'Schwung wird analysiert …');
+   return step();
+ });
+}
+
+/* ---------- Geometrie-Helfer ---------- */
+function RT_SW_d(a,b){ var dx=a.x-b.x,dy=a.y-b.y; return Math.sqrt(dx*dx+dy*dy); }
+function RT_SW_mid(a,b){ return {x:(a.x+b.x)/2,y:(a.y+b.y)/2}; }
+function RT_SW_ang3(a,b,c){ var v1x=a.x-b.x,v1y=a.y-b.y,v2x=c.x-b.x,v2y=c.y-b.y; var d1=Math.hypot(v1x,v1y)||1e-6,d2=Math.hypot(v2x,v2y)||1e-6; var cs=(v1x*v2x+v1y*v2y)/(d1*d2); cs=Math.max(-1,Math.min(1,cs)); return Math.acos(cs)*180/Math.PI; }
+function RT_SW_vertTilt(hipC,shC){ var dx=shC.x-hipC.x,dy=shC.y-hipC.y; return Math.abs(Math.atan2(dx,-dy)*180/Math.PI); }
+function RT_SW_rotDeg(wl,ia,ib){ if(!wl||!wl[ia]||!wl[ib])return null; var dx=wl[ib].x-wl[ia].x,dz=(wl[ib].z||0)-(wl[ia].z||0); return Math.atan2(dz,dx)*180/Math.PI; }
+function RT_SW_angDiff(a,b){ if(a===null||b===null)return null; var d=Math.abs(a-b)%360; if(d>180)d=360-d; return d; }
+
+/* ---------- Phasenerkennung ---------- */
+function RT_SW_detectPhases(frames){
+ var valid=frames.filter(function(f){return f.lm;});
+ if(valid.length<8) return null;
+ function handC(f){ var l=f.lm[15],r=f.lm[16]; if(l&&r)return RT_SW_mid(l,r); return l||r||null; }
+ var idx=[]; for(var i=0;i<frames.length;i++){ if(frames[i].lm&&handC(frames[i])) idx.push(i); }
+ if(idx.length<8) return null;
+ var n=frames.length;
+ // Top = Hände am höchsten (min y) im mittleren Bereich
+ var topIdx=idx[0], topY=1e9;
+ idx.forEach(function(i){ var h=handC(frames[i]); if(h&&h.y<topY && i>=n*0.12 && i<=n*0.8){ topY=h.y; topIdx=i; } });
+ // Adresse = ruhigstes Bild vor dem Top (kleinste Handbewegung im ersten Drittel)
+ var addrIdx=idx[0], bestSpeed=1e9, prev=null, prevI=null;
+ idx.forEach(function(i){ var h=handC(frames[i]); if(prev){ var sp=RT_SW_d(h,prev)/Math.max(1,i-prevI); if(i<=Math.max(3,topIdx*0.6) && sp<bestSpeed){ bestSpeed=sp; addrIdx=i; } } prev=h; prevI=i; });
+ // Treffmoment = nach Top erstes Bild, in dem die Hände wieder auf Adress-Höhe sind
+ var addrY=handC(frames[addrIdx]).y;
+ var impIdx=topIdx, bestD=1e9;
+ idx.forEach(function(i){ if(i>topIdx){ var h=handC(frames[i]); var dd=Math.abs(h.y-addrY); if(i<=topIdx+n*0.6 && dd<bestD){ bestD=dd; impIdx=i; } } });
+ if(impIdx<=topIdx){ impIdx=Math.min(n-1,topIdx+2); }
+ return {address:addrIdx,top:topIdx,impact:impIdx};
+}
+
+/* ---------- Metriken + Bewertung ---------- */
+function RT_SW_evalMetric(id,val,pass){ var c=RT_SW_COACH[id]; return {id:id,title:c.t,phase:c.ph,value:val,pass:pass}; }
+
+function RT_SW_computeMetrics(frames,ph){
+ var A=frames[ph.address], T=frames[ph.top], I=frames[ph.impact];
+ if(!A.lm||!T.lm||!I.lm) return null;
+ var lead=(RT_SW.hand==='R')?{sh:11,el:13,wr:15}:{sh:12,el:14,wr:16};
+ function shC(f){return RT_SW_mid(f.lm[11],f.lm[12]);}
+ function hipC(f){return RT_SW_mid(f.lm[23],f.lm[24]);}
+ var torsoA=Math.max(1e-3,RT_SW_d(shC(A),hipC(A)));
+ var out=[]; var fmt=function(x,u){ return (x===null||isNaN(x))?'–':(Math.round(x*10)/10+(u||'')); };
+
+ // Set-up: Wirbelsäulenwinkel
+ var spineA=RT_SW_vertTilt(hipC(A),shC(A));
+ out.push(RT_SW_evalMetric('spine_setup',fmt(spineA,'°'), spineA<=16));
+ // Set-up: Standbreite (Knöchel vs Schulter)
+ var ankW=Math.abs(A.lm[27].x-A.lm[28].x), shW=Math.abs(A.lm[11].x-A.lm[12].x)||1e-3; var ratio=ankW/shW;
+ out.push(RT_SW_evalMetric('stance_setup',fmt(ratio*100,' %'), ratio>=0.95&&ratio<=1.7));
+ // Rückschwung: Führungsarm am Top
+ var la=RT_SW_ang3(T.lm[lead.sh],T.lm[lead.el],T.lm[lead.wr]);
+ out.push(RT_SW_evalMetric('leadarm_back',fmt(la,'°'), la>=150));
+ // Rückschwung: Wirbelsäulenwinkel halten
+ var spineT=RT_SW_vertTilt(hipC(T),shC(T)); var spineDev=Math.abs(spineT-spineA);
+ out.push(RT_SW_evalMetric('spine_back',fmt(spineDev,'° Abw.'), spineDev<=10));
+ // Rückschwung: Hüftschub
+ var swayB=Math.abs(hipC(T).x-hipC(A).x)/torsoA;
+ out.push(RT_SW_evalMetric('hipsway_back',fmt(swayB*100,' %'), swayB<=0.14));
+ // Rückschwung: Kopfbewegung
+ var headB=RT_SW_d(T.lm[0],A.lm[0])/torsoA;
+ out.push(RT_SW_evalMetric('head_back',fmt(headB*100,' %'), headB<=0.16));
+ // Rückschwung: Hüftdrehung
+ var hrA=RT_SW_rotDeg(A.wl,23,24), hrT=RT_SW_rotDeg(T.wl,23,24);
+ var hipRotB=RT_SW_angDiff(hrA,hrT);
+ if(hipRotB===null){ var wA=Math.abs(A.lm[23].x-A.lm[24].x)||1e-3,wT=Math.abs(T.lm[23].x-T.lm[24].x); hipRotB=Math.max(0,(1-wT/wA))*90; }
+ out.push(RT_SW_evalMetric('hiprot_back',fmt(hipRotB,'°'), hipRotB>=22&&hipRotB<=60));
+ // Treffmoment: Kopfbewegung
+ var headI=RT_SW_d(I.lm[0],A.lm[0])/torsoA;
+ out.push(RT_SW_evalMetric('head_impact',fmt(headI*100,' %'), headI<=0.20));
+ // Treffmoment: Hüftöffnung
+ var hrI=RT_SW_rotDeg(I.wl,23,24); var hipRotI=RT_SW_angDiff(hrA,hrI);
+ if(hipRotI===null){ hipRotI=hipRotB*0.7; }
+ out.push(RT_SW_evalMetric('hiprot_impact',fmt(hipRotI,'°'), hipRotI>=18));
+ // Treffmoment: Hüftverlagerung
+ var swayI=Math.abs(hipC(I).x-hipC(A).x)/torsoA;
+ out.push(RT_SW_evalMetric('hipsway_impact',fmt(swayI*100,' %'), swayI<=0.28));
+ // Tempo
+ var tBack=Math.max(1e-3,T.t-A.t), tDown=Math.max(1e-3,I.t-T.t); var tempo=tBack/tDown;
+ out.push(RT_SW_evalMetric('tempo_impact',(Math.round(tempo*10)/10)+' : 1', tempo>=2.2&&tempo<=3.8));
+
+ // Severity (für Priorität): grobe Distanz zur Schwelle
+ var sev={spine_setup:Math.max(0,spineA-16),stance_setup:Math.max(0,0.95-ratio,ratio-1.7)*100,
+   leadarm_back:Math.max(0,150-la),spine_back:Math.max(0,spineDev-10),hipsway_back:Math.max(0,swayB-0.14)*100,
+   head_back:Math.max(0,headB-0.16)*100,hiprot_back:Math.max(0,22-hipRotB,hipRotB-60),
+   head_impact:Math.max(0,headI-0.20)*100,hiprot_impact:Math.max(0,18-hipRotI),
+   hipsway_impact:Math.max(0,swayI-0.28)*100,tempo_impact:Math.max(0,2.2-tempo,tempo-3.8)*10};
+ out.forEach(function(m){ m.sev=sev[m.id]||0; });
+ return out;
+}
+
+/* ---------- Skelett-Overlay auf Schlüsselbild ---------- */
+function RT_SW_keyframeDataUrl(frameIdx){
+ var v=RT_SW.video, oc=RT_SW.sampleCanvas; if(!v||!oc) return null;
+ var f=RT_SW.frames&&RT_SW.frames[frameIdx]; if(!f) return null;
+ var c=document.createElement('canvas'); c.width=oc.width; c.height=oc.height; var ctx=c.getContext('2d');
+ try{ ctx.drawImage(RT_SW._kfImg||oc,0,0,c.width,c.height); }catch(e){}
+ if(f.lm){
+   ctx.lineWidth=Math.max(2,c.width/160); ctx.strokeStyle='rgba(47,109,246,.95)';
+   RT_SW_CONN.forEach(function(cn){ var a=f.lm[cn[0]],b=f.lm[cn[1]]; if(a&&b){ ctx.beginPath(); ctx.moveTo(a.x*c.width,a.y*c.height); ctx.lineTo(b.x*c.width,b.y*c.height); ctx.stroke(); } });
+   ctx.fillStyle='#8FE1A9'; var r=Math.max(3,c.width/90);
+   [0,11,12,13,14,15,16,23,24,25,26,27,28].forEach(function(i){ var p=f.lm[i]; if(p){ ctx.beginPath(); ctx.arc(p.x*c.width,p.y*c.height,r,0,7); ctx.fill(); } });
+ }
+ try{ return c.toDataURL('image/jpeg',0.8); }catch(e){ return null; }
+}
+function RT_SW_captureKeyframe(frameIdx){
+ // zeichnet das Videobild des Schlüsselbildes neu (scharf) + Skelett
+ var v=RT_SW.video, oc=RT_SW.sampleCanvas; if(!v||!oc) return Promise.resolve(null);
+ var f=RT_SW.frames&&RT_SW.frames[frameIdx]; if(!f) return Promise.resolve(null);
+ return RT_SW_seek(v,f.t).then(function(){
+   var c=document.createElement('canvas'); c.width=oc.width; c.height=oc.height; var ctx=c.getContext('2d');
+   try{ ctx.drawImage(v,0,0,c.width,c.height); }catch(e){}
+   if(f.lm){
+     ctx.lineWidth=Math.max(2,c.width/150); ctx.strokeStyle='rgba(47,109,246,.95)';
+     RT_SW_CONN.forEach(function(cn){ var a=f.lm[cn[0]],b=f.lm[cn[1]]; if(a&&b){ ctx.beginPath(); ctx.moveTo(a.x*c.width,a.y*c.height); ctx.lineTo(b.x*c.width,b.y*c.height); ctx.stroke(); } });
+     ctx.fillStyle='#8FE1A9'; var r=Math.max(3,c.width/85);
+     [0,11,12,13,14,15,16,23,24,25,26,27,28].forEach(function(i){ var p=f.lm[i]; if(p){ ctx.beginPath(); ctx.arc(p.x*c.width,p.y*c.height,r,0,7); ctx.fill(); } });
+   }
+   try{ return c.toDataURL('image/jpeg',0.82); }catch(e){ return null; }
+ });
+}
+
+/* ---------- Hauptablauf ---------- */
+function RT_SW_analyze(){
+ if(RT_SW.busy) return; RT_SW.busy=true;
+ var btn=document.getElementById('sw-analyze'); if(btn){btn.disabled=true;btn.textContent='Analysiere …';}
+ var prog=document.getElementById('sw-progress'); if(prog)prog.style.display='block';
+ RT_SW_progress(0.05,'KI-Modell wird geladen …');
+ RT_SW_sample().then(function(frames){
+   RT_SW.frames=frames;
+   var ph=RT_SW_detectPhases(frames);
+   if(!ph){ throw new Error('no-pose'); }
+   RT_SW.phases=ph;
+   var metrics=RT_SW_computeMetrics(frames,ph);
+   if(!metrics){ throw new Error('no-pose'); }
+   RT_SW_progress(0.97,'Schlüsselbilder werden erstellt …');
+   return Promise.all([RT_SW_captureKeyframe(ph.address),RT_SW_captureKeyframe(ph.top),RT_SW_captureKeyframe(ph.impact)]).then(function(kf){
+     var passed=metrics.filter(function(m){return m.pass;}).length;
+     var improves=metrics.filter(function(m){return !m.pass;});
+     improves.sort(function(a,b){ if(b.sev!==a.sev) return b.sev-a.sev; return RT_SW_IMPORTANCE.indexOf(a.id)-RT_SW_IMPORTANCE.indexOf(b.id); });
+     var res={ts:Date.now(),angle:RT_SW.angle,hand:RT_SW.hand,total:metrics.length,passed:passed,
+       metrics:metrics,top:improves[0]||null,kf:{address:kf[0],top:kf[1],impact:kf[2]}};
+     RT_SW.result=res; RT_SW_saveHist(res);
+     if(prog)prog.style.display='none';
+     if(btn){btn.disabled=false;btn.textContent='Erneut analysieren';}
+     RT_SW.busy=false;
+     RT_SW_renderResult(res); RT_SW_renderHist();
+     var rc=document.getElementById('sw-result'); if(rc)rc.scrollIntoView({behavior:'smooth',block:'start'});
+   });
+ }).catch(function(err){
+   RT_SW.busy=false; if(prog)prog.style.display='none';
+   if(btn){btn.disabled=false;btn.textContent='Schwung analysieren';}
+   var rc=document.getElementById('sw-result');
+   var msg=(err&&err.message==='no-pose')
+     ? 'Der Schwung konnte nicht sicher erkannt werden. Achte darauf, dass dein ganzer Körper im Bild ist, das Licht ausreicht und die Kamera ruhig steht.'
+     : 'Die KI-Analyse konnte nicht geladen werden (Internetverbindung für das einmalige Laden des Modells nötig). Bitte erneut versuchen.';
+   if(rc)rc.innerHTML='<div class="swcard" style="border-color:#f3d6d6;background:#fff8f8;"><div style="font-weight:800;color:#b3261e;margin-bottom:6px;">Analyse nicht möglich</div><div class="swhint" style="margin-top:0;">'+msg+'</div></div>';
+ });
+}
+
+/* ---------- Ergebnis-UI ---------- */
+function RT_SW_setDetailTab(t){ RT_SW.detailTab=t; if(RT_SW.result) RT_SW_renderResult(RT_SW.result); var rc=document.getElementById('sw-detailbox'); if(rc)rc.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+function RT_SW_dot(pass){ return '<span class="swdot" style="background:'+(pass?'#1FB25A':'#F0483E')+';"></span>'; }
+function RT_SW_phaseLabel(p){ return p==='setup'?'Set-up':(p==='back'?'Rückschwung':'Treffmoment'); }
+
+function RT_SW_renderResult(res){
+ var rc=document.getElementById('sw-result'); if(!rc)return;
+ var pct=res.total?res.passed/res.total:0; var deg=Math.round(pct*360);
+ var improveCount=res.total-res.passed;
+ var ring='<div style="position:relative;width:96px;height:96px;flex:none;">'
+   +'<div style="width:96px;height:96px;border-radius:50%;background:conic-gradient(#2f6df6 '+deg+'deg,#e6ecf7 0);display:flex;align-items:center;justify-content:center;">'
+   +'<div style="width:74px;height:74px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;">'
+   +'<div style="font-size:22px;font-weight:800;color:#143522;line-height:1;">'+res.passed+'/'+res.total+'</div>'
+   +'<div style="font-size:10px;font-weight:700;color:#8a9c8e;letter-spacing:.5px;">BESTANDEN</div>'
+   +'</div></div></div>';
+
+ var head='<div class="swcard" style="background:linear-gradient(180deg,#12261b,#1c3a26);border:none;color:#fff;">'
+   +'<div style="display:flex;align-items:center;gap:14px;">'+ring
+   +'<div style="min-width:0;"><div style="font-size:12px;color:#8FE1A9;font-weight:700;">'+(res.angle==='fo'?'Von vorne':'Von der Seite')+'</div>'
+   +'<div style="font-size:20px;font-weight:800;line-height:1.15;">Deine Schwung-Analyse</div>'
+   +'<div style="font-size:13px;color:#cfe0d4;margin-top:2px;">'+(improveCount>0?(improveCount+' '+(improveCount===1?'Bereich':'Bereiche')+' zum Verbessern'):'Stark – alle Merkmale bestanden!')+'</div>'
+   +'</div></div></div>';
+
+ var topCard='';
+ if(res.top){ var c=RT_SW_COACH[res.top.id]; var kfImg=res.kf[c.ph==='setup'?'address':(c.ph==='back'?'top':'impact')];
+   topCard='<div class="swcard">'
+    +'<div style="text-align:center;font-size:14px;color:#3a4a3f;">Deine <b style="color:#F0483E;">Top-Priorität</b></div>'
+    +'<div style="text-align:center;font-size:20px;font-weight:800;color:#143522;margin:2px 0 10px;text-transform:uppercase;letter-spacing:.3px;">'+c.t+'</div>'
+    +(kfImg?'<div style="position:relative;"><img class="swkf" src="'+kfImg+'"><span class="swkflab">'+RT_SW_phaseLabel(c.ph)+'</span></div>':'')
+    +'<div style="margin-top:12px;font-weight:800;color:#143522;">Warum das zählt</div>'
+    +'<div class="swhint" style="margin-top:4px;">'+c.why+'</div>'
+    +'<div style="margin-top:12px;font-weight:800;color:#143522;">Dein Drill</div>'
+    +'<div class="swhint" style="margin-top:4px;">'+c.drill+'</div>'
+    +'<div style="margin-top:8px;font-size:12px;color:#8a9c8e;">Gemessen: '+res.top.value+'</div>'
+   +'</div>';
+ }
+
+ // Detail-Tabs
+ var tab=RT_SW.detailTab||'setup';
+ function phCount(p){ var arr=res.metrics.filter(function(m){return m.phase===p;}); var fail=arr.some(function(m){return !m.pass;}); return fail; }
+ var tabsHtml='<div class="swtabs">'
+   +'<button class="'+(tab==='setup'?'on':'')+'" onclick="RT_SW_setDetailTab(\'setup\')">'+RT_SW_dot(!phCount('setup'))+'Set-up</button>'
+   +'<button class="'+(tab==='back'?'on':'')+'" onclick="RT_SW_setDetailTab(\'back\')">'+RT_SW_dot(!phCount('back'))+'Rückschwung</button>'
+   +'<button class="'+(tab==='impact'?'on':'')+'" onclick="RT_SW_setDetailTab(\'impact\')">'+RT_SW_dot(!phCount('impact'))+'Treffmoment</button>'
+ +'</div>';
+ var rows=res.metrics.filter(function(m){return m.phase===tab;});
+ // Priorität: Verbessern zuerst
+ rows=rows.slice().sort(function(a,b){ if(a.pass!==b.pass) return a.pass?1:-1; return b.sev-a.sev; });
+ var isTop=res.top?res.top.id:null;
+ var tbody=rows.map(function(m,i){
+   return '<tr>'
+     +'<td style="width:64px;color:#8a9c8e;">'+(i+1)+(m.id===isTop?' <span style="color:#F0483E;font-weight:800;">Top</span>':'')+'</td>'
+     +'<td>'+m.title.replace(/\s*\((Set-up|Rückschwung|Treffmoment)\)/,'')+'<div style="font-size:11px;color:#a7b3aa;">'+m.value+'</div></td>'
+     +'<td style="width:110px;font-weight:800;color:'+(m.pass?'#1FB25A':'#F0483E')+';">'+(m.pass?'Bestanden':'Verbessern')+'</td>'
+   +'</tr>';
+ }).join('');
+ var detail='<div class="swcard" id="sw-detailbox" style="padding:0;overflow:hidden;">'
+   +'<div style="display:flex;align-items:center;justify-content:space-between;background:#2f6df6;color:#fff;padding:12px 14px;">'
+     +'<div style="font-weight:800;font-size:15px;">Analyse-Details</div>'
+     +'<div style="display:flex;gap:12px;font-size:12px;font-weight:700;"><span class="swchip" style="color:#fff;">'+RT_SW_dot(true)+'Bestanden</span><span class="swchip" style="color:#fff;">'+RT_SW_dot(false)+'Verbessern</span></div>'
+   +'</div>'
+   +tabsHtml
+   +'<div style="padding:4px 14px 8px;"><table class="swtbl"><thead><tr><th>Priorität</th><th>Merkmal</th><th>Ergebnis</th></tr></thead><tbody>'+tbody+'</tbody></table></div>'
+ +'</div>';
+
+ // Schlüsselbilder-Filmstreifen
+ var strip='<div class="swcard"><div style="font-weight:800;color:#143522;margin-bottom:8px;">Schlüsselbilder mit Skelett</div>'
+   +'<div style="display:flex;gap:8px;">'
+   +['address','top','impact'].map(function(k){ var lbl=k==='address'?'Adresse':(k==='top'?'Top':'Treffer'); return '<div style="flex:1;position:relative;">'+(res.kf[k]?'<img class="swkf" src="'+res.kf[k]+'"><span class="swkflab" style="font-size:10px;padding:2px 6px;">'+lbl+'</span>':'<div style="aspect-ratio:9/16;background:#0b160f;border-radius:12px;"></div>')+'</div>'; }).join('')
+   +'</div><div class="swhint">Die KI hat Adresse, den Punkt der höchsten Hände (Top) und den Treffmoment automatisch bestimmt.</div></div>';
+
+ rc.innerHTML=head+topCard+detail+strip;
+}
+
+/* ---------- Historie ---------- */
+function RT_SW_histData(){ var a=rtGet(RT_SW_HIST_KEY); return Array.isArray(a)?a:[]; }
+function RT_SW_saveHist(res){
+ var slim={ts:res.ts,angle:res.angle,passed:res.passed,total:res.total,topId:res.top?res.top.id:null,thumb:res.kf.impact||res.kf.top||res.kf.address||null};
+ var a=RT_SW_histData(); a.unshift(slim); if(a.length>12)a=a.slice(0,12); rtSet(RT_SW_HIST_KEY,a);
+}
+function RT_SW_renderHist(){
+ var box=document.getElementById('sw-hist'); if(!box)return;
+ var a=RT_SW_histData(); if(!a.length){ box.style.display='none'; return; }
+ box.style.display='block';
+ var rows=a.map(function(e){ var d=new Date(e.ts); var dd=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.';
+   var tt=e.topId&&RT_SW_COACH[e.topId]?RT_SW_COACH[e.topId].t.replace(/\s*\(.*\)/,''):'–';
+   return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #f2f4ef;">'
+     +(e.thumb?'<img src="'+e.thumb+'" style="width:38px;height:50px;object-fit:cover;border-radius:8px;flex:none;">':'')
+     +'<div style="flex:1;min-width:0;"><div style="font-weight:700;color:#143522;font-size:13px;">'+e.passed+'/'+e.total+' bestanden · '+(e.angle==='fo'?'vorne':'Seite')+'</div>'
+     +'<div style="font-size:11px;color:#8a9c8e;">'+dd+' · Fokus: '+tt+'</div></div></div>';
+ }).join('');
+ box.innerHTML='<div style="font-weight:800;color:#143522;">Verlauf</div>'+rows;
+}
+
+function RT_SW_toast(msg){ var t=document.createElement('div'); t.textContent=msg; t.style.cssText='position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#12261b;color:#fff;padding:10px 16px;border-radius:100px;font-size:13px;z-index:99999;box-shadow:0 4px 14px rgba(0,0,0,.35);'; document.body.appendChild(t); setTimeout(function(){ try{document.body.removeChild(t);}catch(e){} },2200); }
+
+/* ============================================================================
+   Analyse-Dispatcher (RT_ANL) — Umschalter Schwunganalyse / Shot-Tracer
+   ========================================================================== */
+var RT_ANL_sub='swing', RT_ANL_panel='tab-analyse';
+function RT_ANL_mount(panelId){
+ RT_ANL_panel=panelId||'tab-analyse'; RT_SW_ensureStyle();
+ var el=document.getElementById(RT_ANL_panel); if(!el)return;
+ el.innerHTML='<div class="swseg" id="anl-seg">'
+   +'<button id="anlseg-swing" class="'+(RT_ANL_sub==='swing'?'on':'')+'" onclick="RT_ANL_switch(\'swing\')">Schwunganalyse</button>'
+   +'<button id="anlseg-trace" class="'+(RT_ANL_sub==='trace'?'on':'')+'" onclick="RT_ANL_switch(\'trace\')">Shot-Tracer</button>'
+ +'</div><div id="anl-sub"></div>';
+ RT_ANL_paint();
+}
+function RT_ANL_switch(s){ if(RT_ANL_sub===s)return; RT_ANL_sub=s; var a=document.getElementById('anlseg-swing'),b=document.getElementById('anlseg-trace'); if(a)a.className=(s==='swing')?'on':''; if(b)b.className=(s==='trace')?'on':''; RT_ANL_paint(); }
+function RT_ANL_paint(){ var sub=document.getElementById('anl-sub'); if(!sub)return; if(RT_ANL_sub==='trace'){ RT_TRC_mount('anl-sub'); } else { RT_SW_mount('anl-sub'); } }
+/* ===== Ende Schwunganalyse ===== */
+
+registerTab({id:'analyse',label:'Analyse',icon:'<img src="'+RT_IC_ANALYSE+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_ANL_mount('tab-analyse'); }});
 /* ===== Ende Registry ===== */
 
 RT_hydrateCustomCourses();

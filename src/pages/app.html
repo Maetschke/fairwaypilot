@@ -274,6 +274,21 @@ body{display:flex;flex-direction:column;}
 .rt-holemap-inner{position:absolute;width:500px;height:500px;left:50%;top:50%;margin-left:-250px;margin-top:-250px;transform-origin:center center;}
 .rt-holemap-inner .leaflet-control-attribution{font-size:8px;}
 .rt-rotbtn{width:26px;height:26px;border-radius:50%;border:1.5px solid #DCE7D4;background:#fff;font-size:13px;color:#3C5546;cursor:pointer;font-family:inherit;line-height:1;flex:none;display:flex;align-items:center;justify-content:center;}
+
+/* ===== M8: Barrierefreiheit & Feinschliff ===== */
+:root{color-scheme:light;}
+/* Sekundaertext leicht dunkler -> AA-Kontrast auf hellem Grund */
+:root{--tx3:rgba(74,92,77,.98);}
+/* Tastatur-Fokus sichtbar (Maus-/Touch-Klick zeigt keinen Ring dank :focus-visible) */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,label:focus-visible,[role="button"]:focus-visible,[tabindex]:focus-visible{outline:2px solid #1F8A4D;outline-offset:2px;border-radius:8px;}
+/* Mindest-Touchflaeche 44px fuer kleine Tap-Ziele */
+.rt-btn,.rt-btn2{min-height:44px;}
+.rt-btn3{min-height:44px;}
+/* Reduzierte Bewegung respektieren (systemweite Einstellung) */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0ms!important;scroll-behavior:auto!important;}
+  .rt-spin{animation-duration:1.6s!important;animation-iteration-count:infinite!important;}
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>

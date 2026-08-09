@@ -3617,7 +3617,7 @@ function RT_toggleRadarHole(){
  if(!RT_state.radarOn) RT_state.radarOn={};
  RT_state.radarOn[key]=!RT_state.radarOn[key];
  var on=!!RT_state.radarOn[key];
- var b=document.getElementById('rt-wxr-toggle'); if(b) b.style.opacity=on?'1':'0.5';
+ RT_tileOp('rt-wxr-toggle',on);
  if(on){ RT_ovCloseOthers('radar'); RT_radarBuildOverlay(); RT_wxFetch(false); RT_radarAttach(RT_holeFullMapInst); }
  else { RT_radarRemoveOverlay(); RT_radarDetach(); }
 }
@@ -3720,7 +3720,7 @@ function RT_hvPanel(title,closeFn,extra,grabBox){
  var grabOn=(grabBox!==undefined&&grabBox!==null);
  var grab=grabOn?'<div class="rt-hv-grab" style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:60px;height:18px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;pointer-events:auto;"><div style="width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);"></div></div>':'';
  var body=grabOn?('<div class="rt-hv-body" style="margin-top:'+(extra?'8px':'0')+';overflow:hidden;transition:max-height .28s ease,opacity .2s ease,margin-top .28s ease;">'+(extra||'')+'</div>'):(extra||'');
- var attrs=grabOn?(' class="rt-hv-panel" data-hvgrab="1"'+(grabBox?' data-hvbox="'+grabBox+'"':'')):'';
+ var _col=(grabBox&&grabBox.indexOf('col:')===0)?grabBox.slice(4):''; var _bx=grabOn?(_col?(' data-hvcol="'+_col+'"'):(grabBox?' data-hvbox="'+grabBox+'"':'')):''; var attrs=grabOn?(' class="rt-hv-panel" data-hvgrab="1"'+_bx):'';
  return '<div'+attrs+' style="position:absolute;top:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 18px;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px '+(grabOn?'18px':'9px')+';box-shadow:0 5px 16px rgba(0,0,0,.55);z-index:6;">'
   +'<div style="display:flex;align-items:center;justify-content:space-between;min-height:30px;'+((extra&&!grabOn)?'margin-bottom:8px;':'')+'">'
     +'<div style="font-size:15px;font-weight:800;color:#fff;">'+title+'</div>'+x
@@ -3735,6 +3735,7 @@ function RT_hvGrabWire(panel){
  var body=panel.querySelector('.rt-hv-body');
  var grab=panel.querySelector('.rt-hv-grab');
  var boxId=panel.getAttribute('data-hvbox');
+ var colId=panel.getAttribute('data-hvcol');
  var expanded=true;
  function setExpanded(on){
   expanded=on;
@@ -3743,6 +3744,7 @@ function RT_hvGrabWire(panel){
    else { body.style.maxHeight=body.scrollHeight+'px'; void body.offsetHeight; body.style.maxHeight='0px'; body.style.opacity='0'; body.style.marginTop='0px'; }
   }
   if(boxId){ var b=document.getElementById(boxId); if(b){ b.style.transition='transform .30s ease'; b.style.transform=on?'translateY(0)':'translateY(135%)'; } }
+  if(colId){ var cE=document.getElementById(colId); if(cE){ if(on){ cE.style.maxHeight=cE.scrollHeight+'px'; cE.style.opacity='1'; } else { cE.style.maxHeight=cE.scrollHeight+'px'; void cE.offsetHeight; cE.style.maxHeight='0px'; cE.style.opacity='0'; } } }
  }
  panel._grabTimer=setTimeout(function(){ if(document.body.contains(panel)) setExpanded(false); },3000);
  if(grab){
@@ -3758,7 +3760,6 @@ function RT_ovCloseOthers(keep){
  if(keep!=='sp'&&document.getElementById('rt-sp')) RT_closeShotPlan();
  if(keep!=='fr'&&document.getElementById('rt-fr')) RT_closeFlagRadar();
  if(keep!=='dki'&&document.getElementById('rt-dki')) RT_closeDistKI();
- if(keep!=='gv'){ var _rg=RT_round; if(_rg&&RT_state.gvOn&&RT_state.gvOn[RT_holeMapKey(_rg,_rg.cur)]) RT_closeGreenView(); }
  if(keep!=='radar'){ var rd=RT_round; if(rd&&RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,rd.cur)]) RT_toggleRadarHole(); }
 }
 var RT_SP={layer:null};
@@ -3913,23 +3914,24 @@ function RT_openFlagRadar(){
  }
  var rec=RT_dkiRecommend(Math.round(RT_FR.dist));
  var srcNote=origin?(origin.src==='gps'?'':(origin.src==='ball'?'Standort: letzte Balllage (kein GPS)':'Standort: Abschlag (kein GPS)')):'';
- var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 64px);left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);border-radius:18px;background:rgba(6,12,9,.74);pointer-events:auto;"></div>'+'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">'
-   +'<div style="position:relative;width:min(80vw,320px);aspect-ratio:1/1;">'
-     +'<div style="position:absolute;left:50%;top:-4px;transform:translateX(-50%);z-index:3;color:#fff;font-size:20px;text-shadow:0 1px 3px #000;">▼</div>'
-     +'<div id="rt-fr-rose" style="position:absolute;inset:0;transition:transform .12s linear;">'+RT_frRoseSvg(RT_FR.brg)+'</div>'
+ var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 56px);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:16px;right:96px;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">'
+   +'<div style="position:relative;width:min(64vw,248px);aspect-ratio:1/1;background:rgba(6,12,9,.80);border-radius:18px;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,.5);">'
+     +'<div style="position:absolute;left:50%;top:-2px;transform:translateX(-50%);z-index:3;color:#fff;font-size:18px;text-shadow:0 1px 3px #000;">&#9660;</div>'
+     +'<div id="rt-fr-rose" style="position:absolute;inset:8px;transition:transform .12s linear;">'+RT_frRoseSvg(RT_FR.brg)+'</div>'
      +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">'
-       +'<div id="rt-fr-aim" style="font-size:11px;font-weight:800;color:#8FE1A9;height:14px;text-shadow:0 1px 3px #000;"></div>'
-       +'<div style="font-size:38px;font-weight:800;color:#fff;line-height:1;text-shadow:0 1px 5px rgba(0,0,0,.7);">'+RT_fmtDist(RT_FR.dist)+'</div>'
-       +'<div style="font-size:12px;color:#cfe0d4;text-shadow:0 1px 3px #000;">zur Fahne</div>'
-       +(rec.empty?'':'<div style="margin-top:8px;background:rgba(31,138,77,.92);color:#fff;font-size:13px;font-weight:700;border-radius:100px;padding:5px 13px;">'+rec.best.l+' · Ø '+rec.best.d+' m</div>')
+       +'<div id="rt-fr-aim" style="font-size:10px;font-weight:800;color:#8FE1A9;height:13px;text-shadow:0 1px 3px #000;"></div>'
+       +'<div style="font-size:30px;font-weight:800;color:#fff;line-height:1;text-shadow:0 1px 5px rgba(0,0,0,.7);">'+RT_fmtDist(RT_FR.dist)+'</div>'
+       +'<div style="font-size:11px;color:#cfe0d4;text-shadow:0 1px 3px #000;">zur Fahne</div>'
+       +(rec.empty?'':'<div style="margin-top:6px;background:rgba(31,138,77,.92);color:#fff;font-size:12px;font-weight:700;border-radius:100px;padding:4px 11px;">'+rec.best.l+' &#183; &#216; '+rec.best.d+' m</div>')
      +'</div>'
    +'</div>'
- +'</div>'
- +'<div style="position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);pointer-events:auto;text-align:center;">'
-   +(srcNote?'<div style="font-size:11px;color:#cfe0d4;margin-bottom:8px;text-shadow:0 1px 3px #000;">'+srcNote+'</div>':'')
-   +'<button id="rt-fr-act" onclick="RT_frStart()" style="border:none;background:#1F8A4D;color:#fff;font-size:15px;font-weight:700;font-family:inherit;border-radius:100px;padding:11px 24px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.4);">Kompass aktivieren</button>'
-   +'<div id="rt-fr-msg" style="font-size:11.5px;color:#cfe0d4;margin-top:8px;text-shadow:0 1px 3px #000;"></div>'
+   +'<div style="pointer-events:auto;text-align:center;max-width:min(64vw,248px);">'
+     +(srcNote?'<div style="font-size:11px;color:#cfe0d4;margin-bottom:8px;text-shadow:0 1px 3px #000;">'+srcNote+'</div>':'')
+     +'<button id="rt-fr-act" onclick="RT_frStart()" style="border:none;background:#1F8A4D;color:#fff;font-size:14px;font-weight:700;font-family:inherit;border-radius:100px;padding:10px 20px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.4);">Kompass aktivieren</button>'
+     +'<div id="rt-fr-msg" style="font-size:11px;color:#cfe0d4;margin-top:8px;text-shadow:0 1px 3px #000;"></div>'
+   +'</div>'
  +'</div>';
+
  o.innerHTML=RT_hvPanel('Fahnenradar','RT_closeFlagRadar()')+body;
  host.appendChild(o);
  if(!(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function')) RT_frStart();
@@ -4021,7 +4023,7 @@ function RT_openDistKI(){
  RT_DKI.pin=pin; RT_DKI.map=map; RT_DKI.mA=null; RT_DKI.mB=null; RT_DKI.err=false; RT_DKI.seq++;
  var o=document.createElement('div'); o.id='rt-dki';
  o.style.cssText='position:absolute;inset:0;z-index:2500;pointer-events:none;';
- o.innerHTML=RT_hvPanel('Entfernung & KI','','<div style="font-size:11.5px;color:#9fb3a4;">Standort &amp; Ziel per Touch verschieben – nur zur Info.</div>','rt-dki-card')
+ o.innerHTML=RT_hvPanel('Entfernung & KI','','<div style="font-size:11.5px;color:#9fb3a4;">Standort &amp; Ziel per Touch verschieben – nur zur Info.</div>','col:rt-dki-rec')
    +'<div id="rt-dki-card" style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:12px 15px calc(env(safe-area-inset-bottom,0px) + 14px);box-shadow:0 -3px 12px rgba(0,0,0,.4);"></div>';
  host.appendChild(o);
  RT_hvGrabInit();
@@ -4097,7 +4099,7 @@ function RT_dkiRenderCard(d,dh,loading,msg){
   +'</div>';
   if(!RT_DKI.err&&dh!=null) body+='<div style="font-size:10.5px;color:#6f857a;margin-top:8px;">Plays-like nach Höhe berechnet · ohne Windkorrektur</div>';
  }
- host.innerHTML=head+body;
+ host.innerHTML=head+'<div id="rt-dki-rec" style="overflow:hidden;transition:max-height .3s ease,opacity .2s ease;">'+body+'</div>';
 }
 function RT_closeDistKI(){
  RT_DKI.seq++;
@@ -4107,7 +4109,7 @@ function RT_closeDistKI(){
 }
 /* ===== Ende Entfernung & KI ===== */
 /* ============================================================
-   M9a/b · Grün-Ansicht (Overlay auf der Bahnkarte)
+   M9a/b · Geländerelief (Overlay auf der Bahnkarte)
    Echtes 1-m-Geländerelief (DGM1, Geobasis NRW) rund um die Fahne: Höhenlinien +
    schattiertes Relief über der Satelliten-Grünansicht, plus Falllinie und Putt-Distanz.
    Datenweg: Worker /api/dgm (WGS84→UTM32, WCS-GeoTIFF) → geotiff.js (CDN) parst im Client.
@@ -4140,7 +4142,7 @@ function RT_openGreenView(){
  var key=RT_holeMapKey(rd,rd.cur);
  RT_state.gvOn=RT_state.gvOn||{};
  if(RT_state.gvOn[key]){ RT_state.gvOn[key]=false; RT_tileOp('rt-tile-gv',false); RT_gvDetach(); RT_gvRemoveOverlay(); return; }
- RT_ovCloseOthers('gv'); RT_state.gvOn[key]=true; RT_tileOp('rt-tile-gv',true);
+ RT_state.gvOn[key]=true; RT_tileOp('rt-tile-gv',true);
  RT_gvBuildOverlay(); RT_gvAttach();
 }
 function RT_closeGreenView(){
@@ -4152,7 +4154,7 @@ function RT_gvBuildOverlay(){
  var ex=document.getElementById('rt-gv-ui'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
  var o=document.createElement('div'); o.id='rt-gv-ui';
  o.style.cssText='position:absolute;inset:0;z-index:2400;pointer-events:none;';
- o.innerHTML=RT_hvPanel('Grün-Ansicht','','','gv-card')
+ o.innerHTML=RT_hvPanel('Geländerelief','','','gv-card')
   +'<div id="gv-status" style="position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 70px);pointer-events:none;background:rgba(8,20,13,.82);color:#fff;font-size:12px;border-radius:100px;padding:6px 12px;">Höhenmodell wird geladen…</div>'
   +'<div id="gv-card" style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:13px 15px calc(env(safe-area-inset-bottom,0px) + 15px);box-shadow:0 -3px 12px rgba(0,0,0,.4);display:none;"></div>';
  host.appendChild(o);
@@ -4161,7 +4163,7 @@ function RT_gvBuildOverlay(){
 function RT_gvRemoveOverlay(){ var o=document.getElementById('rt-gv-ui'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
 function RT_gvStatus(t){ var s=document.getElementById('gv-status'); if(s){ s.style.display=t?'block':'none'; s.textContent=t||''; } }
 function RT_gvCard(html){ var c=document.getElementById('gv-card'); if(c){ c.style.display=html?'block':'none'; c.innerHTML=html||''; } }
-function RT_gvErrCard(msg){ return '<div style="color:#cfe0d4;font-size:13px;line-height:1.5;">'+msg+'</div><div style="font-size:11px;color:#7f948a;margin-top:8px;">Grün-Ansicht nutzt das 1-m-Geländemodell (DGM1) von Geobasis NRW – aktuell nur für NRW-Plätze.</div>'; }
+function RT_gvErrCard(msg){ return '<div style="color:#cfe0d4;font-size:13px;line-height:1.5;">'+msg+'</div><div style="font-size:11px;color:#7f948a;margin-top:8px;">Geländerelief nutzt das 1-m-Geländemodell (DGM1) von Geobasis NRW – aktuell nur für NRW-Plätze.</div>'; }
 function RT_gvAttach(){
  var map=RT_holeFullMapInst; if(!map||typeof L==='undefined'){ RT_gvStatus('Karte nicht verfügbar'); return; }
  var rd=RT_round; if(!rd) return; var c=rd.cur;
@@ -4279,7 +4281,7 @@ function RT_gvRender(band,W,H){
  +'</div>';
  RT_gvCard(cells+'<div style="font-size:10.5px;color:#7f948a;margin-top:8px;line-height:1.5;">Höhenlinien alle '+String(iv).replace('.',',')+' m über die ganze Bahn · 1-m-Geländemodell (DGM1, Geobasis NRW). Zeigt das Geländerelief, keine cm-genaue Grün-Vermessung.</div>');
 }
-/* ===== Ende Grün-Ansicht ===== */
+/* ===== Ende Geländerelief ===== */
 
 
 function RT_grabberOverlayHtml(){
@@ -4300,7 +4302,7 @@ function RT_grabberOverlayHtml(){
    RT_hvBtn('shotanalyse','Shot-Analyse','RT_openShotPlan()',!!document.getElementById('rt-sp'),'rt-tile-sp')+
    RT_hvBtn('fahnenradar','Fahnenradar','RT_openFlagRadar()',!!document.getElementById('rt-fr'),'rt-tile-fr')+
    RT_hvBtn('entfernungki','Entfernung & KI','RT_openDistKI()',!!document.getElementById('rt-dki'),'rt-tile-dki')+
-   RT_hvBtn('gruen','Grün-Ansicht','RT_openGreenView()',RT_gvActive(),'rt-tile-gv')+
+   RT_hvBtn('gruen','Geländerelief','RT_openGreenView()',RT_gvActive(),'rt-tile-gv')+
    RT_hvBtn('entfernung','Entfernung','RT_toggleGrabber()',on,'rt-grab-toggle')+
   '</div>'+
   '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
@@ -4314,8 +4316,7 @@ function RT_toggleWind(){
  if(!RT_state.windOn) RT_state.windOn={};
  RT_state.windOn[key]=!RT_state.windOn[key];
  var on=!!RT_state.windOn[key];
- var b=document.getElementById('rt-wind-toggle');
- if(b) b.style.opacity=on?'1':'0.5';
+ RT_tileOp('rt-wind-toggle',on);
  var ov=document.getElementById('rt-wind-ui');
  if(ov){ ov.innerHTML=RT_windOverlayContent(rd,rd.cur); ov.style.display=on?'flex':'none'; }
 }
@@ -4370,37 +4371,38 @@ function RT_setupFullGrabber(){
  function RT_grabMpp(){
   return 156543.03392*Math.cos(center.lat*Math.PI/180)/Math.pow(2,map.getZoom());
  }
- function RT_grabArcSvg(gp){
+ var spKey=RT_holeMapKey(rd,c);
+ RT_state.simPts=RT_state.simPts||{};
+ var _sp=RT_state.simPts[spKey];
+ if(pin&&(!_sp||!_sp.length||typeof _sp[0]!=='object')){ RT_state.simPts[spKey]=[{lat:(center.lat+pin.lat)/2,lng:(center.lng+pin.lng)/2}]; }
+ var COSs=Math.cos(center.lat*Math.PI/180);
+ function mProjT(ll){ var vx=(pin.lng-center.lng)*111320*COSs, vy=(pin.lat-center.lat)*111320; var wx=(ll.lng-center.lng)*111320*COSs, wy=(ll.lat-center.lat)*111320; var l2=vx*vx+vy*vy||1e-9; return (wx*vx+wy*vy)/l2; }
+ function routeSorted(){ if(!pin) return []; var a=(RT_state.simPts[spKey]||[]).slice(); a.sort(function(p,q){ return mProjT(p)-mProjT(q); }); return a; }
+ function RT_grabArcSvg(){
   var mpp=RT_grabMpp(), radii=RT_grabRadii(total);
   var maxM=radii.length?radii[radii.length-1]:250;
-  if(gp){ maxM=Math.max(maxM,RT_haversineM(center.lat,center.lng,gp.lat,gp.lng)); }
   if(pin) maxM=Math.max(maxM,total);
-  var R=maxM/mpp, S=Math.min(Math.round(2*R+60),8000), cx=S/2, cy=S/2;
-  function px(brgDeg,dM){
-   var t=brgDeg*Math.PI/180, rr=dM/mpp;
-   return [cx+rr*Math.sin(t), cy-rr*Math.cos(t)];
-  }
+  routeSorted().forEach(function(w){ maxM=Math.max(maxM,RT_haversineM(center.lat,center.lng,w.lat,w.lng)); });
+  var R=maxM/mpp, S=Math.min(Math.round(2*R+80),8000), cx=S/2, cy=S/2;
+  function px(brgDeg,dM){ var t=brgDeg*Math.PI/180, rr=dM/mpp; return [cx+rr*Math.sin(t), cy-rr*Math.cos(t)]; }
+  function pxLL(ll){ var d=RT_haversineM(center.lat,center.lng,ll.lat,ll.lng); return px(RT_grabBearing(center,ll),d); }
   var parts=[];
   radii.forEach(function(r){
    var d='';
-   for(var a=-40;a<=40;a+=2.5){
-    var p=px(brg+a,r);
-    d+=(d?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);
-   }
+   for(var a=-40;a<=40;a+=2.5){ var p=px(brg+a,r); d+=(d?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); }
    var hundred=(r%100===0);
-   parts.push('<path d="'+d+'" fill="none" stroke="'+(hundred?'#2F86FF':'#FFFFFF')+
-    '" stroke-width="'+(hundred?2.6:1.8)+'" stroke-opacity="'+(hundred?.95:.85)+'" stroke-linecap="round"/>');
+   parts.push('<path d="'+d+'" fill="none" stroke="'+(hundred?'#2F86FF':'#FFFFFF')+'" stroke-width="'+(hundred?2.6:1.8)+'" stroke-opacity="'+(hundred?.95:.85)+'" stroke-linecap="round"/>');
   });
+  // Route: Abschlag -> Punkte -> Loch. Die weisse Linie IST die Route und bricht an jedem Punkt.
   var ptsL=[px(0,0)];
-  if(gp){ var dg=RT_haversineM(center.lat,center.lng,gp.lat,gp.lng); ptsL.push(px(RT_grabBearing(center,gp),dg)); }
+  routeSorted().forEach(function(w){ ptsL.push(pxLL(w)); });
   if(pin) ptsL.push(px(brg,total));
   var dl=ptsL.map(function(p,i){ return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); }).join('');
-  parts.push('<path d="'+dl+'" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-opacity=".95"/>');
-  return {svg:'<svg width="'+S+'" height="'+S+'" viewBox="0 0 '+S+' '+S+
-   '" style="display:block;overflow:visible;">'+parts.join('')+'</svg>', size:S};
+  parts.push('<path d="'+dl+'" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-opacity=".95" stroke-linejoin="round" stroke-linecap="round"/>');
+  return {svg:'<svg width="'+S+'" height="'+S+'" viewBox="0 0 '+S+' '+S+'" style="display:block;overflow:visible;">'+parts.join('')+'</svg>', size:S};
  }
- function RT_grabDrawArcs(gp){
-  var o=RT_grabArcSvg(gp);
+ function RT_grabDrawArcs(){
+  var o=RT_grabArcSvg();
   var ic=L.divIcon({className:'',html:o.svg,iconSize:[o.size,o.size],iconAnchor:[o.size/2,o.size/2]});
   if(arcMarker){ arcMarker.setIcon(ic); }
   else{ arcMarker=L.marker([center.lat,center.lng],{pane:'rtgrab',interactive:false,icon:ic}).addTo(layer); }
@@ -4408,80 +4410,28 @@ function RT_setupFullGrabber(){
  RT_grabRadii(total).forEach(function(r){
   var lp=RT_grabDest(center.lat,center.lng,brg,r);
   L.marker(lp,{pane:'rtgrab',interactive:false,icon:L.divIcon({className:'',iconSize:[46,18],iconAnchor:[23,9],
-   html:'<div style="transform:rotate('+(-rotF)+'deg);text-align:center;color:#fff;font-size:12px;'+
-    'font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.85);">'+r+'</div>'})}).addTo(layer);
+   html:'<div style="transform:rotate('+(-rotF)+'deg);text-align:center;color:#fff;font-size:12px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.85);">'+r+'</div>'})}).addTo(layer);
  });
- /* Startpunkt bewusst NICHT am GPS-Standort: ausserhalb des Platzes stuende der Ziehpunkt
-    kilometerweit weg und die beiden Distanzen waeren sinnlos. Er startet auf halber
-    Strecke zwischen eigenem Abschlag und Fahne. */
- var start=pin?{lat:(center.lat+pin.lat)/2,lng:(center.lng+pin.lng)/2}:center;
- RT_grabDrawArcs(start);
- map.on('zoomend',function(){ if(arcMarker) RT_grabDrawArcs(marker?marker.getLatLng():start); });
- var marker=L.marker([start.lat,start.lng],{pane:'rtgrab',icon:L.divIcon({className:'',iconSize:[46,46],iconAnchor:[23,23],
-   html:'<div style="width:46px;height:46px;border-radius:50%;border:3px solid #fff;'+
-    'box-shadow:0 1px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;">'+
-    '<div style="width:5px;height:5px;border-radius:50%;background:#fff;"></div></div>'})}).addTo(layer);
- function upd(){
-  var p=marker.getLatLng();
-  var dTee=RT_haversineM(center.lat,center.lng,p.lat,p.lng);
-  var dPin=pin?RT_haversineM(p.lat,p.lng,pin.lat,pin.lng):null;
-  var f=document.getElementById('rt-grab-far'), n=document.getElementById('rt-grab-near');
-  if(f){ f.style.display='block'; f.innerHTML=RT_grabNum(dPin); }
-  if(n){ n.style.display='block'; n.innerHTML=RT_grabNum(dTee); }
-  RT_grabDrawArcs(p);
- }
- /* Ziehen rotationskorrigiert und ABSOLUT: seit RT_correctedLatLng beide Achsen richtig
-    rechnet, laesst sich der Zeigerpunkt direkt in Koordinaten uebersetzen. Beim Anfassen
-    wird einmal der Versatz zwischen Ziehpunkt und Fingerposition gemerkt und danach
-    konstant gehalten - der Marker springt also nicht unter den Finger, bleibt aber exakt
-    unter ihm. Die frueher noetige Delta-Summierung entfaellt; sie hat pro Bewegungsereignis
-    einen Rundungsfehler aufaddiert, wodurch der Ziehpunkt bei schnellem Ziehen wegdriftete. */
- var gEl=marker.getElement();
- if(gEl){
-  gEl.style.touchAction='none'; gEl.style.cursor='grab';
-  var st=null;
-  gEl.addEventListener('pointerdown',function(ev){
-   ev.preventDefault(); ev.stopPropagation();
-   try{gEl.setPointerCapture(ev.pointerId);}catch(e){}
-   var p0=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY);
-   var mp=marker.getLatLng();
-   st=p0?{dLat:mp.lat-p0.lat,dLng:mp.lng-p0.lng}:{dLat:0,dLng:0};
-  });
-  gEl.addEventListener('pointermove',function(ev){
-   if(!st) return;
-   ev.preventDefault(); ev.stopPropagation();
-   var p=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY);
-   if(!p) return;
-   marker.setLatLng([p.lat+st.dLat, p.lng+st.dLng]);
-   upd();
-  });
-  function endG(ev){ if(!st) return; st=null; ev.stopPropagation(); }
-  gEl.addEventListener('pointerup',endG);
-  gEl.addEventListener('pointercancel',endG);
- }
- upd();
- // ===== Simulierte Balllagen auf der weissen Linie (Touch: hinzufuegen/entfernen, ziehen entlang der Linie) =====
+ RT_grabDrawArcs();
+ map.on('zoomend',function(){ if(arcMarker) RT_grabDrawArcs(); });
+ // ===== Route-Punkte: frei verschiebbar, brechen die weisse Linie (Abschlag -> Punkte -> Loch) =====
  if(pin&&total>0){
-  var spKey=RT_holeMapKey(rd,c);
-  RT_state.simPts=RT_state.simPts||{};
-  if(!RT_state.simPts[spKey]||!RT_state.simPts[spKey].length) RT_state.simPts[spKey]=[0.5];
-  var simMarkers=[];
-  var COSs=Math.cos(center.lat*Math.PI/180);
-  function simLL(t){ return {lat:center.lat+(pin.lat-center.lat)*t,lng:center.lng+(pin.lng-center.lng)*t}; }
-  function simProj(ll){ var vx=(pin.lng-center.lng)*111320*COSs, vy=(pin.lat-center.lat)*111320; var wx=(ll.lng-center.lng)*111320*COSs, wy=(ll.lat-center.lat)*111320; var l2=vx*vx+vy*vy||1e-9; var t=(wx*vx+wy*vy)/l2; var qx=vx*t,qy=vy*t; return {t:t,perp:Math.hypot(wx-qx,wy-qy)}; }
-  function simUnit(m){ return (RT_distUnit()==='yd')?Math.round(m*1.09361):Math.round(m); }
-  function simLbl(t){ var dPin=Math.max(0,(1-t)*total), dTee=Math.max(0,t*total); return RT_grabNum(dPin)+'<span style="font-size:9px;font-weight:600;color:#9fb3a4;margin-left:5px;">'+simUnit(dTee)+' ab Tee</span>'; }
-  function simIcon(t){ return L.divIcon({className:'',iconSize:[44,44],iconAnchor:[22,22],html:'<div style="width:44px;height:44px;transform:rotate('+(-rotF)+'deg);position:relative;">'+'<div style="position:absolute;left:14px;top:14px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #12261B;box-shadow:0 1px 4px rgba(0,0,0,.55);"></div>'+'<div class="simlbl" style="position:absolute;left:50%;top:-6px;transform:translateX(-50%);background:#12261B;color:#fff;font-size:11.5px;font-weight:800;border-radius:8px;padding:2px 7px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.5);">'+simLbl(t)+'</div>'+'</div>'}); }
-  function simWire(m,idx){ var e2=m.getElement(); if(!e2) return; e2.style.touchAction='none'; e2.style.cursor='grab'; var stt=null,mv=false,sc=null;
-   e2.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); try{e2.setPointerCapture(ev.pointerId);}catch(e){} stt=true; mv=false; sc={x:ev.clientX,y:ev.clientY}; });
-   e2.addEventListener('pointermove',function(ev){ if(!stt) return; ev.preventDefault(); ev.stopPropagation(); if(Math.abs(ev.clientX-sc.x)+Math.abs(ev.clientY-sc.y)>5) mv=true; var p=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); if(!p) return; var pr=simProj(p); var t=Math.max(0,Math.min(1,pr.t)); RT_state.simPts[spKey][idx]=t; var ll=simLL(t); m.setLatLng([ll.lat,ll.lng]); var lab=e2.querySelector('.simlbl'); if(lab) lab.innerHTML=simLbl(t); });
-   function endS(ev){ if(!stt) return; stt=null; ev.stopPropagation(); if(!mv){ var arr=RT_state.simPts[spKey]; if(arr.length>1){ arr.splice(idx,1); simDraw(); } } }
-   e2.addEventListener('pointerup',endS); e2.addEventListener('pointercancel',endS);
+  var routeMarkers=[];
+  function rUnit(m){ return (RT_distUnit()==='yd')?Math.round(m*1.09361):Math.round(m); }
+  function rLbl(obj){ var sorted=routeSorted(); var i=sorted.indexOf(obj); var prev=(i<=0)?center:sorted[i-1]; var seg=RT_haversineM(prev.lat,prev.lng,obj.lat,obj.lng); var toPin=RT_haversineM(obj.lat,obj.lng,pin.lat,pin.lng); return RT_grabNum(toPin)+'<span style="font-size:9px;font-weight:600;color:#9fb3a4;margin-left:5px;">&#916; '+rUnit(seg)+'</span>'; }
+  function rIcon(obj){ return L.divIcon({className:'',iconSize:[44,44],iconAnchor:[22,22],html:'<div style="width:44px;height:44px;transform:rotate('+(-rotF)+'deg);position:relative;">'+'<div style="position:absolute;left:14px;top:14px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #12261B;box-shadow:0 1px 4px rgba(0,0,0,.55);"></div>'+'<div class="simlbl" style="position:absolute;left:50%;top:-6px;transform:translateX(-50%);background:#12261B;color:#fff;font-size:11.5px;font-weight:800;border-radius:8px;padding:2px 7px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.5);">'+rLbl(obj)+'</div>'+'</div>'}); }
+  function rWire(m,obj){ var e2=m.getElement(); if(!e2) return; e2.style.touchAction='none'; e2.style.cursor='grab'; var st=null,mv=false,sc=null;
+   e2.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); try{e2.setPointerCapture(ev.pointerId);}catch(e){} var p0=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); st=p0?{dLat:obj.lat-p0.lat,dLng:obj.lng-p0.lng}:{dLat:0,dLng:0}; mv=false; sc={x:ev.clientX,y:ev.clientY}; });
+   e2.addEventListener('pointermove',function(ev){ if(!st) return; ev.preventDefault(); ev.stopPropagation(); if(Math.abs(ev.clientX-sc.x)+Math.abs(ev.clientY-sc.y)>5) mv=true; var p=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); if(!p) return; obj.lat=p.lat+st.dLat; obj.lng=p.lng+st.dLng; m.setLatLng([obj.lat,obj.lng]); var lab=e2.querySelector('.simlbl'); if(lab) lab.innerHTML=rLbl(obj); RT_grabDrawArcs(); });
+   function endR(ev){ if(!st) return; st=null; ev.stopPropagation(); if(!mv){ var arr=RT_state.simPts[spKey]; if(arr.length>1){ var k=arr.indexOf(obj); if(k>=0){ arr.splice(k,1); routeDraw(); } } } else { routeDraw(); } }
+   e2.addEventListener('pointerup',endR); e2.addEventListener('pointercancel',endR);
   }
-  function simDraw(){ simMarkers.forEach(function(m){ try{layer.removeLayer(m);}catch(e){} }); simMarkers=[]; var arr=RT_state.simPts[spKey]; arr.forEach(function(t,idx){ var ll=simLL(t); var m=L.marker([ll.lat,ll.lng],{pane:'rtgrab',icon:simIcon(t)}).addTo(layer); simMarkers.push(m); simWire(m,idx); }); }
-  function simClick(e){ if(RT_suppressMapClick&&RT_suppressMapClick['full']) return; if(RT_fullSelPin!=null&&RT_fullSelPin!==undefined) return; var oe=e.originalEvent, ll; if(oe&&typeof oe.clientX==='number'){ ll=RT_correctedLatLng(map,el,rotF,oe.clientX,oe.clientY); } else ll=e.latlng; if(!ll) return; var pr=simProj(ll); if(pr.perp>26*RT_grabMpp()) return; var t=Math.max(0,Math.min(1,pr.t)); var arr=RT_state.simPts[spKey]; for(var i=0;i<arr.length;i++){ if(Math.abs(arr[i]-t)*total<8) return; } arr.push(t); simDraw(); }
-  RT_state.simClick=simClick; map.on('click',simClick);
-  simDraw();
+  function routeDraw(){ routeMarkers.forEach(function(m){ try{layer.removeLayer(m);}catch(e){} }); routeMarkers=[]; routeSorted().forEach(function(obj){ var m=L.marker([obj.lat,obj.lng],{pane:'rtgrab',icon:rIcon(obj)}).addTo(layer); routeMarkers.push(m); rWire(m,obj); }); RT_grabDrawArcs(); }
+  function segNearest(A,B,Pll){ function xy(p){ return [(p.lng-center.lng)*111320*COSs,(p.lat-center.lat)*111320]; } var a=xy(A),b=xy(B),p=xy(Pll); var vx=b[0]-a[0],vy=b[1]-a[1]; var wx=p[0]-a[0],wy=p[1]-a[1]; var l2=vx*vx+vy*vy||1e-9; var t=Math.max(0,Math.min(1,(wx*vx+wy*vy)/l2)); var qx=a[0]+vx*t,qy=a[1]+vy*t; return {pt:{lat:center.lat+qy/111320,lng:center.lng+qx/(111320*COSs)},dist:Math.hypot(p[0]-qx,p[1]-qy)}; }
+  function nearestOnRoute(Pll){ var chain=[center].concat(routeSorted()).concat([pin]); var best=null; for(var i=0;i<chain.length-1;i++){ var r=segNearest(chain[i],chain[i+1],Pll); if(!best||r.dist<best.dist) best=r; } return best; }
+  function routeClick(e){ if(RT_suppressMapClick&&RT_suppressMapClick['full']) return; if(RT_fullSelPin!=null&&RT_fullSelPin!==undefined) return; var oe=e.originalEvent, ll; if(oe&&typeof oe.clientX==='number'){ ll=RT_correctedLatLng(map,el,rotF,oe.clientX,oe.clientY); } else ll=e.latlng; if(!ll) return; var nr=nearestOnRoute(ll); if(!nr||nr.dist>26*RT_grabMpp()) return; var arr=RT_state.simPts[spKey]; for(var i=0;i<arr.length;i++){ if(RT_haversineM(arr[i].lat,arr[i].lng,nr.pt.lat,nr.pt.lng)<8) return; } arr.push({lat:nr.pt.lat,lng:nr.pt.lng}); routeDraw(); }
+  RT_state.simClick=routeClick; map.on('click',routeClick);
+  routeDraw();
  }
  /* Groesse und Renderer-Ursprung nach dem Zeichnen erzwingen: laeuft der Aufbau vor dem
     invalidateSize() der Karte, kennt der Renderer noch die alte Containergroesse. */
@@ -4499,8 +4449,7 @@ function RT_toggleGrabber(){
  if(!RT_state.grabberOn) RT_state.grabberOn={};
  RT_state.grabberOn[key]=!RT_state.grabberOn[key];
  var on=!!RT_state.grabberOn[key];
- var b=document.getElementById('rt-grab-toggle');
- if(b) b.style.opacity=on?'1':'0.5';
+ RT_tileOp('rt-grab-toggle',on);
  /* Bewusst KEIN RT_render(): das Vollbild wuerde neu aufgebaut und die Karte neu
     initialisiert - Ausschnitt und Zoom waeren weg. */
  if(on) RT_setupFullGrabber(); else RT_clearFullGrabber();

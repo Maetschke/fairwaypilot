@@ -779,7 +779,7 @@ function renderRounds(filter){
     var fwPct=fw.length?Math.round(fwC/fw.length*100):0;
     var col=(HV_COURSE_META[sc.half]&&HV_COURSE_META[sc.half].color)||'#8E8E93';
     var scCourse=(HV_COURSE_META[sc.half]&&HV_COURSE_META[sc.half].label)||hn(sc.half); var scKey=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(scCourse):null; var scBg=RT_bgForKey(scKey,scCourse);
-    return '<div style="position:relative;overflow:hidden;padding:12px 0;border-bottom:1px solid rgba(27,46,32,.07);cursor:pointer;" onclick="RT_editFromDetail(\''+(sc.rtId||('hist-'+sc.id))+'\')">'+'<img src="'+scBg+'" alt="" loading="lazy" onerror="RT_imgErr(this)" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.07;z-index:0;pointer-events:none;">'+'<div style="position:relative;z-index:1;">'+
+    return '<div style="position:relative;overflow:hidden;border-radius:16px;padding:10px 10px;margin-bottom:4px;cursor:pointer;" onclick="RT_editFromDetail(\''+(sc.rtId||('hist-'+sc.id))+'\')">'+'<img src="'+scBg+'" alt="" loading="lazy" onerror="RT_imgErr(this)" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.12;z-index:0;pointer-events:none;">'+'<div style="position:relative;z-index:1;">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
       '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;">'+SC_label(sc)+'</div>'+
       '<div style="font-size:10px;color:'+col+';margin-top:1px;">'+hn(sc.half)+'</div></div>'+
@@ -2053,8 +2053,19 @@ function RT_markShotLabel(rd,c,pi){
 }
 function RT_markShot(pi){
  var rd=RT_round; if(!rd) return;
- if(typeof navigator==='undefined'||!navigator.geolocation){ RT_state.saveWarn='Geolocation nicht verf\u00fcgbar.'; RT_render(); return; }
  var c=rd.cur;
+ /* Anschlag (erste Markierung der Bahn = "A"): immer den hinterlegten Abschlag des Spielers
+    verwenden, nicht die am Tee oft ungenaue GPS-Position. Fehlt der Abschlag, faellt es auf GPS zurueck. */
+ if(RT_ballShotSuggest(rd,c,pi)===1){
+  var _tp=RT_grabberTeePoint(rd,c);
+  if(_tp){
+   RT_pinsOf(rd,pi,c).push({lat:_tp.lat,lng:_tp.lng,shot:1});
+   RT_scAdjust(pi,1);
+   rtSet(RT_ACT,rd); RT_syncActiveToSaved(); RT_render();
+   return;
+  }
+ }
+ if(typeof navigator==='undefined'||!navigator.geolocation){ RT_state.saveWarn='Geolocation nicht verf\u00fcgbar.'; RT_render(); return; }
  navigator.geolocation.getCurrentPosition(function(pos){
   var la=pos.coords.latitude, ln=pos.coords.longitude;
   var ref=RT_refFor(rd,c);
@@ -4495,7 +4506,7 @@ function RT_render(){
  else if(RT_state.screen==='services')r.innerHTML=RT_rServices();
  else r.innerHTML=RT_rHome();
 }
-function RT_go(s){if(s!=='play')RT_stopGeoWatch();RT_state.screen=s;RT_state.ask='';RT_render();var _ap=document.getElementById('app');if(_ap)_ap.scrollTop=0;}
+function RT_go(s){if(s!=='play')RT_stopGeoWatch();RT_state.screen=s;RT_state.ask='';try{if(s==='play')rtSet('golflog_screen_v1','play');else rtDel('golflog_screen_v1');}catch(e){}RT_render();var _ap=document.getElementById('app');if(_ap)_ap.scrollTop=0;}
 
 /* ============================================================
    M7 · Verbundene Dienste (Konto)
@@ -4823,9 +4834,9 @@ function RT_rCoursePick(){
    if(!RT_isPlayed(k))return;
   }else if(RT_hiddenPresets().indexOf(k)!==-1&&!RT_isPlayed(k))return;
   h+='<div class="rtc" style="padding:0;overflow:hidden;cursor:pointer;position:relative;" onclick="RT_pickCourse(\''+k+'\')">'+
-   (RT_isPlayed(k)?'':'<button class="rt-btn3" style="position:absolute;top:8px;right:8px;z-index:2;width:28px;height:28px;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;" onclick="event.stopPropagation();RT_removeCoursePick(\''+k+'\')">&#10005;</button>')+(pArr.length>2?'<div style="position:absolute;top:8px;left:8px;z-index:2;display:flex;gap:4px;">'+
-  (pIdx>0?'<button class="rt-btn3" style="width:28px;height:28px;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="event.stopPropagation();RT_platzMove(\''+k+'\',-1)"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+
-  (pIdx<pArr.length-2?'<button class="rt-btn3" style="width:28px;height:28px;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="event.stopPropagation();RT_platzMove(\''+k+'\',1)"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+
+   (RT_isPlayed(k)?'':'<button class="rt-btn3" style="position:absolute;top:8px;right:8px;z-index:2;width:28px;height:28px;min-height:28px;box-sizing:border-box;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;" onclick="event.stopPropagation();RT_removeCoursePick(\''+k+'\')">&#10005;</button>')+(pArr.length>2?'<div style="position:absolute;top:8px;left:8px;z-index:2;display:flex;gap:4px;">'+
+  (pIdx>0?'<button class="rt-btn3" style="width:28px;height:28px;min-height:28px;box-sizing:border-box;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="event.stopPropagation();RT_platzMove(\''+k+'\',-1)"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+
+  (pIdx<pArr.length-2?'<button class="rt-btn3" style="width:28px;height:28px;min-height:28px;box-sizing:border-box;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="event.stopPropagation();RT_platzMove(\''+k+'\',1)"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+
  '</div>':'')+
    (c.photoUrl?'<img src="'+c.photoUrl+'" loading="lazy" style="width:100%;height:150px;object-fit:cover;display:block;background:#EAF1E3;" onerror="RT_imgErr(this)">':'')+
    '<div style="padding:14px 14px 15px;">'+
@@ -8004,9 +8015,11 @@ function RT_SW_ensureStyle(){
  s.textContent=''
  +'.swwrap{padding:2px 0 20px;}'
  +'.swcard{background:#fff;border:1px solid #eef0ea;border-radius:16px;padding:14px;margin:12px 2px;box-shadow:0 1px 4px rgba(20,40,25,.05);}'
- +'.swb{border:none;border-radius:100px;background:#eef2ee;color:#143522;font-weight:700;font-family:inherit;font-size:13.5px;padding:10px 16px;cursor:pointer;min-height:44px;}'
- +'.swb.pri{background:#1F8A4D;color:#fff;}'
+ +'.swb{border:1px solid #cfe0d2;border-radius:10px;background:#fff;color:#143522;font-weight:600;font-family:inherit;font-size:13.5px;padding:11px 14px;cursor:pointer;min-height:44px;}'
+ +'.swb:active{transform:scale(.97);}'
+ +'.swb.pri{background:#1F8A4D;border-color:#1F8A4D;color:#fff;}'
  +'.swb.wide{width:100%;}'
+ +'.swb.cta{width:100%;border-radius:14px;padding:15px;font-size:15px;font-weight:800;}'
  +'.swrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}'
  +'.swhint{font-size:12px;color:#5d7060;line-height:1.5;margin-top:8px;}'
  +'.swseg{display:flex;gap:6px;background:#e9efe9;border-radius:13px;padding:4px;margin:10px 2px;}'
@@ -8016,16 +8029,25 @@ function RT_SW_ensureStyle(){
  +'.swvid video{display:block;width:100%;height:auto;background:#0b160f;}'
  +'.swchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#143522;}'
  +'.swdot{width:9px;height:9px;border-radius:50%;display:inline-block;}'
- +'.swtabs{display:flex;background:#2f6df6;border-radius:12px 12px 0 0;overflow:hidden;}'
- +'.swtabs button{flex:1;border:none;background:#2f6df6;color:#fff;font-family:inherit;font-weight:700;font-size:13.5px;padding:12px 4px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}'
- +'.swtabs button.on{background:#fff;color:#2f6df6;border-radius:10px 10px 0 0;}'
+ +'.swtabs{display:flex;background:#1F8A4D;border-radius:12px 12px 0 0;overflow:hidden;}'
+ +'.swtabs button{flex:1;border:none;background:#1F8A4D;color:#fff;font-family:inherit;font-weight:700;font-size:13.5px;padding:12px 4px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}'
+ +'.swtabs button.on{background:#fff;color:#1F8A4D;border-radius:10px 10px 0 0;}'
  +'.swtbl{width:100%;border-collapse:collapse;}'
  +'.swtbl th{text-align:left;font-size:12px;color:#8a9c8e;font-weight:700;padding:10px 6px;border-bottom:1px solid #eef0ea;}'
  +'.swtbl td{font-size:14px;padding:12px 6px;border-bottom:1px solid #f2f4ef;color:#3a4a3f;vertical-align:middle;}'
  +'.swkf{width:100%;border-radius:12px;display:block;background:#0b160f;}'
- +'.swkflab{position:absolute;left:8px;top:8px;background:#2f6df6;color:#fff;font-size:11px;font-weight:800;border-radius:8px;padding:3px 9px;}'
+ +'.swkflab{position:absolute;left:8px;top:8px;background:#1F8A4D;color:#fff;font-size:11px;font-weight:800;border-radius:8px;padding:3px 9px;}'
  +'.swprog{height:8px;border-radius:6px;background:#e6ece6;overflow:hidden;}'
- +'.swprog>i{display:block;height:100%;width:0;background:#1F8A4D;transition:width .2s;}';
+ +'.swprog>i{display:block;height:100%;width:0;background:#1F8A4D;transition:width .2s;}'
+ +'.swkf{cursor:pointer;}'
+ +'.sw-ov{position:fixed;inset:0;background:rgba(8,16,10,.86);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;}'
+ +'.sw-ov-in{max-width:520px;width:100%;}'
+ +'.sw-ov-img{max-width:100%;max-height:78vh;border-radius:14px;display:block;margin:0 auto;box-shadow:0 10px 40px rgba(0,0,0,.5);}'
+ +'.sw-ov-lab{text-align:center;color:#fff;font-weight:700;margin-top:12px;font-size:15px;}'
+ +'.sw-sheet{background:#fff;border-radius:18px;padding:18px;max-height:86vh;overflow:auto;}'
+ +'.sw-sheet-thumb{width:60px;height:80px;object-fit:cover;border-radius:10px;flex:none;}'
+ +'.sw-note{width:100%;box-sizing:border-box;border:1px solid #e0e6df;border-radius:10px;padding:10px;font-family:inherit;font-size:14px;min-height:70px;margin-top:6px;resize:vertical;}'
+ +'.sw-sheet-x{width:100%;margin-top:10px;background:none;border:none;color:#8a9c8e;font-family:inherit;font-weight:700;font-size:14px;padding:8px;cursor:pointer;}';
  document.head.appendChild(s);
 }
 
@@ -8050,20 +8072,21 @@ function RT_SW_render(){
        +'<div style="font-size:14px;color:#5d7060;line-height:1.5;">Schwung-Video importieren oder aufnehmen,<br>dann „Analysieren" tippen.</div>'
      +'</div>'
    +'</div>'
-   +'<div class="swrow">'
-     +'<label class="swb pri" style="display:inline-flex;align-items:center;">Video importieren'
+   +'<div class="swrow" style="flex-wrap:nowrap;gap:10px;">'
+     +'<label class="swb pri" style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;">Video importieren'
        +'<input type="file" accept="video/*" style="display:none;" onchange="RT_SW_pickFile(this)"></label>'
-     +'<button class="swb" id="sw-rec" onclick="RT_SW_toggleRec()">● Aufnehmen</button>'
+     +'<button class="swb" id="sw-rec" onclick="RT_SW_toggleRec()" style="flex:1;">● Aufnehmen</button>'
    +'</div>'
-   +'<div class="swrow">'
-     +'<button class="swb" id="sw-hand" onclick="RT_SW_toggleHand()">'+handLbl+'</button>'
-     +'<div class="swseg" style="flex:1;margin:0;min-width:180px;">'
-       +'<button id="sw-ang-fo" class="'+(RT_SW.angle==='fo'?'on':'')+'" onclick="RT_SW_setAngle(\'fo\')">Von vorne</button>'
-       +'<button id="sw-ang-dtl" class="'+(RT_SW.angle==='dtl'?'on':'')+'" onclick="RT_SW_setAngle(\'dtl\')">Von der Seite</button>'
-     +'</div>'
+   +'<div class="swseg" style="margin:10px 2px 0;">'
+     +'<button id="sw-hand-r" class="'+(RT_SW.hand==='R'?'on':'')+'" onclick="RT_SW_setHand(\'R\')">Rechtshänder</button>'
+     +'<button id="sw-hand-l" class="'+(RT_SW.hand==='L'?'on':'')+'" onclick="RT_SW_setHand(\'L\')">Linkshänder</button>'
+   +'</div>'
+   +'<div class="swseg" style="margin:8px 2px 0;">'
+     +'<button id="sw-ang-fo" class="'+(RT_SW.angle==='fo'?'on':'')+'" onclick="RT_SW_setAngle(\'fo\')">Von vorne</button>'
+     +'<button id="sw-ang-dtl" class="'+(RT_SW.angle==='dtl'?'on':'')+'" onclick="RT_SW_setAngle(\'dtl\')">Von der Seite</button>'
    +'</div>'
    +'<div class="swrow" id="sw-analyze-row" style="display:none;">'
-     +'<button class="swb pri wide" id="sw-analyze" onclick="RT_SW_analyze()">Schwung analysieren</button>'
+     +'<button class="swb pri cta" id="sw-analyze" onclick="RT_SW_analyze()">Schwung analysieren</button>'
    +'</div>'
    +'<div id="sw-progress" style="display:none;margin-top:12px;">'
      +'<div class="swhint" id="sw-progress-lab" style="margin-top:0;">KI wird geladen…</div>'
@@ -8091,6 +8114,7 @@ function RT_SW_bind(){
 }
 function RT_SW_toggleHand(){ RT_SW.hand=(RT_SW.hand==='R')?'L':'R'; var b=document.getElementById('sw-hand'); if(b)b.textContent=(RT_SW.hand==='R')?'Rechtshänder':'Linkshänder'; }
 function RT_SW_setAngle(a){ RT_SW.angle=a; var f=document.getElementById('sw-ang-fo'),d=document.getElementById('sw-ang-dtl'); if(f)f.className=(a==='fo')?'on':''; if(d)d.className=(a==='dtl')?'on':''; }
+function RT_SW_setHand(hnd){ RT_SW.hand=hnd; var r=document.getElementById('sw-hand-r'),l=document.getElementById('sw-hand-l'); if(r)r.className=(hnd==='R')?'on':''; if(l)l.className=(hnd==='L')?'on':''; }
 function RT_SW_pickFile(inp){
  var f=inp&&inp.files&&inp.files[0];if(!f)return;
  if(RT_SW.url){try{URL.revokeObjectURL(RT_SW.url);}catch(e){}}
@@ -8337,7 +8361,7 @@ function RT_SW_renderResult(res){
  var pct=res.total?res.passed/res.total:0; var deg=Math.round(pct*360);
  var improveCount=res.total-res.passed;
  var ring='<div style="position:relative;width:96px;height:96px;flex:none;">'
-   +'<div style="width:96px;height:96px;border-radius:50%;background:conic-gradient(#2f6df6 '+deg+'deg,#e6ecf7 0);display:flex;align-items:center;justify-content:center;">'
+   +'<div style="width:96px;height:96px;border-radius:50%;background:conic-gradient(#1F8A4D '+deg+'deg,#e3efe6 0);display:flex;align-items:center;justify-content:center;">'
    +'<div style="width:74px;height:74px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;">'
    +'<div style="font-size:22px;font-weight:800;color:#143522;line-height:1;">'+res.passed+'/'+res.total+'</div>'
    +'<div style="font-size:10px;font-weight:700;color:#8a9c8e;letter-spacing:.5px;">BESTANDEN</div>'
@@ -8355,7 +8379,7 @@ function RT_SW_renderResult(res){
    topCard='<div class="swcard">'
     +'<div style="text-align:center;font-size:14px;color:#3a4a3f;">Deine <b style="color:#F0483E;">Top-Priorität</b></div>'
     +'<div style="text-align:center;font-size:20px;font-weight:800;color:#143522;margin:2px 0 10px;text-transform:uppercase;letter-spacing:.3px;">'+c.t+'</div>'
-    +(kfImg?'<div style="position:relative;"><img class="swkf" src="'+kfImg+'"><span class="swkflab">'+RT_SW_phaseLabel(c.ph)+'</span></div>':'')
+    +(kfImg?'<div style="position:relative;"><img class="swkf" src="'+kfImg+'" onclick="RT_SW_lightbox(this.src,\''+RT_SW_phaseLabel(c.ph)+'\')"><span class="swkflab">'+RT_SW_phaseLabel(c.ph)+'</span></div>':'')
     +'<div style="margin-top:12px;font-weight:800;color:#143522;">Warum das zählt</div>'
     +'<div class="swhint" style="margin-top:4px;">'+c.why+'</div>'
     +'<div style="margin-top:12px;font-weight:800;color:#143522;">Dein Drill</div>'
@@ -8384,7 +8408,7 @@ function RT_SW_renderResult(res){
    +'</tr>';
  }).join('');
  var detail='<div class="swcard" id="sw-detailbox" style="padding:0;overflow:hidden;">'
-   +'<div style="display:flex;align-items:center;justify-content:space-between;background:#2f6df6;color:#fff;padding:12px 14px;">'
+   +'<div style="display:flex;align-items:center;justify-content:space-between;background:#1F8A4D;color:#fff;padding:12px 14px;">'
      +'<div style="font-weight:800;font-size:15px;">Analyse-Details</div>'
      +'<div style="display:flex;gap:12px;font-size:12px;font-weight:700;"><span class="swchip" style="color:#fff;">'+RT_SW_dot(true)+'Bestanden</span><span class="swchip" style="color:#fff;">'+RT_SW_dot(false)+'Verbessern</span></div>'
    +'</div>'
@@ -8395,7 +8419,7 @@ function RT_SW_renderResult(res){
  // Schlüsselbilder-Filmstreifen
  var strip='<div class="swcard"><div style="font-weight:800;color:#143522;margin-bottom:8px;">Schlüsselbilder mit Skelett</div>'
    +'<div style="display:flex;gap:8px;">'
-   +['address','top','impact'].map(function(k){ var lbl=k==='address'?'Adresse':(k==='top'?'Top':'Treffer'); return '<div style="flex:1;position:relative;">'+(res.kf[k]?'<img class="swkf" src="'+res.kf[k]+'"><span class="swkflab" style="font-size:10px;padding:2px 6px;">'+lbl+'</span>':'<div style="aspect-ratio:9/16;background:#0b160f;border-radius:12px;"></div>')+'</div>'; }).join('')
+   +['address','top','impact'].map(function(k){ var lbl=k==='address'?'Adresse':(k==='top'?'Top':'Treffer'); return '<div style="flex:1;position:relative;">'+(res.kf[k]?'<img class="swkf" src="'+res.kf[k]+'" onclick="RT_SW_lightbox(this.src,\''+lbl+'\')"><span class="swkflab" style="font-size:10px;padding:2px 6px;">'+lbl+'</span>':'<div style="aspect-ratio:9/16;background:#0b160f;border-radius:12px;"></div>')+'</div>'; }).join('')
    +'</div><div class="swhint">Die KI hat Adresse, den Punkt der höchsten Hände (Top) und den Treffmoment automatisch bestimmt.</div></div>';
 
  rc.innerHTML=head+topCard+detail+strip;
@@ -8404,23 +8428,71 @@ function RT_SW_renderResult(res){
 /* ---------- Historie ---------- */
 function RT_SW_histData(){ var a=rtGet(RT_SW_HIST_KEY); return Array.isArray(a)?a:[]; }
 function RT_SW_saveHist(res){
- var slim={ts:res.ts,angle:res.angle,passed:res.passed,total:res.total,topId:res.top?res.top.id:null,thumb:res.kf.impact||res.kf.top||res.kf.address||null};
+ var slim={ts:res.ts,angle:res.angle,passed:res.passed,total:res.total,topId:res.top?res.top.id:null,thumb:res.kf.impact||res.kf.top||res.kf.address||null,note:'',metrics:(res.metrics||[]).map(function(m){return {title:m.title,value:m.value,pass:m.pass,phase:m.phase,sev:m.sev};})};
  var a=RT_SW_histData(); a.unshift(slim); if(a.length>12)a=a.slice(0,12); rtSet(RT_SW_HIST_KEY,a);
 }
 function RT_SW_renderHist(){
  var box=document.getElementById('sw-hist'); if(!box)return;
  var a=RT_SW_histData(); if(!a.length){ box.style.display='none'; return; }
  box.style.display='block';
- var rows=a.map(function(e){ var d=new Date(e.ts); var dd=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.';
+ var rows=a.map(function(e,i){ var d=new Date(e.ts); var dd=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.';
    var tt=e.topId&&RT_SW_COACH[e.topId]?RT_SW_COACH[e.topId].t.replace(/\s*\(.*\)/,''):'–';
-   return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #f2f4ef;">'
+   return '<div onclick="RT_SW_histOpen('+i+')" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #f2f4ef;cursor:pointer;">'
      +(e.thumb?'<img src="'+e.thumb+'" style="width:38px;height:50px;object-fit:cover;border-radius:8px;flex:none;">':'')
      +'<div style="flex:1;min-width:0;"><div style="font-weight:700;color:#143522;font-size:13px;">'+e.passed+'/'+e.total+' bestanden · '+(e.angle==='fo'?'vorne':'Seite')+'</div>'
-     +'<div style="font-size:11px;color:#8a9c8e;">'+dd+' · Fokus: '+tt+'</div></div></div>';
+     +'<div style="font-size:11px;color:#8a9c8e;">'+dd+' · Fokus: '+tt+(e.note?' · 📝':'')+'</div></div>'
+     +'<span style="color:#c2cdc4;font-size:20px;flex:none;">›</span></div>';
  }).join('');
  box.innerHTML='<div style="font-weight:800;color:#143522;">Verlauf</div>'+rows;
 }
 
+function RT_SW_lightbox(src,label){
+ if(!src)return;
+ var o=document.createElement('div'); o.className='sw-ov';
+ var inner=document.createElement('div'); inner.className='sw-ov-in';
+ var img=document.createElement('img'); img.src=src; img.className='sw-ov-img';
+ inner.appendChild(img);
+ if(label){ var l=document.createElement('div'); l.className='sw-ov-lab'; l.textContent=label; inner.appendChild(l); }
+ o.appendChild(inner);
+ o.addEventListener('click',function(){ try{document.body.removeChild(o);}catch(e){} });
+ inner.addEventListener('click',function(e){ e.stopPropagation(); });
+ document.body.appendChild(o);
+}
+function RT_SW_histClose(){ var o=document.getElementById('sw-histmodal'); if(o){ try{document.body.removeChild(o);}catch(e){} } }
+function RT_SW_histSaveNote(i){ var a=RT_SW_histData(); if(!a[i])return; var t=document.getElementById('sw-hist-note'); a[i].note=t?t.value:''; rtSet(RT_SW_HIST_KEY,a); RT_SW_histClose(); RT_SW_renderHist(); RT_SW_toast('Notiz gespeichert'); }
+function RT_SW_histDelete(i){ var a=RT_SW_histData(); if(!a[i])return; a.splice(i,1); rtSet(RT_SW_HIST_KEY,a); RT_SW_histClose(); RT_SW_renderHist(); RT_SW_toast('Analyse gelöscht'); }
+function RT_SW_histOpen(i){
+ var a=RT_SW_histData(); var e=a[i]; if(!e)return;
+ var d=new Date(e.ts); var dd=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear();
+ var tt=e.topId&&RT_SW_COACH[e.topId]?RT_SW_COACH[e.topId].t.replace(/\s*\(.*\)/,''):'–';
+ var metricsHtml='';
+ if(e.metrics&&e.metrics.length){
+   var mr=e.metrics.slice().sort(function(x,y){ if(x.pass!==y.pass)return x.pass?1:-1; return (y.sev||0)-(x.sev||0); });
+   metricsHtml='<table class="swtbl" style="margin-top:10px;"><tbody>'+mr.map(function(m){ return '<tr><td>'+m.title.replace(/\s*\((Set-up|Rückschwung|Treffmoment)\)/,'')+'<div style="font-size:11px;color:#a7b3aa;">'+m.value+'</div></td><td style="width:104px;font-weight:800;color:'+(m.pass?'#1FB25A':'#F0483E')+';">'+(m.pass?'Bestanden':'Verbessern')+'</td></tr>'; }).join('')+'</tbody></table>';
+ }
+ var o=document.createElement('div'); o.className='sw-ov'; o.id='sw-histmodal';
+ var inner=document.createElement('div'); inner.className='sw-ov-in sw-sheet';
+ inner.innerHTML=
+   '<div style="display:flex;align-items:center;gap:12px;">'
+   +(e.thumb?'<img src="'+e.thumb+'" class="sw-sheet-thumb" onclick="RT_SW_lightbox(this.src,\'Schlüsselbild\')">':'')
+   +'<div style="flex:1;min-width:0;">'
+     +'<div style="font-weight:800;color:#143522;font-size:17px;">'+e.passed+'/'+e.total+' bestanden</div>'
+     +'<div style="font-size:12px;color:#8a9c8e;margin-top:2px;">'+dd+' · '+(e.angle==='fo'?'Von vorne':'Von der Seite')+'</div>'
+     +'<div style="font-size:13px;color:#3a4a3f;margin-top:4px;">Fokus: <b>'+tt+'</b></div>'
+   +'</div></div>'
+   +metricsHtml
+   +'<div style="margin-top:14px;font-weight:800;color:#143522;font-size:13px;">Notiz</div>'
+   +'<textarea id="sw-hist-note" class="sw-note" placeholder="Eigene Notiz zu dieser Analyse…">'+(e.note?rtEsc(e.note):'')+'</textarea>'
+   +'<div style="display:flex;gap:8px;margin-top:12px;">'
+     +'<button class="swb" style="flex:1;color:#c0392b;border-color:#e3c4c0;" onclick="RT_SW_histDelete('+i+')">Löschen</button>'
+     +'<button class="swb pri" style="flex:1;" onclick="RT_SW_histSaveNote('+i+')">Notiz speichern</button>'
+   +'</div>'
+   +'<button class="sw-sheet-x" onclick="RT_SW_histClose()">Schließen</button>';
+ o.appendChild(inner);
+ o.addEventListener('click',function(){ RT_SW_histClose(); });
+ inner.addEventListener('click',function(ev){ ev.stopPropagation(); });
+ document.body.appendChild(o);
+}
 function RT_SW_toast(msg){ var t=document.createElement('div'); t.textContent=msg; t.style.cssText='position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#12261b;color:#fff;padding:10px 16px;border-radius:100px;font-size:13px;z-index:99999;box-shadow:0 4px 14px rgba(0,0,0,.35);'; document.body.appendChild(t); setTimeout(function(){ try{document.body.removeChild(t);}catch(e){} },2200); }
 
 /* ============================================================================
@@ -8452,6 +8524,12 @@ RT_hydrateCustomCourses();
    abgeschlossen (liegt sicher in seinem Account) - die Funktion wird daher nicht mehr
    automatisch aufgerufen. */
 RT_hydrateHistoricalData();
+/* Nach Reload/versehentlichem Weg-Wischen zurueck in die laufende Runde, damit keine
+   Eingaben "verloren" wirken und die aktive Runde nicht versehentlich ueberschrieben wird. */
+try{ if(rtGet('golflog_screen_v1')==='play' && RT_round && !RT_round.done){ RT_state.screen='play'; } }catch(e){}
+/* Hochformat sperren, wo die Plattform es unterstuetzt (Android/PWA); iOS-Safari ignoriert das
+   -> dort greift die CSS-Hochformat-Sperre (#orient-lock in app.html). */
+try{ if(window.screen && screen.orientation && screen.orientation.lock){ screen.orientation.lock('portrait').catch(function(){}); } }catch(e){}
 showTab('runde');
 sbInit();
 AG_render();
@@ -8472,3 +8550,9 @@ setTimeout(adjustFooterPadding,300);
 
 /* Service Worker (M0.5): App-Shell offline, HTML network-first. */
 if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }
+/* Sicherheitsnetz: aktive Runde vor dem Verlassen/Ausblenden sichern (iOS killt Tabs oft ohne
+   beforeunload - pagehide/visibilitychange sind zuverlaessiger). Jeder Klick speichert bereits,
+   das hier faengt zusaetzlich In-Memory-Zwischenstaende (z.B. laufendes Marker-Ziehen) ab. */
+function RT_flushActive(){ try{ if(RT_round && !RT_round.done) rtSet(RT_ACT,RT_round); }catch(e){} }
+window.addEventListener('pagehide',RT_flushActive);
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') RT_flushActive(); });

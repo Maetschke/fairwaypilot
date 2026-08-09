@@ -2229,8 +2229,8 @@ function RT_renderHoleFull(url,title){
  }
  if(RT_holeFullMapInst){ try{RT_holeFullMapInst.remove();}catch(e){} RT_holeFullMapInst=null; }
  var _ni=rd?rd.cur:0, _nn=(rd&&rd.nums)?rd.nums.length:0;
- function _navBtn(dir,dis,glyph){ return '<button onclick="RT_holeFullNav('+dir+')" '+(dis?'disabled ':'')+'style="width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid #DCE7D4;font-size:22px;line-height:1;color:'+(dis?'#C2CFC0':'#3C5546')+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(20,53,34,.18);">'+glyph+'</button>'; }
- var navBar=rd?('<div style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);display:flex;align-items:center;gap:16px;z-index:3;">'+_navBtn(-1,_ni<=0,'\u2039')+_navBtn(1,_ni>=_nn-1,'\u203a')+'</div>'):'';
+ function _navBtn(dir,dis,glyph){ return '<button onclick="RT_holeFullNav('+dir+')" '+(dis?'disabled ':'')+'style="width:40px;height:40px;border-radius:50%;background:#fff;border:1.5px solid #DCE7D4;font-size:20px;line-height:1;color:'+(dis?'#C2CFC0':'#3C5546')+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(20,53,34,.18);">'+glyph+'</button>'; }
+ var navBar=rd?('<div style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 40px);display:flex;align-items:center;gap:16px;z-index:3;">'+_navBtn(-1,_ni<=0,'\u2039')+_navBtn(1,_ni>=_nn-1,'\u203a')+'</div>'):'';
  el.innerHTML='<button class="rt-holefull-close" onclick="RT_closeHoleFull()">&#10005;</button>'+
   toggleBtn+
   '<div class="rt-holefull-title">'+rtEsc(title)+'</div>'+

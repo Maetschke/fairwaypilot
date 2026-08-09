@@ -4285,6 +4285,7 @@ function RT_toggleWind(){
  if(ov){ ov.innerHTML=RT_windOverlayContent(rd,rd.cur); ov.style.display=on?'flex':'none'; }
 }
 function RT_clearFullGrabber(){
+ if(RT_state.simClick){ try{ if(RT_holeFullMapInst) RT_holeFullMapInst.off('click',RT_state.simClick); }catch(e){} RT_state.simClick=null; }
  if(RT_state.grabLayer){ try{RT_state.grabLayer.remove();}catch(e){} RT_state.grabLayer=null; }
  var map=RT_holeFullMapInst;
  if(map){
@@ -4424,6 +4425,29 @@ function RT_setupFullGrabber(){
   gEl.addEventListener('pointercancel',endG);
  }
  upd();
+ // ===== Simulierte Balllagen auf der weissen Linie (Touch: hinzufuegen/entfernen, ziehen entlang der Linie) =====
+ if(pin&&total>0){
+  var spKey=RT_holeMapKey(rd,c);
+  RT_state.simPts=RT_state.simPts||{};
+  if(!RT_state.simPts[spKey]||!RT_state.simPts[spKey].length) RT_state.simPts[spKey]=[0.5];
+  var simMarkers=[];
+  var COSs=Math.cos(center.lat*Math.PI/180);
+  function simLL(t){ return {lat:center.lat+(pin.lat-center.lat)*t,lng:center.lng+(pin.lng-center.lng)*t}; }
+  function simProj(ll){ var vx=(pin.lng-center.lng)*111320*COSs, vy=(pin.lat-center.lat)*111320; var wx=(ll.lng-center.lng)*111320*COSs, wy=(ll.lat-center.lat)*111320; var l2=vx*vx+vy*vy||1e-9; var t=(wx*vx+wy*vy)/l2; var qx=vx*t,qy=vy*t; return {t:t,perp:Math.hypot(wx-qx,wy-qy)}; }
+  function simUnit(m){ return (RT_distUnit()==='yd')?Math.round(m*1.09361):Math.round(m); }
+  function simLbl(t){ var dPin=Math.max(0,(1-t)*total), dTee=Math.max(0,t*total); return RT_grabNum(dPin)+'<span style="font-size:9px;font-weight:600;color:#9fb3a4;margin-left:5px;">'+simUnit(dTee)+' ab Tee</span>'; }
+  function simIcon(t){ return L.divIcon({className:'',iconSize:[44,44],iconAnchor:[22,22],html:'<div style="width:44px;height:44px;transform:rotate('+(-rotF)+'deg);position:relative;">'+'<div style="position:absolute;left:14px;top:14px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #12261B;box-shadow:0 1px 4px rgba(0,0,0,.55);"></div>'+'<div class="simlbl" style="position:absolute;left:50%;top:-6px;transform:translateX(-50%);background:#12261B;color:#fff;font-size:11.5px;font-weight:800;border-radius:8px;padding:2px 7px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.5);">'+simLbl(t)+'</div>'+'</div>'}); }
+  function simWire(m,idx){ var e2=m.getElement(); if(!e2) return; e2.style.touchAction='none'; e2.style.cursor='grab'; var stt=null,mv=false,sc=null;
+   e2.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); try{e2.setPointerCapture(ev.pointerId);}catch(e){} stt=true; mv=false; sc={x:ev.clientX,y:ev.clientY}; });
+   e2.addEventListener('pointermove',function(ev){ if(!stt) return; ev.preventDefault(); ev.stopPropagation(); if(Math.abs(ev.clientX-sc.x)+Math.abs(ev.clientY-sc.y)>5) mv=true; var p=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); if(!p) return; var pr=simProj(p); var t=Math.max(0,Math.min(1,pr.t)); RT_state.simPts[spKey][idx]=t; var ll=simLL(t); m.setLatLng([ll.lat,ll.lng]); var lab=e2.querySelector('.simlbl'); if(lab) lab.innerHTML=simLbl(t); });
+   function endS(ev){ if(!stt) return; stt=null; ev.stopPropagation(); if(!mv){ var arr=RT_state.simPts[spKey]; if(arr.length>1){ arr.splice(idx,1); simDraw(); } } }
+   e2.addEventListener('pointerup',endS); e2.addEventListener('pointercancel',endS);
+  }
+  function simDraw(){ simMarkers.forEach(function(m){ try{layer.removeLayer(m);}catch(e){} }); simMarkers=[]; var arr=RT_state.simPts[spKey]; arr.forEach(function(t,idx){ var ll=simLL(t); var m=L.marker([ll.lat,ll.lng],{pane:'rtgrab',icon:simIcon(t)}).addTo(layer); simMarkers.push(m); simWire(m,idx); }); }
+  function simClick(e){ if(RT_suppressMapClick&&RT_suppressMapClick['full']) return; if(RT_fullSelPin!=null&&RT_fullSelPin!==undefined) return; var oe=e.originalEvent, ll; if(oe&&typeof oe.clientX==='number'){ ll=RT_correctedLatLng(map,el,rotF,oe.clientX,oe.clientY); } else ll=e.latlng; if(!ll) return; var pr=simProj(ll); if(pr.perp>26*RT_grabMpp()) return; var t=Math.max(0,Math.min(1,pr.t)); var arr=RT_state.simPts[spKey]; for(var i=0;i<arr.length;i++){ if(Math.abs(arr[i]-t)*total<8) return; } arr.push(t); simDraw(); }
+  RT_state.simClick=simClick; map.on('click',simClick);
+  simDraw();
+ }
  /* Groesse und Renderer-Ursprung nach dem Zeichnen erzwingen: laeuft der Aufbau vor dem
     invalidateSize() der Karte, kennt der Renderer noch die alte Containergroesse. */
  setTimeout(function(){ try{ map.invalidateSize(); map.fire('moveend'); }catch(e){} },0);

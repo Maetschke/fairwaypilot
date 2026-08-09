@@ -2328,7 +2328,7 @@ async function RT_initHoleFullMap(){
  el.style.transform='rotate('+rotF+'deg)';
  RT_sizeRotatedMap(el,rotF);
  var map=L.map('hole-full-map',{zoomControl:false,attributionControl:true,zoomSnap:0.1}).setView([basePos.lat,basePos.lng],basePos.zoom);
- L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,noWrap:true,errorTileUrl:RT_TRANSPX,attribution:'Tiles \u00a9 Esri'}).addTo(map);
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,maxNativeZoom:19,noWrap:true,errorTileUrl:RT_TRANSPX,attribution:'Tiles \u00a9 Esri'}).addTo(map);
  RT_holeFullMapInst=map;
  /* Leaflets eigenes Dragging MUSS hier ausgeschaltet werden: die Vollbildkarte laeuft ohne
     Kartensperre (RT_applyMapLock gilt nur fuer die kleinen Karten), sonst wuerde Leaflet
@@ -2367,6 +2367,7 @@ async function RT_initHoleFullMap(){
   try{map.invalidateSize();}catch(e){}
   if(RT_state.grabberOn&&RT_state.grabberOn[RT_holeMapKey(rd,c)]) RT_setupFullGrabber();
   if(RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,c)]){ RT_radarBuildOverlay(); RT_radarAttach(map); RT_wxFetch(false); }
+  if(RT_state.gvOn&&RT_state.gvOn[RT_holeMapKey(rd,c)]){ RT_gvBuildOverlay(); RT_gvAttach(); }
  },80);
 }
 /* Die Birdiekarten-Quellbilder liegen im Querformat vor und werden in der Vollbild-
@@ -3696,9 +3697,9 @@ function RT_radarToggle(){
 }
 /* ===== Ende Wetterradar ===== */
 
+function RT_hvActiveCss(active){ return active?'background:rgba(31,138,77,.24);box-shadow:0 0 0 3px #1F8A4D,0 3px 9px rgba(0,0,0,.5);transform:scale(1.06);':'background:transparent;box-shadow:none;transform:scale(1);'; }
 function RT_hvBtn(name,label,onclick,active,id){
- var op=id?(active?'1':'0.5'):'1';
- return '<button '+(id?('id="'+id+'" '):'')+'onclick="'+onclick+'" aria-label="'+label+'" style="pointer-events:auto;border:none;background:transparent;padding:0;cursor:pointer;display:block;opacity:'+op+';"><img src="/hv/'+name+'.png" alt="'+label+'" style="width:50px;height:50px;display:block;filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));"></button>';
+ return '<button '+(id?('id="'+id+'" '):'')+'onclick="'+onclick+'" aria-label="'+label+'" style="pointer-events:auto;border:none;padding:0;cursor:pointer;display:block;border-radius:14px;transition:box-shadow .16s ease,transform .16s ease,background .16s ease;'+RT_hvActiveCss(active)+'"><img src="/hv/'+name+'.png" alt="'+label+'" style="width:50px;height:50px;display:block;border-radius:12px;filter:drop-shadow(0 2px 5px rgba(0,0,0,.5));"></button>';
 }
 function RT_hvToast(msg){
  var ex=document.getElementById('rt-hv-toast'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
@@ -3720,12 +3721,12 @@ function RT_hvPanel(title,closeFn,extra){
     +'<div style="font-size:15px;font-weight:800;color:#fff;">'+title+'</div>'+x
   +'</div>'+(extra||'')+'</div>';
 }
-function RT_tileOp(id,on){ var b=document.getElementById(id); if(b) b.style.opacity=on?'1':'0.5'; }
+function RT_tileOp(id,on){ var b=document.getElementById(id); if(!b) return; if(on){ b.style.background='rgba(31,138,77,.24)'; b.style.boxShadow='0 0 0 3px #1F8A4D,0 3px 9px rgba(0,0,0,.5)'; b.style.transform='scale(1.06)'; } else { b.style.background='transparent'; b.style.boxShadow='none'; b.style.transform='scale(1)'; } }
 function RT_ovCloseOthers(keep){
  if(keep!=='sp'&&document.getElementById('rt-sp')) RT_closeShotPlan();
  if(keep!=='fr'&&document.getElementById('rt-fr')) RT_closeFlagRadar();
  if(keep!=='dki'&&document.getElementById('rt-dki')) RT_closeDistKI();
- if(keep!=='gv'&&document.getElementById('rt-gv')) RT_closeGreenView();
+ if(keep!=='gv'){ var _rg=RT_round; if(_rg&&RT_state.gvOn&&RT_state.gvOn[RT_holeMapKey(_rg,_rg.cur)]) RT_closeGreenView(); }
  if(keep!=='radar'){ var rd=RT_round; if(rd&&RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,rd.cur)]) RT_toggleRadarHole(); }
 }
 var RT_SP={layer:null};
@@ -4078,7 +4079,7 @@ function RT_closeDistKI(){
    Datenweg: Worker /api/dgm (WGS84→UTM32, WCS-GeoTIFF) → geotiff.js (CDN) parst im Client.
    Ehrlich: 1-m-DGM zeigt das Geländerelief, KEINE cm-genaue Grün-Vermessung. Nur NRW-Plätze.
    ============================================================ */
-var RT_GV={map:null,pin:null,ball:null,size:64};
+var RT_GV={relief:null,pin:null,ball:null,center:null,size:64};
 
 function RT_gvPinBall(){
  var rd=RT_round; var ref=rd?RT_refFor(rd,rd.cur):null;
@@ -4086,54 +4087,74 @@ function RT_gvPinBall(){
  var ball=null; if(rd){ var lb=RT_lastBallPos(rd,rd.cur); if(lb&&lb.lat!=null) ball={lat:lb.lat,lng:lb.lng}; }
  return {pin:pin,ball:ball};
 }
+/* Ausdehnung der KOMPLETTEN Bahn (Abschlag..Grün + markierte Lagen) als quadratischer
+   Ausschnitt; das Relief deckt damit die ganze Bahn ab, nicht nur das Grün. */
+function RT_gvHoleExtent(rd,c){
+ var pts=RT_holePoints(rd,c);
+ if(!pts.length) return null;
+ var minLa=90,maxLa=-90,minLo=180,maxLo=-180;
+ pts.forEach(function(p){ if(p[0]<minLa)minLa=p[0]; if(p[0]>maxLa)maxLa=p[0]; if(p[1]<minLo)minLo=p[1]; if(p[1]>maxLo)maxLo=p[1]; });
+ var clat=(minLa+maxLa)/2, clng=(minLo+maxLo)/2;
+ var latM=(maxLa-minLa)*111320, lngM=(maxLo-minLo)*111320*Math.cos(clat*Math.PI/180);
+ var size=Math.max(latM,lngM)*1.25;
+ size=Math.max(80,Math.min(480,size));
+ return {clat:clat,clng:clng,size:Math.round(size)};
+}
+function RT_gvActive(){ var rd=RT_round; return !!(rd&&RT_state.gvOn&&RT_state.gvOn[RT_holeMapKey(rd,rd.cur)]); }
 function RT_openGreenView(){
- var host=document.getElementById('hole-full'); if(!host) return;
- if(document.getElementById('rt-gv')){ RT_closeGreenView(); return; }
- RT_ovCloseOthers('gv'); RT_tileOp('rt-tile-gv',true);
- var pb=RT_gvPinBall();
- var o=document.createElement('div'); o.id='rt-gv';
- o.style.cssText='position:absolute;inset:0;z-index:2600;background:#0b160f;display:flex;flex-direction:column;';
- o.innerHTML=RT_hvPanel('Grün-Ansicht','RT_closeGreenView()')
-  +'<div style="position:relative;flex:1;min-height:0;"><div id="gv-map" style="position:absolute;inset:0;background:#12261B;"></div>'
-  +'<div id="gv-status" style="position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:600;background:rgba(8,20,13,.82);color:#fff;font-size:12px;border-radius:100px;padding:6px 12px;pointer-events:none;">Höhenmodell wird geladen…</div></div>'
-  +'<div id="gv-card" style="background:#0e1e15;padding:12px 15px calc(env(safe-area-inset-bottom,0px) + 14px);box-shadow:0 -3px 12px rgba(0,0,0,.4);"></div>';
- host.appendChild(o);
- RT_GV.pin=pb.pin; RT_GV.ball=pb.ball;
- if(!pb.pin){ RT_gvStatus('Keine Fahnenposition'); RT_gvCard('<div style="color:#cfe0d4;font-size:13px;">Für diese Bahn ist keine Fahnenposition hinterlegt – die Grün-Ansicht braucht sie als Mittelpunkt.</div>'); return; }
- setTimeout(RT_gvInit,60);
+ var rd=RT_round; if(!rd) return;
+ var key=RT_holeMapKey(rd,rd.cur);
+ RT_state.gvOn=RT_state.gvOn||{};
+ if(RT_state.gvOn[key]){ RT_state.gvOn[key]=false; RT_tileOp('rt-tile-gv',false); RT_gvDetach(); RT_gvRemoveOverlay(); return; }
+ RT_ovCloseOthers('gv'); RT_state.gvOn[key]=true; RT_tileOp('rt-tile-gv',true);
+ RT_gvBuildOverlay(); RT_gvAttach();
 }
 function RT_closeGreenView(){
- RT_tileOp('rt-tile-gv',false);
- if(RT_GV.map){ try{RT_GV.map.remove();}catch(e){} RT_GV.map=null; }
- var o=document.getElementById('rt-gv'); if(o&&o.parentNode) o.parentNode.removeChild(o);
+ var rd=RT_round; if(rd&&RT_state.gvOn){ RT_state.gvOn[RT_holeMapKey(rd,rd.cur)]=false; }
+ RT_tileOp('rt-tile-gv',false); RT_gvDetach(); RT_gvRemoveOverlay();
 }
+function RT_gvBuildOverlay(){
+ var host=document.getElementById('hole-full'); if(!host) return;
+ var ex=document.getElementById('rt-gv-ui'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
+ var o=document.createElement('div'); o.id='rt-gv-ui';
+ o.style.cssText='position:absolute;inset:0;z-index:2400;pointer-events:none;';
+ o.innerHTML=RT_hvPanel('Grün-Ansicht','')
+  +'<div id="gv-status" style="position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 70px);pointer-events:none;background:rgba(8,20,13,.82);color:#fff;font-size:12px;border-radius:100px;padding:6px 12px;">Höhenmodell wird geladen…</div>'
+  +'<div id="gv-card" style="position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);pointer-events:auto;background:rgba(10,22,15,.95);border-radius:18px;padding:11px 14px;box-shadow:0 5px 16px rgba(0,0,0,.55);display:none;"></div>';
+ host.appendChild(o);
+}
+function RT_gvRemoveOverlay(){ var o=document.getElementById('rt-gv-ui'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
 function RT_gvStatus(t){ var s=document.getElementById('gv-status'); if(s){ s.style.display=t?'block':'none'; s.textContent=t||''; } }
-function RT_gvCard(html){ var c=document.getElementById('gv-card'); if(c) c.innerHTML=html; }
-function RT_gvErrCard(msg){ return '<div style="color:#cfe0d4;font-size:13px;line-height:1.5;">'+msg+'</div><div style="font-size:11px;color:#7f948a;margin-top:8px;">Die Grün-Ansicht nutzt das 1-m-Geländemodell (DGM1) von Geobasis NRW – aktuell nur für NRW-Plätze.</div>'; }
-function RT_gvInit(){
- var el=document.getElementById('gv-map'); if(!el||typeof L==='undefined'){ RT_gvStatus('Karte nicht verfügbar'); return; }
- var p=RT_GV.pin;
- var map=L.map('gv-map',{zoomControl:false,attributionControl:false}).setView([p.lat,p.lng],19);
- RT_GV.map=map;
- L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:21,maxNativeZoom:19}).addTo(map);
- map.createPane('gvrelief'); map.getPane('gvrelief').style.zIndex=350; map.getPane('gvrelief').style.pointerEvents='none';
- L.marker([p.lat,p.lng],{interactive:false,zIndexOffset:1000,icon:L.divIcon({className:'',iconSize:[26,34],iconAnchor:[6,32],html:'<svg width="26" height="34" viewBox="0 0 26 34"><line x1="6" y1="2" x2="6" y2="32" stroke="#fff" stroke-width="3"/><path d="M6 2h16l-4 5 4 5H6z" fill="#ffd24a" stroke="#c99700" stroke-width="1"/></svg>'})}).addTo(map);
- if(RT_GV.ball){ L.marker([RT_GV.ball.lat,RT_GV.ball.lng],{interactive:false,icon:L.divIcon({className:'',iconSize:[18,18],iconAnchor:[9,9],html:'<div style="width:14px;height:14px;border-radius:50%;background:#2f6df6;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);"></div>'})}).addTo(map); }
+function RT_gvCard(html){ var c=document.getElementById('gv-card'); if(c){ c.style.display=html?'block':'none'; c.innerHTML=html||''; } }
+function RT_gvErrCard(msg){ return '<div style="color:#cfe0d4;font-size:13px;line-height:1.5;">'+msg+'</div><div style="font-size:11px;color:#7f948a;margin-top:8px;">Grün-Ansicht nutzt das 1-m-Geländemodell (DGM1) von Geobasis NRW – aktuell nur für NRW-Plätze.</div>'; }
+function RT_gvAttach(){
+ var map=RT_holeFullMapInst; if(!map||typeof L==='undefined'){ RT_gvStatus('Karte nicht verfügbar'); return; }
+ var rd=RT_round; if(!rd) return; var c=rd.cur;
+ var ext=RT_gvHoleExtent(rd,c);
+ var pb=RT_gvPinBall(); RT_GV.pin=pb.pin; RT_GV.ball=pb.ball;
+ if(!ext){ RT_gvStatus('Keine Referenzpunkte'); RT_gvCard(RT_gvErrCard('Für diese Bahn fehlen Referenzpunkte (Abschlag/Grün) für das Relief.')); return; }
+ RT_GV.center={lat:ext.clat,lng:ext.clng}; RT_GV.size=ext.size;
+ if(!map.getPane('gvrelief')){ var p=map.createPane('gvrelief'); if(p){ p.style.zIndex=345; p.style.pointerEvents='none'; } }
+ RT_gvStatus('Höhenmodell wird geladen…');
  RT_gvLoad();
+}
+function RT_gvDetach(){
+ if(RT_GV.relief&&RT_holeFullMapInst){ try{ RT_holeFullMapInst.removeLayer(RT_GV.relief); }catch(e){} }
+ RT_GV.relief=null;
 }
 function RT_gvLoadGeotiff(cb){
  if(window.GeoTIFF){ cb(null); return; }
  function load(src,next){ var sc=document.createElement('script'); sc.src=src; sc.onload=function(){ if(window.GeoTIFF) cb(null); else next(); }; sc.onerror=next; document.head.appendChild(sc); }
- // Primär same-origin (kein CDN/CSP-Risiko), Fallback jsDelivr. Datei: dist-browser/geotiff.js (UMD, setzt window.GeoTIFF).
  load('/vendor/geotiff.js?v=213', function(){ load('https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js', function(){ cb('load_fail'); }); });
 }
 function RT_gvLoad(){
- var p=RT_GV.pin, size=RT_GV.size;
- fetch('/api/dgm?lat='+p.lat+'&lng='+p.lng+'&size='+size).then(function(r){
-  var ct=r.headers.get('content-type')||'';
-  if(ct.indexOf('json')>=0){ return r.json().then(function(j){ throw {diag:j}; }); }
+ var ct=RT_GV.center, size=RT_GV.size;
+ fetch('/api/dgm?lat='+ct.lat+'&lng='+ct.lng+'&size='+size).then(function(r){
+  var ctype=r.headers.get('content-type')||'';
+  if(ctype.indexOf('json')>=0){ return r.json().then(function(j){ throw {diag:j}; }); }
   return r.arrayBuffer();
  }).then(function(buf){
+  if(!RT_gvActive()) return;
   RT_gvStatus('Relief wird berechnet…');
   RT_gvLoadGeotiff(function(err){
    if(err){ RT_gvStatus('geotiff.js fehlt'); RT_gvCard(RT_gvErrCard('Konnte die GeoTIFF-Bibliothek nicht laden ('+err+').')); return; }
@@ -4151,17 +4172,16 @@ function RT_gvLoad(){
  });
 }
 function RT_gvRender(band,W,H){
+ if(!RT_gvActive()||!RT_holeFullMapInst) return;
  if(!band||!W||!H){ RT_gvStatus('Leeres Höhenmodell'); RT_gvCard(RT_gvErrCard('Das Höhenmodell kam leer zurück.')); return; }
  var g=function(r,c){ var v=band[r*W+c]; return (v>-1000&&v<9000&&!isNaN(v))?v:NaN; };
  var mn=Infinity,mx=-Infinity,cnt=0;
  for(var i=0;i<band.length;i++){ var v=band[i]; if(v>-1000&&v<9000&&!isNaN(v)){ if(v<mn)mn=v; if(v>mx)mx=v; cnt++; } }
  if(!cnt){ RT_gvStatus('Keine gültigen Höhen'); RT_gvCard(RT_gvErrCard('Keine gültigen Höhenwerte im Ausschnitt.')); return; }
  var range=mx-mn;
- var cell=6, cv=document.createElement('canvas'); cv.width=W*cell; cv.height=H*cell; var ctx=cv.getContext('2d');
- // schattiertes Relief (Farbverlauf nach Höhe)
+ var cell=(W>200)?4:6, cv=document.createElement('canvas'); cv.width=W*cell; cv.height=H*cell; var ctx=cv.getContext('2d');
  for(var r=0;r<H;r++){ for(var c=0;c<W;c++){ var h=g(r,c); if(isNaN(h))continue; var t=range>0.01?(h-mn)/range:0.5; var hue=210-210*t; ctx.fillStyle='hsla('+hue+',80%,52%,.5)'; ctx.fillRect(c*cell,r*cell,cell,cell); } }
- // Höhenlinien-Intervall
- var iv=range<1.5?0.25:(range<4?0.5:1);
+ var iv=range<1.5?0.25:(range<4?0.5:(range<10?1:2));
  ctx.lineCap='round';
  function march(level,major){
   ctx.strokeStyle=major?'rgba(255,255,255,.95)':'rgba(255,255,255,.6)'; ctx.lineWidth=major?2:1.2;
@@ -4176,41 +4196,56 @@ function RT_gvRender(band,W,H){
    if(pts.length>=2){ ctx.beginPath(); ctx.moveTo(pts[0][0]*cell,pts[0][1]*cell); ctx.lineTo(pts[1][0]*cell,pts[1][1]*cell); ctx.stroke(); if(pts.length>=4){ ctx.beginPath(); ctx.moveTo(pts[2][0]*cell,pts[2][1]*cell); ctx.lineTo(pts[3][0]*cell,pts[3][1]*cell); ctx.stroke(); } }
   }}
  }
- var lvl=Math.ceil(mn/iv)*iv, k=0;
- for(; lvl<mx; lvl+=iv, k++){ march(lvl, (Math.round(lvl/iv)%4===0)); }
- // Overlay geo-platzieren
- var p=RT_GV.pin, size=RT_GV.size;
- var dLat=(size/2)/111320, dLng=(size/2)/(111320*Math.cos(p.lat*Math.PI/180));
- var bounds=[[p.lat-dLat,p.lng-dLng],[p.lat+dLat,p.lng+dLng]];
- try{ L.imageOverlay(cv.toDataURL('image/png'),bounds,{opacity:0.55,pane:'gvrelief',interactive:false}).addTo(RT_GV.map); }catch(e){}
- // Falllinie am Loch (Gradient in der Mitte)
- var ci=Math.floor(W/2), ri=Math.floor(H/2);
- var hE=g(ri,Math.min(W-1,ci+1)),hW=g(ri,Math.max(0,ci-1)),hN=g(Math.max(0,ri-1),ci),hS=g(Math.min(H-1,ri+1),ci);
- var slopeTxt='', fallBrg=null, slopePct=null;
- if(!isNaN(hE)&&!isNaN(hW)&&!isNaN(hN)&&!isNaN(hS)){
-  var gx=(hE-hW)/2;           // Anstieg pro m nach Osten
-  var gnorth=(hN-hS)/2;       // Anstieg pro m nach Norden
-  var dE=-gx, dN=-gnorth;     // bergab
-  slopePct=Math.round(Math.hypot(gx,gnorth)*1000)/10;
-  if(Math.hypot(dE,dN)>1e-4){ fallBrg=(Math.atan2(dE,dN)*180/Math.PI+360)%360;
-   var end=[p.lat+(dN*8)/111320, p.lng+(dE*8)/(111320*Math.cos(p.lat*Math.PI/180))];
-   try{ L.polyline([[p.lat,p.lng],end],{color:'#ffd24a',weight:4,opacity:.95}).addTo(RT_GV.map);
-    L.marker(end,{interactive:false,icon:L.divIcon({className:'',iconSize:[16,16],iconAnchor:[8,8],html:'<div style="width:11px;height:11px;border-radius:50%;background:#ffd24a;border:2px solid #0b160f;"></div>'})}).addTo(RT_GV.map); }catch(e){}
+ var lvl=Math.ceil(mn/iv)*iv;
+ for(; lvl<mx; lvl+=iv){ march(lvl, (Math.round(lvl/iv)%4===0)); }
+ var ct=RT_GV.center, size=RT_GV.size, pin=RT_GV.pin;
+ var mpp=size/W; // Meter pro Pixel
+ // Falllinie an der Fahne (Fahnen-Pixel im Raster bestimmen)
+ var fallBrg=null, slopePct=null, pcol=null, prow=null;
+ if(pin){
+  var eOff=(pin.lng-ct.lng)*111320*Math.cos(ct.lat*Math.PI/180);
+  var nOff=(pin.lat-ct.lat)*111320;
+  pcol=Math.max(1,Math.min(W-2,Math.round(W*(0.5+eOff/size))));
+  prow=Math.max(1,Math.min(H-2,Math.round(H*(0.5-nOff/size))));
+  var hE=g(prow,pcol+1),hW=g(prow,pcol-1),hN=g(prow-1,pcol),hS=g(prow+1,pcol);
+  if(!isNaN(hE)&&!isNaN(hW)&&!isNaN(hN)&&!isNaN(hS)){
+   var gx=(hE-hW)/(2*mpp), gnorth=(hN-hS)/(2*mpp);
+   slopePct=Math.round(Math.hypot(gx,gnorth)*1000)/10;
+   var dE=-gx, dN=-gnorth;
+   if(Math.hypot(dE,dN)>1e-5){
+    fallBrg=(Math.atan2(dE,dN)*180/Math.PI+360)%360;
+    var un=Math.hypot(dE,dN), ux=dE/un, uy=dN/un;
+    var px=pcol*cell, py=prow*cell, Ln=Math.max(cell*10,46);
+    var ex=px+ux*Ln, ey=py-uy*Ln;
+    ctx.strokeStyle='#ffd24a'; ctx.lineWidth=Math.max(3,cell*0.7); ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(ex,ey); ctx.stroke();
+    var ah=Math.max(7,cell*1.6), ang=Math.atan2(-(ey-py),(ex-px));
+    ctx.fillStyle='#ffd24a'; ctx.beginPath(); ctx.moveTo(ex,ey);
+    ctx.lineTo(ex-ah*Math.cos(ang-0.5), ey+ah*Math.sin(ang-0.5));
+    ctx.lineTo(ex-ah*Math.cos(ang+0.5), ey+ah*Math.sin(ang+0.5));
+    ctx.closePath(); ctx.fill();
+   }
+   ctx.fillStyle='#ffd24a'; ctx.strokeStyle='#0b160f'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(pcol*cell,prow*cell,Math.max(4,cell),0,6.29); ctx.fill(); ctx.stroke();
   }
  }
+ // Relief geo-platzieren (ganze Bahn)
+ var dLat=(size/2)/111320, dLng=(size/2)/(111320*Math.cos(ct.lat*Math.PI/180));
+ var bounds=[[ct.lat-dLat,ct.lng-dLng],[ct.lat+dLat,ct.lng+dLng]];
+ RT_gvDetach();
+ try{ RT_GV.relief=L.imageOverlay(cv.toDataURL('image/png'),bounds,{opacity:0.5,pane:'gvrelief',interactive:false}); RT_GV.relief.addTo(RT_holeFullMapInst); }catch(e){}
  RT_gvStatus('');
  var comp=(fallBrg==null)?'':(['N','NO','O','SO','S','SW','W','NW'][Math.round((fallBrg%360)/45)%8]);
- var putt=(RT_GV.ball)?RT_haversineM(p.lat,p.lng,RT_GV.ball.lat,RT_GV.ball.lng):null;
- var cells='<div style="display:flex;gap:0;background:rgba(0,0,0,.30);border-radius:13px;padding:10px 4px;">'
-  +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Gefälle</div><div style="font-size:18px;font-weight:800;color:#fff;">'+(slopePct!=null?slopePct+' %':'–')+'</div></div>'
+ var putt=(pin&&RT_GV.ball)?RT_haversineM(pin.lat,pin.lng,RT_GV.ball.lat,RT_GV.ball.lng):null;
+ var cells='<div style="display:flex;gap:0;background:rgba(0,0,0,.30);border-radius:13px;padding:9px 4px;">'
+  +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Gefälle Fahne</div><div style="font-size:18px;font-weight:800;color:#fff;">'+(slopePct!=null?slopePct+' %':'–')+'</div></div>'
   +'<div style="width:1px;background:rgba(255,255,255,.12);"></div>'
   +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Falllinie</div><div style="font-size:18px;font-weight:800;color:#ffd24a;">'+(comp||'–')+'</div><div style="font-size:9.5px;color:#7f948a;">bergab</div></div>'
   +'<div style="width:1px;background:rgba(255,255,255,.12);"></div>'
   +'<div style="flex:1;text-align:center;"><div style="font-size:10.5px;color:#9fb3a4;">Putt</div><div style="font-size:18px;font-weight:800;color:#fff;">'+(putt!=null?RT_fmtDist(putt):'–')+'</div></div>'
  +'</div>';
- RT_gvCard(cells+'<div style="font-size:11px;color:#7f948a;margin-top:9px;line-height:1.5;">Höhenlinien alle '+String(iv).replace('.',',')+' m · 1-m-Geländemodell (DGM1, Geobasis NRW). Zeigt das Geländerelief, keine cm-genaue Grün-Vermessung.</div>');
+ RT_gvCard(cells+'<div style="font-size:10.5px;color:#7f948a;margin-top:8px;line-height:1.5;">Höhenlinien alle '+String(iv).replace('.',',')+' m über die ganze Bahn · 1-m-Geländemodell (DGM1, Geobasis NRW). Zeigt das Geländerelief, keine cm-genaue Grün-Vermessung.</div>');
 }
 /* ===== Ende Grün-Ansicht ===== */
+
 
 function RT_grabberOverlayHtml(){
  var rd=RT_round; if(!rd) return '';
@@ -4224,13 +4259,13 @@ function RT_grabberOverlayHtml(){
  var btn='pointer-events:auto;width:48px;height:48px;border:none;border-radius:15px;cursor:pointer;'+
    'box-shadow:0 2px 8px rgba(0,0,0,.45);background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;';
  return '<div id="rt-grab-ui" style="position:absolute;inset:0;pointer-events:none;z-index:1150;">'+
-  '<div style="position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;">'+
+  '<div style="position:absolute;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);display:flex;flex-direction:column;gap:10px;">'+
    RT_hvBtn('wind','Wind','RT_toggleWind()',windOn,'rt-wind-toggle')+
    RT_hvBtn('wetterradar','Wetterradar','RT_toggleRadarHole()',radarOn,'rt-wxr-toggle')+
    RT_hvBtn('shotanalyse','Shot-Analyse','RT_openShotPlan()',!!document.getElementById('rt-sp'),'rt-tile-sp')+
    RT_hvBtn('fahnenradar','Fahnenradar','RT_openFlagRadar()',!!document.getElementById('rt-fr'),'rt-tile-fr')+
    RT_hvBtn('entfernungki','Entfernung & KI','RT_openDistKI()',!!document.getElementById('rt-dki'),'rt-tile-dki')+
-   RT_hvBtn('gruen','Grün-Ansicht','RT_openGreenView()',!!document.getElementById('rt-gv'),'rt-tile-gv')+
+   RT_hvBtn('gruen','Grün-Ansicht','RT_openGreenView()',RT_gvActive(),'rt-tile-gv')+
    RT_hvBtn('entfernung','Entfernung','RT_toggleGrabber()',on,'rt-grab-toggle')+
   '</div>'+
   '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+

@@ -12,6 +12,7 @@ const MANIFEST_JSON = JSON.stringify({
   short_name: "FairwayPilot",
   start_url: "/",
   display: "standalone",
+  orientation: "portrait",
   background_color: "#F5F8F0",
   theme_color: "#1F8A4D",
   icons: [

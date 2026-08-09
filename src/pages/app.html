@@ -293,6 +293,13 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
+<style>
+#orient-lock{display:none;}
+@media screen and (orientation:landscape) and (max-height:520px){
+ #orient-lock{display:flex;position:fixed;inset:0;z-index:2147483000;background:linear-gradient(180deg,#12261B,#1c3a26);color:#fff;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:Inter,-apple-system,sans-serif;}
+}
+</style>
+<div id="orient-lock"><div style="font-size:44px;margin-bottom:14px;">📱</div><div style="font-size:18px;font-weight:800;margin-bottom:6px;">Bitte im Hochformat halten</div><div style="font-size:14px;color:#cfe0d4;max-width:280px;line-height:1.5;">FairwayPilot ist fürs Hochformat gemacht. Drehe dein Gerät zurück ins Hochformat.</div></div>
 <div class="bg"><div class="o o1"></div><div class="o o2"></div><div class="o o3"></div></div>
 <div id="auth-gate" style="display:none;position:fixed;inset:0;z-index:9999;overflow:auto;background:var(--gl);padding:calc(20px + var(--st)) 16px calc(24px + var(--sb));"></div>
 <div id="hole-full" class="rt-holefull"></div>

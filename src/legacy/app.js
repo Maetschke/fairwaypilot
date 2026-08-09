@@ -7457,6 +7457,7 @@ function RT_TRC_render(){
      +'</div>'
      +'<div class="trchint">Für Zeitlupe/Einzelbild sollte die Bildrate zum Video passen. Aufnahmen laufen nur auf dem Gerät (Kamerafreigabe nötig).</div>'
    +'</div>'
+   +'<div class="trccard" id="trc-hist" style="display:none;"></div>'
    +'</div>';
   el.innerHTML=h;
   RT_TRC.video=document.getElementById('trc-video');
@@ -7465,6 +7466,7 @@ function RT_TRC_render(){
   RT_TRC_bind();
   RT_TRC_syncButtons();
   RT_TRC_renderAnalysis();
+  RT_TRC_renderHist();
   if(RT_TRC.url){ RT_TRC_attachSrc(RT_TRC.url); }
 }
 
@@ -7614,8 +7616,10 @@ function RT_TRC_renderAnalysis(){
     +'</div>'
     +'<div style="font-size:13px;color:#143522;line-height:1.5;margin-top:9px;">'+info.tip+'</div>'
     +'<div style="font-size:12.5px;color:#3C5546;line-height:1.5;margin-top:7px;background:#f3f7f3;border-radius:10px;padding:9px 11px;">💡 '+info.opp+'</div>'
-    +'<div class="trcrow"><button class="trcb pri" onclick="RT_TRC_playTraj()">▶︎ Flugbahn abspielen</button></div>'
-    +'<div style="font-size:11px;color:#8A9C8E;margin-top:8px;">Ballgeschwindigkeit, Apex-Höhe und exakte Distanz kommen nicht aus dem Video (nur Launch-Monitor bzw. GPS beim Start aus der Bahn).</div>';
+    +'<div class="trcrow"><button class="trcb pri" onclick="RT_TRC_playTraj()">▶︎ Flugbahn abspielen</button>'
+    +'<button class="trcb" onclick="RT_TRC_shareImage()">Bild teilen</button></div>'
+    +RT_TRC_m6Controls(r)
+    +'<div style="font-size:11px;color:#8A9C8E;margin-top:8px;">Ballgeschwindigkeit und Apex-Höhe kommen nicht aus dem Video. Die <b>exakte Schlaglänge</b> gibt es über die auf der Bahn per GPS gemessene Balllage – oben verknüpfen.</div>';
 }
 function RT_TRC_path(t){
   var m=RT_TRC.marks,a=RT_TRC.apex;var b=m.ball,l=m.land;
@@ -7679,6 +7683,175 @@ function RT_TRC_toggleRec(){
   }).catch(function(){RT_TRC_toast('Kamerazugriff nicht möglich.');});
 }
 /* ===== Ende Shot-Tracer ===== */
+/* ============================================================
+   M6 · Shot-Tracer – Analyse-Erweiterung (GPS-Länge, Schläger, Historie, Export)
+   Kernwert: die auf der Bahn per GPS gemessene Balllage liefert die ECHTE Schlaglänge –
+   der Video-Tracer wird daran gekoppelt. Zusätzlich Schlägerwahl, lokale Historie mit
+   Schlägerfilter und ein Bild-Export (Frame + Flugkurve) via Web-Share/Download.
+   Alles lokal; keine Uploads. Fügt sich in RT_TRC ein.
+   ============================================================ */
+var RT_TRC_HIST_KEY='fp_tracer_hist_v1';
+
+/* --- Schlägerauswahl --- */
+function RT_TRC_clubList(){ var own=RT_bagInOrder(); return (own&&own.length)?own:RT_BAG_CLUBS; }
+function RT_TRC_clubLabel(id){ for(var i=0;i<RT_BAG_CLUBS.length;i++){ if(RT_BAG_CLUBS[i].id===id) return RT_BAG_CLUBS[i].l; } return ''; }
+function RT_TRC_setClub(v){ RT_TRC.club=v||''; }
+
+/* --- Gemessene Schläge aus GPS-Balllagen (wie Shot-Analyse: p.pins[holeIdx]) --- */
+function RT_TRC_shotList(){
+ var rounds=(rtGet(RT_KEY)||[]).slice();
+ var cur=RT_round; if(cur&&!rounds.some(function(r){ return r.id===cur.id; })) rounds.push(cur);
+ var out=[];
+ rounds.forEach(function(r){
+  if(!r||!r.players||!r.nums) return;
+  var pi=(typeof RT_myPlayerIndex==='function')?RT_myPlayerIndex(r):0;
+  var p=r.players[pi]||r.players[0]; if(!p||!p.pins) return;
+  for(var c=0;c<r.nums.length;c++){
+   var arr=p.pins[c]; if(!arr||arr.length<2) continue;
+   var pts=[]; for(var m=0;m<arr.length;m++){ if(arr[m]&&arr[m].lat!=null&&arr[m].lng!=null) pts.push(arr[m]); }
+   for(var k=0;k<pts.length-1;k++){
+    var d=RT_haversineM(pts[k].lat,pts[k].lng,pts[k+1].lat,pts[k+1].lng);
+    if(!(d>=3&&d<=400)) continue;
+    out.push({m:Math.round(d),course:r.courseName||'Platz',hole:r.nums[c],shot:k+1,date:r.date||'',ts:(r.date||'')+'-'+(r.id||'')});
+   }
+  }
+ });
+ out.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+ return out.slice(0,60);
+}
+function RT_TRC_openShotLink(){
+ var list=RT_TRC_shotList();
+ var o=document.createElement('div'); o.id='trc-shotsheet';
+ o.style.cssText='position:fixed;inset:0;z-index:4200;background:rgba(8,20,13,.55);display:flex;flex-direction:column;justify-content:flex-end;';
+ var rows='';
+ if(!list.length){
+  rows='<div style="padding:26px 18px;text-align:center;color:#5d7060;font-size:13px;line-height:1.5;">Noch keine per GPS gemessenen Schläge gefunden. Markiere beim Spielen auf der Bahn deine Balllagen – dann erscheinen hier die echten Schlaglängen zum Verknüpfen.</div>';
+ } else {
+  rows=list.map(function(s,i){
+   return '<button onclick="RT_TRC_pickShot('+i+')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;border:none;border-bottom:1px solid #EEF2EC;background:#fff;padding:12px 16px;cursor:pointer;">'
+     +'<span style="min-width:0;"><span style="font-size:14px;font-weight:700;color:#143522;">'+RT_TRC_esc(s.course)+'</span>'
+       +'<span style="display:block;font-size:11.5px;color:#5d7060;">Loch '+s.hole+' · Schlag '+s.shot+(s.date?(' · '+RT_TRC_esc(s.date)):'')+'</span></span>'
+     +'<span style="flex:none;font-size:15px;font-weight:800;color:#1F8A4D;">'+RT_fmtDist(s.m)+'</span></button>';
+  }).join('');
+ }
+ o.innerHTML='<div style="background:#fff;border-radius:20px 20px 0 0;max-height:74vh;display:flex;flex-direction:column;overflow:hidden;">'
+   +'<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid #EEF2EC;">'
+     +'<div style="font-size:16px;font-weight:800;color:#143522;">Schlag verknüpfen</div>'
+     +'<button class="trcb" onclick="RT_TRC_closeShotLink()" style="padding:6px 12px;">Schließen</button></div>'
+   +'<div style="overflow-y:auto;-webkit-overflow-scrolling:touch;">'+rows+'</div>'
+   +'<div style="padding:11px 16px calc(env(safe-area-inset-bottom,0px) + 12px);font-size:11px;color:#8A9C8E;line-height:1.5;">Die Länge stammt aus den auf der Bahn gemessenen GPS-Balllagen – die echte, gemessene Schlaglänge.</div>'
+   +'</div>';
+ o.addEventListener('click',function(e){ if(e.target===o) RT_TRC_closeShotLink(); });
+ document.body.appendChild(o);
+ RT_TRC._shots=list;
+}
+function RT_TRC_closeShotLink(){ var o=document.getElementById('trc-shotsheet'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
+function RT_TRC_pickShot(i){
+ var s=(RT_TRC._shots||[])[i]; if(!s){ RT_TRC_closeShotLink(); return; }
+ RT_TRC.measured={m:s.m,course:s.course,hole:s.hole,shot:s.shot,date:s.date};
+ RT_TRC_closeShotLink(); RT_TRC_renderAnalysis();
+}
+function RT_TRC_clearLink(){ RT_TRC.measured=null; RT_TRC_renderAnalysis(); }
+
+/* --- Steuerblock in der Analyse-Karte --- */
+function RT_TRC_m6Controls(r){
+ var clubs=RT_TRC_clubList();
+ var opt='<option value="">Schläger (optional)</option>'+clubs.map(function(c){
+   return '<option value="'+c.id+'"'+(RT_TRC.club===c.id?' selected':'')+'>'+RT_TRC_esc(c.l)+'</option>';
+ }).join('');
+ var h='<div style="margin-top:12px;border-top:1px solid #EEF2EC;padding-top:11px;">';
+ // Gemessene Länge
+ if(RT_TRC.measured){
+  var mm=RT_TRC.measured;
+  h+='<div style="display:flex;align-items:center;gap:10px;background:rgba(31,138,77,.08);border:1px solid rgba(31,138,77,.2);border-radius:12px;padding:10px 12px;">'
+    +'<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:800;letter-spacing:.4px;color:#1F8A4D;">GEMESSENE LÄNGE (GPS)</div>'
+      +'<div style="font-size:20px;font-weight:800;color:#143522;line-height:1.1;margin-top:1px;">'+RT_fmtDist(mm.m)+'</div>'
+      +'<div style="font-size:11px;color:#5d7060;">'+RT_TRC_esc(mm.course)+' · Loch '+mm.hole+' · Schlag '+mm.shot+'</div></div>'
+    +'<button class="trcb" onclick="RT_TRC_clearLink()" style="padding:6px 10px;font-size:12px;flex:none;">Lösen</button></div>';
+ } else {
+  h+='<button class="trcb set" style="width:100%;" onclick="RT_TRC_openShotLink()">📍 Echte Schlaglänge verknüpfen (GPS)</button>';
+ }
+ // Schläger + Speichern
+ h+='<div class="trcrow" style="margin-top:10px;">'
+   +'<select class="trcb" onchange="RT_TRC_setClub(this.value)" style="padding:8px;flex:1;min-width:120px;">'+opt+'</select>'
+   +'<button class="trcb pri" onclick="RT_TRC_saveHist()">In Historie speichern</button></div>';
+ h+='</div>';
+ return h;
+}
+
+/* --- Historie --- */
+function RT_TRC_histData(){ var a=rtGet(RT_TRC_HIST_KEY); return (a&&a.length)?a:[]; }
+function RT_TRC_histSave(a){ rtSet(RT_TRC_HIST_KEY,a); }
+function RT_TRC_saveHist(){
+ var r=RT_TRC_classify(); if(!r){ RT_TRC_toast('Bitte zuerst Ball, Landung und Flugkurve setzen.'); return; }
+ var mm=RT_TRC.measured;
+ var e={ id:'trc_'+RT_TRC_uid(), at:RT_TRC_now(), shape:r.shape, dir:r.dir, handed:RT_TRC.handed,
+   club:RT_TRC.club||'', clubLabel:RT_TRC.club?RT_TRC_clubLabel(RT_TRC.club):'',
+   meters:(mm?mm.m:null), holeLabel:(mm?(mm.course+' · Loch '+mm.hole):'') };
+ var a=RT_TRC_histData(); a.unshift(e); if(a.length>200) a=a.slice(0,200); RT_TRC_histSave(a);
+ RT_TRC_toast('In Historie gespeichert.'); RT_TRC_renderHist();
+}
+function RT_TRC_delHist(id){ var a=RT_TRC_histData().filter(function(e){ return e.id!==id; }); RT_TRC_histSave(a); RT_TRC_renderHist(); }
+function RT_TRC_histFilter(v){ RT_TRC._hf=v||''; RT_TRC_renderHist(); }
+function RT_TRC_renderHist(){
+ var host=document.getElementById('trc-hist'); if(!host) return;
+ var all=RT_TRC_histData();
+ if(!all.length){ host.style.display='none'; host.innerHTML=''; return; }
+ host.style.display='block';
+ var f=RT_TRC._hf||'';
+ var clubsUsed={}; all.forEach(function(e){ if(e.club) clubsUsed[e.club]=e.clubLabel||RT_TRC_clubLabel(e.club); });
+ var fopt='<option value="">Alle Schläger</option>';
+ RT_BAG_CLUBS.forEach(function(c){ if(clubsUsed[c.id]) fopt+='<option value="'+c.id+'"'+(f===c.id?' selected':'')+'>'+RT_TRC_esc(c.l)+'</option>'; });
+ var list=all.filter(function(e){ return !f || e.club===f; });
+ var rows=list.map(function(e){
+  var info=RT_TRC_SHAPES[e.shape]||RT_TRC_SHAPES['Gerade'];
+  var meta=[]; if(e.clubLabel) meta.push(RT_TRC_esc(e.clubLabel)); if(e.meters!=null) meta.push(RT_fmtDist(e.meters)); if(e.holeLabel) meta.push(RT_TRC_esc(e.holeLabel));
+  return '<div style="display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid #EEF2EC;">'
+    +'<span style="flex:none;padding:4px 10px;border-radius:100px;background:'+info.col+';color:#fff;font-size:12px;font-weight:800;">'+RT_TRC_esc(e.shape)+'</span>'
+    +'<span style="flex:1;min-width:0;font-size:12px;color:#5d7060;">'+(meta.length?meta.join(' · '):'—')+'<span style="display:block;font-size:10.5px;color:#9AAB9E;">'+RT_TRC_esc(RT_TRC_fmtWhen(e.at))+'</span></span>'
+    +'<button class="trcb" onclick="RT_TRC_delHist(\''+e.id+'\')" style="padding:5px 9px;font-size:12px;flex:none;">Löschen</button></div>';
+ }).join('');
+ host.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">'
+   +'<div style="font-weight:800;color:#143522;font-size:15px;">Historie</div>'
+   +'<select class="trcb" onchange="RT_TRC_histFilter(this.value)" style="padding:6px 8px;font-size:12px;">'+fopt+'</select></div>'
+   +(list.length?rows:'<div class="trchint" style="margin-top:2px;">Keine Einträge für diesen Schläger.</div>');
+}
+
+/* --- Bild-Export (Frame + Flugkurve) --- */
+function RT_TRC_shareImage(){
+ var v=RT_TRC.video,m=RT_TRC.marks; if(!v||!m.ball||!m.land||!RT_TRC.apex){ RT_TRC_toast('Bitte zuerst Ball, Landung und Flugkurve setzen.'); return; }
+ var vw=v.videoWidth||1280, vh=v.videoHeight||720;
+ var cv=document.createElement('canvas'); cv.width=vw; cv.height=vh; var ctx=cv.getContext('2d');
+ try{ ctx.drawImage(v,0,0,vw,vh); }catch(e){ RT_TRC_toast('Video-Bild nicht verfügbar.'); return; }
+ ctx.lineWidth=Math.max(3,vw/240); ctx.lineJoin='round'; ctx.lineCap='round'; ctx.strokeStyle='rgba(246,195,90,.97)';
+ ctx.beginPath(); var N=64;
+ for(var i=0;i<=N;i++){ var t=i/N; var p=RT_TRC_path(t); var X=p.x*vw,Y=p.y*vh; if(i===0)ctx.moveTo(X,Y); else ctx.lineTo(X,Y); }
+ ctx.stroke();
+ function dot(pt,col){ if(!pt)return; ctx.fillStyle=col; ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,vw/500); ctx.beginPath(); ctx.arc(pt.x*vw,pt.y*vh,Math.max(5,vw/150),0,6.29); ctx.fill(); ctx.stroke(); }
+ dot(m.ball,'#1F8A4D'); dot(m.land,'#B03A3A');
+ var r=RT_TRC_classify();
+ var badge=(r?r.shape:''); if(RT_TRC.measured) badge+=(badge?'  ':'')+RT_fmtDist(RT_TRC.measured.m);
+ if(badge){ var fs=Math.max(22,vw/26); ctx.font='800 '+fs+'px Inter,sans-serif'; ctx.textBaseline='top';
+  var pad=fs*0.5, tw=ctx.measureText(badge).width;
+  ctx.fillStyle='rgba(10,22,15,.72)'; ctx.fillRect(pad*0.6,pad*0.6,tw+pad*1.4,fs+pad*1.1);
+  ctx.fillStyle='#fff'; ctx.fillText(badge,pad*1.3,pad*1.05); }
+ var done=function(blob){ if(!blob){ RT_TRC_toast('Export fehlgeschlagen.'); return; }
+  try{
+   var file=new File([blob],'shot-tracer.png',{type:'image/png'});
+   if(navigator.canShare&&navigator.canShare({files:[file]})){ navigator.share({files:[file],title:'FairwayPilot Shot-Tracer'}).catch(function(){}); return; }
+  }catch(e){}
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='shot-tracer.png'; document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{URL.revokeObjectURL(a.href); a.remove();}catch(e){} },1200);
+ };
+ try{ cv.toBlob(done,'image/png'); }catch(e){ RT_TRC_toast('Export auf diesem Gerät nicht möglich.'); }
+}
+
+/* --- Hilfen (Zeit/ID ohne Date.now-Verbot im Browser unkritisch) --- */
+function RT_TRC_uid(){ return (new Date()).getTime().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
+function RT_TRC_now(){ return (new Date()).getTime(); }
+function RT_TRC_fmtWhen(ts){ if(!ts) return ''; var d=new Date(ts); function p(n){ return (n<10?'0':'')+n; } return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+/* ===== Ende Shot-Tracer M6 ===== */
+
 
 function RT_renderTabBar(){
   var nav=document.getElementById('nav-tabs'); if(!nav) return;

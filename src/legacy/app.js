@@ -3597,7 +3597,7 @@ function RT_radarBuildOverlay(){
  var ex=document.getElementById('rt-wxradar-ui'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
  var o=document.createElement('div'); o.id='rt-wxradar-ui';
  o.style.cssText='position:absolute;inset:0;z-index:2400;pointer-events:none;';
- o.innerHTML=RT_hvPanel('Wetterradar','','<div id="rt-wx-body"></div>')
+ o.innerHTML=RT_hvPanel('Wetterradar','','<div id="rt-wx-body"></div>','')
   +'<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);pointer-events:none;display:flex;align-items:center;gap:7px;background:rgba(8,20,13,.72);border-radius:100px;padding:5px 11px;">'
     +'<span style="font-size:10.5px;color:#cfe0d4;">leicht</span>'
     +'<span style="width:46px;height:7px;border-radius:4px;background:linear-gradient(90deg,#8fd1ff,#3a86ff,#33d17a,#f6d32d,#e01b24);display:inline-block;"></span>'
@@ -3608,6 +3608,7 @@ function RT_radarBuildOverlay(){
     +'<span id="rt-radar-time" style="background:rgba(8,20,13,.78);color:#fff;font-size:12px;font-weight:700;border-radius:100px;padding:6px 12px;">–</span>'
   +'</div>';
  host.appendChild(o);
+ RT_hvGrabInit();
 }
 function RT_radarRemoveOverlay(){ var o=document.getElementById('rt-wxradar-ui'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
 function RT_toggleRadarHole(){
@@ -3714,12 +3715,43 @@ function RT_hvToast(msg){
    auf die Satelliten-Bahnkarte. Kopf-Panel (wie Wetterradar) zeigt Links/Mitte/Rechts,
    darunter eine regelbasierte Empfehlung. Verteilung: seitliche Abweichung Tee->Gruen.
    ============================================================ */
-function RT_hvPanel(title,closeFn,extra){
+function RT_hvPanel(title,closeFn,extra,grabBox){
  var x=closeFn?('<button onclick="'+closeFn+'" aria-label="Schließen" style="border:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:14px;cursor:pointer;">✕</button>'):'';
- return '<div style="position:absolute;top:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 18px;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px 9px;box-shadow:0 5px 16px rgba(0,0,0,.55);z-index:6;">'
-  +'<div style="display:flex;align-items:center;justify-content:space-between;min-height:30px;'+(extra?'margin-bottom:8px;':'')+'">'
+ var grabOn=(grabBox!==undefined&&grabBox!==null);
+ var grab=grabOn?'<div class="rt-hv-grab" style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:60px;height:18px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;pointer-events:auto;"><div style="width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);"></div></div>':'';
+ var body=grabOn?('<div class="rt-hv-body" style="margin-top:'+(extra?'8px':'0')+';overflow:hidden;transition:max-height .28s ease,opacity .2s ease,margin-top .28s ease;">'+(extra||'')+'</div>'):(extra||'');
+ var attrs=grabOn?(' class="rt-hv-panel" data-hvgrab="1"'+(grabBox?' data-hvbox="'+grabBox+'"':'')):'';
+ return '<div'+attrs+' style="position:absolute;top:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 18px;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px '+(grabOn?'18px':'9px')+';box-shadow:0 5px 16px rgba(0,0,0,.55);z-index:6;">'
+  +'<div style="display:flex;align-items:center;justify-content:space-between;min-height:30px;'+((extra&&!grabOn)?'margin-bottom:8px;':'')+'">'
     +'<div style="font-size:15px;font-weight:800;color:#fff;">'+title+'</div>'+x
-  +'</div>'+(extra||'')+'</div>';
+  +'</div>'+body+grab+'</div>';
+}
+/* Grabber-Steuerung: klappt Kopf-Body (und optional unteren Kasten) 3 s nach Anzeige
+   automatisch ein (nur Titel sichtbar, wie beim Fahnenradar). Grabber mittig in der
+   Kopfleiste zieht alles wieder herunter. Tippen togglet, Ziehen richtet nach Richtung. */
+function RT_hvGrabInit(){ var ps=document.querySelectorAll('.rt-hv-panel[data-hvgrab="1"]'); for(var i=0;i<ps.length;i++) RT_hvGrabWire(ps[i]); }
+function RT_hvGrabWire(panel){
+ if(panel._grabWired) return; panel._grabWired=true;
+ var body=panel.querySelector('.rt-hv-body');
+ var grab=panel.querySelector('.rt-hv-grab');
+ var boxId=panel.getAttribute('data-hvbox');
+ var expanded=true;
+ function setExpanded(on){
+  expanded=on;
+  if(body){
+   if(on){ body.style.maxHeight=body.scrollHeight+'px'; body.style.opacity='1'; body.style.marginTop='8px'; }
+   else { body.style.maxHeight=body.scrollHeight+'px'; void body.offsetHeight; body.style.maxHeight='0px'; body.style.opacity='0'; body.style.marginTop='0px'; }
+  }
+  if(boxId){ var b=document.getElementById(boxId); if(b){ b.style.transition='transform .30s ease'; b.style.transform=on?'translateY(0)':'translateY(135%)'; } }
+ }
+ panel._grabTimer=setTimeout(function(){ if(document.body.contains(panel)) setExpanded(false); },3000);
+ if(grab){
+  var stt=null, sy=0, moved=false;
+  grab.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); try{grab.setPointerCapture(ev.pointerId);}catch(e){} if(panel._grabTimer){ clearTimeout(panel._grabTimer); panel._grabTimer=null; } stt=true; sy=ev.clientY; moved=false; });
+  grab.addEventListener('pointermove',function(ev){ if(!stt) return; ev.preventDefault(); ev.stopPropagation(); var dy=ev.clientY-sy; if(Math.abs(dy)>8){ moved=true; if(dy>0){ if(!expanded) setExpanded(true); } else { if(expanded) setExpanded(false); } } });
+  function endG(ev){ if(!stt) return; stt=null; ev.stopPropagation(); if(!moved) setExpanded(!expanded); }
+  grab.addEventListener('pointerup',endG); grab.addEventListener('pointercancel',endG);
+ }
 }
 function RT_tileOp(id,on){ var b=document.getElementById(id); if(!b) return; if(on){ b.style.background='rgba(31,138,77,.24)'; b.style.boxShadow='0 0 0 3px #1F8A4D,0 3px 9px rgba(0,0,0,.5)'; b.style.transform='scale(1.06)'; } else { b.style.background='transparent'; b.style.boxShadow='none'; b.style.transform='scale(1)'; } }
 function RT_ovCloseOthers(keep){
@@ -3802,15 +3834,16 @@ function RT_openShotPlan(){
  var advBg=adv.tone==='good'?'rgba(31,138,77,.18)':(adv.tone==='warn'?'rgba(224,140,27,.18)':'rgba(255,255,255,.08)');
  var advBd=adv.tone==='good'?'#1F8A4D':(adv.tone==='warn'?'#E08C1B':'rgba(255,255,255,.22)');
  var advIc=adv.tone==='good'?'✓':(adv.tone==='warn'?'⚠':'ℹ');
- var card='<div style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:13px 15px calc(env(safe-area-inset-bottom,0px) + 15px);box-shadow:0 -3px 12px rgba(0,0,0,.4);">'
+ var card='<div id="rt-sp-card" style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:13px 15px calc(env(safe-area-inset-bottom,0px) + 15px);box-shadow:0 -3px 12px rgba(0,0,0,.4);">'
    +'<div style="background:'+advBg+';border:1px solid '+advBd+';border-radius:13px;padding:12px 13px;display:flex;gap:10px;align-items:flex-start;">'
      +'<div style="font-size:16px;">'+advIc+'</div>'
      +'<div style="flex:1;"><div style="font-size:11.5px;font-weight:800;letter-spacing:.4px;color:#9fb3a4;margin-bottom:3px;">EMPFEHLUNG</div><div style="font-size:13px;color:#fff;line-height:1.5;">'+adv.txt+'</div></div>'
    +'</div>'
    +'<div style="font-size:10.5px;color:#6f857a;text-align:center;margin-top:9px;">Basis: '+d.n+' erfasste'+(d.n===1?'r Abschlag':' Abschläge')+' auf dieser Bahn'+(d.avgLen?' · Ø '+RT_fmtDist(d.avgLen):'')+'</div>'
  +'</div>';
- o.innerHTML=RT_hvPanel('Shot-Analyse · Bahn '+d.num,'',extra)+card;
+ o.innerHTML=RT_hvPanel('Shot-Analyse · Bahn '+d.num,'',extra,'rt-sp-card')+card;
  host.appendChild(o);
+ RT_hvGrabInit();
  RT_spPlot(d);
 }
 function RT_spPlot(d){
@@ -3988,9 +4021,10 @@ function RT_openDistKI(){
  RT_DKI.pin=pin; RT_DKI.map=map; RT_DKI.mA=null; RT_DKI.mB=null; RT_DKI.err=false; RT_DKI.seq++;
  var o=document.createElement('div'); o.id='rt-dki';
  o.style.cssText='position:absolute;inset:0;z-index:2500;pointer-events:none;';
- o.innerHTML=RT_hvPanel('Entfernung & KI','','<div style="font-size:11.5px;color:#9fb3a4;">Standort &amp; Ziel per Touch verschieben – nur zur Info.</div>')
+ o.innerHTML=RT_hvPanel('Entfernung & KI','','<div style="font-size:11.5px;color:#9fb3a4;">Standort &amp; Ziel per Touch verschieben – nur zur Info.</div>','rt-dki-card')
    +'<div id="rt-dki-card" style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:12px 15px calc(env(safe-area-inset-bottom,0px) + 14px);box-shadow:0 -3px 12px rgba(0,0,0,.4);"></div>';
  host.appendChild(o);
+ RT_hvGrabInit();
  if(!map||typeof L==='undefined'||!A||!B){ RT_dkiRenderCard(null,null,false,'Karte/Position nicht verfügbar. Öffne die Funktion auf der Bahn (Satellitenkarte).'); return; }
  RT_dkiAttach(map,A,B);
  RT_dkiRenderCard(RT_haversineM(A.lat,A.lng,B.lat,B.lng),null,true);
@@ -4118,10 +4152,11 @@ function RT_gvBuildOverlay(){
  var ex=document.getElementById('rt-gv-ui'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
  var o=document.createElement('div'); o.id='rt-gv-ui';
  o.style.cssText='position:absolute;inset:0;z-index:2400;pointer-events:none;';
- o.innerHTML=RT_hvPanel('Grün-Ansicht','')
+ o.innerHTML=RT_hvPanel('Grün-Ansicht','','','gv-card')
   +'<div id="gv-status" style="position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 70px);pointer-events:none;background:rgba(8,20,13,.82);color:#fff;font-size:12px;border-radius:100px;padding:6px 12px;">Höhenmodell wird geladen…</div>'
-  +'<div id="gv-card" style="position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);pointer-events:auto;background:rgba(10,22,15,.95);border-radius:18px;padding:11px 14px;box-shadow:0 5px 16px rgba(0,0,0,.55);display:none;"></div>';
+  +'<div id="gv-card" style="position:absolute;left:0;right:0;bottom:0;pointer-events:auto;background:rgba(14,30,21,.96);padding:13px 15px calc(env(safe-area-inset-bottom,0px) + 15px);box-shadow:0 -3px 12px rgba(0,0,0,.4);display:none;"></div>';
  host.appendChild(o);
+ RT_hvGrabInit();
 }
 function RT_gvRemoveOverlay(){ var o=document.getElementById('rt-gv-ui'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
 function RT_gvStatus(t){ var s=document.getElementById('gv-status'); if(s){ s.style.display=t?'block':'none'; s.textContent=t||''; } }

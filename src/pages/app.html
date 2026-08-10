@@ -26,7 +26,7 @@ body{touch-action:manipulation;}
   --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
 }
 html,body{min-height:100%;color:var(--tx);font-family:'Inter',-apple-system,sans-serif;overflow-x:hidden;}
-html{background:linear-gradient(180deg,#F8FBF3 0%,#ECF2E4 100%) fixed;background-color:#ECF2E4;}
+html{background:#ECF2E4;}
 body{background:transparent;}
 .bg{position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,#F8FBF3 0%,#ECF2E4 100%);overflow:hidden;}
 .o{position:absolute;border-radius:50%;filter:blur(70px);animation:ob 18s ease-in-out infinite;}
@@ -291,14 +291,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0ms!important;scroll-behavior:auto!important;}
   .rt-spin{animation-duration:1.6s!important;animation-iteration-count:infinite!important;}
 }
-/* PWA (Zum Home-Bildschirm): Nav als am unteren Rand ANGEDOCKTE Frosted-Bar statt schwebender
-   Pille. Buendig bei 0px, deckt die iOS-Safe-Area selbst ab (kein weisser/gruener Streifen),
-   Inhalt scrollt sichtbar-verschwommen dahinter durch - spiegelt das obere Ende unter der
-   Statusleiste. Nur im Standalone-Modus; im Browser bleibt die schwebende Pille. */
-@media all and (display-mode:standalone){
-  #bottom-nav{ padding:0 !important; background:none !important; }
-  #nav-tabs{ border-radius:16px 16px 0 0 !important; padding:8px 12px calc(env(safe-area-inset-bottom,0px) + 8px) !important; }
-}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
@@ -416,7 +408,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   <div id="tab-analyse" style="display:none;"></div>
 
   <!-- Tab Bar -->
-  <div id="bottom-nav" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:60;padding:8px 16px calc(env(safe-area-inset-bottom,0px) * 0.4 + 8px);background:linear-gradient(to top,#ECF2E4 42%,rgba(236,242,228,0));">
+  <div id="bottom-nav" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:60;padding:8px 16px 10px;">
     <div id="nav-tabs" style="background:var(--fp-surface-glass);backdrop-filter:var(--fp-blur);-webkit-backdrop-filter:var(--fp-blur);border:1px solid var(--fp-border);border-radius:var(--fp-radius-lg);padding:var(--fp-space-2);display:flex;justify-content:space-around;box-shadow:var(--fp-shadow-nav);"></div>
   </div>
 

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FairwayPilot – Umsatz- & Ergebnisrechner</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:linear-gradient(180deg,#F8FBF3,#ECF2E4);color:#16301F;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:18px;min-height:100vh;}
+.wrap{max-width:680px;margin:0 auto;}
+h1{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:2px;}
+.sub{font-size:13px;color:#5d7060;margin-bottom:16px;}
+.card{background:#fff;border:1px solid #E1EADA;border-top:3px solid #1F8A4D;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 8px 22px -18px rgba(27,46,32,.35);}
+.card h2{font-size:15px;font-weight:800;margin-bottom:12px;}
+.ctrl{margin-bottom:13px;}
+.ctrl .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;font-weight:600;margin-bottom:5px;}
+.ctrl .val{color:#1F8A4D;font-weight:800;font-variant-numeric:tabular-nums;}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:6px;background:#E4EEDC;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#1F8A4D;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-radius:50%;background:#1F8A4D;cursor:pointer;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.kpi{background:#F4F8EF;border:1px solid #E4EEDC;border-radius:14px;padding:12px 13px;}
+.kpi .t{font-size:11px;font-weight:700;color:#5d7060;text-transform:uppercase;letter-spacing:.3px;}
+.kpi .n{font-size:20px;font-weight:800;color:#143522;margin-top:3px;font-variant-numeric:tabular-nums;}
+.kpi .s{font-size:11px;color:#5d7060;margin-top:1px;}
+.kpi.big{grid-column:span 2;background:linear-gradient(135deg,#12261b,#1c3a26);border:none;color:#fff;}
+.kpi.big .t{color:#8FE1A9;}
+.kpi.big .n{color:#fff;font-size:22px;}
+.kpi.big .s{color:#cfe0d4;}
+table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums;}
+th,td{padding:7px 4px;text-align:right;border-bottom:1px solid #f0f3ec;}
+th:first-child,td:first-child{text-align:left;}
+th{font-size:10.5px;color:#8a9c8e;text-transform:uppercase;letter-spacing:.3px;font-weight:700;}
+tr.hl td{background:#F4F8EF;font-weight:700;}
+.pos{color:#1F8A4D;}.neg{color:#c0392b;}
+.legend{display:flex;gap:14px;font-size:12px;color:#5d7060;margin-top:8px;flex-wrap:wrap;}
+.dot{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:5px;}
+.note{font-size:11.5px;color:#7b8e80;line-height:1.5;margin-top:10px;}
+.reset{background:none;border:1px solid #E1EADA;color:#1F8A4D;font-weight:700;font-family:inherit;font-size:12px;padding:8px 14px;border-radius:10px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>FairwayPilot · Umsatz- &amp; Ergebnisrechner</h1>
+  <div class="sub">Freemium-Modell mit dauerhafter Werbung ab Jahr 2. Alle Werte sind Schätzungen – Regler verschieben, Ergebnis rechnet live.</div>
+
+  <div class="card">
+    <h2>Stellschrauben</h2>
+    <div class="grid2">
+      <div class="ctrl"><div class="lab"><span>Jahresabo (brutto)</span><span class="val" id="v_price">55 €</span></div><input type="range" id="price" min="19" max="120" step="1" value="55"></div>
+      <div class="ctrl"><div class="lab"><span>Conversion</span><span class="val" id="v_conv">3,0 %</span></div><input type="range" id="conv" min="1" max="8" step="0.5" value="3"></div>
+      <div class="ctrl"><div class="lab"><span>Werbebudget / Jahr</span><span class="val" id="v_budget">20.000 €</span></div><input type="range" id="budget" min="0" max="100000" step="2500" value="20000"></div>
+      <div class="ctrl"><div class="lab"><span>Kosten je Gratis-Nutzer (CPA)</span><span class="val" id="v_cpa">2,50 €</span></div><input type="range" id="cpa" min="0.5" max="8" step="0.25" value="2.5"></div>
+      <div class="ctrl"><div class="lab"><span>Organische Neukunden / Jahr</span><span class="val" id="v_org">5.000</span></div><input type="range" id="org" min="0" max="20000" step="500" value="5000"></div>
+      <div class="ctrl"><div class="lab"><span>Halt der Gratis-Basis / Jahr</span><span class="val" id="v_ret">65 %</span></div><input type="range" id="ret" min="40" max="90" step="5" value="65"></div>
+      <div class="ctrl"><div class="lab"><span>Fixkosten / Jahr</span><span class="val" id="v_fix">3.000 €</span></div><input type="range" id="fix" min="0" max="20000" step="500" value="3000"></div>
+      <div class="ctrl"><div class="lab"><span>Start-Basis Jahr 1 (organisch)</span><span class="val" id="v_base">4.000</span></div><input type="range" id="base" min="500" max="20000" step="500" value="4000"></div>
+      <div class="ctrl"><div class="lab"><span>Steuersatz (auf Ergebnis)</span><span class="val" id="v_tax">0 %</span></div><input type="range" id="tax" min="0" max="45" step="1" value="0"></div>
+      <div class="ctrl"><div class="lab"><span>Horizont</span><span class="val" id="v_years">10 Jahre</span></div><input type="range" id="years" min="3" max="15" step="1" value="10"></div>
+    </div>
+    <div class="note" id="arpuNote"></div>
+    <button class="reset" onclick="resetAll()">Zurücksetzen</button>
+  </div>
+
+  <div class="card">
+    <h2>Kennzahlen</h2>
+    <div class="kpis" id="kpis"></div>
+  </div>
+
+  <div class="card">
+    <h2>Verlauf</h2>
+    <div id="chart"></div>
+    <div class="legend">
+      <span><span class="dot" style="background:#A7D9BD;"></span>Brutto-Umsatz</span>
+      <span><span class="dot" style="background:#1F8A4D;"></span>Ergebnis (nach Werbung &amp; Fix)</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Jahr für Jahr</h2>
+    <div style="overflow-x:auto;"><table id="tbl"></table></div>
+    <div class="note">„Ergebnis" ist das operative Ergebnis nach Werbung und Fixkosten. Bei Steuersatz &gt; 0 wird zusätzlich Steuer auf positive Jahresergebnisse abgezogen (vereinfachte Näherung, keine Steuerberatung). Netto-ARPU = Preis abzüglich MwSt (19 %) und Stripe-Gebühr (~1,5 % + 0,25 €).</div>
+  </div>
+</div>
+
+<script>
+var DEFAULTS={price:55,conv:3,budget:20000,cpa:2.5,org:5000,ret:65,fix:3000,base:4000,tax:0,years:10};
+var ids=Object.keys(DEFAULTS);
+function euro(n){return Math.round(n).toLocaleString('de-DE')+' €';}
+function num(n){return Math.round(n).toLocaleString('de-DE');}
+
+function calc(){
+  var g={};
+  ids.forEach(function(k){ g[k]=parseFloat(document.getElementById(k).value); });
+  // Labels
+  document.getElementById('v_price').textContent=num(g.price)+' €';
+  document.getElementById('v_conv').textContent=g.conv.toFixed(1).replace('.',',')+' %';
+  document.getElementById('v_budget').textContent=euro(g.budget);
+  document.getElementById('v_cpa').textContent=g.cpa.toFixed(2).replace('.',',')+' €';
+  document.getElementById('v_org').textContent=num(g.org);
+  document.getElementById('v_ret').textContent=g.ret+' %';
+  document.getElementById('v_fix').textContent=euro(g.fix);
+  document.getElementById('v_base').textContent=num(g.base);
+  document.getElementById('v_tax').textContent=g.tax+' %';
+  document.getElementById('v_years').textContent=g.years+' Jahre';
+
+  var net=g.price/1.19; net=net-(net*0.015+0.25); // MwSt + Stripe
+  var arpu=net, conv=g.conv/100, ret=g.ret/100, adUsers=g.cpa>0?g.budget/g.cpa:0;
+  document.getElementById('arpuNote').textContent='Netto-ARPU je Zahler/Jahr: '+arpu.toFixed(2).replace('.',',')+' € · Werbe-Neukunden/Jahr: '+num(adUsers)+' · Gleichgewicht Gratis-Basis: '+num((g.org+adUsers)/(1-ret));
+
+  var rows=[], free=g.base, cumG=0, cumR=0;
+  for(var y=1;y<=g.years;y++){
+    if(y>=2){ free=free*ret+g.org+adUsers; }
+    var payers=free*conv, gross=payers*g.price, netRev=payers*arpu;
+    var ad=(y>=2?g.budget:0);
+    var result=netRev-ad-g.fix;
+    if(g.tax>0 && result>0) result=result*(1-g.tax/100);
+    cumG+=gross; cumR+=result;
+    rows.push({y:y,free:free,payers:payers,gross:gross,net:netRev,cost:ad+g.fix,result:result,cumR:cumR,cumG:cumG});
+  }
+  return {rows:rows,arpu:arpu};
+}
+
+function findYear(rows,y){ for(var i=0;i<rows.length;i++){ if(rows[i].y===y) return rows[i]; } return rows[rows.length-1]; }
+
+function render(){
+  var r=calc(), rows=r.rows, last=rows[rows.length-1];
+  var y5=findYear(rows,5), y10=findYear(rows,10);
+  // KPIs
+  var k='';
+  function kpi(t,n,s,big){ return '<div class="kpi'+(big?' big':'')+'"><div class="t">'+t+'</div><div class="n">'+n+'</div><div class="s">'+s+'</div></div>'; }
+  if(rows.length>=5) k+=kpi('Nach 5 Jahren', euro(y5.gross), 'Ergebnis '+euro(y5.result)+'/Jahr');
+  if(rows.length>=10) k+=kpi('Nach 10 Jahren', euro(y10.gross), 'Ergebnis '+euro(y10.result)+'/Jahr');
+  k+=kpi('Zahler (Endjahr)', num(last.payers), Math.round(last.free).toLocaleString('de-DE')+' Gratis-Nutzer');
+  k+=kpi('Brutto-Umsatz (Endjahr)', euro(last.gross), 'Jahr '+last.y);
+  k+=kpi('Kumuliertes Ergebnis', euro(last.cumR), 'über '+last.y+' Jahre · kum. Umsatz '+euro(last.cumG), true);
+  document.getElementById('kpis').innerHTML=k;
+  // Table
+  var t='<tr><th>Jahr</th><th>Gratis</th><th>Zahler</th><th>Brutto</th><th>Ergebnis</th><th>kumuliert</th></tr>';
+  rows.forEach(function(x){ var hl=(x.y===5||x.y===10)?' class="hl"':'';
+    t+='<tr'+hl+'><td>'+x.y+'</td><td>'+num(x.free)+'</td><td>'+num(x.payers)+'</td><td>'+euro(x.gross)+'</td><td class="'+(x.result>=0?'pos':'neg')+'">'+euro(x.result)+'</td><td>'+euro(x.cumR)+'</td></tr>'; });
+  document.getElementById('tbl').innerHTML=t;
+  drawChart(rows);
+}
+
+function drawChart(rows){
+  var W=620,H=230,pl=44,pr=12,pt=12,pb=26, iw=W-pl-pr, ih=H-pt-pb;
+  var maxV=0,minV=0;
+  rows.forEach(function(x){ maxV=Math.max(maxV,x.gross,x.result); minV=Math.min(minV,x.result); });
+  maxV=maxV*1.08; if(minV>0)minV=0; minV=minV*1.1;
+  var span=maxV-minV||1;
+  function X(i){ return pl+ (rows.length<=1?iw/2 : i/(rows.length-1)*iw); }
+  function Y(v){ return pt+ ih - (v-minV)/span*ih; }
+  var bw=Math.max(6, iw/rows.length*0.5);
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block;font-family:inherit;">';
+  // gridlines + y labels (0, mid, max)
+  [minV,(minV+maxV)/2,maxV].forEach(function(v){ var y=Y(v); s+='<line x1="'+pl+'" y1="'+y+'" x2="'+(W-pr)+'" y2="'+y+'" stroke="#eef2ec"/>'; s+='<text x="'+(pl-6)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" fill="#a7b3aa">'+Math.round(v/1000)+'k</text>'; });
+  // zero line
+  var yz=Y(0); s+='<line x1="'+pl+'" y1="'+yz+'" x2="'+(W-pr)+'" y2="'+yz+'" stroke="#cfd8cd" stroke-dasharray="3 3"/>';
+  // bars (gross)
+  rows.forEach(function(x,i){ var cx=X(i), y0=Y(0), y1=Y(x.gross); s+='<rect x="'+(cx-bw/2)+'" y="'+Math.min(y0,y1)+'" width="'+bw+'" height="'+Math.abs(y0-y1)+'" rx="3" fill="#A7D9BD"/>'; });
+  // result line
+  var d=''; rows.forEach(function(x,i){ d+=(i?'L':'M')+X(i)+' '+Y(x.result)+' '; });
+  s+='<path d="'+d+'" fill="none" stroke="#1F8A4D" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+  rows.forEach(function(x,i){ s+='<circle cx="'+X(i)+'" cy="'+Y(x.result)+'" r="3" fill="#1F8A4D"/>'; });
+  // x labels
+  rows.forEach(function(x,i){ if(rows.length<=12||i%2===0||i===rows.length-1){ s+='<text x="'+X(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" fill="#8a9c8e">'+x.y+'</text>'; } });
+  s+='</svg>';
+  document.getElementById('chart').innerHTML=s;
+}
+
+function resetAll(){ ids.forEach(function(k){ document.getElementById(k).value=DEFAULTS[k]; }); render(); }
+ids.forEach(function(k){ document.getElementById(k).addEventListener('input',render); });
+render();
+</script>
+</body>
+</html>

@@ -18,6 +18,7 @@ HTML = HTML.replace('<style>', '<style id="fp-tokens">\n' + tokens + '\n</style>
 const pages = {
   HTML,
   LANDING_HTML: read('src/pages/landing.html'),
+  RECHNER_HTML: read('src/pages/rechner.html'),
   IMPRESSUM_HTML: read('src/pages/impressum.html'),
   DATENSCHUTZ_HTML: read('src/pages/datenschutz.html'),
   AGB_HTML: read('src/pages/agb.html'),
@@ -52,5 +53,6 @@ console.log('public/ mit statischen Icons erzeugt.');
 cpSync(r('assets/hv'), resolve(pub, 'hv'), { recursive: true });
 cpSync(r('assets/round-bg'), resolve(pub, 'round-bg'), { recursive: true });
 cpSync(r('assets/course-images'), resolve(pub, 'course-images'), { recursive: true });
+try { cpSync(r('assets/shots'), resolve(pub, 'shots'), { recursive: true }); } catch (e) { /* Landing-Screenshots optional */ }
 try { cpSync(r('assets/vendor'), resolve(pub, 'vendor'), { recursive: true }); } catch (e) { /* vendor optional */ }
 console.log('public/ mit Icons, Rundenbildern und Platzbildern erzeugt.');

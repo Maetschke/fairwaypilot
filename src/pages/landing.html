@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>FairwayPilot – dein Weg zum besseren Handicap</title>
-<meta name="description" content="FairwayPilot zeigt dir nach jeder Runde, woran es liegt und wo du dich verbesserst. Handicap-Entwicklung, Runden-Tracking und Statistiken – direkt im Browser, ohne App-Store.">
+<title>FairwayPilot – die komplette Golf-App. Kostenlos starten, Premium für die Profi-Funktionen.</title>
+<meta name="description" content="Runde, Handicap und GPS gratis. Premium schaltet KI-Schwunganalyse, Satelliten-Platzkarten, echte Schlaglängen, Auto-Platzrecherche, Shot-Tracer und Platzreife-Training frei – alles in einer App, ohne App-Store.">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="/icon-32.png">
@@ -12,6 +12,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FairwayPilot">
 <meta name="theme-color" content="#1F8A4D">
+<meta property="og:title" content="FairwayPilot – kostenlos starten, Premium für die Profi-Funktionen">
+<meta property="og:description" content="KI-Schwunganalyse, Platzkarten, echte Schlaglängen, Platzreife-Training – alles in einer App, ohne App-Store.">
+<meta property="og:type" content="website">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
@@ -34,7 +37,7 @@ html,body{min-height:100%;background:#F5F8F0;color:var(--tx);font-family:'Inter'
 .card{background:var(--gl);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--glb);border-top:3px solid var(--gd);border-radius:22px;padding:22px 20px;margin-bottom:16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(27,46,32,.04),0 10px 26px -20px rgba(27,46,32,.22);}
 .badge{display:inline-flex;align-items:center;gap:7px;background:rgba(52,199,89,.12);color:var(--gd);font-size:13px;font-weight:700;padding:5px 12px 5px 6px;border-radius:100px;margin-bottom:14px;}
 .badge img{width:22px;height:22px;border-radius:6px;display:block;}
-h1{font-size:30px;font-weight:800;letter-spacing:-.6px;line-height:1.15;background:linear-gradient(135deg,#143522,#2F5C42);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+h1{font-size:29px;font-weight:800;letter-spacing:-.6px;line-height:1.15;background:linear-gradient(135deg,#143522,#2F5C42);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
 h1 em{-webkit-text-fill-color:var(--g);font-style:normal;}
 .sub{font-size:15px;font-weight:600;color:var(--gd);margin-bottom:10px;}
 .lead{font-size:14.5px;line-height:1.55;color:var(--tx2);margin-bottom:20px;}
@@ -43,12 +46,47 @@ h1 em{-webkit-text-fill-color:var(--g);font-style:normal;}
 .cta-note{text-align:center;font-size:12px;color:var(--tx3);margin-top:10px;}
 h2{font-size:20px;font-weight:800;letter-spacing:-.3px;color:var(--tx);margin-bottom:4px;}
 .section-lead{font-size:13.5px;color:var(--tx3);margin-bottom:16px;}
-.benefits{display:grid;gap:12px;margin-top:6px;}
-.benefit{display:flex;gap:14px;align-items:flex-start;}
-.benefit .ico{flex:none;width:44px;height:44px;border-radius:13px;background:rgba(52,199,89,.13);display:flex;align-items:center;justify-content:center;font-size:20px;}
-.benefit h3{font-size:15px;font-weight:700;margin-bottom:2px;}
-.benefit p{font-size:13px;color:var(--tx3);line-height:1.45;}
-.shot-frame{border-radius:18px;border:1px solid var(--glb);background:linear-gradient(160deg,#EEF4E7,#E3ECDA);aspect-ratio:9/16;max-width:220px;margin:8px auto 4px;display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:12px;text-align:center;padding:20px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--gd);background:rgba(52,199,89,.1);border:1px solid rgba(52,199,89,.18);padding:6px 11px;border-radius:100px;}
+.chip img{width:16px;height:16px;border-radius:4px;display:block;flex:none;}
+.heroicon{width:84px;height:84px;border-radius:20px;display:block;margin:0 auto 14px;box-shadow:0 8px 22px -10px rgba(27,46,32,.4);}
+.browser{width:260px;max-width:74vw;margin:20px auto 2px;border-radius:16px;overflow:hidden;border:1px solid var(--glb);background:#fff;box-shadow:0 24px 46px -20px rgba(16,32,22,.5),0 2px 6px rgba(16,32,22,.14);}
+.bbar{display:flex;align-items:center;gap:8px;padding:9px 11px;background:#EDF1EA;border-bottom:1px solid var(--glb);}
+.bdots{display:flex;gap:5px;flex:none;}
+.bdots i{width:9px;height:9px;border-radius:50%;display:block;}
+.burl{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#fff;border:1px solid var(--glb);border-radius:100px;font-size:10.5px;color:var(--tx3);padding:4px 10px;overflow:hidden;white-space:nowrap;}
+.browser>img{display:block;width:100%;height:auto;}
+.gallery{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;margin:16px -20px 0;padding:4px 20px 12px;-webkit-overflow-scrolling:touch;}
+.gallery::-webkit-scrollbar{display:none;}
+.gshot{flex:none;width:190px;scroll-snap-align:center;}
+.gbrowser{border-radius:13px;overflow:hidden;border:1px solid var(--glb);background:#fff;box-shadow:0 14px 28px -16px rgba(16,32,22,.45);}
+.gbbar{display:flex;align-items:center;gap:5px;padding:6px 8px;background:#EDF1EA;border-bottom:1px solid var(--glb);}
+.gbbar i{width:7px;height:7px;border-radius:50%;display:block;flex:none;}
+.gburl{flex:1;background:#fff;border:1px solid var(--glb);border-radius:100px;font-size:8.5px;color:var(--tx3);padding:2px 8px;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.gbrowser>img{display:block;width:100%;height:auto;}
+.gcap{font-size:11.5px;color:var(--tx3);text-align:center;margin-top:9px;font-weight:600;line-height:1.3;}
+.gcap b{color:var(--gd);font-weight:800;}
+.swipe-note{font-size:11.5px;color:var(--tx3);text-align:center;margin-top:6px;}
+.lock{width:9px;height:9px;flex:none;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+.feat{background:#fff;border:1px solid var(--glb);border-radius:16px;padding:14px;position:relative;}
+.feat .ico{width:40px;height:40px;border-radius:11px;overflow:hidden;margin-bottom:9px;display:block;}
+.feat .ico img{width:100%;height:100%;display:block;object-fit:cover;}
+.feat h3{font-size:14px;font-weight:700;margin-bottom:3px;line-height:1.25;}
+.feat p{font-size:12px;color:var(--tx3);line-height:1.45;}
+.ptag{position:absolute;top:11px;right:11px;font-size:9.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#8a5a00;background:#FFE9B8;border:1px solid #F3D48A;border-radius:100px;padding:2px 7px;}
+.ftag{position:absolute;top:11px;right:11px;font-size:9.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--gd);background:rgba(52,199,89,.14);border:1px solid rgba(52,199,89,.28);border-radius:100px;padding:2px 7px;}
+.tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--gd);background:rgba(52,199,89,.12);padding:3px 9px;border-radius:100px;margin-bottom:10px;}
+.tiers{display:grid;gap:12px;margin-top:14px;}
+.tier{border:1px solid var(--glb);border-radius:16px;padding:16px;background:#fff;}
+.tier.pro{border:1.5px solid var(--gd);background:linear-gradient(180deg,#FCFEFB,#F4F9EF);}
+.tier .tt{font-size:16px;font-weight:800;}
+.tier .price{font-size:24px;font-weight:800;color:var(--tx);margin:6px 0 2px;}
+.tier .price small{font-size:13px;font-weight:600;color:var(--tx3);}
+.tier .pnote{font-size:12px;color:var(--tx3);margin-bottom:10px;}
+.tier ul{list-style:none;display:grid;gap:7px;}
+.tier li{font-size:13px;color:var(--tx2);padding-left:22px;position:relative;line-height:1.4;}
+.tier li:before{content:"✓";position:absolute;left:0;color:var(--gd);font-weight:800;}
 .steps{counter-reset:step;display:grid;gap:14px;margin-top:6px;}
 .step{display:flex;gap:14px;align-items:flex-start;}
 .step .num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--gd);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;}
@@ -63,9 +101,6 @@ h2{font-size:20px;font-weight:800;letter-spacing:-.3px;color:var(--tx);margin-bo
 .install-steps ol{padding-left:18px;}
 .install-steps li{font-size:13.5px;color:var(--tx2);line-height:1.7;}
 .install-steps b{color:var(--tx);}
-.quote{background:rgba(52,199,89,.07);border-left:3px solid var(--g);border-radius:0 14px 14px 0;padding:14px 16px;margin-bottom:12px;}
-.quote p{font-size:13.5px;line-height:1.5;color:var(--tx2);font-style:italic;margin-bottom:6px;}
-.quote span{font-size:12px;color:var(--tx3);font-weight:600;}
 .faq-item{border-bottom:1px solid var(--glb);padding:14px 0;}
 .faq-item:last-child{border-bottom:none;}
 .faq-item h3{font-size:14.5px;font-weight:700;margin-bottom:5px;}
@@ -78,59 +113,114 @@ footer a{color:var(--gd);text-decoration:none;font-weight:600;}
 <div class="bg"><div class="o o1"></div><div class="o o2"></div><div class="o o3"></div></div>
 <div class="wrap">
 
-  <div class="card">
-    <span class="badge"><img src="/icon-32.png" alt="FairwayPilot"> FairwayPilot</span>
-    <h1>Dein Golf-<em>Handicap</em> im Griff – nicht nur auf dem Papier.</h1>
-    <div class="sub">FairwayPilot – dein Weg zum besseren Handicap</div>
-    <p class="lead">FairwayPilot zeigt dir nach jeder Runde, woran es liegt und wo du dich verbesserst. Keine Excel-Tabellen, keine Rätselei – nur klare Zahlen zu deinem Spiel, direkt im Browser.</p>
-    <a href="#install" class="cta">App jetzt einrichten</a>
-    <div class="cta-note">Kein App Store nötig – läuft direkt im Browser auf deinem Handy.</div>
-  </div>
-
-  <div class="card">
-    <h2>Warum FairwayPilot</h2>
-    <div class="benefits">
-      <div class="benefit">
-        <div class="ico">📈</div>
-        <div><h3>Handicap-Entwicklung verstehen</h3><p>Sieh auf einen Blick, wie sich dein Handicap über Wochen und Monate entwickelt – und welche Runden den Unterschied gemacht haben.</p></div>
-      </div>
-      <div class="benefit">
-        <div class="ico">⛳</div>
-        <div><h3>Runden einfach tracken</h3><p>Score, Stableford-Punkte und Statistiken pro Loch – in wenigen Sekunden erfasst, direkt auf dem Platz oder danach.</p></div>
-      </div>
-      <div class="benefit">
-        <div class="ico">🎯</div>
-        <div><h3>Fortschritte klar sehen</h3><p>Keine losen Zettel, keine vergessenen Runden. Alle Daten an einem Ort, übersichtlich aufbereitet.</p></div>
-      </div>
-    </div>
-  </div>
-
   <div class="card" style="text-align:center;">
-    <h2 style="margin-bottom:2px;">So sieht's aus</h2>
-    <p class="section-lead">Dein Handicap-Verlauf auf einen Blick</p>
-    <div class="shot-frame">Screenshot folgt</div>
-  </div>
-
-  <div class="card">
-    <h2>So funktioniert es</h2>
-    <div class="steps" style="margin-top:12px;">
-      <div class="step"><div class="num">1</div><div><h3>Runde anlegen</h3><p>Platz wählen, loslegen. FairwayPilot kennt Par und Stroke Index deines Golfclubs.</p></div></div>
-      <div class="step"><div class="num">2</div><div><h3>Scores erfassen</h3><p>Trage deine Schläge Loch für Loch ein – live während der Runde oder im Nachhinein.</p></div></div>
-      <div class="step"><div class="num">3</div><div><h3>Entwicklung sehen</h3><p>Nach der Runde siehst du sofort, wie sie sich auf dein Handicap auswirkt.</p></div></div>
+    <img src="/icon-192.png" alt="FairwayPilot" class="heroicon">
+    <h1>Play a Hole <em>with me!</em></h1>
+    <div class="sub">KI-gestützte Spielbegleitung</div>
+    <p class="lead">Was andere auf drei, vier Apps und Abos verteilen, gibt es hier in einer – direkt im Browser, ohne App-Store, ohne Sensoren. Der Kern ist dauerhaft kostenlos. Wer mehr will, schaltet die fortgeschrittenen Werkzeuge mit einem fairen Abo frei – deutlich günstiger als ein reiner KI-Coach.</p>
+    <a href="/app" class="cta">Kostenlos starten</a>
+    <a href="#preise" class="cta secondary" style="margin-top:10px;">Premium ansehen</a>
+    <div class="cta-note">7 Tage Premium gratis testen · jederzeit kündbar · ohne App-Store</div>
+    <div class="browser">
+      <div class="bbar"><span class="bdots"><i style="background:#E0736E"></i><i style="background:#E3B84E"></i><i style="background:#5FB56A"></i></span><span class="burl"><svg class="lock" viewBox="0 0 24 24" fill="#8aa08f"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0z"/></svg>fairwaypilot.com</span></div>
+      <img src="/shots/scorecard.jpg" alt="FairwayPilot im Browser – Scorecard mit Loch-Karte" loading="eager">
+    </div>
+    <div class="swipe-note">Läuft direkt im Browser – Loch für Loch erfassen, mit Birdiekarte, GPS-Markern und Live-Auswertung.</div>
+    <div class="chips" style="justify-content:center;">
+      <span class="chip"><img src="data:image/png;base64,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" alt=""> Runde &amp; Score</span>
+      <span class="chip"><img src="data:image/png;base64,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" alt=""> Handicap</span>
+      <span class="chip"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAABgFBMVEV0SJFRKnNlO4VZM3r9+/2BUZ0AAAB6VJKATpyEVKJcNICEaJfIus/w6PKsmLhhN32Zh6rSx9dlR3ytlsG5p8N9YpCKdJuReKPl2umjirSzo73d0+FOKHRVAFVeQXhOJm9/AH9DHWdPKHJQKHJOJ29VVaqBTqDBrcrZyeLb0d4AAP9NJm5OJnGLbaL/AP8AAH9tRop4TJJ6TJh8WJtzVIyqVaq+scVzTI10TJB/f/+VeKqjirc4FF8/H38zIlU/P19fH19EJF9bLYJSP29VVX9gRHx9TpR+T6B/Vap1Yol+bZN/f3+AT5eAT6CJUp6CUpuFUp2AVpyCVKCEUKCEVqCGYZqMbqSJdZyMdZ+Zd6qVgKqahqyfkLLgze0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC7rSEIAAAAgHRSTlP+/v/+//4A/v7+/////////////v///v///v//DwP/tQL/SJvYA/r///8BKXj/AQIWRr4NmwP/LXgCo9b/CA8ICP//UAYl1v8GDdYCnXcleZvbmr3bTEwNUA+d1v//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAN88GoAAAAYpSURBVHjapZgHf9sqEMAPDoNsDUuKbMlxmjSjGU3Svfv23nuP7/813h1oIMV20tf7xRIg+HMTKwbt5I7WX/766vXWKknaRuIPv3712+92oRWw16+1fv7TL6PxCIwBAzcTMx79+OS51rc70FP9+NsxyfF4KKMRf0b8GfnD9noM47F58b5TikH39INH4yCw87tpLWAo4/YeAATjRw8IYEFP9cNjy+m2rRW5RpwPxvCQdQIy8XFAnIBRwfpVQQB2RrNjwPrA55b0gCBw7+UXP4+DkSXRFm6rFbvTH0ParZgbwDHd4PjRJy/vwlP9PXOsvVCDepq4wcCYETiKYajbGdx1/ELfgbvfsXetzk75nhAkvAxZU/rj50AcY4KRWxDUOPj0HugfxqN6GOwGo84+MItMkVRFCLUtEAzEOfyJhsd1OL00pKQEQyAol0rFy6wi1qKXiqZh1A4JzJ/wsHZtCyKV7DYjSJXKSh4PC6UKS2DIqsw3f8A3Y+s9vrjlrZRKJU49kGFFbVOruwJl/oLPrPdMW2NhEkUnKbeWpEWzRppYhZsK7+/OK9ZiUygrcYmlWnoTZaqyTaCkBjX9TMVJGLJP5oVKpT81VqMNoH4woFBZbWCsYtVzhXymypuCIFRxs3hO2dN7JhO1kOtBaU+hhUqauTIa+OQNQECWddonQ422Bz7bAJJFF2JSQM17U5cb498HLVTZmnaiVCR7/qvgpiCaHGHjsDiOOyzJ2UbLBiBKowR5uuTWnNKyXsv9SN5cIy6EAhDRZCrLkYq2MFMWKrWMhjeg/ulxwoROjDgqopgclBQJ3VRWFNEp30+iwtt2aozsVZDfKdU6YYfZE64JXBjVB8sqEFVTOpvZk4DKjRuzWd2vpXBJOmVMvPS974Mkx0yycGeFkMup/qTDJPlcFWtApf8E5ArXykzlfNDECe0UdvU0ANEWUw+b5shK+DjM1DOHsQYk0+tBbEU1R7RGdiBrFNhZcnYTEC3mQGUhTn3TCLQNbDL/mQZk3dcHbSO0j+Jsl7wRGd9VZFouwcWjBbleP2qJgDZA6gynIX09bkOzrwWBA0kLQqualSGoi7U6y0FOSzpyU2zGHKhe6kC1TDeBWJNpnlL5oQ+qBRkke6DalukAlNlpSPXagOQVUNdLuyzGKyBKyhl5qTWtD5r50x0IVoByPjc4izneNwPJlRrlcYZ0bGczlOCDcC1IrgRN8jiuOGDoly2BShSr9l0LwpwOoCQX/foXVCLLuUNtBnnuOIlygYODRGTxtlJnc9bTmTZdBeIS6RIDcYBBnBDIBoBqEDn8rJE906+AhFwvBBbLmL4azDMOwocMmtbCoGk706gqR1/EUIxakpp0J19F5Pg1ICxUnEW1tI1OMkrOUki7Aycqf0FNyQVMED6ISZuloiS3urJW857yaZe3EznBvBOAvH6R68ZQuGUTwSgpW85ElPy9KnEyoQ5dnCvoZp/yGIqJG7EPmv3nIe0/4RVuHjJoUosdoD13+aS2HzqQ+Cbtx7cjV5GQE4do0PUEBwnjU7EVb2GlZiaOBL13YRXTe3tEKZ3kVVQvwqra9Sk+yPUgNMKEQMsAXRMvS4T0EsPUYBmyjWTlMs4F9qUPwsYb24pv5BzyomDP2ea+dZ4QURyFYrIRVKtLoFyw03qCC7Aej9SuqYhdj/ogLx5utFC7PFJHwM6mOafACm2rmRBpBG14WlBbAD6IneBPRLFIqizB/VLNKWARF2zPJyUcXeE0oL7ALJvlVG3xfCIhqTyQ9exXcCiuCoO8LKybJ7hPB3DKKfROFLmxprTxCRx4AEpBQSlI/sz5lhuXmwYQzC5SK1PGZFQ9WGTd8WB3+hh2Ooy4VJVI1UJUiv6ricQWNf+N6U3uVCxUwe72XgTpk+x3OrwH2rON1aCNBVhVSEFqUneXPGaoi7OwEXonDEPoVh5q0OdXXIS9WxeMwTRPH3Gu4Za++GiIQWx9XDcHeSywv9GFvgX6/s6e2Cx4zXOxt3ObTLuvd8Rbyg5BQOtb+uDtOAeEsD9E3dXXWrfRLgLUP43d0u9e/F/OxQesT/Nj3W2tzw+P3pxydHje+7HOKqV3DvbeiHW0d7CjnTok/wF6D3Lm68KoigAAAABJRU5ErkJggg==" alt=""> KI-Schwunganalyse</span>
+      <span class="chip"><img src="/hv/entfernungki.png" alt=""> Platzkarten &amp; GPS</span>
+      <span class="chip"><img src="/hv/fahnenradar.png" alt=""> Platzsuche DE</span>
+      <span class="chip"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAABgFBMVEXXnCbsuTn+/vfzw0Lzwz3jqTDZpC3r1ZEAAADpvEX899LZtFXy5a/lzIjlyHHPlxrt3KfUt2zTqkry68jEqGr//wDcwnHz4ZjDjBP/qgDgvWnu03b/qlXXnSbUoR3csTz/fwD/00X+9LfZnR3RmCbVmSXyw0TVmSLYmiTPmy7lqxvwxUl/fwC4hRPMjh7Rmi7doCTbtzP/AADgpSzsuTjluk3vwD7wxk3twUvyxk3zyEzox3TmyoP/1FXv0HC7mUS+mlHCmUzMn0HUqireoCTcoCbBoGDfv1/du1Xdu2bbvGLbumvXu3LfwFrXxInfx4bd0Jnf1KX/f3/gnyf/qirvvzzgt1Hyv0Hkvk7tv0PqwDfrxHX//1UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABTHjkNAAAAgHRSTlP+/v/+/v7+/wD+/////v////7///4B////A///A7X//wL//w0pm75GeNb/dwL/GQ7bCgFMFCmcEkKa26PWBkwPnVD/Bnea1ggtD1Cd1v8N////Av8GUBl5m9YlDQMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALc/aF4AAAUUSURBVHjarZiHdqM6EIYHBJIQQrTFzq6TzU3ddrf3fnvvvb3/c9wZiWZKEq93fDBY1nz6f40E5wDSRrUr5b9vXr4SyYVDvHr55gcpdytHAPv9gZSPn79gG8eL519J+UsH+k/ev8UOWOCCzq5f0Aarj2EwdutLuduAKvno9KDNw3ODaVt62CHu4PQPWTnQrnw207Xh2ZM9JsQx9ow0Ac7PU8ZGVqye6YlZN05XTxECVfX6dAIUzIKCHrG+Pn1dVbAr/zxY69QqCoJJRGAddqPixcEtuQvVP41/NprZCU8B68bpiX9cgXzCxhPMgvV6rcHaIXuwvyQ8GhWhNt+nNjXzvMEqct28IPoafsdTb8xgUBe2nuh56yyPeQG1sW/gCfMmHLjwgnb2SYy3OoyIRRLqtibYt/A3UuciYFHEvAjD5QjFlkqwyBuDvgMcgXrWv1sotmBb5K0FgXxfaWEGf3jRAiIHav5pXWFLEI1AkfAplF6ydVAOti9msB4pGhKGIN/XM6BhyjSpASk99NaALhgOpO10bwtaLc1kxsagmX8mFEUmejfQsEX7OtoeFBmFRRHhttbqVaL5zTkQuyCI9CjBb97cVNGwarRKYs5W051DcxZoMKbhnrfyDRcaQwjWmz4TLQ73jTDsIiDOV5rFpYpNs6fcajBaKYUgTrtfjXf/CBRy4Yt9g/Od1CS/NLQmMN9wc8i5dvzoTBCVnWsV72s0pxuS4FRMnLv9RMWcu8oaLwynQCG1c7LPY6XxUDxeAyECp0x9v3JYHIhFfAwKKbCH5isBBk2IWocFgaBEXeqfVCx8U5QWtFQmnAHh7uCGhsZD+XGhalAqfFUYVSrl6xK10fRhL3/J10BhEw7ka2tu4dPRgjQXZVkrzHMCXdW0lTDNs59LEHagDP1g2RO0srDmstZahlJVTVp0oDqQdwn4CISmrDlVmyOQVeSsqnhhQdS7UzEAZRZE5pbWXN6AVJyrEsMv0ba4KIjMKQPa1cvVT4DWqOnnUhurM+ZngrQDqYLrQ5S1usrLZkHmfEnbTxsLt1VLzlWE48dKXOU8ovXtQCqH2BjDwe2dcxQ1ILUAY1IQyw7k+1leFEVe75wYsr4ijiDeB0G96xXspIbWVQ9Ezc3FUJEF8V754UqzL27DUvm2Qj1QF6RoAArtT+5AaQPyswIiEbmCXRDkrvgAhIugAL4JyFqjbxiAfJVwOAvUTjZmW5CLMQjvjnk2B0o7ELlZA4kRyM3WLAjCNrsBAcVGINLfqahBAC0onwIlM3O0IUikDQgfSevWKBezLQjsZQuKaIq1WORxHOd5kikC4XIvxSLGHYKNSUY3phhvm0mbycGCoAeKhSm6ljSFXJvUiBx2dlLXgm1FbvYRZNKu5yXoBYFSoH6JyMoSH9mmgB1Mhp3bECcZ3UUyVMYtjkAwB9IAxY9a9dakJi07sCj7CzUzCMvmQbj4ynI01zov8nErPQmSOdCoykr5Z4S6sga60f3gcR5TYag8dKb7WKMlc2WMe1H0NPAv4CSEcaSuPBif4ALAJ1pSDHtQ9Xqgj+AanBMkjZ/XCT6Gu/Be4i3ISW8bRngioTp+H4KOK7gsr28tKbwuL0NV/ba3JSnc+7Sq6CXLEfy6FQeO6CWLlJflNb6FppBfQ0T9IurOu7sL9+40L6JI09F1JG9OwcfHZ0ekp3lZ96GUxyf3+IaskN/7/NgmtyD5AKn3H+7d2IDEb+w9vItuHjjC/2RjbKyeuqDqAAAAAElFTkSuQmCC" alt=""> Platzreife</span>
     </div>
   </div>
 
   <div class="card">
-    <h2 style="margin-bottom:12px;">Was Golfer sagen</h2>
-    <div class="quote"><p>„Ich weiß jetzt endlich, an welchen Löchern ich wirklich Schläge verliere."</p><span>— M., Handicap 18</span></div>
-    <div class="quote" style="margin-bottom:0;"><p>„Seit ich meine Runden mit FairwayPilot tracke, sehe ich meinen Fortschritt schwarz auf weiß."</p><span>— S., Handicap 24</span></div>
+    <h2>Alles in einer App</h2>
+    <p class="section-lead"><span style="color:var(--gd);font-weight:700;">Gratis</span>-Kern plus <span style="color:#8a5a00;font-weight:700;">Premium</span>-Werkzeuge – klar gekennzeichnet.</p>
+    <div class="fgrid">
+      <div class="feat"><span class="ftag">Gratis</span><div class="ico"><img src="data:image/png;base64,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" alt=""></div><h3>Runde &amp; Scorekarte</h3><p>Loch für Loch mit Stableford, Netto-Auswertung und automatischer Zählung.</p></div>
+      <div class="feat"><span class="ftag">Gratis</span><div class="ico"><img src="data:image/png;base64,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" alt=""></div><h3>Handicap-Verlauf</h3><p>Nachvollziehbare Entwicklung aus deinen Runden, mit Basis-Statistik.</p></div>
+      <div class="feat"><span class="ptag">Premium</span><div class="ico"><img src="data:image/png;base64,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" alt=""></div><h3>KI-Schwunganalyse</h3><p>33 Punkte, 11 Merkmale, Schlüsselbilder &amp; Drills – auf deinem Gerät. Gratis 1×/Monat.</p></div>
+      <div class="feat"><span class="ptag">Premium</span><div class="ico"><img src="/hv/entfernungki.png" alt=""></div><h3>Platzkarten &amp; GPS+</h3><p>Satelliten-/Birdiekarte, Fahnenradar, Wind &amp; Grün-Relief. Basis-Entfernung ist gratis.</p></div>
+      <div class="feat"><span class="ptag">Premium</span><div class="ico"><img src="/hv/entfernung.png" alt=""></div><h3>Echte Schlaglängen</h3><p>GPS-Balllagen → gemessene Längen je Schläger und Tiefen-Statistik.</p></div>
+      <div class="feat"><span class="ptag">Premium</span><div class="ico"><img src="data:image/png;base64,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" alt=""></div><h3>Auto-Platzrecherche</h3><p>Par, Stroke-Index, CR/Slope &amp; Adresse automatisch recherchiert. Gratis 1 Platz.</p></div>
+      <div class="feat"><span class="ptag">Premium</span><div class="ico"><img src="/hv/shotanalyse.png" alt=""></div><h3>Shot-Tracer</h3><p>Ballflug aus dem Video – erkennt Draw/Fade/Slice und gibt den Tipp.</p></div>
+      <div class="feat"><span class="ptag">Premium</span><div class="ico"><img src="data:image/png;base64,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" alt=""></div><h3>Platzreife-Training</h3><p>Prüfungssimulation und Premium-Videoakademie. Golfwissen &amp; Lexikon bleiben gratis.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>So sieht's aus</h2>
+    <p class="section-lead">Echte Screens aus der App – wisch dich durch.</p>
+    <div class="gallery">
+      <div class="gshot"><div class="gbrowser"><div class="gbbar"><i style="background:#E0736E"></i><i style="background:#E3B84E"></i><i style="background:#5FB56A"></i><span class="gburl">fairwaypilot.com</span></div><img src="/shots/home.jpg" alt="Startseite" loading="lazy"></div><div class="gcap"><b>Start</b> · Runde &amp; gespeicherte Runden</div></div>
+      <div class="gshot"><div class="gbrowser"><div class="gbbar"><i style="background:#E0736E"></i><i style="background:#E3B84E"></i><i style="background:#5FB56A"></i><span class="gburl">fairwaypilot.com</span></div><img src="/shots/wind.jpg" alt="Wind auf der Bahn" loading="lazy"></div><div class="gcap"><b>Wind</b> · Richtung &amp; Stärke auf der Bahn</div></div>
+      <div class="gshot"><div class="gbrowser"><div class="gbbar"><i style="background:#E0736E"></i><i style="background:#E3B84E"></i><i style="background:#5FB56A"></i><span class="gburl">fairwaypilot.com</span></div><img src="/shots/distki.jpg" alt="Entfernung und KI" loading="lazy"></div><div class="gcap"><b>Entfernung &amp; KI</b> · „Spielt wie" + Schläger-Tipp</div></div>
+      <div class="gshot"><div class="gbrowser"><div class="gbbar"><i style="background:#E0736E"></i><i style="background:#E3B84E"></i><i style="background:#5FB56A"></i><span class="gburl">fairwaypilot.com</span></div><img src="/shots/fahnenradar.jpg" alt="Fahnenradar mit Distanzringen" loading="lazy"></div><div class="gcap"><b>Fahnenradar</b> · Distanzringe zur Fahne</div></div>
+      <div class="gshot"><div class="gbrowser"><div class="gbbar"><i style="background:#E0736E"></i><i style="background:#E3B84E"></i><i style="background:#5FB56A"></i><span class="gburl">fairwaypilot.com</span></div><img src="/shots/handicap.jpg" alt="Handicap-Verlauf" loading="lazy"></div><div class="gcap"><b>Handicap</b> · Verlauf aus deinen Runden</div></div>
+      <div class="gshot"><div class="gbrowser"><div class="gbbar"><i style="background:#E0736E"></i><i style="background:#E3B84E"></i><i style="background:#5FB56A"></i><span class="gburl">fairwaypilot.com</span></div><img src="/shots/stats.jpg" alt="Schläge-Statistik" loading="lazy"></div><div class="gcap"><b>Statistik</b> · Fairways, Putts, Loch für Loch</div></div>
+      <div class="gshot"><div class="gbrowser"><div class="gbbar"><i style="background:#E0736E"></i><i style="background:#E3B84E"></i><i style="background:#5FB56A"></i><span class="gburl">fairwaypilot.com</span></div><img src="/shots/lernen.jpg" alt="Lernbereich mit Level" loading="lazy"></div><div class="gcap"><b>Lernen</b> · Golfwissen, XP &amp; Level</div></div>
+      <div class="gshot"><div class="gbrowser"><div class="gbbar"><i style="background:#E0736E"></i><i style="background:#E3B84E"></i><i style="background:#5FB56A"></i><span class="gburl">fairwaypilot.com</span></div><img src="/shots/quiz.jpg" alt="Regel-Quiz" loading="lazy"></div><div class="gcap"><b>Platzreife</b> · Regeln üben mit Quiz</div></div>
+    </div>
+  </div>
+
+  <div class="card" id="preise">
+    <span class="tag">Preise</span>
+    <h2>Fair statt drei teurer Apps</h2>
+    <p class="section-lead">Ein reiner KI-Coach kostet anderswo rund 18 € im Monat. FairwayPilot Premium bündelt viel mehr – für einen Bruchteil.</p>
+    <div class="tiers">
+      <div class="tier">
+        <div class="tt">Kostenlos</div>
+        <div class="price">0 €</div>
+        <div class="pnote">Dauerhaft gratis, ohne App-Store.</div>
+        <ul>
+          <li>Runde &amp; Scorekarte, Stableford</li>
+          <li>Handicap-Verlauf &amp; Basis-Statistik</li>
+          <li>Basis-GPS (Entfernung zur Grünmitte)</li>
+          <li>Platzsuche auf der Karte &amp; Merken</li>
+          <li>Golfwissen &amp; Lexikon</li>
+          <li>1 KI-Schwunganalyse pro Monat</li>
+        </ul>
+      </div>
+      <div class="tier pro">
+        <div class="tt">Premium</div>
+        <div class="price">54,99 €<small> / Jahr</small></div>
+        <div class="pnote">oder 7,99 € / Monat · 7 Tage gratis testen · jederzeit kündbar</div>
+        <ul>
+          <li>KI-Schwunganalyse <b>unbegrenzt</b> + Verlauf &amp; Export</li>
+          <li>Satelliten-/Birdiekarte, Fahnenradar, Wind, Grün-Relief</li>
+          <li>Echte GPS-Schlaglängen &amp; Schlägerdistanzen</li>
+          <li>Auto-Platzrecherche unbegrenzt</li>
+          <li>Shot-Tracer</li>
+          <li>Platzreife-Prüfung &amp; Premium-Videoakademie</li>
+          <li>Tiefen-Statistik &amp; volle Historie</li>
+        </ul>
+        <a href="/app" class="cta" style="margin-top:14px;">Premium 7 Tage gratis testen</a>
+      </div>
+    </div>
+    <p class="cta-note" style="text-align:left;margin-top:12px;line-height:1.5;">Preise inkl. gesetzl. MwSt. Vergleichswerte (z. B. reiner KI-Coach ~18 €/Monat) dienen der Orientierung; Umfang und Preise der Anbieter variieren.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag">Besser werden</span>
+    <h2>Dein Coach – auf deinem Gerät</h2>
+    <p class="section-lead">Die KI-Schwunganalyse läuft komplett lokal: kein Upload, deine Videos bleiben bei dir.</p>
+    <div class="steps" style="margin-top:12px;">
+      <div class="step"><div class="num">1</div><div><h3>Aufnehmen</h3><p>Schwung filmen oder importieren – die KI erkennt 33 Körperpunkte.</p></div></div>
+      <div class="step"><div class="num">2</div><div><h3>Verstehen</h3><p>11 Merkmale bewertet, Schlüsselbilder mit Skelett, der passende Drill – und ein Video zu jedem Hinweis.</p></div></div>
+      <div class="step"><div class="num">3</div><div><h3>Dranbleiben</h3><p>Verlauf zeigt Fortschritt über die Zeit. Premium schaltet unbegrenzte Analysen frei.</p></div></div>
+    </div>
   </div>
 
   <div class="card">
     <h2 style="margin-bottom:6px;">Häufige Fragen</h2>
-    <div class="faq-item"><h3>Ist FairwayPilot kostenlos?</h3><p>Ja, FairwayPilot ist aktuell kostenlos nutzbar.</p></div>
-    <div class="faq-item"><h3>Muss ich etwas aus dem App Store laden?</h3><p>Nein. FairwayPilot läuft direkt im Browser und lässt sich wie eine App auf deinem Home-Bildschirm einrichten – ganz ohne App Store.</p></div>
-    <div class="faq-item"><h3>Brauche ich Internet auf dem Platz?</h3><p>Deine Runde lässt sich auch ohne durchgehende Verbindung erfassen; sobald du wieder online bist, wird alles synchronisiert.</p></div>
+    <div class="faq-item"><h3>Kann ich FairwayPilot kostenlos nutzen?</h3><p>Ja. Runde, Handicap, Basis-Statistik, Platzsuche, Basis-GPS und eine KI-Schwunganalyse pro Monat sind dauerhaft gratis. Premium schaltet die fortgeschrittenen Funktionen frei.</p></div>
+    <div class="faq-item"><h3>Was kostet Premium?</h3><p>7,99 € im Monat oder 54,99 € im Jahr (inkl. MwSt.). Die ersten 7 Tage sind gratis, du kannst jederzeit kündigen.</p></div>
+    <div class="faq-item"><h3>Läuft die Schwunganalyse wirklich auf meinem Gerät?</h3><p>Ja, die KI-Analyse arbeitet lokal im Browser. Deine Videos werden nicht hochgeladen.</p></div>
+    <div class="faq-item"><h3>Brauche ich den App-Store?</h3><p>Nein. FairwayPilot läuft im Browser und lässt sich wie eine App auf dem Home-Bildschirm einrichten.</p></div>
+    <div class="faq-item"><h3>Ist das mein offizielles DGV-Handicap?</h3><p>FairwayPilot zeigt eine nachvollziehbare, indikative Handicap-Entwicklung. Das amtliche Handicap führt weiterhin dein Club.</p></div>
   </div>
 
   <div class="card" id="install">
@@ -158,12 +248,13 @@ footer a{color:var(--gd);text-decoration:none;font-weight:600;}
         </ol>
       </div>
     </div>
-    <a href="/" class="cta" style="margin-top:16px;">Zu FairwayPilot</a>
-    <a href="/" class="cta secondary" style="margin-top:10px;">Ohne Installation im Browser öffnen</a>
+    <a href="/app" class="cta" style="margin-top:16px;">Kostenlos starten</a>
   </div>
 
   <footer>
-    FairwayPilot · <a href="/">fairwaypilot.com</a><br>
+    <b>Mätschke Media &amp; Consulting GmbH</b><br>
+    Niederstraße 18 · 40789 Monheim am Rhein · Amtsgericht Düsseldorf HRB 103922<br>
+    Betreiberin von FairwayPilot · <a href="/">fairwaypilot.com</a><br>
     <a href="/impressum">Impressum</a> · <a href="/datenschutz">Datenschutz</a> · <a href="/agb">AGB</a>
   </footer>
 </div>

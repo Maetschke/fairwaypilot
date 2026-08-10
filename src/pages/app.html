@@ -291,10 +291,33 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0ms!important;scroll-behavior:auto!important;}
   .rt-spin{animation-duration:1.6s!important;animation-iteration-count:infinite!important;}
 }
-/* Nur in der installierten PWA (Standalone): Nav buendig an die Displaykante (0px). Im Browser
-   bleibt die schwebende Pille mit 10px Abstand ueber der Browser-Toolbar unveraendert. */
+/* Nur in der installierten PWA (Standalone): Nav als durchscheinende, am unteren Displayrand
+   angedockte Leiste, die die iOS-Home-Indikator-Zone SELBST abdeckt (kein Streifen darunter).
+   Die Leiste wird per Negativ-Margin bis zur physischen Kante gezogen; die Tab-Symbole sitzen
+   mit Safe-Area-Abstand darueber (iOS erlaubt keine Bedienelemente unter dem Home-Indikator).
+   Der Inhalt scrollt sichtbar-verschwommen dahinter - wie oben unter der Statusleiste.
+   Im Browser bleibt die schwebende Pille unveraendert. */
 @media all and (display-mode:standalone){
-  #bottom-nav{ padding-bottom:0 !important; }
+  #bottom-nav{
+    bottom:0 !important;
+    margin-bottom:calc(-1 * env(safe-area-inset-bottom,0px)) !important;
+    padding:8px 12px calc(env(safe-area-inset-bottom,0px) + 8px) !important;
+    background:var(--fp-surface-glass) !important;
+    -webkit-backdrop-filter:var(--fp-blur) !important;
+    backdrop-filter:var(--fp-blur) !important;
+    box-shadow:var(--fp-shadow-nav) !important;
+    border:1px solid var(--fp-border) !important;
+    border-bottom:none !important;
+    border-radius:18px 18px 0 0 !important;
+  }
+  #nav-tabs{
+    background:none !important;
+    border:none !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
 }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">

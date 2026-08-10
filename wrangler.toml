@@ -3,5 +3,11 @@ main = "worker.js"
 compatibility_date = "2026-07-01"
 workers_dev = true
 
+[vars]
+SUPABASE_URL = "https://qzeesflibjxkdorvxqyf.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_vjpHBU2YE30WznFuaDoyWg_fxVmNDbW"
+STRIPE_PRICE_MONTHLY = "price_1U2tUBJuU1QEFsU7TnnmIymH"
+STRIPE_PRICE_YEARLY = "price_1U2tQIJuU1QEFsU7kNDFHZo8"
+
 [assets]
 directory = "./public"

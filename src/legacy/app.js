@@ -8752,4 +8752,7 @@ function RT_premiumCard(){
 }
 /* Nach Rueckkehr aus Stripe-Checkout (/app?abo=ok) Entitlement nachladen (Webhook kann kurz brauchen). */
 try{ if(typeof location!=='undefined' && (location.search||'').indexOf('abo=ok')>=0){ setTimeout(function(){ try{ RT_loadEntitlement(); }catch(e){} }, 2500); } }catch(e){}
+/* Nach Rueckkehr aus dem Stripe-Kundenportal (bfcache) Lade-Flags zuruecksetzen, damit der
+   "Abo verwalten"-Button nicht als "…" haengen bleibt; bei echter Rueckkehr Entitlement neu laden. */
+window.addEventListener('pageshow', function(e){ try{ RT_state.aboBusy=false; RT_state.redeemBusy=false; RT_render(); if(e&&e.persisted) RT_loadEntitlement(); }catch(_){} });
 

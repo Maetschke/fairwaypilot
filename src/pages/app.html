@@ -291,6 +291,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0ms!important;scroll-behavior:auto!important;}
   .rt-spin{animation-duration:1.6s!important;animation-iteration-count:infinite!important;}
 }
+/* Nur in der installierten PWA (Standalone): Nav buendig an die Displaykante (0px). Im Browser
+   bleibt die schwebende Pille mit 10px Abstand ueber der Browser-Toolbar unveraendert. */
+@media all and (display-mode:standalone){
+  #bottom-nav{ padding-bottom:0 !important; }
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
@@ -408,7 +413,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   <div id="tab-analyse" style="display:none;"></div>
 
   <!-- Tab Bar -->
-  <div id="bottom-nav" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:60;padding:8px 16px 0;">
+  <div id="bottom-nav" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:60;padding:8px 16px 10px;">
     <div id="nav-tabs" style="background:var(--fp-surface-glass);backdrop-filter:var(--fp-blur);-webkit-backdrop-filter:var(--fp-blur);border:1px solid var(--fp-border);border-radius:var(--fp-radius-lg);padding:var(--fp-space-2);display:flex;justify-content:space-around;box-shadow:var(--fp-shadow-nav);"></div>
   </div>
 

@@ -6,6 +6,7 @@ import { handleDgm } from './dgm.js';
 import { handleCourses } from './courses.js';
 import { handleResearch } from './research.js';
 import { handleAccountDelete } from './account.js';
+import { handleEntitlement, handleCheckout, handlePortal, handleRedeem, handleWebhook, guardResearch } from './billing.js';
 
 const MANIFEST_JSON = JSON.stringify({
   name: "FairwayPilot",
@@ -68,7 +69,24 @@ export default {
     if (url.pathname === "/health") {
       return new Response("ok v9-sisync-filter", { headers: { "content-type": "text/plain" } });
     }
+    if (url.pathname === "/api/entitlement" && request.method === "GET") {
+      return handleEntitlement(request, env);
+    }
+    if (url.pathname === "/api/checkout" && request.method === "POST") {
+      return handleCheckout(request, env);
+    }
+    if (url.pathname === "/api/portal" && request.method === "POST") {
+      return handlePortal(request, env);
+    }
+    if (url.pathname === "/api/redeem" && request.method === "POST") {
+      return handleRedeem(request, env);
+    }
+    if (url.pathname === "/api/stripe/webhook" && request.method === "POST") {
+      return handleWebhook(request, env);
+    }
     if (url.pathname === "/api/research" && request.method === "POST") {
+      const g = await guardResearch(request, env);
+      if (!g.ok) return new Response(JSON.stringify({ error: g.error }), { status: g.code, headers: { "content-type": "application/json; charset=utf-8" } });
       return handleResearch(request, env);
     }
     if (url.pathname === "/api/account/delete" && request.method === "POST") {

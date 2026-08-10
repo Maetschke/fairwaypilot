@@ -146,8 +146,8 @@ async function handleCheckout(request, env) {
     mode: "subscription",
     customer: customer,
     client_reference_id: user.id,
-    success_url: origin + "/?abo=ok",
-    cancel_url: origin + "/?abo=abbruch",
+    success_url: origin + "/app?abo=ok",
+    cancel_url: origin + "/app?abo=abbruch",
     allow_promotion_codes: "true",
     line_items: { 0: { price: price, quantity: 1 } },
     subscription_data: { trial_period_days: 7, metadata: { user_id: user.id } },
@@ -162,7 +162,7 @@ async function handlePortal(request, env) {
   const sub = await readSub(env, user.id).catch(() => null);
   if (!sub || !sub.stripe_customer_id) return j({ error: "Kein Abo vorhanden." }, 400);
   const origin = baseUrl(env, request);
-  const ps = await stripe(env, "billing_portal/sessions", "POST", { customer: sub.stripe_customer_id, return_url: origin + "/" });
+  const ps = await stripe(env, "billing_portal/sessions", "POST", { customer: sub.stripe_customer_id, return_url: origin + "/app" });
   return j({ url: ps.url });
 }
 

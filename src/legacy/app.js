@@ -1052,7 +1052,7 @@ function sbInit(){
    if(lastUid&&lastUid!==sbUser.id){ RT_clearLocalSyncedData(); }
    var firstEverLogin=!lastUid;
    try{ localStorage.setItem(RT_LAST_UID_KEY,sbUser.id); }catch(e){}
-   sbPull(firstEverLogin); PL_load().then(RT_render); RT_loadConnections(); if(AG_joinCode) AG_claim(); AG_claimByEmail(); RT_LRN_cloudPull();
+   sbPull(firstEverLogin); PL_load().then(RT_render); RT_loadConnections(); if(AG_joinCode) AG_claim(); AG_claimByEmail(); RT_LRN_cloudPull(); RT_loadEntitlement();
   }
   else RT_render();
   AG_render();
@@ -1469,6 +1469,7 @@ function RT_rUser(){
   '</div>'+
   '<div class="rt-cs" style="margin-bottom:0;">'+rtEsc(sbUser.email)+'</div>'+
  '</div>';
+ h+=RT_premiumCard();
  h+='<div class="rtc"><div class="rt-ct">Name</div>'+
   '<input class="rt-inp" id="usr-name" value="'+rtEsc(dispName)+'" placeholder="Anzeigename" style="margin-bottom:8px;">'+
   '<button class="rt-btn2" onclick="RT_nameSave()">Speichern</button>'+
@@ -8615,3 +8616,140 @@ if('serviceWorker' in navigator){ window.addEventListener('load',function(){ nav
 function RT_flushActive(){ try{ if(RT_round && !RT_round.done) rtSet(RT_ACT,RT_round); }catch(e){} }
 window.addEventListener('pagehide',RT_flushActive);
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') RT_flushActive(); });
+
+/* ============================================================
+   Premium / Paywall (Stripe) — Client-Entitlement + Gating
+   Backend: /api/entitlement, /api/checkout, /api/portal, /api/redeem.
+   Die Schwunganalyse laeuft on-device (kostet nichts) -> Gratis-Limit rein
+   clientseitig (1/Monat). Die Auto-Recherche kostet echtes Geld -> zusaetzlich
+   hart serverseitig in research.js/index.js abgesichert. Basis-GPS/Runde/
+   Handicap/Golfwissen bleiben gratis.
+   ============================================================ */
+var RT_ENT=null; /* {premium,plan,status,current_period_end,free:{swing_left,research_left}} */
+var RT_SWING_FREE_KEY='fp_swing_free_v1';
+function RT_isPremium(){ return !!(RT_ENT&&RT_ENT.premium); }
+async function RT_authToken(){ try{ if(!sb)return null; var s=await sb.auth.getSession(); return (s&&s.data&&s.data.session&&s.data.session.access_token)||null; }catch(e){ return null; } }
+async function RT_loadEntitlement(){
+ if(!sbReady()||!sbUser){ RT_ENT=null; return; }
+ try{
+  var t=await RT_authToken(); if(!t){ RT_ENT=null; return; }
+  var r=await fetch('/api/entitlement',{headers:{'Authorization':'Bearer '+t}});
+  var d=await r.json(); RT_ENT=d||null;
+ }catch(e){ RT_ENT=null; }
+ try{ RT_render(); }catch(e){}
+}
+function RT_swingMonth(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2); }
+function RT_swingFreeUsed(){ var o=rtGet(RT_SWING_FREE_KEY)||{}; return (o.period===RT_swingMonth())?(o.count||0):0; }
+function RT_swingFreeInc(){ rtSet(RT_SWING_FREE_KEY,{period:RT_swingMonth(),count:RT_swingFreeUsed()+1}); }
+function RT_swingFreeLeft(){ return Math.max(0,1-RT_swingFreeUsed()); }
+function RT_researchLeft(){ if(RT_ENT&&RT_ENT.free&&typeof RT_ENT.free.research_left==='number')return RT_ENT.free.research_left; return 1; }
+function RT_fmtDate(iso){ if(!iso)return ''; try{ var d=new Date(iso); return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear(); }catch(e){ return ''; } }
+
+var RT_PW_INFO={
+ swing:{t:'KI-Schwunganalyse',d:'Analysiere deinen Schwung so oft du willst – mit Verlauf, Schlüsselbildern und Coaching. Gratis ist 1 Analyse pro Monat enthalten.'},
+ research:{t:'Automatische Platzrecherche',d:'Par, Stroke-Index, CR/Slope und Adresse jedes Platzes automatisch recherchieren lassen. Gratis ist 1 Platz enthalten.'},
+ trace:{t:'Shot-Tracer',d:'Zeichne den Ballflug aus deinem Video nach – mit Auto-Shape, Schlägerwahl und echter GPS-Schlaglänge.'},
+ map:{t:'Erweiterte Bahnkarten',d:'Fahnenradar, Wind, Wetterradar, Entfernung & KI und Geländerelief direkt auf der Satelliten-Bahnkarte. Die einfache Entfernung zur Grünmitte bleibt gratis.'},
+ exam:{t:'Platzreife-Prüfung',d:'Die vollständige Prüfungssimulation mit Zeit und Auswertung. Golfwissen, Lexikon und die Lernkapitel bleiben gratis.'},
+ premium:{t:'FairwayPilot Premium',d:'Schalte alle Premium-Funktionen frei: unbegrenzte KI-Analyse & Recherche, Shot-Tracer, erweiterte Karten und die Platzreife-Prüfung.'}
+};
+function RT_requirePremium(feature){ if(RT_isPremium())return true; RT_showPaywall(feature); return false; }
+function RT_pwClose(){ var e=document.getElementById('rt-paywall'); if(e&&e.parentNode)e.parentNode.removeChild(e); }
+function RT_showPaywall(feature){
+ RT_pwClose();
+ var info=RT_PW_INFO[feature]||RT_PW_INFO.premium;
+ var ov=document.createElement('div'); ov.id='rt-paywall';
+ ov.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(8,18,12,.55);display:flex;align-items:flex-end;justify-content:center;';
+ ov.addEventListener('click',function(ev){ if(ev.target===ov) RT_pwClose(); });
+ var anon=(!sbReady()||!sbUser);
+ var card=document.createElement('div');
+ card.style.cssText='background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom,0px) + 18px);box-shadow:0 -6px 24px rgba(0,0,0,.3);';
+ var h=''
+  +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'
+   +'<img src="/icon-192.png" alt="" style="width:34px;height:34px;border-radius:9px;">'
+   +'<div style="flex:1;font-weight:800;font-size:16px;color:#12261b;">FairwayPilot Premium</div>'
+   +'<button id="rt-pw-close" aria-label="Schließen" style="border:none;background:#eef1ea;width:30px;height:30px;border-radius:50%;font-size:15px;cursor:pointer;color:#4a5a4e;">✕</button>'
+  +'</div>'
+  +'<div style="font-weight:800;font-size:15px;color:#1F8A4D;margin-bottom:4px;">'+info.t+'</div>'
+  +'<div style="font-size:13.5px;line-height:1.5;color:#3a4a3e;margin-bottom:14px;">'+info.d+'</div>';
+ if(anon){
+  h+='<div style="font-size:13px;color:#3a4a3e;margin-bottom:12px;">Bitte melde dich zuerst im Konto an, um Premium zu testen oder einen Club-Code einzulösen.</div>'
+   +'<button id="rt-pw-login" class="rt-btn" style="width:100%;">Zum Konto</button>';
+ }else{
+  h+='<div style="background:#f3f8f2;border-radius:12px;padding:11px 13px;font-size:12.5px;color:#2c3b30;margin-bottom:14px;">7 Tage kostenlos testen, danach <b>7,99&thinsp;€/Monat</b> oder <b>54,99&thinsp;€/Jahr</b> (−43&thinsp;%). Jederzeit kündbar.</div>'
+   +'<button id="rt-pw-year" class="rt-btn" style="width:100%;margin-bottom:8px;">7 Tage gratis testen · dann 54,99&thinsp;€/Jahr</button>'
+   +'<button id="rt-pw-month" class="rt-btn2" style="width:100%;margin-bottom:12px;">Monatlich · 7,99&thinsp;€/Monat</button>'
+   +'<div id="rt-pw-msg" style="font-size:12.5px;color:#b03a3a;min-height:16px;margin-bottom:6px;"></div>'
+   +'<div style="text-align:center;"><button id="rt-pw-code" style="border:none;background:none;color:#1F8A4D;font-weight:700;font-size:13px;cursor:pointer;text-decoration:underline;">Ich habe einen Club-Code</button></div>';
+ }
+ h+='<div style="font-size:11px;color:#9aa79d;text-align:center;margin-top:10px;">Zahlung sicher über Stripe · keine Kartendaten in der App.</div>';
+ card.innerHTML=h; ov.appendChild(card); document.body.appendChild(ov);
+ var byId=function(i){ return document.getElementById(i); };
+ if(byId('rt-pw-close'))byId('rt-pw-close').addEventListener('click',RT_pwClose);
+ if(byId('rt-pw-login'))byId('rt-pw-login').addEventListener('click',function(){ RT_pwClose(); RT_go('user'); });
+ if(byId('rt-pw-year'))byId('rt-pw-year').addEventListener('click',function(){ RT_checkout('yearly'); });
+ if(byId('rt-pw-month'))byId('rt-pw-month').addEventListener('click',function(){ RT_checkout('monthly'); });
+ if(byId('rt-pw-code'))byId('rt-pw-code').addEventListener('click',function(){ RT_pwClose(); RT_go('user'); setTimeout(function(){ var i=document.getElementById('rt-redeem-code'); if(i){ try{ i.scrollIntoView({behavior:'smooth',block:'center'}); i.focus(); }catch(e){} } },250); });
+}
+async function RT_checkout(plan){
+ var msg=document.getElementById('rt-pw-msg');
+ if(!sbReady()||!sbUser){ RT_pwClose(); RT_go('user'); return; }
+ if(msg)msg.textContent='Weiterleitung zu Stripe …';
+ try{
+  var t=await RT_authToken(); if(!t)throw new Error('Keine aktive Sitzung.');
+  var r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({plan:plan})});
+  var d=await r.json(); if(!r.ok||!d.url)throw new Error(d.error||('Fehler ('+r.status+')'));
+  window.location.href=d.url;
+ }catch(e){ if(msg)msg.textContent='Checkout fehlgeschlagen: '+(e.message||e); }
+}
+async function RT_portal(){
+ RT_state.aboMsg=''; RT_state.aboBusy=true; RT_render();
+ try{
+  var t=await RT_authToken(); if(!t)throw new Error('Keine aktive Sitzung.');
+  var r=await fetch('/api/portal',{method:'POST',headers:{'Authorization':'Bearer '+t}});
+  var d=await r.json(); if(!r.ok||!d.url)throw new Error(d.error||('Fehler ('+r.status+')'));
+  window.location.href=d.url;
+ }catch(e){ RT_state.aboBusy=false; RT_state.aboMsg='Abo-Verwaltung fehlgeschlagen: '+(e.message||e); RT_render(); }
+}
+async function RT_redeemCode(){
+ var inp=document.getElementById('rt-redeem-code'); var code=inp?String(inp.value||'').trim():'';
+ if(!code){ RT_state.aboMsg='Bitte Code eingeben.'; RT_render(); return; }
+ RT_state.redeemBusy=true; RT_state.aboMsg=''; RT_render();
+ try{
+  var t=await RT_authToken(); if(!t)throw new Error('Bitte zuerst anmelden.');
+  var r=await fetch('/api/redeem',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({code:code})});
+  var d=await r.json(); if(!r.ok||!d.ok)throw new Error(d.error||('Fehler ('+r.status+')'));
+  RT_state.aboMsg='Code eingelöst – Premium ist aktiv. Viel Spaß!';
+  await RT_loadEntitlement();
+ }catch(e){ RT_state.aboMsg='Einlösen fehlgeschlagen: '+(e.message||e); }
+ RT_state.redeemBusy=false; RT_render();
+}
+/* Premium-Karte im Konto-Screen (RT_rUser) */
+function RT_premiumCard(){
+ var h='';
+ if(RT_isPremium()){
+  var isClub=(RT_ENT&&RT_ENT.plan==='club');
+  var until=RT_ENT&&RT_ENT.current_period_end?RT_fmtDate(RT_ENT.current_period_end):'';
+  var planLbl=isClub?'über Club-Code freigeschaltet':(RT_ENT&&RT_ENT.plan==='monthly'?'Monats-Abo':(RT_ENT&&RT_ENT.plan==='yearly'?'Jahres-Abo':'aktiv'));
+  h+='<div class="rtc" style="border-top-color:#1F8A4D;"><div class="rt-ct" style="color:#1F8A4D;">FairwayPilot Premium ✓</div>'
+   +'<div class="rt-cs">'+planLbl+(until?(' · gültig bis '+until):'')+'. Alle Premium-Funktionen sind freigeschaltet.</div>';
+  if(RT_ENT&&(RT_ENT.status==='trialing'))h+='<div class="rt-cs" style="color:#1F8A4D;">Testphase läuft'+(until?(' bis '+until):'')+'.</div>';
+  if(!isClub)h+='<button class="rt-btn2" '+(RT_state.aboBusy?'disabled':'')+' onclick="RT_portal()">'+(RT_state.aboBusy?'…':'Abo verwalten (kündigen / Zahlungsmittel)')+'</button>';
+  if(RT_state.aboMsg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(RT_state.aboMsg)+'</div>';
+  h+='</div>';
+ }else{
+  h+='<div class="rtc" style="border-top-color:#1F8A4D;"><div class="rt-ct" style="color:#1F8A4D;">FairwayPilot Premium</div>'
+   +'<div class="rt-cs">Unbegrenzte KI-Schwunganalyse & Platzrecherche, Shot-Tracer, erweiterte Bahnkarten (Fahnenradar/Wind/Relief) und die Platzreife-Prüfung.</div>'
+   +'<div style="font-size:12.5px;color:#2c3b30;margin-bottom:8px;">Diesen Monat gratis übrig: <b>'+RT_swingFreeLeft()+'</b> KI-Analyse · <b>'+RT_researchLeft()+'</b> Platzrecherche.</div>'
+   +'<button class="rt-btn" style="width:100%;margin-bottom:10px;" onclick="RT_showPaywall(\'premium\')">7 Tage kostenlos testen</button>'
+   +'<div style="font-size:12.5px;font-weight:700;color:#2c3b30;margin-bottom:4px;">Club-Code einlösen</div>'
+   +'<div class="rt-row"><input class="rt-inp" id="rt-redeem-code" placeholder="z. B. GEORGHAUSEN2026" style="flex:1;text-transform:uppercase;">'
+   +'<button class="rt-btn2" style="flex:none;width:auto;" '+(RT_state.redeemBusy?'disabled':'')+' onclick="RT_redeemCode()">'+(RT_state.redeemBusy?'…':'Einlösen')+'</button></div>';
+  if(RT_state.aboMsg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(RT_state.aboMsg)+'</div>';
+  h+='</div>';
+ }
+ return h;
+}
+/* Nach Rueckkehr aus Stripe-Checkout (/app?abo=ok) Entitlement nachladen (Webhook kann kurz brauchen). */
+try{ if(typeof location!=='undefined' && (location.search||'').indexOf('abo=ok')>=0){ setTimeout(function(){ try{ RT_loadEntitlement(); }catch(e){} }, 2500); } }catch(e){}
+

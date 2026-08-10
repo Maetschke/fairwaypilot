@@ -229,9 +229,15 @@ async function handleWebhook(request, env) {
   return new Response("ok", { status: 200 });
 }
 function subRow(userId, customer, s) {
+  const item = (s.items && s.items.data && s.items.data[0]) || {};
   const status = s.status === "canceled" || s.status === "incomplete_expired" ? "canceled" : s.status;
-  const plan = (s.items && s.items.data && s.items.data[0] && s.items.data[0].plan && s.items.data[0].plan.interval === "month") ? "monthly" : "yearly";
-  const cpe = s.current_period_end ? new Date(s.current_period_end * 1000).toISOString() : null;
+  // Stripe hat current_period_end + interval ab API 2025-... auf die Item-Ebene verschoben;
+  // wir lesen beide Stellen (neu zuerst, dann alt), damit es versionsuebergreifend stimmt.
+  const interval = (item.price && item.price.recurring && item.price.recurring.interval)
+    || (item.plan && item.plan.interval) || null;
+  const plan = interval === "month" ? "monthly" : "yearly";
+  const cpeUnix = item.current_period_end || s.current_period_end || s.trial_end || null;
+  const cpe = cpeUnix ? new Date(cpeUnix * 1000).toISOString() : null;
   return { user_id: userId, status: status, plan: plan, stripe_customer_id: customer, stripe_subscription_id: s.id, current_period_end: cpe };
 }
 

@@ -4050,7 +4050,7 @@ function RT_openFlagRadar(){
  }
  var rec=RT_dkiRecommend(Math.round(RT_FR.dist));
  var srcNote=origin?(origin.src==='gps'?'':(origin.src==='ball'?'Standort: letzte Balllage (kein GPS)':'Standort: Abschlag (kein GPS)')):'';
- var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 70px);left:12px;width:min(54vw,196px);pointer-events:none;display:flex;flex-direction:column;align-items:stretch;gap:12px;">'
+ var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 56px);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:12px;width:min(56vw,200px);pointer-events:none;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:12px;">'
    +'<div style="position:relative;width:100%;aspect-ratio:1/1;background:rgba(6,12,9,.80);border-radius:18px;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,.5);">'
      +'<div style="position:absolute;left:50%;top:-2px;transform:translateX(-50%);z-index:3;color:#fff;font-size:18px;text-shadow:0 1px 3px #000;">&#9660;</div>'
      +'<div id="rt-fr-rose" style="position:absolute;inset:8px;transition:transform .12s linear;">'+RT_frRoseSvg(RT_FR.brg)+'</div>'
@@ -4269,8 +4269,8 @@ function RT_gvHoleExtent(rd,c){
  pts.forEach(function(p){ if(p[0]<minLa)minLa=p[0]; if(p[0]>maxLa)maxLa=p[0]; if(p[1]<minLo)minLo=p[1]; if(p[1]>maxLo)maxLo=p[1]; });
  var clat=(minLa+maxLa)/2, clng=(minLo+maxLo)/2;
  var latM=(maxLa-minLa)*111320, lngM=(maxLo-minLo)*111320*Math.cos(clat*Math.PI/180);
- var size=Math.max(latM,lngM)*1.25;
- size=Math.max(80,Math.min(480,size));
+ var size=Math.max(latM,lngM)*2.0;
+ size=Math.max(120,Math.min(500,size));
  return {clat:clat,clng:clng,size:Math.round(size)};
 }
 function RT_gvActive(){ var rd=RT_round; return !!(rd&&RT_state.gvOn&&RT_state.gvOn[RT_holeMapKey(rd,rd.cur)]); }
@@ -6197,7 +6197,12 @@ function RT_sc(pi,d){
  var p=RT_round.players[pi],c=RT_round.cur;
  if(p.sc[c]===null){p.sc[c]=d>0?1:Math.max(1,RT_round.par[c]-1);}
  else{var nv=p.sc[c]+d;p.sc[c]=nv<1?null:nv;}
- /* Stepper zaehlen bewusst nur die Zahl - keine Balllage (Zwei-Werkzeuge). */
+ /* Minus entfernt zusaetzlich die zuletzt gesetzte Balllage (letzter Ball-/eingelocht-Marker);
+    Straf/Sand/Putt-Marker bleiben - die werden ueber ihre eigenen Stepper verwaltet. */
+ if(d<0 && p.pins && p.pins[c] && p.pins[c].length){
+  var pins=p.pins[c];
+  for(var i=pins.length-1;i>=0;i--){ var k=RT_pinKind(pins[i]); if(k==='ball'||k==='holed'){ pins.splice(i,1); break; } }
+ }
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
 }
 function RT_mini(pi,f,d){

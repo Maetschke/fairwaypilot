@@ -8595,8 +8595,7 @@ function adjustFooterPadding(){
   /* Nur in der installierten PWA (Standalone) soll der Inhalt - wie oben unter der Statusleiste -
      bis an die untere Displaykante hinter die durchscheinende Nav scrollen: dort minimaler
      Reserve-Abstand. Im Browser bleibt der volle Abstand (Nav-Hoehe), damit sich nichts aendert. */
-  var standalone=false; try{ standalone=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true; }catch(e){}
-  var pad=standalone ? Math.max(0,Math.ceil(h)-64) : Math.max(0,Math.ceil(h)-9);
+  var pad=Math.max(0,Math.ceil(h)-9);
   RT_TABS.map(function(t){return 'tab-'+t.id;}).forEach(function(id){
     var el=document.getElementById(id);
     if(el) el.style.paddingBottom=pad+'px';

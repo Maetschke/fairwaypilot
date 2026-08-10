@@ -2359,7 +2359,7 @@ async function RT_initHoleFullMap(){
     parallel zu RT_setupRotDrag() weiter unkorrigiert - also schief - verschieben.
     Pinch-Zoom bleibt bewusst bei Leaflet. */
  try{ map.dragging.disable(); }catch(e){}
- RT_setupRotDrag('full',map,el,function(){ return rotF; });
+ RT_setupRotDrag('full',map,el,function(){ return rotF; },function(){ return false; });
  /* Die Bahn soll immer gleich im Bild liegen: eigener Abschlag unten in der Mitte, Fahne
     knapp unter dem oberen Rand. Weil das Kartenzentrum in der Mitte des sichtbaren
     Ausschnitts sitzt, ist der Mittelpunkt zwischen Abschlag und Fahne der richtige
@@ -2934,7 +2934,7 @@ function RT_correctedLatLng(map,containerEl,rotDeg,clientX,clientY){
    Verschoben wird dann um die Differenz zweier so bestimmter Punkte; beide werden im selben
    Kartenzustand berechnet, wodurch das Delta unabhaengig vom laufenden Pan korrekt bleibt. */
 var RT_suppressMapClick={};
-function RT_setupRotDrag(key,map,el,getRot){
+function RT_setupRotDrag(key,map,el,getRot,getLocked){
  if(!map||!el||el.dataset.rotdrag==='1') return;
  el.dataset.rotdrag='1';
  var st=null, active={};
@@ -2948,6 +2948,7 @@ function RT_setupRotDrag(key,map,el,getRot){
  });
  el.addEventListener('pointermove',function(ev){
   if(!st||nActive()>1) return;
+  if(getLocked&&getLocked()) return;
   if(!st.moved&&(Math.abs(ev.clientX-st.x)+Math.abs(ev.clientY-st.y))<3) return;
   st.moved=true;
   ev.preventDefault();
@@ -3204,7 +3205,7 @@ async function RT_initHoleMaps(){
   RT_holeMapInst[pi]={map:map,layer:layer,refLayer:refLayer,rot:rot0,el:el,locked:true};
   if(basePos.fit){ try{ var fpts=RT_holePoints(rd,c); if(fpts.length>1) map.fitBounds(L.latLngBounds(fpts).pad(0.45)); else map.setZoom(18); }catch(e){} }
   RT_applyMapLock(pi);
-  RT_setupRotDrag('h'+pi,map,el,function(){ var i2=RT_holeMapInst[pi]; return i2?(i2.rot||0):0; });
+  RT_setupRotDrag('h'+pi,map,el,function(){ var i2=RT_holeMapInst[pi]; return i2?(i2.rot||0):0; },function(){ var i3=RT_holeMapInst[pi]; return !i3||i3.locked!==false; });
   RT_redrawPins(pi);
   /* Referenzpunkte werden waehrend des Spiels bewusst NICHT mehr eingeblendet - auf den
      Spielerkarten sollen nur die selbst gesetzten Markierungen zu sehen sein. Sichtbar
@@ -3931,11 +3932,10 @@ function RT_frRoseSvg(brg){
   var p=RT_frPx(Ln[1],96);
   parts.push('<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+5).toFixed(1)+'" text-anchor="middle" font-size="20" font-weight="800" fill="'+(Ln[0]==='N'?'#ff6b5e':'#ffffff')+'" font-family="Inter,sans-serif">'+Ln[0]+'</text>');
  });
- var fp=RT_frPx(brg,118);
+ var fp=RT_frPx(brg,116);
  parts.push('<line x1="150" y1="150" x2="'+fp[0].toFixed(1)+'" y2="'+fp[1].toFixed(1)+'" stroke="#8FE1A9" stroke-width="3.5" stroke-linecap="round"/>');
- parts.push('<circle cx="'+fp[0].toFixed(1)+'" cy="'+fp[1].toFixed(1)+'" r="5" fill="#ffd24a" stroke="#0b160f" stroke-width="1.5"/>');
- var f1=RT_frPx(brg,132), f2=RT_frPx(brg+7,124), f3=RT_frPx(brg,116);
- parts.push('<path d="M'+f1[0].toFixed(1)+' '+f1[1].toFixed(1)+'L'+f2[0].toFixed(1)+' '+f2[1].toFixed(1)+'L'+f3[0].toFixed(1)+' '+f3[1].toFixed(1)+'Z" fill="#ffd24a"/>');
+ var aTip=RT_frPx(brg,140), aL=RT_frPx(brg-8,118), aR=RT_frPx(brg+8,118);
+ parts.push('<path d="M'+aTip[0].toFixed(1)+' '+aTip[1].toFixed(1)+'L'+aL[0].toFixed(1)+' '+aL[1].toFixed(1)+'L'+aR[0].toFixed(1)+' '+aR[1].toFixed(1)+'Z" fill="#ffd24a" stroke="#0b160f" stroke-width="1"/>');
  parts.push('<circle cx="150" cy="150" r="8" fill="#1F8A4D" stroke="#fff" stroke-width="2.5"/>');
  return '<svg viewBox="0 0 300 300" style="width:100%;height:100%;display:block;">'+parts.join('')+'</svg>';
 }
@@ -3962,8 +3962,8 @@ function RT_openFlagRadar(){
  }
  var rec=RT_dkiRecommend(Math.round(RT_FR.dist));
  var srcNote=origin?(origin.src==='gps'?'':(origin.src==='ball'?'Standort: letzte Balllage (kein GPS)':'Standort: Abschlag (kein GPS)')):'';
- var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 56px);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:12px;right:96px;pointer-events:none;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:14px;">'
-   +'<div style="position:relative;width:min(64vw,248px);aspect-ratio:1/1;background:rgba(6,12,9,.80);border-radius:18px;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,.5);">'
+ var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 70px);left:12px;width:min(54vw,196px);pointer-events:none;display:flex;flex-direction:column;align-items:stretch;gap:12px;">'
+   +'<div style="position:relative;width:100%;aspect-ratio:1/1;background:rgba(6,12,9,.80);border-radius:18px;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,.5);">'
      +'<div style="position:absolute;left:50%;top:-2px;transform:translateX(-50%);z-index:3;color:#fff;font-size:18px;text-shadow:0 1px 3px #000;">&#9660;</div>'
      +'<div id="rt-fr-rose" style="position:absolute;inset:8px;transition:transform .12s linear;">'+RT_frRoseSvg(RT_FR.brg)+'</div>'
      +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">'
@@ -3973,7 +3973,7 @@ function RT_openFlagRadar(){
        +(rec.empty?'':'<div style="margin-top:6px;background:rgba(31,138,77,.92);color:#fff;font-size:12px;font-weight:700;border-radius:100px;padding:4px 11px;">'+rec.best.l+' &#183; &#216; '+rec.best.d+' m</div>')
      +'</div>'
    +'</div>'
-   +'<div style="pointer-events:auto;text-align:center;width:min(64vw,248px);">'
+   +'<div style="pointer-events:auto;text-align:center;width:100%;">'
      +(srcNote?'<div style="font-size:11px;color:#cfe0d4;margin-bottom:8px;text-shadow:0 1px 3px #000;">'+srcNote+'</div>':'')
      +'<button id="rt-fr-act" onclick="RT_frStart()" style="border:none;background:#1F8A4D;color:#fff;font-size:14px;font-weight:700;font-family:inherit;border-radius:100px;padding:10px 20px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.4);">Kompass aktivieren</button>'
      +'<div id="rt-fr-msg" style="font-size:11px;color:#cfe0d4;margin-top:8px;text-shadow:0 1px 3px #000;"></div>'
@@ -4471,7 +4471,7 @@ function RT_setupFullGrabber(){
  if(pin&&total>0){
   var routeMarkers=[];
   function rUnit(m){ return (RT_distUnit()==='yd')?Math.round(m*1.09361):Math.round(m); }
-  function rLbl(obj){ var sorted=routeSorted(); var i=sorted.indexOf(obj); var prev=(i<=0)?center:sorted[i-1]; var seg=RT_haversineM(prev.lat,prev.lng,obj.lat,obj.lng); var toPin=RT_haversineM(obj.lat,obj.lng,pin.lat,pin.lng); var uu=(RT_distUnit()==='yd')?'yd':'m'; return '<span style="font-size:13px;font-weight:800;">'+rUnit(toPin)+'<span style="font-size:10px;font-weight:700;margin-left:2px;">'+uu+'</span></span>'+'<span style="font-size:10px;font-weight:600;color:#9fb3a4;margin-left:6px;">&#916; '+rUnit(seg)+'</span>'; }
+  function rLbl(obj){ var fromTee=RT_haversineM(center.lat,center.lng,obj.lat,obj.lng); var toPin=RT_haversineM(obj.lat,obj.lng,pin.lat,pin.lng); var uu=(RT_distUnit()==='yd')?'yd':'m'; return '<span style="font-size:9px;font-weight:600;color:#9fb3a4;">ab </span><span style="font-size:13px;font-weight:800;">'+rUnit(fromTee)+'</span><span style="font-size:9px;font-weight:700;color:#9fb3a4;margin:0 6px 0 2px;">'+uu+'</span><span style="font-size:9px;font-weight:600;color:#9fb3a4;">Loch </span><span style="font-size:13px;font-weight:800;">'+rUnit(toPin)+'</span><span style="font-size:9px;font-weight:700;margin-left:2px;">'+uu+'</span>'; }
   function rIcon(obj){ return L.divIcon({className:'',iconSize:[44,44],iconAnchor:[22,22],html:'<div style="width:44px;height:44px;transform:rotate('+(-rotF)+'deg);position:relative;">'+'<div style="position:absolute;left:14px;top:14px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #12261B;box-shadow:0 1px 4px rgba(0,0,0,.55);"></div>'+'<div class="simlbl" style="position:absolute;left:50%;top:33px;transform:translateX(-50%);background:#12261B;color:#fff;font-weight:800;border-radius:9px;padding:4px 10px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.5);">'+rLbl(obj)+'</div>'+'</div>'}); }
   function rWire(m,obj){ var e2=m.getElement(); if(!e2) return; e2.style.touchAction='none'; e2.style.cursor='grab'; var st=null,mv=false,sc=null;
    e2.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); try{e2.setPointerCapture(ev.pointerId);}catch(e){} var p0=RT_correctedLatLng(map,el,rotF,ev.clientX,ev.clientY); st=p0?{dLat:obj.lat-p0.lat,dLng:obj.lng-p0.lng}:{dLat:0,dLng:0}; mv=false; sc={x:ev.clientX,y:ev.clientY}; });
@@ -5025,7 +5025,7 @@ if(cd){
    var neutral=(cr===null||sl===null);
    var ph=RT_ph(parseFloat(p.hi),cr!==null?cr:cd.parSum,sl!==null?sl:113,cd.parSum,cd.cnt);
    h+='<div class="rt-plc" style="position:relative;">'+
-    (pArr.length>1?'<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px;">'+(i>0?'<button class="rt-btn3" style="width:26px;height:26px;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_playerMove('+i+',-1)" title="Nach oben"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+(i<pArr.length-1?'<button class="rt-btn3" style="width:26px;height:26px;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_playerMove('+i+',1)" title="Nach unten"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+'</div>':'')+
+    (pArr.length>1?'<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px;">'+(i>0?'<button class="rt-btn3" style="width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_playerMove('+i+',-1)" title="Nach oben"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+(i<pArr.length-1?'<button class="rt-btn3" style="width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_playerMove('+i+',1)" title="Nach unten"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+'</div>':'')+
     '<div class="rt-row" style="margin-bottom:8px;">'+
      '<div style="flex:2;"><span class="rt-lbl">Name</span><input class="rt-inp" value="'+rtEsc(p.name)+'" oninput="RT_su.players['+i+'].name=this.value;RT_updStart()" onchange="RT_persistPlayer('+i+')"></div>'+
      '<div><span class="rt-lbl">HI</span><input class="rt-inp" type="number" step="0.1" value="'+p.hi+'" oninput="RT_suNum('+i+',\'hi\',this.value)" onchange="RT_persistPlayer('+i+')"></div>'+
@@ -6597,20 +6597,23 @@ function RT_rView(){
     Bearbeiten/Speichern (rd.promoted) ist die Info nicht mehr noetig. */
 
  if(!foreignLocked){
-  h+='<div class="rt-row" style="margin-bottom:8px;"><button class="rt-btn" onclick="RT_editRound(\''+rd.id+'\',true)">Runde starten</button></div>';
+  var _started=rd.players.some(function(p){ return (p.sc&&p.sc.some(function(v){return v!==null&&v!==undefined;}))||(p.pins&&p.pins.some(function(a){return a&&a.length;})); });
+  var _ended=!!(rd.promoted||rd.historical);
+  var _primLbl=_ended?'Runde ansehen':(_started?'Runde fortsetzen':'Runde starten');
+  h+='<div class="rt-row" style="margin-bottom:8px;"><button class="rt-btn" onclick="RT_editRound(\''+rd.id+'\',true)">'+_primLbl+'</button></div>';
   if(!foreign){
-   h+='<div class="rt-row"><button class="rt-btn2" onclick="RT_editRound(\''+rd.id+'\')">Bearbeiten</button>'+
-    (rd.historical||rd.promoted?'':'<button class="rt-btn2" onclick="RT_promoteRound(\''+rd.id+'\')">Runde beenden</button>')+'</div>'+
+   h+='<div class="rt-row"><button class="rt-btn2" onclick="RT_editRound(\''+rd.id+'\')">Runde bearbeiten</button>'+
+    ((_started&&!_ended)?'<button class="rt-btn2" onclick="RT_promoteRound(\''+rd.id+'\')">Runde beenden</button>':'')+'</div>'+
     '<div class="rt-row" style="margin-top:8px;margin-bottom:12px;"><button class="rt-btn2" style="color:#B03A3A;border-color:#E0BCBC;'+(RT_state.ask==='del'+rd.id?'background:#FBEAEA;font-weight:800;':'')+'" onclick="RT_delete(\''+rd.id+'\')">'+(RT_state.ask==='del'+rd.id?'Wirklich l\u00f6schen?':'Runde l\u00f6schen')+'</button></div>';
   }
  }
  return h;
 }
-function RT_delete(id){
+function RT_delete(id,confirmed){
  var saved=rtGet(RT_KEY)||[];
  var existing=saved.find(function(r){return r.id===id;});
  if(existing&&RT_isForeignRound(existing)) return;
- if(RT_state.ask!=='del'+id){RT_state.ask='del'+id;RT_render();return;}
+ if(!confirmed){ RT_pageConfirm('Wollen Sie diese Runde wirklich löschen und damit alle Einträge verlieren?', function(){ RT_delete(id,true); }); return; }
  if(id.indexOf('hist-')===0){
   var deletedHist=rtGet(RT_HISTDEL_KEY)||[];
   if(deletedHist.indexOf(id)===-1){ deletedHist.push(id); rtSet(RT_HISTDEL_KEY,deletedHist); }

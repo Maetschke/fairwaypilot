@@ -3631,6 +3631,7 @@ function RT_radarBuildOverlay(){
 }
 function RT_radarRemoveOverlay(){ var o=document.getElementById('rt-wxradar-ui'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
 function RT_toggleRadarHole(){
+ if(!RT_requirePremium('map'))return;
  var rd=RT_round; if(!rd) return;
  var key=RT_holeMapKey(rd,rd.cur);
  if(!RT_state.radarOn) RT_state.radarOn={};
@@ -3836,6 +3837,7 @@ function RT_spAdvice(d){
  return {tone:'warn',txt:'Du schlägst hier auffällig oft nach '+dom+' ('+domPct+' %). Ziele bewusst weiter '+other+' bzw. auf die '+other+'e Fairwayhälfte, um in der Mitte zu landen.'};
 }
 function RT_openShotPlan(){
+ if(!document.getElementById('rt-sp') && !RT_requirePremium('map'))return;
  var host=document.getElementById('hole-full'); if(!host) return;
  if(document.getElementById('rt-sp')){ RT_closeShotPlan(); return; }
  RT_ovCloseOthers('sp'); RT_tileOp('rt-tile-sp',true);
@@ -3912,6 +3914,7 @@ function RT_frRoseSvg(brg){
  return '<svg viewBox="0 0 300 300" style="width:100%;height:100%;display:block;">'+parts.join('')+'</svg>';
 }
 function RT_openFlagRadar(){
+ if(!document.getElementById('rt-fr') && !RT_requirePremium('map'))return;
  var host=document.getElementById('hole-full'); if(!host) return;
  if(document.getElementById('rt-fr')){ RT_closeFlagRadar(); return; }
  RT_ovCloseOthers('fr'); RT_tileOp('rt-tile-fr',true);
@@ -4029,6 +4032,7 @@ function RT_dkiRecommend(pl){
  return {empty:false,best:best,maxC:maxC,fit:fit,over:over,diff:diff};
 }
 function RT_openDistKI(){
+ if(!document.getElementById('rt-dki') && !RT_requirePremium('map'))return;
  var host=document.getElementById('hole-full'); if(!host) return;
  if(document.getElementById('rt-dki')){ RT_closeDistKI(); return; }
  RT_ovCloseOthers('dki'); RT_tileOp('rt-tile-dki',true);
@@ -4157,6 +4161,7 @@ function RT_gvHoleExtent(rd,c){
 }
 function RT_gvActive(){ var rd=RT_round; return !!(rd&&RT_state.gvOn&&RT_state.gvOn[RT_holeMapKey(rd,rd.cur)]); }
 function RT_openGreenView(){
+ if(!RT_gvActive() && !RT_requirePremium('map'))return;
  var rd=RT_round; if(!rd) return;
  var key=RT_holeMapKey(rd,rd.cur);
  RT_state.gvOn=RT_state.gvOn||{};
@@ -4330,6 +4335,9 @@ function RT_grabberOverlayHtml(){
  '</div>';
 }
 function RT_toggleWind(){
+ var _wk=RT_round?RT_holeMapKey(RT_round,RT_round.cur):null;
+ var _won=!!(RT_state.windOn&&_wk&&RT_state.windOn[_wk]);
+ if(!_won && !RT_requirePremium('map'))return;
  var rd=RT_round; if(!rd) return;
  var key=RT_holeMapKey(rd,rd.cur);
  if(!RT_state.windOn) RT_state.windOn={};
@@ -7109,6 +7117,7 @@ function RT_LRN_renderPrChapter(i){
 /* ---------- Prüfungsmodus ---------- */
 function RT_LRN_fmtTime(s){ s=Math.max(0,s|0); var m=Math.floor(s/60); var r=s%60; return m+':'+(r<10?'0':'')+r; }
 function RT_LRN_startExam(){
+  if(!RT_requirePremium('exam'))return;
   RT_LRN_ensure(['platzreife','fragenkatalog'],function(){
     var d=RT_LRN_data.platzreife||{}; var cfg=d.pruefung||{fragen_anzahl:20,bestehen_prozent:75,zeit_minuten:20,quelle_kapitel:null};
     var all=RT_LRN_data.fragenkatalog||[];
@@ -8372,7 +8381,9 @@ function RT_SW_captureKeyframe(frameIdx){
 
 /* ---------- Hauptablauf ---------- */
 function RT_SW_analyze(){
- if(RT_SW.busy) return; RT_SW.busy=true;
+ if(RT_SW.busy) return;
+ if(!RT_isPremium() && RT_swingFreeLeft()<=0){ RT_showPaywall('swing'); return; }
+ RT_SW.busy=true;
  var btn=document.getElementById('sw-analyze'); if(btn){btn.disabled=true;btn.textContent='Analysiere …';}
  var prog=document.getElementById('sw-progress'); if(prog)prog.style.display='block';
  RT_SW_progress(0.05,'KI-Modell wird geladen …');
@@ -8391,6 +8402,7 @@ function RT_SW_analyze(){
      var res={ts:Date.now(),angle:RT_SW.angle,hand:RT_SW.hand,total:metrics.length,passed:passed,
        metrics:metrics,top:improves[0]||null,kf:{address:kf[0],top:kf[1],impact:kf[2]}};
      RT_SW.result=res; RT_SW_saveHist(res);
+     if(!RT_isPremium()) RT_swingFreeInc();
      if(prog)prog.style.display='none';
      if(btn){btn.disabled=false;btn.textContent='Erneut analysieren';}
      RT_SW.busy=false;
@@ -8565,7 +8577,7 @@ function RT_ANL_mount(panelId){
  +'</div><div id="anl-sub"></div>';
  RT_ANL_paint();
 }
-function RT_ANL_switch(s){ if(RT_ANL_sub===s)return; RT_ANL_sub=s; var a=document.getElementById('anlseg-swing'),b=document.getElementById('anlseg-trace'); if(a)a.className=(s==='swing')?'on':''; if(b)b.className=(s==='trace')?'on':''; RT_ANL_paint(); }
+function RT_ANL_switch(s){ if(RT_ANL_sub===s)return; if(s==='trace'&&!RT_requirePremium('trace'))return; RT_ANL_sub=s; var a=document.getElementById('anlseg-swing'),b=document.getElementById('anlseg-trace'); if(a)a.className=(s==='swing')?'on':''; if(b)b.className=(s==='trace')?'on':''; RT_ANL_paint(); }
 function RT_ANL_paint(){ var sub=document.getElementById('anl-sub'); if(!sub)return; if(RT_ANL_sub==='trace'){ RT_TRC_mount('anl-sub'); } else { RT_SW_mount('anl-sub'); } }
 /* ===== Ende Schwunganalyse ===== */
 

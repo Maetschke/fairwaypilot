@@ -963,6 +963,10 @@ function RT_clearLocalSyncedData(){
  rtDel(RT_HISTDEL_KEY);
  rtDel(RT_OWNHI_KEY);
  rtDel(RT_REFOV_KEY);
+ /* Lernfortschritt beim Konto-Wechsel/Logout lokal leeren, damit kein fremder Stand ins
+    naechste Konto mergt (er liegt seit dem Cloud-Sync sicher in learning_progress). */
+ rtDel('fp_lrn_xp'); rtDel('fp_lrn_done'); rtDel('fp_lrn_badges');
+ rtDel('fp_lrn_exam'); rtDel('fp_lrn_wrong'); rtDel('fp_lrn_streak');
  RT_roundOwners={}; RT_myPlayerNameByOwner={};
  RT_round=null;
  HV_D=[]; SC=[];
@@ -1048,7 +1052,7 @@ function sbInit(){
    if(lastUid&&lastUid!==sbUser.id){ RT_clearLocalSyncedData(); }
    var firstEverLogin=!lastUid;
    try{ localStorage.setItem(RT_LAST_UID_KEY,sbUser.id); }catch(e){}
-   sbPull(firstEverLogin); PL_load().then(RT_render); RT_loadConnections(); if(AG_joinCode) AG_claim(); AG_claimByEmail();
+   sbPull(firstEverLogin); PL_load().then(RT_render); RT_loadConnections(); if(AG_joinCode) AG_claim(); AG_claimByEmail(); RT_LRN_cloudPull();
   }
   else RT_render();
   AG_render();
@@ -2597,7 +2601,7 @@ function RT_getSiOverrides(){ if(!RT_siOverrides) RT_siOverrides=rtGet(RT_SIOV_K
 var RT_parOverrides=null;
 function RT_getParOverrides(){ if(!RT_parOverrides) RT_parOverrides=rtGet(RT_PAROV_KEY)||{}; return RT_parOverrides; }
 var RT_MEM={};
-function rtSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){RT_MEM[k]=v;}}
+function rtSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){RT_MEM[k]=v;} if(!RT_LRN_pulling&&typeof k==='string'&&k.indexOf('fp_lrn_')===0){try{RT_LRN_cloudPush();}catch(e){}}}
 function rtGet(k){try{var r=localStorage.getItem(k);if(r!==null)return JSON.parse(r);}catch(e){}return RT_MEM[k]!==undefined?RT_MEM[k]:null;}
 function rtDel(k){try{localStorage.removeItem(k);}catch(e){}delete RT_MEM[k];}
 function rtEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -6683,6 +6687,58 @@ function RT_LRN_badges(){ return rtGet('fp_lrn_badges')||[]; }
 function RT_LRN_examRec(){ return rtGet('fp_lrn_exam')||{best:0,passed:false,count:0}; }
 function RT_LRN_wrongMap(){ return rtGet('fp_lrn_wrong')||{}; }
 function RT_LRN_streak(){ return rtGet('fp_lrn_streak')||{count:0,last:''}; }
+/* ---------- Lernfortschritt Cloud-Sync (Tabelle learning_progress) ----------
+   Der Lernfortschritt lag bisher NUR lokal (fp_lrn_*) und war nach geloeschten
+   Website-Daten / Geraetewechsel weg. Jetzt: beim Login mit der Cloud MERGEN (nie
+   ueberschreiben - XP=Maximum, erledigte/Badges/Fehler=Vereinigung, Pruefung=Bestwert,
+   Streak=neuester Eintrag) und bei jeder Aenderung gedrosselt hochladen. Merge statt
+   Last-Write-Wins, damit kein Geraet je Fortschritt verliert und mehrere Geraete sich
+   sauber addieren. */
+var RT_LRN_pushT=null, RT_LRN_pulling=false;
+function RT_LRN_snapshot(){
+  return {v:1,xp:RT_LRN_gxp(),done:RT_LRN_doneMap(),badges:RT_LRN_badges(),
+    exam:RT_LRN_examRec(),wrong:RT_LRN_wrongMap(),streak:RT_LRN_streak()};
+}
+function RT_LRN_unionMap(a,b){ var o={},k; a=a||{}; b=b||{}; for(k in a){ if(a.hasOwnProperty(k))o[k]=1; } for(k in b){ if(b.hasOwnProperty(k))o[k]=1; } return o; }
+function RT_LRN_mergeCloud(c){
+  if(!c||typeof c!=='object') return;
+  RT_LRN_pulling=true;
+  try{
+    var loc=RT_LRN_snapshot();
+    var badges=(loc.badges||[]).slice();
+    (c.badges||[]).forEach(function(id){ if(badges.indexOf(id)<0) badges.push(id); });
+    var le=loc.exam||{}, ce=c.exam||{};
+    var exam={best:Math.max(le.best||0,ce.best||0),passed:!!(le.passed||ce.passed),count:Math.max(le.count||0,ce.count||0)};
+    var ls=loc.streak||{}, cs=c.streak||{};
+    var streak=((cs.last||'')>(ls.last||''))?cs:ls;
+    rtSet('fp_lrn_xp',Math.max(loc.xp||0,c.xp||0));
+    rtSet('fp_lrn_done',RT_LRN_unionMap(loc.done,c.done));
+    rtSet('fp_lrn_badges',badges);
+    rtSet('fp_lrn_exam',exam);
+    rtSet('fp_lrn_wrong',RT_LRN_unionMap(loc.wrong,c.wrong));
+    rtSet('fp_lrn_streak',streak);
+  }catch(e){}
+  RT_LRN_pulling=false;
+}
+function RT_LRN_cloudPull(){
+  if(!sb||!sbUser) return;
+  try{
+    sb.from('learning_progress').select('state').eq('user_id',sbUser.id).maybeSingle().then(function(r){
+      if(r&&!r.error&&r.data&&r.data.state){ RT_LRN_mergeCloud(r.data.state); }
+      RT_LRN_cloudPush(true); /* zusammengefuehrten Stand (inkl. lokaler Extras) hochladen */
+      if(RT_curTab==='lernen'){ var d=RT_tabById('lernen'); if(d&&d.mount){ try{ d.mount(); }catch(e){} } }
+    },function(){});
+  }catch(e){}
+}
+function RT_LRN_cloudPush(now){
+  if(!sb||!sbUser) return;
+  if(RT_LRN_pushT){ clearTimeout(RT_LRN_pushT); RT_LRN_pushT=null; }
+  var doPush=function(){
+    if(!sb||!sbUser) return;
+    try{ sb.from('learning_progress').upsert({user_id:sbUser.id,state:RT_LRN_snapshot(),updated_at:new Date().toISOString()}).then(function(){},function(){}); }catch(e){}
+  };
+  if(now){ doPush(); } else { RT_LRN_pushT=setTimeout(doPush,1500); }
+}
 function RT_LRN_levelInfo(){ var xp=RT_LRN_gxp(); var lv=1+Math.floor(xp/150); return {level:lv,into:xp-(lv-1)*150,need:150,pct:Math.round((xp-(lv-1)*150)/150*100)}; }
 function RT_LRN_countPrefix(pre){ var d=RT_LRN_doneMap(),n=0; for(var k in d){ if(d.hasOwnProperty(k)&&k.lastIndexOf(pre,0)===0) n++; } return n; }
 function RT_LRN_mark(key){ var d=RT_LRN_doneMap(); if(d[key]) return false; d[key]=1; rtSet('fp_lrn_done',d); return true; }

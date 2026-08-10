@@ -239,23 +239,31 @@ function HV_renderLegend(){
  if(hiEl) hiEl.innerHTML=hiHint;
 }
 function HV_renderSegButtons(){
- var html='<button class="sb'+(HV_curV==='all'?' on':'')+'" data-v="all">Alle</button>';
- html+=RT_groupCodes(HV_usedCodes()).map(function(g){
+ var opts='<option value="all"'+(HV_curV==='all'?' selected':'')+'>Alle Plätze</option>';
+ opts+=RT_groupCodes(HV_usedCodes()).map(function(g){
   var v=g.codes.join(',');
-  return '<button class="sb'+(HV_curV===v?' on':'')+'" data-v="'+v+'">'+g.label+'</button>';
+  return '<option value="'+v+'"'+(HV_curV===v?' selected':'')+'>'+g.label+'</option>';
  }).join('');
- document.getElementById('seg').innerHTML=html;
+ var el=document.getElementById('seg'); if(!el) return;
+ el.style.background='none'; el.style.padding='0';
+ el.innerHTML='<select id="seg-sel" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1px solid #DCE7D4;background:#fff;color:#143522;font-size:13px;font-weight:600;font-family:inherit;">'+opts+'</select>';
+ var sel=document.getElementById('seg-sel');
+ if(sel) sel.onchange=function(){ HV_curV=sel.value; HV_renderChart(); };
 }
 function RD_renderSegButtons(){
- var html='<button class="sb'+(curRoFilter==='all'?' on':'')+'" data-v="all">Alle</button>';
- html+=RT_groupCodes(SC_usedCodes()).map(function(g){
+ var opts='<option value="all"'+(curRoFilter==='all'?' selected':'')+'>Alle Plätze</option>';
+ opts+=RT_groupCodes(SC_usedCodes()).map(function(g){
   var v=g.codes.join(',');
-  return '<button class="sb'+(curRoFilter===v?' on':'')+'" data-v="'+v+'">'+g.label+'</button>';
+  return '<option value="'+v+'"'+(curRoFilter===v?' selected':'')+'>'+g.label+'</option>';
  }).join('');
- document.getElementById('seg-ro').innerHTML=html;
+ var el=document.getElementById('seg-ro'); if(!el) return;
+ el.style.background='none'; el.style.padding='0';
+ el.innerHTML='<select id="seg-ro-sel" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1px solid #DCE7D4;background:#fff;color:#143522;font-size:13px;font-weight:600;font-family:inherit;">'+opts+'</select>';
+ var sel=document.getElementById('seg-ro-sel');
+ if(sel) sel.onchange=function(){ renderRounds(sel.value); GD_renderKPIs(); renderPenChart(); renderFW(); renderSandChart(); renderPuttsChart(); renderMetrics(); renderPerf(); };
 }
 function GD_renderRangeButtons(){
- var opts=[['all','Alle'],['30','30 Tage'],['90','90 Tage'],['180','6 Monate']];
+ var opts=[['all','Alle'],['30','30 Tage'],['90','90 Tage'],['180','6 Monate'],['365','1 Jahr']];
  var html=opts.map(function(o){return '<button class="sb'+(RT_gdRange===o[0]?' on':'')+'" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('');
  var el=document.getElementById('seg-gdrange'); if(el) el.innerHTML=html;
 }
@@ -383,7 +391,7 @@ document.getElementById('seg').addEventListener('click',function(e){
   HV_renderChart();
 });
 function HV_renderRangeButtons(){
- var opts=[['all','Alle'],['30','30 Tage'],['90','90 Tage'],['180','6 Monate']];
+ var opts=[['all','Alle'],['30','30 Tage'],['90','90 Tage'],['180','6 Monate'],['365','1 Jahr']];
  var html=opts.map(function(o){return '<button class="sb'+(RT_hiRange===o[0]?' on':'')+'" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('');
  var el=document.getElementById('seg-hirange'); if(el) el.innerHTML=html;
 }
@@ -2300,6 +2308,87 @@ function RT_pageConfirm(msg,onOk){
  document.getElementById('rt-pc-cancel').onclick=close;
  document.getElementById('rt-pc-ok').onclick=function(){ close(); try{ onOk&&onOk(); }catch(e){} };
 }
+var RT_pinMoveMode=null;
+/* ===== Einheitliches Marker-Kontextmenue (kleine + grosse Karte) =====
+   Tap auf einen Marker -> Menue: Verschieben / Loeschen / Typ aendern (Schlag, Straf, Sand,
+   Putt, Eingelocht). Die automatische Zuordnung passt selten - daher manuell aenderbar.
+   Regel: ein Marker = ein Schlag. Umklassifizieren laesst die Gesamtschlagzahl unveraendert
+   und tauscht nur den Straf-/Sand-/Putt-Zaehler; Loeschen entfernt Schlag + Zaehler. */
+function RT_pinKind(pt){
+ if(!pt) return 'ball';
+ if(pt.type==='straf') return 'straf';
+ if(pt.type==='sand') return 'sand';
+ if(pt.type==='putt') return 'putt';
+ if(pt.shot==='P') return 'holed';
+ return 'ball';
+}
+function RT_pinCounterAdjust(p,c,kind,delta){
+ if(kind==='straf'){ p.pe[c]=Math.max(0,(p.pe[c]||0)+delta); }
+ else if(kind==='sand'){ p.sa[c]=Math.max(0,(p.sa[c]||0)+delta); }
+ else if(kind==='putt'){ if(p.pu[c]===null||p.pu[c]===undefined){ p.pu[c]=delta>0?delta:0; } else { p.pu[c]=Math.max(0,p.pu[c]+delta); } }
+}
+function RT_pinApplyKind(pt,kind){
+ delete pt.type; delete pt.shot;
+ if(kind==='straf') pt.type='straf';
+ else if(kind==='sand') pt.type='sand';
+ else if(kind==='putt') pt.type='putt';
+ else if(kind==='holed') pt.shot='P';
+ else pt.shot=1;
+}
+function RT_pinReclass(pi,idx,kind){
+ var rd=RT_round; if(!rd) return; var c=rd.cur; var p=rd.players[pi];
+ var pins=RT_pinsOf(rd,pi,c); var pt=pins[idx]; if(!pt) return;
+ var old=RT_pinKind(pt); if(old===kind){ RT_render(); return; }
+ RT_pinCounterAdjust(p,c,old,-1);
+ RT_pinCounterAdjust(p,c,kind,1);
+ RT_pinApplyKind(pt,kind);
+ rtSet(RT_ACT,rd); RT_syncActiveToSaved(); RT_render();
+}
+function RT_pinDelete(pi,idx){
+ var rd=RT_round; if(!rd) return; var c=rd.cur; var p=rd.players[pi];
+ var pins=RT_pinsOf(rd,pi,c); var pt=pins[idx]; if(!pt) return;
+ var kind=RT_pinKind(pt); var isBall=(kind==='ball'||kind==='holed');
+ RT_pinCounterAdjust(p,c,kind,-1);
+ if(isBall||RT_roundAutoCount(rd)) RT_scAdjust(pi,-1);
+ pins.splice(idx,1);
+ RT_pinMoveMode=null;
+ rtSet(RT_ACT,rd); RT_syncActiveToSaved(); RT_render();
+}
+function RT_pinStartMove(pi,idx){
+ RT_pinMoveMode={pi:pi,idx:idx};
+ RT_fullSelPin=(RT_holeFullMapInst&&(RT_holeFullMapInst._pi||0)===pi)?idx:null;
+ if(RT_holeFullMapInst) { try{ RT_redrawFullPins(); }catch(e){} }
+ RT_render();
+}
+function RT_pinMenu(pi,idx){
+ var rd=RT_round; if(!rd) return;
+ var pins=RT_pinsOf(rd,pi,rd.cur); var pt=pins[idx]; if(!pt) return;
+ var cur=RT_pinKind(pt);
+ var kinds=[['ball','Schlag'],['straf','Straf'],['sand','Sand'],['putt','Putt'],['holed','Eingelocht']];
+ var ex=document.getElementById('rt-pinmenu'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
+ var ov=document.createElement('div'); ov.id='rt-pinmenu';
+ ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(8,20,12,.42);display:flex;align-items:flex-end;justify-content:center;';
+ var reclass=kinds.filter(function(k){return k[0]!==cur;}).map(function(k){
+  return '<button class="rt-pm-kind" data-k="'+k[0]+'" style="flex:1 1 88px;padding:11px 8px;border-radius:10px;border:1px solid #DCE7D4;background:#fff;color:#143522;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">'+k[1]+'</button>';
+ }).join('');
+ ov.innerHTML='<div style="background:#fff;border-radius:18px 18px 0 0;max-width:480px;width:100%;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 16px);box-shadow:0 -8px 32px rgba(0,0,0,.28);font-family:Inter,-apple-system,sans-serif;">'
+  +'<div style="font-size:13px;color:#8A9C8E;font-weight:700;margin-bottom:12px;">Markierung bearbeiten</div>'
+  +'<button id="rt-pm-move" style="width:100%;padding:12px;border-radius:11px;border:1px solid #DCE7D4;background:#F1F6EC;color:#143522;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;margin-bottom:14px;">📍 Verschieben</button>'
+  +'<div style="font-size:11px;color:#8A9C8E;font-weight:600;margin-bottom:6px;">Ändern in:</div>'
+  +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">'+reclass+'</div>'
+  +'<div style="display:flex;gap:10px;">'
+   +'<button id="rt-pm-cancel" style="flex:1;padding:11px;border-radius:11px;border:1px solid #DCE7D4;background:#fff;color:#3C5546;font-weight:600;font-size:14px;font-family:inherit;cursor:pointer;">Abbrechen</button>'
+   +'<button id="rt-pm-del" style="flex:1;padding:11px;border-radius:11px;border:none;background:#B03A3A;color:#fff;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Löschen</button>'
+  +'</div>'
+ +'</div>';
+ document.body.appendChild(ov);
+ function close(){ if(ov&&ov.parentNode) ov.parentNode.removeChild(ov); }
+ ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
+ document.getElementById('rt-pm-cancel').onclick=close;
+ document.getElementById('rt-pm-move').onclick=function(){ close(); RT_pinStartMove(pi,idx); };
+ document.getElementById('rt-pm-del').onclick=function(){ close(); RT_pinDelete(pi,idx); };
+ Array.prototype.forEach.call(ov.querySelectorAll('.rt-pm-kind'),function(b){ b.onclick=function(){ close(); RT_pinReclass(pi,idx,b.dataset.k); }; });
+}
 function RT_redrawFullPins(){
  var map=RT_holeFullMapInst; if(!map||!map._layer) return;
  var layer=map._layer, rotF=map._rotF||0, pi=map._pi||0;
@@ -2314,9 +2403,7 @@ function RT_redrawFullPins(){
   var m=L.marker([pt.lat,pt.lng],{icon:icon,interactive:true}).addTo(layer);
   m.on('click',function(ev){
    if(ev.originalEvent) L.DomEvent.stopPropagation(ev.originalEvent);
-   var now=Date.now();
-   if(RT_fullTapIdx===idx && (now-RT_fullTapT)<400){ RT_fullSelPin=(RT_fullSelPin===idx)?null:idx; RT_fullTapIdx=null; RT_fullTapT=0; RT_redrawFullPins(); }
-   else { RT_fullTapIdx=idx; RT_fullTapT=now; }
+   RT_pinMenu((RT_holeFullMapInst&&RT_holeFullMapInst._pi)||0,idx);
   });
  });
 }
@@ -2375,13 +2462,13 @@ async function RT_initHoleFullMap(){
  RT_redrawFullPins();
  map.on('click', function(e){
   if(RT_suppressMapClick && RT_suppressMapClick['full']) return;
-  if(RT_fullSelPin===null||RT_fullSelPin===undefined) return;
+  if(!RT_pinMoveMode) return;
   var oe=e.originalEvent, ll;
   if(oe&&typeof oe.clientX==='number'){ ll=RT_correctedLatLng(map,el,rotF,oe.clientX,oe.clientY); } else { ll=e.latlng; }
   if(!ll) return;
-  var pp=RT_pinsOf(RT_round,RT_state.fullPi||0,RT_round.cur);
-  if(pp[RT_fullSelPin]){ pp[RT_fullSelPin].lat=ll.lat; pp[RT_fullSelPin].lng=ll.lng; rtSet(RT_ACT,RT_round); }
-  RT_fullSelPin=null; RT_redrawFullPins(); RT_render();
+  var pp=RT_pinsOf(RT_round,RT_pinMoveMode.pi,RT_round.cur);
+  if(pp[RT_pinMoveMode.idx]){ pp[RT_pinMoveMode.idx].lat=ll.lat; pp[RT_pinMoveMode.idx].lng=ll.lng; rtSet(RT_ACT,RT_round); RT_syncActiveToSaved(); }
+  RT_pinMoveMode=null; RT_fullSelPin=null; RT_redrawFullPins(); RT_render();
  });
  RT_state.fullRot=rotF;
  RT_clearFullGrabber();
@@ -3226,6 +3313,14 @@ async function RT_initHoleMaps(){
    }else{
     ll=e.latlng;
    }
+   if(RT_pinMoveMode&&RT_pinMoveMode.pi===pi){
+    var mp=p.pins[c][RT_pinMoveMode.idx];
+    if(mp){ mp.lat=ll.lat; mp.lng=ll.lng; }
+    RT_pinMoveMode=null;
+    rtSet(RT_ACT,RT_round); RT_syncActiveToSaved();
+    setTimeout(function(){ RT_render(); },0);
+    return;
+   }
    p.pins[c].push({lat:ll.lat, lng:ll.lng});
    RT_scAdjust(pi,1);
    rtSet(RT_ACT,RT_round);
@@ -3247,14 +3342,7 @@ function RT_redrawPins(pi){
   var m=L.marker([pt.lat,pt.lng],{icon:icon}).addTo(inst.layer);
   m.on('click', function(ev){
    if(ev.originalEvent)L.DomEvent.stopPropagation(ev.originalEvent);
-   RT_pageConfirm('Wollen Sie diese Lage wirklich löschen?', function(){
-    var _rm=pins[idx]||{}; var _wasBall=(!_rm.type||_rm.type==='shot');
-    pins.splice(idx,1);
-    if(_wasBall) RT_scAdjust(pi,-1);
-    rtSet(RT_ACT,RT_round);
-    RT_syncActiveToSaved();
-    RT_render();
-   });
+   RT_pinMenu(pi,idx);
   });
  });
 }
@@ -5964,7 +6052,7 @@ function RT_rPlay(){
   }else{
    h+='<div class="rt-holemap" style="position:relative;"><div class="rt-holemap-inner" id="hole-map-'+pi+'"></div>'+(rtImg?'<div class="rt-holemap-tap" style="z-index:1200;pointer-events:auto;" onclick="event.stopPropagation();RT_openHoleFull(\''+rtImg.url+'\',\'Bahn '+rd.nums[c]+'\','+pi+')">&#8599;</div>':'')+'</div>';
    h+='<div id="map-ctrl-'+pi+'">'+RT_mapCtrlHtml(pi)+'</div>';
-   h+='<div id="pin-hint-'+pi+'" style="font-size:9.5px;color:#8A9C8E;margin-top:4px;">Karte antippen = Lage + Schlag &middot; Markierung antippen = entfernt beides</div>';
+   h+='<div id="pin-hint-'+pi+'" style="font-size:9.5px;color:#8A9C8E;margin-top:4px;">'+((RT_pinMoveMode&&RT_pinMoveMode.pi===pi)?'Tippe die neue Position für die Markierung an.':'Karte antippen = neue Lage &middot; Markierung antippen = Menü (verschieben/löschen/Typ ändern)')+'</div>';
   }
   /* Ein Button je Spieler, links unter der Karte: setzt die naechste Markierung an der
      aktuellen GPS-Position und zaehlt zugleich einen Schlag hoch (A, dann 2..n, am Loch

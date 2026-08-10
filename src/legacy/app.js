@@ -1539,7 +1539,7 @@ function RT_rUser(){
    '<span class="rt-btn2" style="display:inline-block;width:auto;padding:8px 16px;background:#1F8A4D;border-color:#1F8A4D;color:#fff;font-weight:700;">verknüpft &#10003;</span>'+
    '</div>';
   else h+='<button class="rt-btn2" style="flex:1;width:auto;" onclick="PL_showEmail(\''+rtJsEsc(sp.name)+'\')">'+(emailMode?'Abbrechen':(st?'Erneut per E-Mail senden':'Einladen'))+'</button>';
-  if(!linked&&st)h+='<button class="rt-btn3" style="flex:none;padding:8px 10px;" onclick="PL_copy(\'+st.invite_code+\')" title="Link kopieren">&#128279;</button>';
+  if(!linked&&st)h+='<button class="rt-btn3" style="flex:none;padding:8px 10px;" onclick="PL_copy(\''+rtJsEsc(st.invite_code)+'\')" title="Link kopieren">&#128279;</button>';
   h+='</div>';
   if(!linked&&emailMode){
    h+='<div style="display:flex;gap:8px;align-items:center;margin-top:6px;padding-left:80px;">'+
@@ -2053,16 +2053,18 @@ var RT_HOLED_RADIUS_M=8;
    die naechste Nummer. Ob es stattdessen das Einlochen wird, entscheidet sich erst beim
    Klick anhand der dann gemessenen Position - deshalb steht das nicht im Label. */
 function RT_markShotLabel(rd,c,pi){
- var n=RT_ballShotSuggest(rd,c,pi);
- return '\ud83d\udccd Markieren'+(n===1?' (A)':' ('+n+')');
+ /* Vorschau der naechsten Positionsnummer: der naechste Marker landet an Position pins.length
+    (0-basiert) und wird als pins.length+1 angezeigt; die allererste Markierung ist der Abschlag (A). */
+ var _pl=RT_pinsOf(rd,(pi===undefined||pi===null)?0:pi,c).length;
+ return '\ud83d\udccd Markieren'+(_pl===0?' (A)':' ('+(_pl+1)+')');
 }
 function RT_markShot(pi){
  var rd=RT_round; if(!rd) return;
  var c=rd.cur;
  /* Anschlag (erste Markierung der Bahn = "A"): immer den hinterlegten Abschlag des Spielers
     verwenden, nicht die am Tee oft ungenaue GPS-Position. Fehlt der Abschlag, faellt es auf GPS zurueck. */
- if(RT_ballShotSuggest(rd,c,pi)===1){
-  var _tp=RT_grabberTeePoint(rd,c);
+ if(RT_pinsOf(rd,(pi===undefined||pi===null)?0:pi,c).length===0){
+  var _tp=RT_teePointForPlayer(rd,c,pi);
   if(_tp){
    RT_pinsOf(rd,pi,c).push({lat:_tp.lat,lng:_tp.lng,shot:1});
    RT_scAdjust(pi,1);
@@ -2116,9 +2118,12 @@ function RT_pinMarkerVisual(pt,idx){
  if(type==='sand') return {label:'B', bg:'#E0B400'};
  if(type==='putt') return {label:'P', bg:'#1F8A4D'};
  if(pt.shot==='P') return {label:'\u26f3', bg:'#1B1B1B'};
- if(pt.shot===1) return {label:'A', bg:'#1B1B1B'};
- var lbl=(pt.shot!==undefined&&pt.shot!==null)?RT_ballLabel(pt.shot):String(idx+1);
- return {label:lbl, bg:'rgba(20,53,34,.85)'};
+ /* Positionsbasierte Nummerierung: jede Markierung (Ball ODER Straf/Sand/Putt) besetzt eine
+    Position im gemeinsamen pins-Array. Normale Schlaege zeigen ihre Position (idx+1); Straf/Sand/
+    Putt zeigen S/B/P, besetzen aber ebenfalls eine Position -> Beispiel A,2,B,4,S,6,P,P.
+    Die erste Markierung der Bahn ist der Abschlag (A). */
+ if((idx||0)===0) return {label:'A', bg:'#1B1B1B'};
+ return {label:String((idx||0)+1), bg:'rgba(20,53,34,.85)'};
 }
 
 function RT_pinsOverlayHtml(rd,c,rotComp,pi){
@@ -3395,6 +3400,27 @@ function RT_grabberTeePoint(rd,c){
  var mi=(typeof RT_myPlayerIndex==='function')?RT_myPlayerIndex(rd):0;
  var me=rd.players&&(rd.players[mi]||rd.players[0]);
  var want=norm(me&&me.tee);
+ var keys=Object.keys(ref.tees);
+ if(want){
+  for(var i=0;i<keys.length;i++){
+   var t=ref.tees[keys[i]];
+   if(t&&t.lat!==undefined&&t.lat!==null&&norm(keys[i])===want) return {lat:t.lat,lng:t.lng,teeName:keys[i]};
+  }
+ }
+ for(var j=0;j<keys.length;j++){
+  var t2=ref.tees[keys[j]];
+  if(t2&&t2.lat!==undefined&&t2.lat!==null) return {lat:t2.lat,lng:t2.lng,teeName:keys[j]};
+ }
+ return null;
+}
+/* Wie RT_grabberTeePoint, aber fuer einen BELIEBIGEN Spieler pi (nicht nur den eigenen).
+   Beim Abschlag-Markieren soll der hinterlegte Abschlag DES JEWEILIGEN Spielers gelten -
+   also der User-Abschlag beim User, der Mitspieler-Abschlag beim Mitspieler, nicht GPS. */
+function RT_teePointForPlayer(rd,c,pi){
+ var ref=RT_refFor(rd,c); if(!ref||!ref.tees) return null;
+ var norm=function(x){ return (x||'').trim().toLowerCase(); };
+ var pl=rd.players&&(rd.players[pi]||rd.players[0]);
+ var want=norm(pl&&pl.tee);
  var keys=Object.keys(ref.tees);
  if(want){
   for(var i=0;i<keys.length;i++){
@@ -5599,10 +5625,15 @@ function RT_roundBgUrl(rd){
 function RT_setPhoto(dataUrl,field){
  field=field||'photoUrl';
  var key=RT_su&&RT_su.course; if(!key||key==='other'||!RT_COURSES[key])return;
- RT_COURSES[key][field]=dataUrl;
+ /* Erstinstallation: Wird das Platzbild (photoUrl) gesetzt und ist noch kein eigenes
+    Rundenbild (bgUrl) hinterlegt, wird dasselbe Bild automatisch auch als Rundenbild
+    uebernommen. Ein spaeter separat hochgeladenes Rundenbild bleibt unangetastet. */
+ var flds=[field];
+ if(field==='photoUrl' && !RT_COURSES[key].bgUrl) flds.push('bgUrl');
+ flds.forEach(function(fld){ RT_COURSES[key][fld]=dataUrl; });
  var custom=RT_loadCustomCourses();
  if(custom[key]){
-  custom[key][field]=dataUrl;
+  flds.forEach(function(fld){ custom[key][fld]=dataUrl; });
   rtSet(RT_CUSTOM_KEY,custom);
   sbPushCourse(key,custom[key]);
  }else{
@@ -5613,7 +5644,7 @@ function RT_setPhoto(dataUrl,field){
   var ov=RT_getPhotoOverrides();
   ov[key]=(typeof ov[key]==='object'&&ov[key])?ov[key]:{};
   if(typeof ov[key]==='string') ov[key]={photoUrl:ov[key]};
-  ov[key][field]=dataUrl;
+  flds.forEach(function(fld){ ov[key][fld]=dataUrl; });
   rtSet(RT_PHOTOOV_KEY,ov);
   sbPushCourse(key,RT_COURSES[key]);
  }

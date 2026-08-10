@@ -69,20 +69,21 @@ export default {
     if (url.pathname === "/health") {
       return new Response("ok v9-sisync-filter", { headers: { "content-type": "text/plain" } });
     }
+    const _jerr = (e) => new Response(JSON.stringify({ error: String((e && e.message) || e) }), { status: 500, headers: { "content-type": "application/json; charset=utf-8" } });
     if (url.pathname === "/api/entitlement" && request.method === "GET") {
-      return handleEntitlement(request, env);
+      try { return await handleEntitlement(request, env); } catch (e) { return _jerr(e); }
     }
     if (url.pathname === "/api/checkout" && request.method === "POST") {
-      return handleCheckout(request, env);
+      try { return await handleCheckout(request, env); } catch (e) { return _jerr(e); }
     }
     if (url.pathname === "/api/portal" && request.method === "POST") {
-      return handlePortal(request, env);
+      try { return await handlePortal(request, env); } catch (e) { return _jerr(e); }
     }
     if (url.pathname === "/api/redeem" && request.method === "POST") {
-      return handleRedeem(request, env);
+      try { return await handleRedeem(request, env); } catch (e) { return _jerr(e); }
     }
     if (url.pathname === "/api/stripe/webhook" && request.method === "POST") {
-      return handleWebhook(request, env);
+      try { return await handleWebhook(request, env); } catch (e) { return _jerr(e); }
     }
     if (url.pathname === "/api/research" && request.method === "POST") {
       const g = await guardResearch(request, env);

@@ -4791,7 +4791,7 @@ function RT_rHome(){
   });
  }
  h+='</div>';
-  if(sortedSaved.length>RT_homeLimit){h+='<div style="text-align:center;margin:8px 0 2px;"><button onclick="RT_homeShowMore()" style="padding:10px 22px;border-radius:var(--fp-radius-md,13px);border:1px solid var(--fp-border,#DFE8DA);background:var(--fp-surface-glass,rgba(255,255,255,.92));color:var(--fp-primary,#1F8A4D);font-weight:600;font-family:var(--fp-font,Inter,sans-serif);font-size:14px;cursor:pointer;">Weitere laden ('+(sortedSaved.length-RT_homeLimit)+')</button></div>';}
+  if(saved.length>RT_homeLimit){h+='<div style="text-align:center;margin:8px 0 2px;"><button onclick="RT_homeShowMore()" style="padding:10px 22px;border-radius:var(--fp-radius-md,13px);border:1px solid var(--fp-border,#DFE8DA);background:var(--fp-surface-glass,rgba(255,255,255,.92));color:var(--fp-primary,#1F8A4D);font-weight:600;font-family:var(--fp-font,Inter,sans-serif);font-size:14px;cursor:pointer;">Weitere laden ('+(saved.length-RT_homeLimit)+')</button></div>';}
  return h;
 }
 

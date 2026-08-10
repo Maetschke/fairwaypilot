@@ -13,7 +13,7 @@ const MANIFEST_JSON = JSON.stringify({
   start_url: "/app",
   display: "standalone",
   orientation: "portrait",
-  background_color: "#F5F8F0",
+  background_color: "#ECF2E4",
   theme_color: "#1F8A4D",
   icons: [
     { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

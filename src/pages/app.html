@@ -291,6 +291,14 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0ms!important;scroll-behavior:auto!important;}
   .rt-spin{animation-duration:1.6s!important;animation-iteration-count:infinite!important;}
 }
+/* PWA (Zum Home-Bildschirm): Nav als am unteren Rand ANGEDOCKTE Frosted-Bar statt schwebender
+   Pille. Buendig bei 0px, deckt die iOS-Safe-Area selbst ab (kein weisser/gruener Streifen),
+   Inhalt scrollt sichtbar-verschwommen dahinter durch - spiegelt das obere Ende unter der
+   Statusleiste. Nur im Standalone-Modus; im Browser bleibt die schwebende Pille. */
+@media all and (display-mode:standalone){
+  #bottom-nav{ padding:0 !important; background:none !important; }
+  #nav-tabs{ border-radius:16px 16px 0 0 !important; padding:8px 12px calc(env(safe-area-inset-bottom,0px) + 8px) !important; }
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>

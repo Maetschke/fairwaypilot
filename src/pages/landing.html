@@ -49,7 +49,7 @@ h2{font-size:20px;font-weight:800;letter-spacing:-.3px;color:var(--tx);margin-bo
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--gd);background:rgba(52,199,89,.1);border:1px solid rgba(52,199,89,.18);padding:6px 11px;border-radius:100px;}
 .chip img{width:16px;height:16px;border-radius:4px;display:block;flex:none;}
-.heroicon{width:84px;height:84px;border-radius:20px;display:block;margin:0 auto 14px;box-shadow:0 8px 22px -10px rgba(27,46,32,.4);}
+.heroicon{width:88px;height:88px;display:block;margin:0 auto 16px;filter:drop-shadow(0 10px 16px rgba(20,40,25,.34));}
 .browser{width:260px;max-width:74vw;margin:20px auto 2px;border-radius:16px;overflow:hidden;border:1px solid var(--glb);background:#fff;box-shadow:0 24px 46px -20px rgba(16,32,22,.5),0 2px 6px rgba(16,32,22,.14);}
 .bbar{display:flex;align-items:center;gap:8px;padding:9px 11px;background:#EDF1EA;border-bottom:1px solid var(--glb);}
 .bdots{display:flex;gap:5px;flex:none;}
@@ -63,8 +63,8 @@ h2{font-size:20px;font-weight:800;letter-spacing:-.3px;color:var(--tx);margin-bo
 .gbbar{display:flex;align-items:center;gap:5px;padding:6px 8px;background:#EDF1EA;border-bottom:1px solid var(--glb);}
 .gbbar i{width:7px;height:7px;border-radius:50%;display:block;flex:none;}
 .gburl{flex:1;background:#fff;border:1px solid var(--glb);border-radius:100px;font-size:8.5px;color:var(--tx3);padding:2px 8px;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
-.gbrowser>img{display:block;width:100%;height:auto;}
-.gcap{font-size:11.5px;color:var(--tx3);text-align:center;margin-top:9px;font-weight:600;line-height:1.3;}
+.gbrowser>img{display:block;width:100%;aspect-ratio:56/82;object-fit:fill;background:#0e1e15;}
+.gcap{font-size:11.5px;color:var(--tx3);text-align:center;margin-top:9px;font-weight:600;line-height:1.3;min-height:30px;}
 .gcap b{color:var(--gd);font-weight:800;}
 .swipe-note{font-size:11.5px;color:var(--tx3);text-align:center;margin-top:6px;}
 .lock{width:9px;height:9px;flex:none;}
@@ -114,7 +114,7 @@ footer a{color:var(--gd);text-decoration:none;font-weight:600;}
 <div class="wrap">
 
   <div class="card" style="text-align:center;">
-    <img src="/icon-192.png" alt="FairwayPilot" class="heroicon">
+    <img src="/shots/appicon.png" alt="FairwayPilot" class="heroicon" width="88" height="88">
     <h1>Play a Hole <em>with me!</em></h1>
     <div class="sub">KI-gestützte Spielbegleitung</div>
     <p class="lead">Was andere auf drei, vier Apps und Abos verteilen, gibt es hier in einer – direkt im Browser, ohne App-Store, ohne Sensoren. Der Kern ist dauerhaft kostenlos. Wer mehr will, schaltet die fortgeschrittenen Werkzeuge mit einem fairen Abo frei – deutlich günstiger als ein reiner KI-Coach.</p>

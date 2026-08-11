@@ -1043,6 +1043,88 @@ function RT_isForeignRound(rd){
 function RT_isForeignLocked(rd){
  return RT_isForeignRound(rd)&&!!rd.done;
 }
+/* ===== Scoring-Ownership (Stufe 1): bei geteilten (verknuepften) Runden fuehrt genau EIN
+   Spieler die Scoringkarte. Nur der aktuelle Scorer schreibt; andere sehen mit (nach Sync)
+   und koennen die Uebergabe anfordern. Solo-/unverknuepfte Runden sind unberuehrt - dort ist
+   man immer selbst Scorer (RT_amScorer() liefert dann true). Live-Aktualisierung = Stufe 2. */
+function RT_scorerId(rd){
+ if(!rd) return null;
+ if(rd.scorerId) return rd.scorerId;
+ if(rd.ownerHint) return rd.ownerHint;
+ if(RT_roundOwners&&RT_roundOwners[rd.id]) return RT_roundOwners[rd.id];
+ return sbUser?sbUser.id:null;
+}
+function RT_roundIsShared(rd){
+ if(!rd) return false;
+ if(RT_isForeignRound(rd)) return true;
+ if(rd.players&&rd.players.length>1&&typeof PL_statusFor==='function'){
+  return rd.players.some(function(pp){ var st=PL_statusFor(pp.name); return !!(st&&st.linked_user_id); });
+ }
+ return false;
+}
+function RT_amScorer(rd){
+ if(!rd) return true;
+ if(!RT_roundIsShared(rd)) return true;
+ if(!sbUser) return true;
+ return RT_scorerId(rd)===sbUser.id;
+}
+function RT_scorerName(rd){
+ var sid=RT_scorerId(rd);
+ if(sbUser&&sid===sbUser.id) return 'Du';
+ if(rd&&rd.players){
+  for(var i=0;i<rd.players.length;i++){ var st=(typeof PL_statusFor==='function')?PL_statusFor(rd.players[i].name):null; if(st&&st.linked_user_id===sid) return rd.players[i].name; }
+  if(RT_isForeignRound(rd)&&rd.players[0]) return rd.players[0].name;
+ }
+ return 'ein Mitspieler';
+}
+function RT_scorerBlock(){
+ RT_state.saveWarn=RT_scorerName(RT_round)+' f\u00fchrt gerade die Scoringkarte. Fordere die \u00dcbergabe an, um selbst zu scoren.';
+ RT_render();
+}
+function RT_handoffScoring(uid){
+ var rd=RT_round; if(!rd||!RT_amScorer(rd)||!uid) return;
+ rd.scorerId=uid;
+ rtSet(RT_ACT,rd); RT_syncActiveToSaved(); RT_render();
+}
+function RT_requestScoring(){
+ RT_state.saveWarn='Bitte '+RT_scorerName(RT_round)+', dir die Scoringkarte zu \u00fcbergeben. (Live-Anforderung folgt in K\u00fcrze.)';
+ RT_render();
+}
+function RT_handoffMenu(){
+ var rd=RT_round; if(!rd||!RT_amScorer(rd)) return;
+ var opts=[];
+ if(rd.players){ rd.players.forEach(function(pp){ var st=(typeof PL_statusFor==='function')?PL_statusFor(pp.name):null; if(st&&st.linked_user_id&&st.linked_user_id!==(sbUser&&sbUser.id)) opts.push({name:pp.name,uid:st.linked_user_id}); }); }
+ if(!opts.length){ RT_state.saveWarn='Noch kein verkn\u00fcpfter Mitspieler zum \u00dcbergeben. Lade zuerst jemanden per E-Mail ein.'; RT_render(); return; }
+ var ex=document.getElementById('rt-handoff'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
+ var ov=document.createElement('div'); ov.id='rt-handoff';
+ ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(8,20,12,.42);display:flex;align-items:flex-end;justify-content:center;';
+ var btns=opts.map(function(o){ return '<button class="rt-ho-opt" data-uid="'+rtEsc(o.uid)+'" style="width:100%;padding:12px;border-radius:11px;border:1px solid #DCE7D4;background:#F1F6EC;color:#143522;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;margin-bottom:8px;">Scoring an '+rtEsc(o.name)+' \u00fcbergeben</button>'; }).join('');
+ ov.innerHTML='<div style="background:#fff;border-radius:18px 18px 0 0;max-width:480px;width:100%;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 16px);box-shadow:0 -8px 32px rgba(0,0,0,.28);font-family:Inter,-apple-system,sans-serif;"><div style="font-size:13px;color:#8A9C8E;font-weight:700;margin-bottom:12px;">Scoringkarte \u00fcbergeben</div>'+btns+'<button id="rt-ho-cancel" style="width:100%;padding:11px;border-radius:11px;border:1px solid #DCE7D4;background:#fff;color:#3C5546;font-weight:600;font-size:14px;font-family:inherit;cursor:pointer;">Abbrechen</button></div>';
+ document.body.appendChild(ov);
+ function close(){ if(ov&&ov.parentNode) ov.parentNode.removeChild(ov); }
+ ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
+ document.getElementById('rt-ho-cancel').onclick=close;
+ Array.prototype.forEach.call(ov.querySelectorAll('.rt-ho-opt'),function(b){ b.onclick=function(){ var uid=b.dataset.uid; close(); RT_pageConfirm('Scoringkarte \u00fcbergeben? Danach tr\u00e4gt der andere Spieler ein, du siehst nur mit.', function(){ RT_handoffScoring(uid); }); }; });
+}
+/* Einladung im Runden-Setup: neuen/vorhandenen Mitspieler VOR dem Spiel per E-Mail einladen und
+   verknuepfen (nutzt dieselbe PL_-Mechanik wie die Konto-Seite). */
+function RT_setupInviteHtml(name){
+ if(!sbUser||(typeof RT_isSelfName==='function'&&RT_isSelfName(name))) return '';
+ var st=(typeof PL_statusFor==='function')?PL_statusFor(name):null;
+ var linked=st&&st.linked_user_id;
+ if(linked) return '<div style="margin-top:8px;font-size:11.5px;color:#187040;font-weight:700;">\u2713 verkn\u00fcpft \u2013 kann live mitscoren</div>';
+ var emailMode=RT_state.plEmailFor===name;
+ var h='<div style="margin-top:8px;">';
+ h+='<button class="rt-btn3" style="color:#1F8A4D;font-weight:700;padding:4px 0;font-size:12px;" onclick="PL_showEmail(\''+rtJsEsc(name)+'\')">'+(emailMode?'Abbrechen':(st?'Erneut per E-Mail einladen':'\u2709\ufe0f Per E-Mail einladen (gemeinsam scoren)'))+'</button>';
+ if(emailMode){
+  h+='<div style="display:flex;gap:8px;align-items:center;margin-top:6px;">'
+   +'<input class="rt-inp" id="'+PL_domId(name)+'" type="email" placeholder="E-Mail von '+rtEsc(name)+'" style="flex:1;margin:0;">'
+   +'<button class="rt-btn" style="flex:none;width:auto;padding:10px 14px;margin:0;" onclick="PL_sendInvite(\''+rtJsEsc(name)+'\')">Senden</button></div>';
+  if(PL_msg) h+='<div class="rt-warn" style="margin-top:6px;margin-bottom:0;font-size:11px;">'+rtEsc(PL_msg)+'</div>';
+ }
+ h+='</div>';
+ return h;
+}
 function sbInit(){
  if(!sbReady())return;
  sb=window.supabase.createClient(SB_URL,SB_KEY);
@@ -2068,6 +2150,7 @@ function RT_markShotLabel(rd,c,pi){
 }
 function RT_markShot(pi){
  var rd=RT_round; if(!rd) return;
+ if(!RT_amScorer(rd)){RT_scorerBlock();return;}
  var c=rd.cur;
  /* Anschlag (erste Markierung der Bahn = "A"): immer den hinterlegten Abschlag des Spielers
     verwenden, nicht die am Tee oft ungenaue GPS-Position. Fehlt der Abschlag, faellt es auf GPS zurueck. */
@@ -2362,6 +2445,7 @@ function RT_pinStartMove(pi,idx){
 }
 function RT_pinMenu(pi,idx){
  var rd=RT_round; if(!rd) return;
+ if(!RT_amScorer(rd)){RT_scorerBlock();return;}
  var pins=RT_pinsOf(rd,pi,rd.cur); var pt=pins[idx]; if(!pt) return;
  var cur=RT_pinKind(pt);
  var kinds=[['ball','Schlag'],['straf','Straf'],['sand','Sand'],['putt','Putt'],['holed','Eingelocht']];
@@ -3303,6 +3387,7 @@ async function RT_initHoleMaps(){
   });
   map.on('click', function(e){
    if(RT_suppressMapClick['h'+pi]) return;
+   if(!RT_amScorer(RT_round)){RT_scorerBlock();return;}
    if(!p.pins[c])p.pins[c]=[];
    var inst=RT_holeMapInst[pi];
    var rot=(inst&&inst.rot)||0;
@@ -5137,7 +5222,7 @@ if(cd){
     '<div style="display:flex;justify-content:space-between;align-items:center;">'+
      '<div class="rt-ph" id="rt-ph-'+i+'">Spielvorgabe: '+(ph!==null?ph:'&ndash;')+(neutral&&ph!==null?' <span style="font-weight:500;color:#8A9C8E;">neutral</span>':'')+'</div>'+
      (RT_su.players.length>1?'<button class="rt-btn3" onclick="RT_suRm('+i+')">Entfernen</button>':'')+
-    '</div></div>';
+    '</div>'+RT_setupInviteHtml(p.name)+'</div>';
   });
   var savedNotInRound=RT_getSavedPlayers().filter(function(sp){
    if(RT_isSelfName(sp.name)) return false;
@@ -5997,6 +6082,13 @@ function RT_rPlay(){
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="'+(RT_editingExisting?'RT_cancelEdit()':'RT_go(\'home\')')+'">&#8249;</button>'+
   '<div style="flex:1;min-width:0;"><div class="rt-h1" style="font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+rtEsc(rd.courseName)+'</div>'+
   '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
+ if(RT_roundIsShared(rd)){
+  var _amSc=RT_amScorer(rd);
+  h+='<div class="rtc" style="padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:10px;background:'+(_amSc?'#EAF6EE':'#FBF3E4')+';border:1px solid '+(_amSc?'#BFE3CB':'#EAD9AE')+';">'
+   +'<div style="flex:1;min-width:0;font-size:12.5px;color:#143522;"><b>'+(_amSc?'Du f\u00fchrst die Scoringkarte':(rtEsc(RT_scorerName(rd))+' f\u00fchrt die Scoringkarte'))+'</b><div style="font-size:11px;color:#6b7d70;margin-top:1px;">'+(_amSc?'Nur du tr\u00e4gst Schl\u00e4ge ein \u2013 du kannst die Karte \u00fcbergeben.':'Nur der aktuelle Scorer tr\u00e4gt ein \u2013 du kannst die \u00dcbergabe anfordern.')+'</div></div>'
+   +(_amSc?'<button class="rt-btn2" style="width:auto;flex:none;padding:8px 12px;font-size:12px;margin:0;" onclick="RT_handoffMenu()">\u00dcbergeben</button>':'<button class="rt-btn2" style="width:auto;flex:none;padding:8px 12px;font-size:12px;margin:0;" onclick="RT_requestScoring()">Anfordern</button>')
+   +'</div>';
+ }
  /* Bahnen-Leiste */
  h+='<div class="rt-holes">';
  for(var i=0;i<rd.cnt;i++){
@@ -6194,6 +6286,7 @@ function RT_removeLastTrackedPoint(type,pi){
 }
 function RT_scAdjust(pi,d){ var p=RT_round.players[pi],c=RT_round.cur; if(p.sc[c]===null){ if(d>0)p.sc[c]=1; } else { var nv=p.sc[c]+d; p.sc[c]=nv<1?null:nv; } }
 function RT_sc(pi,d){
+ if(!RT_amScorer(RT_round)){RT_scorerBlock();return;}
  var p=RT_round.players[pi],c=RT_round.cur;
  if(p.sc[c]===null){p.sc[c]=d>0?1:Math.max(1,RT_round.par[c]-1);}
  else{var nv=p.sc[c]+d;p.sc[c]=nv<1?null:nv;}
@@ -6206,6 +6299,7 @@ function RT_sc(pi,d){
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
 }
 function RT_mini(pi,f,d){
+ if(!RT_amScorer(RT_round)){RT_scorerBlock();return;}
  var p=RT_round.players[pi],c=RT_round.cur;
  if(f==='pu'){p.pu[c]=p.pu[c]===null?(d>0?1:0):Math.max(0,p.pu[c]+d);}
  else{p[f][c]=Math.max(0,p[f][c]+d);}
@@ -6221,11 +6315,13 @@ function RT_mini(pi,f,d){
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
 }
 function RT_fwSet(pi,v){
+ if(!RT_amScorer(RT_round)){RT_scorerBlock();return;}
  var p=RT_round.players[pi],c=RT_round.cur;
  p.fw[c]=p.fw[c]===v?null:v;
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
 }
 function RT_cx(pi){
+ if(!RT_amScorer(RT_round)){RT_scorerBlock();return;}
  var p=RT_round.players[pi],c=RT_round.cur;
  p.cx[c]=p.cx[c]?0:1;
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();

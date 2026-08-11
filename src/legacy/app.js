@@ -1748,7 +1748,7 @@ function RT_rUser(){
   h+='<div style="margin-top:8px;">';
   h+='<div style="display:flex;gap:8px;align-items:center;">'+
    '<div style="flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+rtEsc(sp.name)+'</div>';
-  if(linked)h+='<span class="rt-btn2" style="flex:none;width:128px;box-sizing:border-box;margin:0;padding:9px 8px;text-align:center;background:#1F8A4D;border-color:#1F8A4D;color:#fff;font-weight:700;">verknüpft &#10003;</span>';
+  if(linked)h+='<button class="rt-btn2" disabled style="flex:none;width:128px;box-sizing:border-box;margin:0;padding:9px 8px;display:flex;align-items:center;justify-content:center;background:#1F8A4D;border-color:#1F8A4D;color:#fff;font-weight:700;cursor:default;">verknüpft &#10003;</button>';
   else h+='<button class="rt-btn2" style="flex:none;width:128px;box-sizing:border-box;margin:0;padding:9px 8px;text-align:center;" onclick="PL_showEmail(\''+rtJsEsc(sp.name)+'\')">'+(emailMode?'Abbrechen':(st?'Erneut senden':'Einladen'))+'</button>';
   if(!linked&&st)h+='<button class="rt-btn3" style="flex:none;padding:8px 10px;" onclick="PL_copy(\''+rtJsEsc(st.invite_code)+'\')" title="Link kopieren">&#128279;</button>';
   h+='</div>';

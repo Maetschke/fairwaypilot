@@ -822,7 +822,8 @@ function renderHoles(sc){
      amtlichen Out-/In-Aufteilung der Scorekarte ab. */
   var holesTotal = sc.chHoles || 9;
   var h='<div style="display:flex;align-items:flex-start;gap:8px;">';
-  h+='<div style="display:flex;gap:3px;flex-wrap:wrap;flex:1;">';
+  var _cols=Math.min(Math.max(sc.scores.length||9,1),9);
+  h+='<div style="display:grid;grid-template-columns:repeat('+_cols+',minmax(0,1fr));gap:3px;flex:1;min-width:0;">';
   var stbfSum=0; var grossSum=0; var hasAnyScore=false;
   for(var i=0;i<sc.scores.length;i++){
     var s=sc.scores[i]; var cross=sc.crossed[i];
@@ -860,7 +861,7 @@ function renderHoles(sc){
     } else {
       shape='<div style="width:15px;height:15px;margin:1px auto 0;"></div>';
     }
-    h+='<div style="width:28px;background:'+bg+';border-radius:6px;padding:3px 2px;text-align:center;">'+
+    h+='<div style="min-width:0;background:'+bg+';border-radius:6px;padding:3px 1px;text-align:center;overflow:hidden;">'+
       '<div style="font-size:8px;line-height:1.3;color:rgba(93,112,96,.95);">'+(i+1)+'</div>'+
       '<div style="font-size:6.5px;line-height:1.1;color:rgba(93,112,96,.7);">Par '+p+'</div>'+
       '<div style="font-size:11px;font-weight:700;color:'+tc+';text-decoration:'+(cross?'line-through':'none')+';">'+disp+'</div>'+

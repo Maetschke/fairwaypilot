@@ -1152,6 +1152,10 @@ function RT_rtOnState(payload){
  var nd=payload&&payload.data; var rd=RT_round;
  if(!nd||!rd||rd.id!==nd.id) return;
  RT_rtApplyState(nd);
+ /* Finaler (beendeter) Stand: eigene, eigenstaendige Kopie in der Cloud sichern, damit die
+    fertige Runde dauerhaft auch bei MIR vorliegt - unabhaengig vom anderen Spieler. Spaetere
+    Aenderungen bleiben danach isoliert (kein Live-Kanal mehr bei done:true). */
+ if(nd.done && sb && sbUser){ try{ sbPushRound(nd); }catch(e){} }
 }
 function RT_rtOnRequest(payload){
  var rd=RT_round; if(!rd||!RT_amScorer(rd)) return;
@@ -6393,6 +6397,7 @@ function RT_validateRound(rd){
  return {ok:true};
 }
 function RT_finish(){
+ if(RT_round&&!RT_amScorer(RT_round)){RT_scorerBlock();return;}
  var check=RT_validateRound(RT_round);
  if(!check.ok){
   RT_state.saveWarn='Bahn '+check.hole+' bei '+check.player+': Putts + Strafschl\u00e4ge + Sandschl\u00e4ge d\u00fcrfen zusammen nicht mehr sein als die Schl\u00e4ge.';
@@ -6409,6 +6414,7 @@ function RT_finish(){
  RT_editingExisting=false;
  rtSet(RT_KEY,saved);
  sbPushRound(RT_round);
+ RT_rtBroadcastState();
  rtDel(RT_ACT);
  if(RT_round.promoted) RT_hydrateHistoricalData();
  RT_state.viewId=RT_round.id;

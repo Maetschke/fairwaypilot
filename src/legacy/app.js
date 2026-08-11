@@ -248,7 +248,7 @@ function HV_renderSegButtons(){
  el.style.background='none'; el.style.padding='0';
  el.innerHTML='<select id="seg-sel" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:1px solid #DCE7D4;background:#fff;color:#143522;font-size:13px;font-weight:600;font-family:inherit;">'+opts+'</select>';
  var sel=document.getElementById('seg-sel');
- if(sel) sel.onchange=function(){ HV_curV=sel.value; HV_renderChart(); HV_renderWhsChart(); };
+ if(sel) sel.onchange=function(){ HV_curV=sel.value; HV_renderChart(); HV_renderWhsChart(); HV_renderStbfChart(); };
 }
 function RD_renderSegButtons(){
  var opts='<option value="all"'+(curRoFilter==='all'?' selected':'')+'>Alle Plätze</option>';
@@ -581,6 +581,103 @@ function HV_renderWhsChart(){
     });
   }
 }
+var RT_stbfMode='18';
+/* Stableford-Verlauf. Datenquelle sind die PRO-NEUN erfassten Stableford-Punkte (HV_D.stbf).
+   Modus '9': jede Neun als eigener Punkt (ein Tag mit Front+Back gibt zwei Punkte).
+   Modus '18': Front+Back desselben Tages und Platzes werden zu EINER 18er-Wertung summiert
+   (je ein bester Front- und Back-Wert); wurde nur eine Neun gespielt, steht sie allein. */
+function RT_stbfSeries(){
+ var base=(typeof HV_D!=='undefined'&&HV_D)?HV_D.slice():[];
+ var arr=(HV_curV==='all')?base:base.filter(function(d){ return HV_curV.split(',').indexOf(d.half)>=0; });
+ var cut=(RT_hiRange&&RT_hiRange!=='all'&&typeof RT_rangeCutoff==='function')?RT_rangeCutoff(RT_hiRange):null;
+ if(cut) arr=arr.filter(function(d){return d.date>=cut;});
+ arr=arr.filter(function(d){ return d && d.stbf!==null && d.stbf!==undefined && !isNaN(d.stbf); });
+ function ascSort(x){ x.sort(function(a,b){ var ka=(a.date||'')+'T'+(a.time||'00:00'),kb=(b.date||'')+'T'+(b.time||'00:00'); return ka<kb?-1:(ka>kb?1:0); }); return x; }
+ if(RT_stbfMode==='9'){
+  return ascSort(arr.map(function(d){ return {date:d.date, time:d.time, pts:d.stbf, col:d.col, course:(HV_COURSE_META[d.half]&&HV_COURSE_META[d.half].label)||d.half, holes:9}; }));
+ }
+ function baseOf(half){ var m=HV_COURSE_META[half]; var lbl=m?m.label:half; return String(lbl).replace(/\s+[FB]$/,''); }
+ function isFront(half){ return half==='Front'||/F$/.test(half); }
+ var groups={};
+ arr.forEach(function(d){
+  var b=baseOf(d.half); var k=d.date+'|'+b;
+  if(!groups[k]) groups[k]={date:d.date, time:d.time, base:b, front:null, back:null, frontCol:null, backCol:null};
+  var gg=groups[k];
+  if(isFront(d.half)){ if(gg.front===null||d.stbf>gg.front){ gg.front=d.stbf; gg.frontCol=d.col; } }
+  else { if(gg.back===null||d.stbf>gg.back){ gg.back=d.stbf; gg.backCol=d.col; } }
+  var tt=d.time||'00:00'; if(!gg.time||tt<gg.time) gg.time=tt;
+ });
+ var out=Object.keys(groups).map(function(k){ var gg=groups[k];
+  var sum=(gg.front||0)+(gg.back||0); var nines=(gg.front!==null?1:0)+(gg.back!==null?1:0);
+  return {date:gg.date, time:gg.time, pts:sum, col:gg.frontCol||gg.backCol, course:gg.base, holes:18, nines:nines};
+ });
+ return ascSort(out);
+}
+function HV_renderStbfToggle(){
+ var el=document.getElementById('seg-stbf'); if(!el) return;
+ var opts=[['18','18 L\u00f6cher'],['9','9 L\u00f6cher']];
+ el.innerHTML=opts.map(function(o){return '<button class="sb'+(RT_stbfMode===o[0]?' on':'')+'" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('');
+}
+function HV_renderStbfChart(){
+  var svg=document.getElementById('svg-stbf'); if(!svg) return;
+  var pts=RT_stbfSeries();
+  var n=pts.length;
+  if(!n){ svg.innerHTML='<text x="180" y="130" text-anchor="middle" font-size="12" fill="rgba(100,118,102,.95)">Keine Daten</text>'; return; }
+  var target=(RT_stbfMode==='9')?18:36;
+  var ms=function(x){return new Date(x).getTime();};
+  var ts=pts.map(function(d){return ms(d.date);});
+  var t0=Math.min.apply(null,ts),t1=Math.max.apply(null,ts),tSpan=Math.max(1,t1-t0);
+  var xS=function(i){return HV_P.l+(t1===t0?HV_cW/2:(ms(pts[i].date)-t0)/tSpan*HV_cW);};
+  var va=pts.map(function(d){return d.pts;});
+  var lo=Math.min.apply(null,va), hi=Math.max.apply(null,va);
+  var mn=Math.max(0,Math.floor((Math.min(lo,target)-4)/10)*10);
+  var mx=Math.ceil((Math.max(hi,target)+4)/10)*10;
+  var yS=function(v){return HV_P.t+HV_cH-(v-mn)/(mx-mn)*HV_cH;};
+  var g='';
+  for(var v=mn;v<=mx;v+=10){
+    var gy=yS(v).toFixed(1);
+    g+='<line x1="'+HV_P.l+'" y1="'+gy+'" x2="'+(HV_W-HV_P.r)+'" y2="'+gy+'" stroke="rgba(27,46,32,'+(v%20===0?.12:.06)+')"/>';
+    g+='<text x="'+(HV_P.l-5)+'" y="'+(parseFloat(gy)+3.5).toFixed(1)+'" text-anchor="end" font-size="9" fill="rgba(96,115,99,.95)" font-family="Inter,sans-serif">'+v+'</text>';
+  }
+  var yt=yS(target).toFixed(1);
+  g+='<line x1="'+HV_P.l+'" y1="'+yt+'" x2="'+(HV_W-HV_P.r)+'" y2="'+yt+'" stroke="rgba(255,159,10,.75)" stroke-width="2" stroke-dasharray="6,4"/>';
+  g+='<text x="'+(HV_W-HV_P.r+4)+'" y="'+(parseFloat(yt)+3.5).toFixed(1)+'" font-size="8.5" fill="rgba(200,120,0,.95)" font-weight="700" font-family="Inter,sans-serif">'+target+'</text>';
+  var path='';
+  pts.forEach(function(d,i){ path+=(path?'L':'M')+xS(i).toFixed(1)+','+yS(d.pts).toFixed(1); });
+  g+='<path d="'+path+'" fill="none" stroke="rgba(80,100,86,.5)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>';
+  [['2026-04-01','Apr'],['2026-05-01','Mai'],['2026-06-01','Jun'],['2026-07-01','Jul'],['2026-07-25','25.07.']].forEach(function(L){
+    var t=ms(L[0]); if(t<t0||t>t1) return;
+    var x=(HV_P.l+(t-t0)/tSpan*HV_cW).toFixed(1);
+    g+='<line x1="'+x+'" y1="'+HV_P.t+'" x2="'+x+'" y2="'+(HV_P.t+HV_cH)+'" stroke="rgba(27,46,32,.07)" stroke-dasharray="2,4"/>';
+    g+='<text x="'+x+'" y="'+(HV_P.t+HV_cH+14).toFixed(1)+'" text-anchor="middle" font-size="9.5" fill="rgba(50,72,56,.9)" font-weight="500" font-family="Inter,sans-serif">'+L[1]+'</text>';
+  });
+  pts.forEach(function(d,i){
+    var x=xS(i).toFixed(1),y=yS(d.pts).toFixed(1);
+    g+='<circle class="dots" data-i="'+i+'" cx="'+x+'" cy="'+y+'" r="4.5" fill="'+d.col+'" stroke="#fff" stroke-width="2" style="cursor:pointer"/>';
+    if(i===0||i===n-1) g+='<text x="'+x+'" y="'+(parseFloat(y)-9).toFixed(1)+'" text-anchor="middle" font-size="9" fill="'+d.col+'" font-weight="700" font-family="Inter,sans-serif">'+d.pts+'</text>';
+  });
+  svg.innerHTML=g;
+  var tip=document.getElementById('tip-stbf');
+  if(tip){
+    var show=function(ex,ey,d){
+      tip.innerHTML='<div class="tit" style="color:'+d.col+'">'+(d.course||'Runde')+'</div>'+
+        '<div class="tr"><span>Datum</span><b>'+(d.date?d.date.split('-').reverse().join('.'):'')+'</b></div>'+
+        '<div class="tr"><span>Wertung</span><b>'+(d.holes===18?((d.nines===1?'9 (nur eine Neun)':'18 L\u00f6cher')):'9 L\u00f6cher')+'</b></div>'+
+        '<div class="tr"><span>Stableford</span><b>'+d.pts+'</b></div>';
+      tip.classList.add('on');
+      var wr=svg.parentElement.getBoundingClientRect();
+      var lf=ex-wr.left+12; if(lf+195>wr.width) lf=ex-wr.left-200;
+      tip.style.left=Math.max(0,lf)+'px'; tip.style.top=Math.max(0,ey-wr.top-70)+'px';
+    };
+    svg.querySelectorAll('.dots').forEach(function(el){
+      var d=pts[parseInt(el.dataset.i)];
+      el.addEventListener('mouseenter',function(e){ if(d)show(e.clientX,e.clientY,d);});
+      el.addEventListener('mouseleave',function(){tip.classList.remove('on');});
+      el.addEventListener('click',function(e){ if(d)show(e.clientX,e.clientY,d);});
+      el.addEventListener('touchstart',function(e){e.preventDefault();if(!d)return;var t=e.touches[0];show(t.clientX,t.clientY,d);setTimeout(function(){tip.classList.remove('on');},2500);},{passive:false});
+    });
+  }
+}
 var HV_tblPage=0;
 function HV_renderTable(){
   var sortedHV=HV_D.slice().sort(function(a,b){
@@ -620,6 +717,7 @@ document.getElementById('seg').addEventListener('click',function(e){
   btn.classList.add('on');
   HV_renderChart();
   HV_renderWhsChart();
+  HV_renderStbfChart();
 });
 function HV_renderRangeButtons(){
  var opts=[['all','Alle'],['30','30 Tage'],['90','90 Tage'],['180','6 Monate'],['365','1 Jahr']];
@@ -633,7 +731,16 @@ document.getElementById('seg-hirange').addEventListener('click',function(e){
   btn.classList.add('on');
   HV_renderChart();
   HV_renderWhsChart();
+  HV_renderStbfChart();
 });
+var _segStbfEl=document.getElementById('seg-stbf');
+if(_segStbfEl){ _segStbfEl.addEventListener('click',function(e){
+  var btn=e.target.closest('.sb'); if(!btn)return;
+  RT_stbfMode=btn.dataset.v;
+  document.querySelectorAll('#seg-stbf .sb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  HV_renderStbfChart();
+}); }
 
 function barChart(svgId, series, colors, labels, dataArr, tipId, seriesLabels){
   dataArr = dataArr || SC;
@@ -8666,7 +8773,7 @@ function RT_mountShell(panelId,title,text,icon){
 }
 registerTab({id:'runde',label:'Runde',icon:'<img src="'+RT_IC_RUNDE+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_render(); }});
 registerTab({id:'detail',label:'Schläge',icon:'<img src="'+RT_IC_DETAIL+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var detailIcon=document.getElementById('detail-usericon'); if(detailIcon) detailIcon.innerHTML=RT_userIcon(); RD_renderSegButtons(); GD_renderRangeButtons(); GD_renderKPIs(); renderRounds('all'); renderPenChart(); renderFW(); renderSandChart(); renderPuttsChart(); renderMetrics(); renderPerf(); }});
-registerTab({id:'hi',label:'Handicap',icon:'<img src="'+RT_IC_HI+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var hiSub=document.getElementById('hi-subtitle'); if(hiSub) hiSub.textContent='HI-Verlauf '+RT_myDisplayName(); var hiChartSub=document.getElementById('hi-chart-sub'); if(hiChartSub) hiChartSub.textContent='Ungedeckelt · 9L x2 · HI '+rtDe(RT_ownHandicap())+' = eigenes Handicap'; var hiIcon=document.getElementById('hi-usericon'); if(hiIcon) hiIcon.innerHTML=RT_userIcon(); HV_renderWhsIndex(); HV_renderLegend(); HV_renderSegButtons(); HV_renderRangeButtons(); HV_renderKPIs(); HV_renderChart(); HV_renderWhsChart(); HV_renderTable(); }});
+registerTab({id:'hi',label:'Handicap',icon:'<img src="'+RT_IC_HI+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var hiSub=document.getElementById('hi-subtitle'); if(hiSub) hiSub.textContent='HI-Verlauf '+RT_myDisplayName(); var hiChartSub=document.getElementById('hi-chart-sub'); if(hiChartSub) hiChartSub.textContent='Ungedeckelt · 9L x2 · HI '+rtDe(RT_ownHandicap())+' = eigenes Handicap'; var hiIcon=document.getElementById('hi-usericon'); if(hiIcon) hiIcon.innerHTML=RT_userIcon(); HV_renderWhsIndex(); HV_renderLegend(); HV_renderSegButtons(); HV_renderRangeButtons(); HV_renderKPIs(); HV_renderChart(); HV_renderWhsChart(); HV_renderStbfToggle(); HV_renderStbfChart(); HV_renderTable(); }});
 registerTab({id:'lernen',label:'Lernen',icon:'<img src="'+RT_IC_LERNEN+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_LRN_mount('tab-lernen'); }});
 /* ============================================================================
    Schwunganalyse (RT_SW) — KI-Videoanalyse des Golfschwungs (on-device)

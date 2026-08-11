@@ -355,28 +355,48 @@ function RT_whsSeries(){
    Index der letzten 365 Tage). PCC (Platz-/Wetter-Korrektur) ist im Einzelspieler-Betrieb nicht
    ermittelbar und daher 0. */
 function RT_whsIndex(){
- var diffs=RT_whsAllDiffs();
- if(diffs.length<3) return null;
- var raw=RT_whsCalc(diffs.slice(0,20).map(function(d){return d.diff;}));
+ var desc=RT_whsAllDiffs();
+ if(desc.length<3) return null;
+ var asc=desc.slice().reverse();
+ /* Uncapped Index eines Fensters (letzte 20 bis Position i) inkl. aktiver Exceptional-Score-
+    Reduction: WHS-Rule 5.9 senkt bei aussergewoehnlich guten Runden den Index (-1,0 bei 7,0-9,9
+    unter dem Index zum Spielzeitpunkt, -2,0 ab 10,0) fuer die naechsten bis zu 20 Wertungen. */
+ function asOf(i){
+  var st=Math.max(0,i-19);
+  var win=asc.slice(st,i+1);
+  var base=RT_whsCalc(win.map(function(d){return d.diff;}));
+  if(base===null) return null;
+  var esr=0; win.forEach(function(d){ if(d._esr) esr+=d._esr; });
+  return base-esr;
+ }
+ asc.forEach(function(d,i){
+  d._esr=0;
+  if(i>=1){
+   var ref=asOf(i-1);
+   if(ref!==null){
+    var delta=ref-d.diff;
+    if(delta>=10.0) d._esr=2.0;
+    else if(delta>=7.0) d._esr=1.0;
+   }
+  }
+ });
+ var n=asc.length;
+ var raw=asOf(n-1);
  if(raw===null) return null;
  var cut=(typeof RT_rangeCutoff==='function')?RT_rangeCutoff('365'):null;
  var lows=[];
- diffs.forEach(function(anchor){
-  if(!cut || anchor.date>=cut){
-   var akey=anchor.date+'T'+(anchor.time||'23:59');
-   var upto=diffs.filter(function(d){ return (d.date+'T'+(d.time||'00:00'))<=akey; });
-   var v=RT_whsCalc(upto.slice(0,20).map(function(d){return d.diff;}));
-   if(v!==null) lows.push(v);
-  }
- });
+ asc.forEach(function(d,i){ if(!cut || d.date>=cut){ var v=asOf(i); if(v!==null) lows.push(v); } });
  var lowHi=lows.length?Math.min.apply(null,lows):raw;
  var fin=raw, capped=false;
  if(raw-lowHi>3.0){ fin=lowHi+3.0+(raw-lowHi-3.0)*0.5; capped=true; }
  if(fin-lowHi>5.0){ fin=lowHi+5.0; capped=true; }
  fin=Math.round(fin*10)/10; if(fin>54) fin=54; if(fin<-10) fin=-10;
- var cnt=Math.min(diffs.length,20); var rule=RT_whsRule(cnt);
+ var winStart=Math.max(0,n-20); var esrTotal=0, esrCount=0;
+ asc.slice(winStart).forEach(function(d){ if(d._esr){ esrTotal+=d._esr; esrCount++; } });
+ var cnt=Math.min(n,20); var rule=RT_whsRule(cnt);
  return {value:fin, raw:Math.round(raw*10)/10, lowHi:Math.round(lowHi*10)/10, capped:capped,
-  count:cnt, use:rule?Math.min(rule.use,cnt):0, total:diffs.length};
+  count:cnt, use:rule?Math.min(rule.use,cnt):0, total:n,
+  esr:Math.round(esrTotal*10)/10, esrCount:esrCount};
 }
 /* Repraesentativer Wert des bisherigen (groeberen) theoretischen 9L×2-Verlaufs: dieselbe
    Bestenauswahl wie beim WHS-Index (beste N der 20 juengsten), aber auf die PRO-NEUN hochge-
@@ -416,7 +436,7 @@ function HV_renderWhsIndex(){
   '</div>';
  if(w){
   var stored=RT_ownHandicap(); var same=Math.abs(stored-w.value)<0.05;
-  h+='<div style="font-size:11px;color:rgba(93,112,96,.95);margin-top:10px;line-height:1.45;">Der <b>WHS-Index</b> ist die amtliche Rechnung: beste '+w.use+' von '+w.count+' j\u00fcngsten Runden (je Runde ein Differenzial)'+(w.capped?(', gedeckelt \u00fcber Low HI '+rtDe(w.lowHi)):'')+'. Der <b>theoretische</b> Wert stammt aus dem gr\u00f6beren 9L\u00d72-Verlauf im Diagramm.</div>';
+  h+='<div style="font-size:11px;color:rgba(93,112,96,.95);margin-top:10px;line-height:1.45;">Der <b>WHS-Index</b> ist die amtliche Rechnung: beste '+w.use+' von '+w.count+' j\u00fcngsten Runden (je Runde ein Differenzial)'+(w.esr>0?(', inkl. Sonderreduzierung −'+rtDe(w.esr)+' für außergewöhnliche Runden'):'')+(w.capped?(', gedeckelt \u00fcber Low HI '+rtDe(w.lowHi)):'')+'. Der <b>theoretische</b> Wert stammt aus dem gr\u00f6beren 9L\u00d72-Verlauf im Diagramm.</div>';
   if(same){
    h+='<div style="font-size:11px;color:#187040;font-weight:700;margin-top:8px;">WHS-Index entspricht deinem eingetragenen Handicap.</div>';
   }else{

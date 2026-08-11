@@ -1271,6 +1271,18 @@ async function sbPull(firstEverLogin){
   r.data.forEach(function(x){ if(x.data&&x.data.id) owners[x.data.id]=x.user_id; });
   RT_roundOwners=owners;
   await RT_loadMyPlayerNames();
+  /* Bulletproof-Kopie fuer gemeinsames Scoring: Jede BEENDETE, mit mir GETEILTE Runde (der
+     DB-Server gibt sie ueber player_links frei, also bin ich verifizierter Mitspieler) einmalig
+     als eigene, eigenstaendige Zeile sichern. So liegt jede fertige gemeinsame Runde dauerhaft
+     auch bei MIR vor - selbst wenn ich beim Beenden offline/abwesend war - und ab dem Moment,
+     wo ich eine eigene Kopie habe, sehe ich nur noch meine Zeile (rounds_select_shared greift
+     nicht mehr): spaetere Aenderungen des anderen an SEINER Kopie erreichen mich nicht, und
+     Loeschen bleibt beidseitig unabhaengig. Nur DONE-Runden - laufende bleiben live geteilt. */
+  cloud.forEach(function(x){
+   if(x && x.done && owners[x.id] && owners[x.id]!==sbUser.id){
+    try{ if(typeof RT_myPlayerIndex!=='function' || RT_myPlayerIndex(x)>=0) sbPushRound(x); }catch(e){}
+   }
+  });
   var ids={}; cloud.forEach(function(x){ids[x.id]=1;});
   /* KRITISCH: hier NICHT blind jede lokal gecachte, dem eigenen Cloud-Stand unbekannte Runde
      als "meine, noch nicht synchronisierte" Runde behandeln und hochladen - genau das hat zu

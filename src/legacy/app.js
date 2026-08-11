@@ -274,6 +274,81 @@ document.getElementById('seg-gdrange').addEventListener('click',function(e){
   btn.classList.add('on');
   renderPenChart(); renderSandChart(); renderPuttsChart();
 });
+var RT_WHS_TABLE=[
+ {min:3,max:3,use:1,adj:-2.0},
+ {min:4,max:4,use:1,adj:-1.0},
+ {min:5,max:5,use:1,adj:0},
+ {min:6,max:6,use:2,adj:-1.0},
+ {min:7,max:8,use:2,adj:0},
+ {min:9,max:11,use:3,adj:0},
+ {min:12,max:14,use:4,adj:0},
+ {min:15,max:16,use:5,adj:0},
+ {min:17,max:18,use:6,adj:0},
+ {min:19,max:19,use:7,adj:0},
+ {min:20,max:9999,use:8,adj:0}
+];
+/* F1: Automatisch fortgeschriebener Handicap-Index nach WHS-Schema. Grundlage sind die pro
+   gewerteter Neun berechneten 18-Loch-aequivalenten Score-Differenziale (hvEntry.hi, siehe
+   RT_convertHalf). Aus den bis zu 20 JUENGSTEN Differenzialen werden die besten N gemittelt
+   (WHS-Tabelle: 20->8, 19->7, 17-18->6 ... 3->1 mit Anpassung). Jede Neun zaehlt als ein
+   eigenstaendiges Differenzial. Weniger als 3 -> noch kein Index. */
+function RT_whsIndex(){
+ var all=(HV_D||[]).filter(function(d){return d&&d.hi!==null&&d.hi!==undefined&&!isNaN(d.hi);});
+ if(all.length<3) return null;
+ var sorted=all.slice().sort(function(a,b){
+  var ka=(a.date||'')+'T'+(a.time||'00:00'), kb=(b.date||'')+'T'+(b.time||'00:00');
+  return ka<kb?1:(ka>kb?-1:0);
+ });
+ var win=sorted.slice(0,20);
+ var cnt=win.length;
+ var rule=null;
+ for(var i=0;i<RT_WHS_TABLE.length;i++){ if(cnt>=RT_WHS_TABLE[i].min&&cnt<=RT_WHS_TABLE[i].max){ rule=RT_WHS_TABLE[i]; break; } }
+ if(!rule) return null;
+ var diffs=win.map(function(d){return d.hi;}).sort(function(a,b){return a-b;});
+ var use=Math.min(rule.use,diffs.length);
+ var sum=0; for(var j=0;j<use;j++) sum+=diffs[j];
+ var idx=Math.round((sum/use+rule.adj)*10)/10;
+ if(idx>54) idx=54; if(idx<-10) idx=-10;
+ return {value:idx, count:cnt, use:use, adj:rule.adj, total:all.length};
+}
+function HV_renderWhsIndex(){
+ var el=document.getElementById('whs-index'); if(!el) return;
+ var w=RT_whsIndex();
+ if(!w){
+  el.innerHTML='<div style="font-size:13px;font-weight:700;color:#143522;margin-bottom:2px;">Berechneter Handicap-Index</div>'+
+   '<div style="font-size:11px;color:rgba(93,112,96,.95);">Noch nicht genug gewertete Runden \u2013 ab 3 gewerteten Neunern wird hier ein Index nach WHS-Schema berechnet.</div>';
+  return;
+ }
+ var col=HV_hiCol(w.value);
+ var stored=RT_ownHandicap();
+ var same=Math.abs(stored-w.value)<0.05;
+ var sub='Beste '+w.use+' von '+w.count+' j\u00fcngsten Differenzialen (WHS-Schema, je Neun ein 18-Loch-Wert)'+(w.adj?(' \u00b7 Anpassung '+rtDe(w.adj)):'');
+ var h='<div style="display:flex;align-items:center;gap:14px;">'+
+  '<div style="flex:none;min-width:82px;text-align:center;background:'+col.bg+';border-radius:12px;padding:10px 6px;">'+
+   '<div style="font-size:30px;font-weight:800;line-height:1;color:'+col.tc+';">'+rtDe(w.value)+'</div>'+
+   '<div style="font-size:8.5px;color:rgba(84,104,88,.9);margin-top:3px;letter-spacing:.3px;">WHS-INDEX</div>'+
+  '</div>'+
+  '<div style="flex:1;min-width:0;">'+
+   '<div style="font-size:13px;font-weight:700;color:#143522;">Berechneter Handicap-Index</div>'+
+   '<div style="font-size:11px;color:rgba(93,112,96,.95);margin-top:3px;line-height:1.4;">'+sub+'</div>';
+ if(same){
+  h+='<div style="font-size:11px;color:#187040;font-weight:700;margin-top:6px;">Entspricht deinem eingetragenen Handicap.</div>';
+ }else{
+  h+='<div style="font-size:11px;color:rgba(93,112,96,.95);margin-top:6px;">Dein eingetragenes Handicap: '+rtDe(stored)+'</div>'+
+   '<button class="rt-btn2" style="width:auto;margin-top:8px;padding:9px 14px;font-size:12px;" onclick="RT_whsAdopt()">Als mein Handicap \u00fcbernehmen</button>';
+ }
+ h+='</div></div>';
+ el.innerHTML=h;
+}
+function RT_whsAdopt(){
+ var w=RT_whsIndex(); if(!w) return;
+ var val=w.value;
+ rtSet(RT_OWNHI_KEY,val);
+ if(sb&&sbUser){ try{ sb.auth.updateUser({data:{handicap:val}}).then(function(r){ if(r&&r.data&&r.data.user) sbUser=r.data.user; }); }catch(e){} }
+ try{ HV_renderWhsIndex(); }catch(e){}
+ try{ HV_renderChart(); }catch(e){}
+ try{ RT_render(); }catch(e){}
+}
 function HV_renderKPIs(){
   var hi=HV_D.map(function(d){return d.hi;});
   var best=Math.min.apply(null,hi).toFixed(1);
@@ -8414,7 +8489,7 @@ function RT_mountShell(panelId,title,text,icon){
 }
 registerTab({id:'runde',label:'Runde',icon:'<img src="'+RT_IC_RUNDE+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_render(); }});
 registerTab({id:'detail',label:'Schläge',icon:'<img src="'+RT_IC_DETAIL+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var detailIcon=document.getElementById('detail-usericon'); if(detailIcon) detailIcon.innerHTML=RT_userIcon(); RD_renderSegButtons(); GD_renderRangeButtons(); GD_renderKPIs(); renderRounds('all'); renderPenChart(); renderFW(); renderSandChart(); renderPuttsChart(); renderMetrics(); renderPerf(); }});
-registerTab({id:'hi',label:'Handicap',icon:'<img src="'+RT_IC_HI+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var hiSub=document.getElementById('hi-subtitle'); if(hiSub) hiSub.textContent='HI-Verlauf '+RT_myDisplayName(); var hiChartSub=document.getElementById('hi-chart-sub'); if(hiChartSub) hiChartSub.textContent='Ungedeckelt · 9L x2 · HI '+rtDe(RT_ownHandicap())+' = eigenes Handicap'; var hiIcon=document.getElementById('hi-usericon'); if(hiIcon) hiIcon.innerHTML=RT_userIcon(); HV_renderLegend(); HV_renderSegButtons(); HV_renderRangeButtons(); HV_renderKPIs(); HV_renderChart(); HV_renderTable(); }});
+registerTab({id:'hi',label:'Handicap',icon:'<img src="'+RT_IC_HI+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_hydrateHistoricalData(); var hiSub=document.getElementById('hi-subtitle'); if(hiSub) hiSub.textContent='HI-Verlauf '+RT_myDisplayName(); var hiChartSub=document.getElementById('hi-chart-sub'); if(hiChartSub) hiChartSub.textContent='Ungedeckelt · 9L x2 · HI '+rtDe(RT_ownHandicap())+' = eigenes Handicap'; var hiIcon=document.getElementById('hi-usericon'); if(hiIcon) hiIcon.innerHTML=RT_userIcon(); HV_renderWhsIndex(); HV_renderLegend(); HV_renderSegButtons(); HV_renderRangeButtons(); HV_renderKPIs(); HV_renderChart(); HV_renderTable(); }});
 registerTab({id:'lernen',label:'Lernen',icon:'<img src="'+RT_IC_LERNEN+'" style="width:26px;height:26px;display:block;">',mount:function(){ RT_LRN_mount('tab-lernen'); }});
 /* ============================================================================
    Schwunganalyse (RT_SW) — KI-Videoanalyse des Golfschwungs (on-device)

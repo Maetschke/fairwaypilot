@@ -3446,6 +3446,7 @@ function RT_applySavedTee(p,courseKey){
     z.B. 18 Loch spielt). p.teeHalf bleibt daher auf dem Wert stehen, den der Aufrufer vorher
     gesetzt hat (ueblicherweise null = folgt RT_su.holes der aktuellen Runde). */
  if(ti>=0){ p.tee=ti; }
+ if(saved.sex==='w'||saved.sex==='m'){ p.sex=saved.sex; }
 }
 function RT_persistPlayer(i){
  if(!RT_su||!RT_su.players||!RT_su.players[i]) return;
@@ -3461,7 +3462,7 @@ function RT_persistPlayer(i){
  var teeName=null;
  var key=RT_su.course; var c=key&&RT_COURSES[key];
  if(c&&p.tee>=0&&c.tees[p.tee]) teeName=c.tees[p.tee].name;
- var entry={name:name, hi:isNaN(hi)?54:hi, teeName:teeName, teeHalf:p.teeHalf||null};
+ var entry={name:name, hi:isNaN(hi)?54:hi, sex:(p.sex==='w')?'w':'m', teeName:teeName, teeHalf:p.teeHalf||null};
  if(idx>=0) list[idx]=entry; else list.push(entry);
  RT_setSavedPlayers(list);
 }
@@ -3476,7 +3477,7 @@ function RT_playerMove(i,dir){
     aktiv per Klick aus, wer bei dieser Runde dabei ist).
     Segment-Standard: 18 Loch vor Front vor Back (Georghausen hat einen echten Back-9, also 'A'). */
  var defHoles='A';
- var players=[{name:RT_myDisplayName(), hi:RT_ownHandicap(), tee:RT_hardestTeeIdx('georg',defHoles), teeHalf:null, cr:null, sl:null}];
+ var players=[{name:RT_myDisplayName(), hi:RT_ownHandicap(), sex:'m', tee:RT_hardestTeeIdx('georg',defHoles,'m'), teeHalf:(defHoles==='A')?null:defHoles, cr:null, sl:null}];
  RT_applySavedTee(players[0],'georg');
  return {course:'georg', holes:defHoles, date:RT_today(), time:RT_nowTime(),
   players:players,
@@ -5758,14 +5759,24 @@ if(cd){
      '<div style="flex:2;"><span class="rt-lbl">Name</span><input class="rt-inp" value="'+rtEsc(p.name)+'" oninput="RT_su.players['+i+'].name=this.value;RT_updStart()" onchange="RT_persistPlayer('+i+')"></div>'+
      '<div><span class="rt-lbl">HI</span><input class="rt-inp" type="number" step="0.1" value="'+p.hi+'" oninput="RT_suNum('+i+',\'hi\',this.value)" onchange="RT_persistPlayer('+i+')"></div>'+
     '</div>'+
+    '<div style="margin-bottom:8px;"><span class="rt-lbl">Geschlecht</span><div style="display:inline-flex;margin-left:8px;border:1.5px solid #DCE7D4;border-radius:10px;overflow:hidden;vertical-align:middle;">'+
+     '<button type="button" onclick="RT_suSex('+i+',\'m\')" style="border:none;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;'+((p.sex==='w')?'background:#F1F6EC;color:#5b6b5e;':'background:#143522;color:#fff;')+'">Herren</button>'+
+     '<button type="button" onclick="RT_suSex('+i+',\'w\')" style="border:none;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;'+((p.sex==='w')?'background:#143522;color:#fff;':'background:#F1F6EC;color:#5b6b5e;')+'">Damen</button>'+
+    '</div></div>'+
     '<div style="margin-bottom:8px;"><span class="rt-lbl">Abschlag</span><select class="rt-inp" onchange="RT_suTee('+i+',this.value)">';
-   var teeHasTwoNinesP = c.nines && c.nines.B && c.nines.B.lbl !== '–' && RT_su.holes!=='A';
+   var pSex=(p.sex==='w')?'w':'m';
+   var hasBackP = c.nines && c.nines.B && c.nines.B.lbl !== '–';
+   var segP = RT_su.holes;
+   var anyMatchP = cd.tees.some(function(t){ var d=(t.name||'').toLowerCase().indexOf('damen')>=0; return pSex==='w'?d:!d; });
    RT_teeOrderResolved(c).forEach(function(ti){
     var t=cd.tees[ti];
-    var curSel=(!p.teeHalf)?'':p.teeHalf;
-    h+='<option value="'+ti+'"'+(p.tee===ti&&!p.teeHalf?' selected':'')+'>'+rtEsc(t.name)+'</option>';
-    if(teeHasTwoNinesP){
+    var isDamen=(t.name||'').toLowerCase().indexOf('damen')>=0;
+    if(anyMatchP){ if(pSex==='w'){ if(!isDamen) return; } else { if(isDamen) return; } }
+    if(segP==='A' || !hasBackP){
+     h+='<option value="'+ti+'"'+(p.tee===ti&&!p.teeHalf?' selected':'')+'>'+rtEsc(t.name)+'</option>';
+    }else if(segP==='F'){
      h+='<option value="'+ti+':F"'+(p.tee===ti&&p.teeHalf==='F'?' selected':'')+'>'+rtEsc(t.name)+' \u2013 Front</option>';
+    }else if(segP==='B'){
      h+='<option value="'+ti+':B"'+(p.tee===ti&&p.teeHalf==='B'?' selected':'')+'>'+rtEsc(t.name)+' \u2013 Back</option>';
     }
    });
@@ -5819,9 +5830,17 @@ if(cd){
    "schwerste Variante" wird beim Hinzufuegen eines Spielers als Standard vorausgewaehlt statt
    einfach immer der erste Abschlag in der Liste. Faellt auf Index 0 zurueck, wenn keine CR-Werte
    fuer das Segment vorliegen (z.B. bei manuell angelegten Plaetzen ohne vollstaendige Daten). */
-function RT_hardestTeeIdx(courseKey, side){
+function RT_hardestTeeIdx(courseKey, side, sex){
  var cc=courseKey&&RT_COURSES[courseKey];
  if(!cc||!cc.tees||!cc.tees.length) return 0;
+ if(sex==='w'||sex==='m'){
+  var poolG=[];
+  cc.tees.forEach(function(t,i){ var d=t.name.toLowerCase().indexOf('damen')>=0; if(sex==='w'?d:!d) poolG.push(i); });
+  if(!poolG.length){ poolG=cc.tees.map(function(t,i){ return i; }); }
+  var bgIdx=-1, bgCr=-Infinity;
+  poolG.forEach(function(i){ var v=cc.tees[i].cr&&cc.tees[i].cr[side]!=null?parseFloat(cc.tees[i].cr[side]):null; if(v!=null&&!isNaN(v)&&v>bgCr){ bgCr=v; bgIdx=i; } });
+  return bgIdx>=0?bgIdx:poolG[0];
+ }
  /* CR allein ist kein verlaesslicher "Schwierigkeits"-Vergleich ueber Geschlechter-Abschlaege
     hinweg - ein Damen-Abschlag kann bei kuerzerer Laenge einen HOEHEREN CR haben als der
     Herren-Abschlag (z.B. Georghausen: Rot L/Damen 73,4 vs. Gelb/Herren 71,1), waere hier aber
@@ -5857,11 +5876,18 @@ function RT_suCourse(k){
   var hasBack=cc&&cc.nines&&cc.nines.B&&cc.nines.B.lbl!=='\u2013';
   RT_su.holes=hasBack?'A':'F';
  }
- if(k!=='other'){ RT_su.players.forEach(function(p){ p.tee=RT_hardestTeeIdx(k,RT_su.holes); p.teeHalf=null; RT_applySavedTee(p,k); }); }
+ if(k!=='other'){ RT_su.players.forEach(function(p){ var side=(RT_su.holes==='A')?'A':RT_su.holes; p.tee=RT_hardestTeeIdx(k,side,p.sex||'m'); p.teeHalf=(RT_su.holes==='A')?null:RT_su.holes; RT_applySavedTee(p,k); }); }
  if(k==='other'){ RT_su.custName=''; RT_su.custPar=''; RT_su.custSi=''; RT_su.siEdit={}; RT_su.parEdit={}; RT_state.resMsg=''; }
  RT_render();
 }
-function RT_suHoles(v){RT_su.holes=v;RT_render();}
+function RT_suHoles(v){
+ RT_su.holes=v;
+ if(RT_su.course&&RT_su.course!=='other'){
+  var side=(v==='A')?'A':v;
+  RT_su.players.forEach(function(p){ p.tee=RT_hardestTeeIdx(RT_su.course,side,p.sex||'m'); p.teeHalf=(v==='A')?null:v; });
+ }
+ RT_render();
+}
 /* Prueft, ob a eine gueltige Permutation von 1..n ist (jeder Wert von 1 bis n genau einmal) -
    nur dann ist es ein plausibler Stroke-Index. Verhindert die Art von Datenkorruption, die
    z.B. bei Kuerten/Kaanapali passiert ist: 18er-Skala-Werte wurden ungeprueft als 9-Loch-SI
@@ -6001,17 +6027,33 @@ function RT_suTee(i,v){
  p.tee=parseInt(parts[0],10);
  p.teeHalf=parts[1]||null;
  p.cr=null;p.sl=null;
+ var cc=RT_su.course&&RT_COURSES[RT_su.course];
+ if(cc&&cc.tees&&cc.tees[p.tee]){ p.sex=(cc.tees[p.tee].name.toLowerCase().indexOf('damen')>=0)?'w':'m'; }
  RT_persistPlayer(i);
  RT_render();
 }
-function RT_suAdd(){RT_su.players.push({name:'',hi:54,tee:RT_hardestTeeIdx(RT_su.course,RT_su.holes),teeHalf:null,cr:null,sl:null});RT_render();}
+function RT_suSex(i,s){
+ var p=RT_su.players[i]; if(!p) return;
+ p.sex=(s==='w')?'w':'m';
+ if(RT_su.course&&RT_su.course!=='other'){
+  var side=(RT_su.holes==='A')?'A':RT_su.holes;
+  p.tee=RT_hardestTeeIdx(RT_su.course,side,p.sex);
+  p.teeHalf=(RT_su.holes==='A')?null:RT_su.holes;
+  p.cr=null;p.sl=null;
+ }
+ RT_persistPlayer(i);
+ RT_render();
+}
+function RT_suAdd(){var side=(RT_su.holes==='A')?'A':RT_su.holes;RT_su.players.push({name:'',hi:54,sex:'m',tee:RT_hardestTeeIdx(RT_su.course,side,'m'),teeHalf:(RT_su.holes==='A')?null:RT_su.holes,cr:null,sl:null});RT_render();}
 /* Fuegt einen bereits bekannten/gespeicherten Mitspieler (Name, HI, zuletzt genutzter
    Abschlag) direkt zur aktuellen Runde hinzu, statt eine leere Spielerkarte zu erzeugen -
    siehe die Schnellauswahl-Chips ueber "+ Neuer Spieler". */
 function RT_suAddSaved(name){
  var sp=RT_getSavedPlayers().find(function(x){ return x.name===name; });
  if(!sp) return;
- var p={name:sp.name, hi:(sp.hi!==undefined&&sp.hi!==null&&!isNaN(sp.hi))?sp.hi:54, tee:RT_hardestTeeIdx(RT_su.course,RT_su.holes), teeHalf:null, cr:null, sl:null};
+ var sx=(sp.sex==='w')?'w':'m';
+ var side=(RT_su.holes==='A')?'A':RT_su.holes;
+ var p={name:sp.name, hi:(sp.hi!==undefined&&sp.hi!==null&&!isNaN(sp.hi))?sp.hi:54, sex:sx, tee:RT_hardestTeeIdx(RT_su.course,side,sx), teeHalf:(RT_su.holes==='A')?null:RT_su.holes, cr:null, sl:null};
  RT_applySavedTee(p, RT_su.course);
  RT_su.players.push(p);
  RT_render();

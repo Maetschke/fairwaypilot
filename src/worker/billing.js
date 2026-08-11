@@ -131,6 +131,7 @@ async function handleCheckout(request, env) {
   const user = await getUser(request, env);
   if (!user) return j({ error: "Bitte anmelden." }, 401);
   let body = {}; try { body = await request.json(); } catch (e) {}
+  if (body.waiver !== true) return j({ error: "Bitte der Zustimmung zum sofortigen Leistungsbeginn zustimmen." }, 400);
   const plan = body.plan === "monthly" ? "monthly" : "yearly";
   const price = plan === "monthly" ? env.STRIPE_PRICE_MONTHLY : env.STRIPE_PRICE_YEARLY;
   if (!price) return j({ error: "Kein Preis konfiguriert." }, 500);
@@ -142,6 +143,7 @@ async function handleCheckout(request, env) {
     await upsertSub(env, { user_id: user.id, stripe_customer_id: customer, status: sub && sub.status || "none", plan: sub && sub.plan || null }).catch(() => {});
   }
   const origin = baseUrl(env, request);
+  const _waiverAt = new Date().toISOString();
   const session = await stripe(env, "checkout/sessions", "POST", {
     mode: "subscription",
     customer: customer,
@@ -150,7 +152,8 @@ async function handleCheckout(request, env) {
     cancel_url: origin + "/app?abo=abbruch",
     allow_promotion_codes: "true",
     line_items: { 0: { price: price, quantity: 1 } },
-    subscription_data: { trial_period_days: 7, metadata: { user_id: user.id } },
+    subscription_data: { trial_period_days: 7, metadata: { user_id: user.id, withdrawal_waiver: "yes", waiver_at: _waiverAt } },
+    metadata: { withdrawal_waiver: "yes", waiver_at: _waiverAt },
   });
   return j({ url: session.url });
 }

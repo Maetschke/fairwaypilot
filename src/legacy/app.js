@@ -9470,6 +9470,7 @@ function RT_showPaywall(feature){
    +'<button id="rt-pw-login" class="rt-btn" style="width:100%;">Zum Konto</button>';
  }else{
   h+='<div style="background:#f3f8f2;border-radius:12px;padding:11px 13px;font-size:12.5px;color:#2c3b30;margin-bottom:14px;">7 Tage kostenlos testen, danach <b>7,99&thinsp;€/Monat</b> oder <b>54,99&thinsp;€/Jahr</b> (−43&thinsp;%). Jederzeit kündbar.</div>'
+   +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:11px;color:#3a4a3e;margin-bottom:12px;line-height:1.45;cursor:pointer;"><input type="checkbox" id="rt-pw-consent" style="margin-top:1px;flex:none;width:16px;height:16px;accent-color:#1F8A4D;"><span>Ich stimme ausdrücklich zu, dass mit der Bereitstellung der Premium-Inhalte vor Ablauf der 14-tägigen Widerrufsfrist begonnen wird, und bestätige, dass ich dadurch mein Widerrufsrecht verliere (§&#8201;356 Abs.&#8201;5 BGB). Es gelten <a href="/agb" target="_blank" style="color:#1F8A4D;">AGB</a> &amp; <a href="/datenschutz" target="_blank" style="color:#1F8A4D;">Datenschutz</a>.</span></label>'
    +'<button id="rt-pw-year" class="rt-btn" style="width:100%;margin-bottom:8px;">7 Tage gratis testen · dann 54,99&thinsp;€/Jahr</button>'
    +'<button id="rt-pw-month" class="rt-btn2" style="width:100%;margin-bottom:12px;">Monatlich · 7,99&thinsp;€/Monat</button>'
    +'<div id="rt-pw-msg" style="font-size:12.5px;color:#b03a3a;min-height:16px;margin-bottom:6px;"></div>'
@@ -9487,10 +9488,12 @@ function RT_showPaywall(feature){
 async function RT_checkout(plan){
  var msg=document.getElementById('rt-pw-msg');
  if(!sbReady()||!sbUser){ RT_pwClose(); RT_go('user'); return; }
+ var _cb=document.getElementById('rt-pw-consent');
+ if(_cb && !_cb.checked){ if(msg)msg.textContent='Bitte bestätige die Zustimmung zum sofortigen Leistungsbeginn, um fortzufahren.'; return; }
  if(msg)msg.textContent='Weiterleitung zu Stripe …';
  try{
   var t=await RT_authToken(); if(!t)throw new Error('Keine aktive Sitzung.');
-  var r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({plan:plan})});
+  var r=await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({plan:plan, waiver:true})});
   var d=await r.json(); if(!r.ok||!d.url)throw new Error(d.error||('Fehler ('+r.status+')'));
   window.location.href=d.url;
  }catch(e){ if(msg)msg.textContent='Checkout fehlgeschlagen: '+(e.message||e); }

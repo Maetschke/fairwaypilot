@@ -4466,7 +4466,16 @@ function RT_gvAttach(){
  RT_gvStatus('Höhenmodell wird geladen…');
  RT_gvLoad();
 }
+function RT_gvApplyReliefRot(rotF){
+ if(!rotF) return;
+ var img=RT_GV.relief&&RT_GV.relief._image; if(!img) return;
+ img.style.transformOrigin='center center';
+ var base=(img.style.transform||'').replace(/\s*rotate\([-0-9.]+deg\)/,'');
+ img.style.transform=base+' rotate('+(-rotF)+'deg)';
+}
 function RT_gvDetach(){
+ if(RT_GV._rotHook&&RT_holeFullMapInst){ try{ RT_holeFullMapInst.off('move moveend zoomend viewreset',RT_GV._rotHook); }catch(e){} }
+ RT_GV._rotHook=null;
  if(RT_GV.relief&&RT_holeFullMapInst){ try{ RT_holeFullMapInst.removeLayer(RT_GV.relief); }catch(e){} }
  RT_GV.relief=null;
 }
@@ -4555,11 +4564,29 @@ function RT_gvRender(band,W,H){
    ctx.fillStyle='#ffd24a'; ctx.strokeStyle='#0b160f'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(pcol*cell,prow*cell,Math.max(4,cell),0,6.29); ctx.fill(); ctx.stroke();
   }
  }
- // Relief geo-platzieren (ganze Bahn)
- var dLat=(size/2)/111320, dLng=(size/2)/(111320*Math.cos(ct.lat*Math.PI/180));
+ // Relief geo-platzieren: Inhalt um +rotF vorrotieren, Bild um -rotF gegenrotieren -> das
+ // Quadrat erscheint screen-horizontal, der Inhalt bleibt deckungsgleich zum gedrehten Gelaende.
+ // Bei rotF=0 (Nordausrichtung) unveraendertes Verhalten.
+ var _rotF=(RT_holeFullMapInst&&RT_holeFullMapInst._rotF)||0;
+ var _rad=_rotF*Math.PI/180, _shrink=Math.abs(Math.cos(_rad))+Math.abs(Math.sin(_rad));
+ var _cvOut=cv, _vis=size;
+ if(_rotF){
+  var _sidePx=Math.min(cv.width,cv.height);
+  var _vpx=Math.max(8,Math.round(_sidePx/_shrink));
+  var _cv2=document.createElement('canvas'); _cv2.width=_vpx; _cv2.height=_vpx;
+  var _c2=_cv2.getContext('2d');
+  _c2.translate(_vpx/2,_vpx/2); _c2.rotate(_rad); _c2.drawImage(cv,-cv.width/2,-cv.height/2);
+  _cvOut=_cv2; _vis=size/_shrink;
+ }
+ var dLat=(_vis/2)/111320, dLng=(_vis/2)/(111320*Math.cos(ct.lat*Math.PI/180));
  var bounds=[[ct.lat-dLat,ct.lng-dLng],[ct.lat+dLat,ct.lng+dLng]];
  RT_gvDetach();
- try{ RT_GV.relief=L.imageOverlay(cv.toDataURL('image/png'),bounds,{opacity:0.5,pane:'gvrelief',interactive:false}); RT_GV.relief.addTo(RT_holeFullMapInst); }catch(e){}
+ try{
+  RT_GV.relief=L.imageOverlay(_cvOut.toDataURL('image/png'),bounds,{opacity:0.5,pane:'gvrelief',interactive:false});
+  RT_GV.relief.addTo(RT_holeFullMapInst);
+  RT_gvApplyReliefRot(_rotF);
+  if(_rotF&&RT_holeFullMapInst){ RT_GV._rotHook=function(){ RT_gvApplyReliefRot(_rotF); }; RT_holeFullMapInst.on('move moveend zoomend viewreset',RT_GV._rotHook); }
+ }catch(e){}
  RT_gvStatus('');
  var comp=(fallBrg==null)?'':(['N','NO','O','SO','S','SW','W','NW'][Math.round((fallBrg%360)/45)%8]);
  var putt=(pin&&RT_GV.ball)?RT_haversineM(pin.lat,pin.lng,RT_GV.ball.lat,RT_GV.ball.lng):null;

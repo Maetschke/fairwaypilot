@@ -1560,6 +1560,7 @@ function sbInit(){
    var firstEverLogin=!lastUid;
    try{ localStorage.setItem(RT_LAST_UID_KEY,sbUser.id); }catch(e){}
    sbPull(firstEverLogin); PL_load().then(RT_render); RT_loadConnections(); if(AG_joinCode) AG_claim(); AG_claimByEmail(); RT_LRN_cloudPull(); RT_loadEntitlement();
+   try{ var _dn=sbUser.user_metadata&&sbUser.user_metadata.display_name; if(!_dn||!(''+_dn).trim()){ AG_needName=true; setTimeout(function(){ try{ AG_namePrompt(); }catch(e){} },0); } }catch(e){}
   }
   else RT_render();
   AG_render();
@@ -1840,6 +1841,33 @@ async function AG_auth(mode){
   if(mode==='up'&&!r.data.session){ AG_msg='Registriert – bitte Bestätigungslink in der E-Mail öffnen, dann anmelden.'; AG_render(); return; }
  }catch(e){ AG_msg=AG_errText(e); AG_render(); return; }
  if(!AG_joinCode)AG_render();
+}
+var AG_needName=false, AG_nameMsg='';
+function AG_namePrompt(){
+ var el=document.getElementById('auth-gate'); if(!el) return;
+ el.style.display='block';
+ var dn=''; try{ dn=(sbUser&&sbUser.user_metadata&&sbUser.user_metadata.display_name)||''; }catch(e){}
+ var h='<div style="max-width:420px;margin:0 auto;">';
+ h+='<h1 style="margin-bottom:4px;">Fairway<em>Pilot</em></h1>';
+ h+='<div class="rtc"><div class="rt-ct">Wie sollen dich Mitspieler sehen?</div>'+
+  '<div class="rt-cs" style="margin-bottom:8px;">Dieser Anzeigename erscheint bei gemeinsam gespielten Runden. Bitte Vor- und Zunamen eingeben, damit du eindeutig erkennbar bist.</div>'+
+  '<span class="rt-lbl">Anzeigename</span><input class="rt-inp" id="ag-dispname" value="'+rtEsc(dn)+'" placeholder="z. B. Mark Mätschke" style="margin-bottom:10px;">'+
+  '<button class="rt-btn" style="width:100%;" onclick="AG_saveDisplayName()">Speichern</button>';
+ if(AG_nameMsg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(AG_nameMsg)+'</div>';
+ h+='</div></div>';
+ el.innerHTML=h;
+}
+async function AG_saveDisplayName(){
+ var el=document.getElementById('ag-dispname'); var nm=el?el.value.trim():'';
+ if(nm.length<2){ AG_nameMsg='Bitte einen Namen mit mindestens 2 Zeichen eingeben.'; AG_namePrompt(); return; }
+ AG_nameMsg='';
+ try{
+  var r=await sb.auth.updateUser({data:{display_name:nm}});
+  if(r.error)throw r.error;
+  AG_needName=false;
+  var g=document.getElementById('auth-gate'); if(g){ g.style.display='none'; g.innerHTML=''; }
+  RT_render();
+ }catch(e){ AG_nameMsg='Konnte nicht gespeichert werden: '+((typeof AG_errText==='function')?AG_errText(e):(e.message||e)); AG_namePrompt(); return; }
 }
 var AG_recoveryMsg='';
 /* Wird nach Klick auf den Passwort-Zuruecksetzen-Link in der E-Mail aufgerufen (Supabase feuert
@@ -5756,9 +5784,10 @@ if(cd){
    h+='<div class="rt-plc" style="position:relative;">'+
     (pArr.length>1?'<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px;">'+(i>0?'<button class="rt-btn3" style="width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_playerMove('+i+',-1)" title="Nach oben"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+(i<pArr.length-1?'<button class="rt-btn3" style="width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_playerMove('+i+',1)" title="Nach unten"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+'</div>':'')+
     '<div class="rt-row" style="margin-bottom:8px;">'+
-     '<div style="flex:2;"><span class="rt-lbl">Name</span><input class="rt-inp" value="'+rtEsc(p.name)+'" oninput="RT_su.players['+i+'].name=this.value;RT_updStart()" onchange="RT_persistPlayer('+i+')"></div>'+
+     '<div style="flex:2;"><span class="rt-lbl">Name</span><input class="rt-inp" value="'+rtEsc(p.name)+'" oninput="RT_su.players['+i+'].name=this.value;RT_updStart()" onchange="RT_persistPlayer('+i+');RT_suCheckDup('+i+')"></div>'+
      '<div><span class="rt-lbl">HI</span><input class="rt-inp" type="number" step="0.1" value="'+p.hi+'" oninput="RT_suNum('+i+',\'hi\',this.value)" onchange="RT_persistPlayer('+i+')"></div>'+
     '</div>'+
+    (p._dupHint?'<div style="margin:-2px 0 8px;font-size:12px;color:#8A6D3B;background:#FCF4E3;border:1px solid #E7D8A8;border-radius:8px;padding:6px 10px;">Ähnlich zu <b>'+rtEsc(p._dupHint)+'</b>. <a href="#" onclick="RT_suApplyDup('+i+');return false;" style="font-weight:700;color:#143522;">Übernehmen</a> &middot; <a href="#" onclick="RT_suDismissDup('+i+');return false;" style="color:#8A9C8E;">ignorieren</a></div>':'')+
     '<div style="margin-bottom:8px;"><span class="rt-lbl">Geschlecht</span><div style="display:inline-flex;margin-left:8px;border:1.5px solid #DCE7D4;border-radius:10px;overflow:hidden;vertical-align:middle;">'+
      '<button type="button" onclick="RT_suSex('+i+',\'m\')" style="border:none;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;'+((p.sex==='w')?'background:#F1F6EC;color:#5b6b5e;':'background:#143522;color:#fff;')+'">Herren</button>'+
      '<button type="button" onclick="RT_suSex('+i+',\'w\')" style="border:none;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;'+((p.sex==='w')?'background:#143522;color:#fff;':'background:#F1F6EC;color:#5b6b5e;')+'">Damen</button>'+
@@ -6044,6 +6073,34 @@ function RT_suSex(i,s){
  RT_persistPlayer(i);
  RT_render();
 }
+function RT_suCheckDup(i){
+ var p=RT_su.players[i]; if(!p){ RT_render(); return; }
+ p._dupHint=null;
+ var nm=(p.name||'').trim();
+ if(nm.length>=2){
+  var inRound={}; RT_su.players.forEach(function(q,j){ if(j!==i && q.name) inRound[RT_normName(q.name)]=1; });
+  var cands=RT_getSavedPlayers().map(function(sp){ return sp.name; });
+  var exact=false, best=null;
+  for(var k=0;k<cands.length;k++){
+   var cn=cands[k]; if(!cn) continue;
+   if(RT_normName(cn)===RT_normName(nm)){ exact=true; break; }
+   if(typeof RT_isSelfName==='function'&&RT_isSelfName(cn)) continue;
+   if(inRound[RT_normName(cn)]) continue;
+   if(RT_namesLikelySame(nm,cn)){ if(!best||cn.length>best.length) best=cn; }
+  }
+  if(!exact && best && RT_normName(best)!==RT_normName(nm)) p._dupHint=best;
+ }
+ RT_render();
+}
+function RT_suApplyDup(i){
+ var p=RT_su.players[i]; if(!p||!p._dupHint) return;
+ p.name=p._dupHint; p._dupHint=null;
+ var sp=RT_getSavedPlayers().find(function(x){ return x.name===p.name; });
+ if(sp){ if(sp.sex==='w'||sp.sex==='m') p.sex=sp.sex; if(sp.hi!==undefined&&sp.hi!==null&&!isNaN(sp.hi)) p.hi=sp.hi; }
+ RT_persistPlayer(i);
+ RT_render();
+}
+function RT_suDismissDup(i){ var p=RT_su.players[i]; if(p){ p._dupHint=null; } RT_render(); }
 function RT_suAdd(){var side=(RT_su.holes==='A')?'A':RT_su.holes;RT_su.players.push({name:'',hi:54,sex:'m',tee:RT_hardestTeeIdx(RT_su.course,side,'m'),teeHalf:(RT_su.holes==='A')?null:RT_su.holes,cr:null,sl:null});RT_render();}
 /* Fuegt einen bereits bekannten/gespeicherten Mitspieler (Name, HI, zuletzt genutzter
    Abschlag) direkt zur aktuellen Runde hinzu, statt eine leere Spielerkarte zu erzeugen -

@@ -287,42 +287,92 @@ var RT_WHS_TABLE=[
  {min:19,max:19,use:7,adj:0},
  {min:20,max:9999,use:8,adj:0}
 ];
-/* F1: Automatisch fortgeschriebener Handicap-Index nach WHS-Schema. Grundlage sind die pro
-   gewerteter Neun berechneten 18-Loch-aequivalenten Score-Differenziale (hvEntry.hi, siehe
-   RT_convertHalf). Aus den bis zu 20 JUENGSTEN Differenzialen werden die besten N gemittelt
-   (WHS-Tabelle: 20->8, 19->7, 17-18->6 ... 3->1 mit Anpassung). Jede Neun zaehlt als ein
-   eigenstaendiges Differenzial. Weniger als 3 -> noch kein Index. */
+function RT_whsRule(cnt){ for(var i=0;i<RT_WHS_TABLE.length;i++){ if(cnt>=RT_WHS_TABLE[i].min&&cnt<=RT_WHS_TABLE[i].max) return RT_WHS_TABLE[i]; } return null; }
+/* Mittelt aus einer Liste von Score-Differenzialen (auf max. 20 begrenzt) die besten N gemaess
+   WHS-Tabelle inkl. Anpassung. Weniger als 3 -> null. */
+function RT_whsCalc(arr){
+ if(!arr||arr.length<3) return null;
+ var cnt=Math.min(arr.length,20);
+ var rule=RT_whsRule(cnt); if(!rule) return null;
+ var s=arr.slice(0,20).sort(function(a,b){return a-b;});
+ var use=Math.min(rule.use,s.length), sum=0;
+ for(var j=0;j<use;j++) sum+=s[j];
+ return sum/use+rule.adj;
+}
+/* Ein Score-Differenzial pro RUNDE (nicht pro Neun): Eine 18-Loch-Runde ergibt EIN 18-Loch-
+   Differenzial aus dem tatsaechlichen Adjusted Gross (Netto-Doppelbogey-Deckel je Loch;
+   gestrichene/ungespielte Loecher = Netto-Doppelbogey), Formel (113/Slope)*(AdjGross-CR).
+   9-Loch-Runden oder Runden ohne CR/Slope fallen auf die 9->18-Hochrechnung (RT_convertRound,
+   Mittel der Haelften) zurueck. */
+function RT_whsRoundDiff(rd){
+ var idx=(typeof RT_myPlayerIndex==='function')?RT_myPlayerIndex(rd):0; if(idx<0) return null;
+ var p=rd.players&&rd.players[idx]; if(!p) return null;
+ var cnt=rd.cnt||18;
+ var sl=parseFloat(p.sl), cr=parseFloat(p.cr), ph=parseFloat(p.ph);
+ if(cnt===18 && !isNaN(sl)&&!isNaN(cr)&&!isNaN(ph) && rd.par && rd.si && p.sc && p.sc.length>=18){
+  var cx=p.cx||[]; var adj=0, unplayed=0;
+  for(var i=0;i<18;i++){
+   var np=SC_netPar(rd.par[i], ph, rd.si[i], 18); var cap=np+2; var sv=p.sc[i];
+   if(cx[i]){ adj+=cap; }
+   else if(sv===null||sv===undefined){ adj+=cap; unplayed++; }
+   else { adj+=Math.min(sv,cap); }
+  }
+  if(unplayed<=4) return {date:rd.date, time:rd.time, diff:Math.round(((113/sl)*(adj-cr))*10)/10};
+ }
+ var conv=RT_convertRound(rd);
+ if(conv&&conv.hv&&conv.hv.length){
+  var sum=0,n=0; conv.hv.forEach(function(h){ if(h&&!isNaN(h.hi)){sum+=h.hi;n++;} });
+  if(n) return {date:rd.date, time:rd.time, diff:Math.round((sum/n)*10)/10};
+ }
+ return null;
+}
+/* Alle wertbaren Runden -> je ein Differenzial, sortiert nach Datum/Zeit absteigend. */
+function RT_whsAllDiffs(){
+ var rounds=(rtGet(RT_KEY)||[]).filter(function(r){ return r && !r.hidden && (r.historical||r.promoted); });
+ var out=[];
+ rounds.forEach(function(rd){ try{ var d=RT_whsRoundDiff(rd); if(d&&!isNaN(d.diff)) out.push(d); }catch(e){} });
+ out.sort(function(a,b){ var ka=(a.date||'')+'T'+(a.time||'00:00'), kb=(b.date||'')+'T'+(b.time||'00:00'); return ka<kb?1:(ka>kb?-1:0); });
+ return out;
+}
+/* Automatischer WHS-Handicap-Index inkl. Soft-/Hard-Cap ueber die Low HI (niedrigster berechneter
+   Index der letzten 365 Tage). PCC (Platz-/Wetter-Korrektur) ist im Einzelspieler-Betrieb nicht
+   ermittelbar und daher 0. */
 function RT_whsIndex(){
- var all=(HV_D||[]).filter(function(d){return d&&d.hi!==null&&d.hi!==undefined&&!isNaN(d.hi);});
- if(all.length<3) return null;
- var sorted=all.slice().sort(function(a,b){
-  var ka=(a.date||'')+'T'+(a.time||'00:00'), kb=(b.date||'')+'T'+(b.time||'00:00');
-  return ka<kb?1:(ka>kb?-1:0);
+ var diffs=RT_whsAllDiffs();
+ if(diffs.length<3) return null;
+ var raw=RT_whsCalc(diffs.slice(0,20).map(function(d){return d.diff;}));
+ if(raw===null) return null;
+ var cut=(typeof RT_rangeCutoff==='function')?RT_rangeCutoff('365'):null;
+ var lows=[];
+ diffs.forEach(function(anchor){
+  if(!cut || anchor.date>=cut){
+   var akey=anchor.date+'T'+(anchor.time||'23:59');
+   var upto=diffs.filter(function(d){ return (d.date+'T'+(d.time||'00:00'))<=akey; });
+   var v=RT_whsCalc(upto.slice(0,20).map(function(d){return d.diff;}));
+   if(v!==null) lows.push(v);
+  }
  });
- var win=sorted.slice(0,20);
- var cnt=win.length;
- var rule=null;
- for(var i=0;i<RT_WHS_TABLE.length;i++){ if(cnt>=RT_WHS_TABLE[i].min&&cnt<=RT_WHS_TABLE[i].max){ rule=RT_WHS_TABLE[i]; break; } }
- if(!rule) return null;
- var diffs=win.map(function(d){return d.hi;}).sort(function(a,b){return a-b;});
- var use=Math.min(rule.use,diffs.length);
- var sum=0; for(var j=0;j<use;j++) sum+=diffs[j];
- var idx=Math.round((sum/use+rule.adj)*10)/10;
- if(idx>54) idx=54; if(idx<-10) idx=-10;
- return {value:idx, count:cnt, use:use, adj:rule.adj, total:all.length};
+ var lowHi=lows.length?Math.min.apply(null,lows):raw;
+ var fin=raw, capped=false;
+ if(raw-lowHi>3.0){ fin=lowHi+3.0+(raw-lowHi-3.0)*0.5; capped=true; }
+ if(fin-lowHi>5.0){ fin=lowHi+5.0; capped=true; }
+ fin=Math.round(fin*10)/10; if(fin>54) fin=54; if(fin<-10) fin=-10;
+ var cnt=Math.min(diffs.length,20); var rule=RT_whsRule(cnt);
+ return {value:fin, raw:Math.round(raw*10)/10, lowHi:Math.round(lowHi*10)/10, capped:capped,
+  count:cnt, use:rule?Math.min(rule.use,cnt):0, total:diffs.length};
 }
 function HV_renderWhsIndex(){
  var el=document.getElementById('whs-index'); if(!el) return;
  var w=RT_whsIndex();
  if(!w){
   el.innerHTML='<div style="font-size:13px;font-weight:700;color:#143522;margin-bottom:2px;">Berechneter Handicap-Index</div>'+
-   '<div style="font-size:11px;color:rgba(93,112,96,.95);">Noch nicht genug gewertete Runden \u2013 ab 3 gewerteten Neunern wird hier ein Index nach WHS-Schema berechnet.</div>';
+   '<div style="font-size:11px;color:rgba(93,112,96,.95);">Noch nicht genug gewertete Runden – ab 3 gewerteten Runden wird hier ein Index nach WHS-Schema berechnet.</div>';
   return;
  }
  var col=HV_hiCol(w.value);
  var stored=RT_ownHandicap();
  var same=Math.abs(stored-w.value)<0.05;
- var sub='Beste '+w.use+' von '+w.count+' j\u00fcngsten Differenzialen (WHS-Schema, je Neun ein 18-Loch-Wert)'+(w.adj?(' \u00b7 Anpassung '+rtDe(w.adj)):'');
+ var sub='Beste '+w.use+' von '+w.count+' jüngsten Runden (WHS-Schema, je Runde ein Differenzial)'+(w.capped?(' · gedeckelt (Soft/Hard-Cap über Low HI '+rtDe(w.lowHi)+')'):'');
  var h='<div style="display:flex;align-items:center;gap:14px;">'+
   '<div style="flex:none;min-width:82px;text-align:center;background:'+col.bg+';border-radius:12px;padding:10px 6px;">'+
    '<div style="font-size:30px;font-weight:800;line-height:1;color:'+col.tc+';">'+rtDe(w.value)+'</div>'+
@@ -335,8 +385,9 @@ function HV_renderWhsIndex(){
   h+='<div style="font-size:11px;color:#187040;font-weight:700;margin-top:6px;">Entspricht deinem eingetragenen Handicap.</div>';
  }else{
   h+='<div style="font-size:11px;color:rgba(93,112,96,.95);margin-top:6px;">Dein eingetragenes Handicap: '+rtDe(stored)+'</div>'+
-   '<button class="rt-btn2" style="width:auto;margin-top:8px;padding:9px 14px;font-size:12px;" onclick="RT_whsAdopt()">Als mein Handicap \u00fcbernehmen</button>';
+   '<button class="rt-btn2" style="width:auto;margin-top:8px;padding:9px 14px;font-size:12px;" onclick="RT_whsAdopt()">Als mein Handicap übernehmen</button>';
  }
+ h+='<div style="font-size:10px;color:rgba(84,104,88,.7);margin-top:6px;">Ohne Platz-/Wetter-Korrektur (PCC) – im Einzelspieler-Betrieb nicht ermittelbar.</div>';
  h+='</div></div>';
  el.innerHTML=h;
 }

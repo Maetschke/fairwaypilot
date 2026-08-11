@@ -4881,8 +4881,8 @@ function RT_gvHoleExtent(rd,c){
  pts.forEach(function(p){ if(p[0]<minLa)minLa=p[0]; if(p[0]>maxLa)maxLa=p[0]; if(p[1]<minLo)minLo=p[1]; if(p[1]>maxLo)maxLo=p[1]; });
  var clat=(minLa+maxLa)/2, clng=(minLo+maxLo)/2;
  var latM=(maxLa-minLa)*111320, lngM=(maxLo-minLo)*111320*Math.cos(clat*Math.PI/180);
- var size=Math.max(latM,lngM)*2.0;
- size=Math.max(120,Math.min(500,size));
+ var size=Math.max(latM,lngM)*4.0;
+ size=Math.max(200,Math.min(900,size));
  return {clat:clat,clng:clng,size:Math.round(size)};
 }
 function RT_gvActive(){ var rd=RT_round; return !!(rd&&RT_state.gvOn&&RT_state.gvOn[RT_holeMapKey(rd,rd.cur)]); }

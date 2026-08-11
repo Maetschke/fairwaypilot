@@ -31,7 +31,7 @@ async function handleDgm(url) {
   const lat = Number(url.searchParams.get("lat"));
   const lng = Number(url.searchParams.get("lng"));
   let size = Number(url.searchParams.get("size")) || 64;
-  size = Math.max(24, Math.min(500, size));
+  size = Math.max(24, Math.min(900, size));
   if (!isFinite(lat) || !isFinite(lng)) return _dgmJson({ error: "bad_coords" }, 400);
   // grobe NRW-Bounding-Box
   if (lat < 50.0 || lat > 52.6 || lng < 5.7 || lng > 9.6) return _dgmJson({ error: "out_of_nrw" });

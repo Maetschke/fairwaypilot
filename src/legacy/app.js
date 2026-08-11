@@ -1084,10 +1084,13 @@ function RT_scorerBlock(){
 function RT_handoffScoring(uid){
  var rd=RT_round; if(!rd||!RT_amScorer(rd)||!uid) return;
  rd.scorerId=uid;
- rtSet(RT_ACT,rd); RT_syncActiveToSaved(); RT_render();
+ rtSet(RT_ACT,rd); RT_syncActiveToSaved();
+ if(RT_RT.ch){ try{ RT_RT.ch.send({type:'broadcast',event:'state',payload:{data:rd}}); }catch(e){} }
+ RT_render();
 }
 function RT_requestScoring(){
- RT_state.saveWarn='Bitte '+RT_scorerName(RT_round)+', dir die Scoringkarte zu \u00fcbergeben. (Live-Anforderung folgt in K\u00fcrze.)';
+ if(RT_RT.ch&&sbUser){ try{ RT_RT.ch.send({type:'broadcast',event:'request',payload:{name:(typeof RT_myDisplayName==='function'?RT_myDisplayName():'Ein Mitspieler'),uid:sbUser.id}}); RT_state.saveWarn='Übergabe angefordert – warte auf den aktuellen Scorer.'; RT_render(); return; }catch(e){} }
+ RT_state.saveWarn='Bitte '+RT_scorerName(RT_round)+', dir die Scoringkarte zu übergeben.';
  RT_render();
 }
 function RT_handoffMenu(){
@@ -1108,6 +1111,55 @@ function RT_handoffMenu(){
 }
 /* Einladung im Runden-Setup: neuen/vorhandenen Mitspieler VOR dem Spiel per E-Mail einladen und
    verknuepfen (nutzt dieselbe PL_-Mechanik wie die Konto-Seite). */
+/* ===== Live-Scoring Stufe 2: Supabase Realtime BROADCAST (ephemer, KEINE DB-/RLS-Aenderung).
+   Der aktuelle Scorer sendet nach jeder Eingabe den Rundenstand ueber einen Kanal
+   'fp-round-<id>'; Zuschauer ziehen live mit. Uebergabe und Anforderung laufen ueber denselben
+   Kanal. Faellt der Kanal aus, bleibt der pull-basierte Sync (Stufe 1) als Fallback. ===== */
+var RT_RT={ch:null,id:null};
+function RT_rtWantId(){
+ var rd=RT_round;
+ return (rd&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_roundIsShared(rd))?rd.id:null;
+}
+function RT_rtSync(){
+ var want=RT_rtWantId();
+ if(RT_RT.id===want) return;
+ if(RT_RT.ch){ try{ sb.removeChannel(RT_RT.ch); }catch(e){} RT_RT.ch=null; }
+ RT_RT.id=want;
+ if(!want) return;
+ try{
+  var ch=sb.channel('fp-round-'+want,{config:{broadcast:{self:false}}});
+  ch.on('broadcast',{event:'state'},function(m){ RT_rtOnState(m&&m.payload); });
+  ch.on('broadcast',{event:'request'},function(m){ RT_rtOnRequest(m&&m.payload); });
+  ch.subscribe();
+  RT_RT.ch=ch;
+ }catch(e){ RT_RT.ch=null; RT_RT.id=null; }
+}
+function RT_rtBroadcastState(){
+ if(RT_RT.ch&&RT_round&&RT_RT.id===RT_round.id&&RT_amScorer(RT_round)){
+  try{ RT_RT.ch.send({type:'broadcast',event:'state',payload:{data:RT_round}}); }catch(e){}
+ }
+}
+function RT_rtApplyState(nd){
+ if(!nd||!nd.id) return;
+ var saved=rtGet(RT_KEY)||[]; var found=false;
+ for(var i=0;i<saved.length;i++){ if(saved[i].id===nd.id){ saved[i]=nd; found=true; break; } }
+ if(!found) saved.push(nd);
+ rtSet(RT_KEY,saved);
+ if(RT_round&&RT_round.id===nd.id){ RT_round=nd; try{ rtSet(RT_ACT,RT_round); }catch(e){} }
+ RT_render();
+}
+function RT_rtOnState(payload){
+ var nd=payload&&payload.data; var rd=RT_round;
+ if(!nd||!rd||rd.id!==nd.id) return;
+ RT_rtApplyState(nd);
+}
+function RT_rtOnRequest(payload){
+ var rd=RT_round; if(!rd||!RT_amScorer(rd)) return;
+ var nm=(payload&&payload.name)||'Ein Mitspieler';
+ RT_pageConfirm(rtEsc(nm)+' möchte die Scoringkarte übernehmen. Übergeben?', function(){
+  if(payload&&payload.uid) RT_handoffScoring(payload.uid);
+ });
+}
 function RT_setupInviteHtml(name){
  if(!sbUser||(typeof RT_isSelfName==='function'&&RT_isSelfName(name))) return '';
  var st=(typeof PL_statusFor==='function')?PL_statusFor(name):null;
@@ -4717,6 +4769,7 @@ function RT_render(){
  else if(RT_state.screen==='user')r.innerHTML=RT_rUser();
  else if(RT_state.screen==='services')r.innerHTML=RT_rServices();
  else r.innerHTML=RT_rHome();
+ try{ if(typeof RT_rtSync==='function') RT_rtSync(); }catch(e){}
 }
 function RT_go(s){if(s!=='play')RT_stopGeoWatch();RT_state.screen=s;RT_state.ask='';try{if(s==='play')rtSet('golflog_screen_v1','play');else rtDel('golflog_screen_v1');}catch(e){}RT_render();var _ap=document.getElementById('app');if(_ap)_ap.scrollTop=0;}
 
@@ -6265,6 +6318,7 @@ function RT_syncActiveToSaved(){
  if(idx>=0) saved[idx]=rd; else saved.push(rd);
  rtSet(RT_KEY,saved);
  if(isNew&&sb&&sbUser) sbPushRound(rd);
+ RT_rtBroadcastState();
 }
 function RT_addTrackedPoint(type,shotNum,pi){
  var rd=RT_round; if(!rd) return;

@@ -1679,6 +1679,26 @@ function PL_showEmail(name){
    Empfaenger, Betreff und dem Einladungslink im Text - kein eigener Mailversand-Server
    noetig, der Nutzer sendet ueber seine eigene, bereits eingerichtete Mail-App. */
 function PL_domId(name){ return 'pl-email-'+String(name).replace(/[^a-zA-Z0-9]/g,''); }
+/* Hebt die Verknuepfung zu einem Mitspieler wieder auf (loescht die player_links-Zeile des
+   Kontoinhabers fuer diesen Namen). Danach erscheint wieder "Einladen" und der Spieler kann
+   neu - auch mit einer ANDEREN E-Mail-Adresse - eingeladen werden. Bereits abgeschlossene,
+   gemeinsam gespeicherte Runden bleiben bei beiden als eigene Kopie erhalten; eine noch
+   laufende Freigabe endet. */
+function PL_unlink(name){
+ RT_pageConfirm('Verkn\u00fcpfung zu <b>'+rtEsc(name)+'</b> aufheben? Du kannst '+rtEsc(name)+' danach neu (auch mit anderer E-Mail) einladen. Bereits gespeicherte gemeinsame Runden bleiben bei beiden erhalten.', function(){ PL_unlinkDo(name); }, 'Verkn\u00fcpfung aufheben');
+}
+async function PL_unlinkDo(name){
+ if(!sb||!sbUser){ PL_msg='Nicht angemeldet.'; RT_render(); return; }
+ try{
+  var r=await sb.from('player_links').delete().eq('owner_id',sbUser.id).eq('player_name',name);
+  if(r.error)throw r.error;
+  if(PL_list) PL_list=PL_list.filter(function(x){return x.player_name!==name;});
+  RT_state.plEmailFor=null;
+  PL_msg='Verkn\u00fcpfung zu '+name+' aufgehoben \u2013 du kannst '+name+' jetzt neu einladen.';
+ }catch(e){ PL_msg='Aufheben fehlgeschlagen: '+(e.message||e); }
+ try{ RT_loadConnections(); }catch(e){}
+ RT_render();
+}
 async function PL_sendInvite(name){
  var emEl=document.getElementById(PL_domId(name));
  var em=(emEl?emEl.value:'').trim();
@@ -1823,7 +1843,7 @@ function RT_rUser(){
   h+='<div style="margin-top:8px;">';
   h+='<div style="display:flex;gap:8px;align-items:center;">'+
    '<div style="flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+rtEsc(sp.name)+'</div>';
-  if(linked)h+='<button class="rt-btn2" disabled style="flex:none;width:128px;box-sizing:border-box;margin:0;padding:9px 8px;display:flex;align-items:center;justify-content:center;background:#1F8A4D;border-color:#1F8A4D;color:#fff;font-weight:700;cursor:default;">verknüpft &#10003;</button>';
+  if(linked)h+='<button class="rt-btn2" title="Verkn&uuml;pfung aufheben" onclick="PL_unlink(\''+rtJsEsc(sp.name)+'\')" style="flex:none;width:128px;box-sizing:border-box;margin:0;padding:9px 8px;display:flex;align-items:center;justify-content:center;background:#1F8A4D;border-color:#1F8A4D;color:#fff;font-weight:700;cursor:pointer;">verknüpft &#10003;</button>';
   else h+='<button class="rt-btn2" style="flex:none;width:128px;box-sizing:border-box;margin:0;padding:9px 8px;text-align:center;" onclick="PL_showEmail(\''+rtJsEsc(sp.name)+'\')">'+(emailMode?'Abbrechen':(st?'Erneut senden':'Einladen'))+'</button>';
   if(!linked&&st)h+='<button class="rt-btn3" style="flex:none;padding:8px 10px;" onclick="PL_copy(\''+rtJsEsc(st.invite_code)+'\')" title="Link kopieren">&#128279;</button>';
   h+='</div>';
@@ -2576,11 +2596,11 @@ function RT_sizeRotatedMap(el,rotDeg){
  el.style.left=Math.round((W-nw)/2)+'px'; el.style.top=Math.round((H-nh)/2)+'px';
 }
 var RT_fullSelPin=null,RT_fullTapIdx=null,RT_fullTapT=0;
-function RT_pageConfirm(msg,onOk){
+function RT_pageConfirm(msg,onOk,okLabel){
  var ex=document.getElementById('rt-pageconfirm'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
  var ov=document.createElement('div'); ov.id='rt-pageconfirm';
  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(8,20,12,.42);display:flex;align-items:center;justify-content:center;padding:24px;';
- ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:340px;width:100%;padding:20px 20px 14px;box-shadow:0 12px 44px rgba(0,0,0,.32);font-family:Inter,-apple-system,sans-serif;">'+'<div style="font-size:15px;color:#143522;font-weight:600;line-height:1.35;margin-bottom:16px;">'+msg+'</div>'+'<div style="display:flex;gap:10px;justify-content:flex-end;">'+'<button id="rt-pc-cancel" style="padding:9px 16px;border-radius:10px;border:1px solid #DCE7D4;background:#fff;color:#3C5546;font-weight:600;font-size:14px;cursor:pointer;">Abbrechen</button>'+'<button id="rt-pc-ok" style="padding:9px 18px;border-radius:10px;border:none;background:#B03A3A;color:#fff;font-weight:700;font-size:14px;cursor:pointer;">Löschen</button>'+'</div></div>';
+ ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:340px;width:100%;padding:20px 20px 14px;box-shadow:0 12px 44px rgba(0,0,0,.32);font-family:Inter,-apple-system,sans-serif;">'+'<div style="font-size:15px;color:#143522;font-weight:600;line-height:1.35;margin-bottom:16px;">'+msg+'</div>'+'<div style="display:flex;gap:10px;justify-content:flex-end;">'+'<button id="rt-pc-cancel" style="padding:9px 16px;border-radius:10px;border:1px solid #DCE7D4;background:#fff;color:#3C5546;font-weight:600;font-size:14px;cursor:pointer;">Abbrechen</button>'+'<button id="rt-pc-ok" style="padding:9px 18px;border-radius:10px;border:none;background:#B03A3A;color:#fff;font-weight:700;font-size:14px;cursor:pointer;">'+(okLabel||'Löschen')+'</button>'+'</div></div>';
  document.body.appendChild(ov);
  function close(){ if(ov&&ov.parentNode) ov.parentNode.removeChild(ov); }
  ov.addEventListener('click',function(e){ if(e.target===ov) close(); });

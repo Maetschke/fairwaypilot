@@ -4662,7 +4662,7 @@ function RT_openFlagRadar(){
  }
  var rec=RT_dkiRecommend(Math.round(RT_FR.dist));
  var srcNote=origin?(origin.src==='gps'?'':(origin.src==='ball'?'Standort: letzte Balllage (kein GPS)':'Standort: Abschlag (kein GPS)')):'';
- var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 56px);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:12px;width:min(56vw,200px);pointer-events:none;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:12px;">'
+ var body='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 56px);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:29px;width:min(56vw,200px);pointer-events:none;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:12px;">'
    +'<div style="position:relative;width:100%;aspect-ratio:1/1;background:rgba(6,12,9,.80);border-radius:18px;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,.5);">'
      +'<div style="position:absolute;left:50%;top:-2px;transform:translateX(-50%);z-index:3;color:#fff;font-size:18px;text-shadow:0 1px 3px #000;">&#9660;</div>'
      +'<div id="rt-fr-rose" style="position:absolute;inset:8px;transition:transform .12s linear;">'+RT_frRoseSvg(RT_FR.brg)+'</div>'

@@ -1186,6 +1186,7 @@ function sbInit(){
  sb=window.supabase.createClient(SB_URL,SB_KEY);
  sb.auth.onAuthStateChange(function(ev,session){
   sbUser=session?session.user:null;
+   if(ev==='PASSWORD_RECOVERY'){ RT_render(); try{ AG_recoveryPrompt(); }catch(e){} return; }
   if(sbUser){
    /* TOKEN_REFRESHED feuert automatisch alle ca. 50-60 Minuten im Hintergrund (z.B. waehrend
       einer laufenden Runde auf dem Platz), ohne dass sich der Nutzer neu anmeldet. Ein voller
@@ -1419,7 +1420,7 @@ function AG_render(){
    '<span class="rt-lbl">E-Mail</span><input class="rt-inp" id="ag-em" type="email" autocomplete="email" style="margin-bottom:8px;">'+
    '<span class="rt-lbl">Passwort</span><input class="rt-inp" id="ag-pw" type="password" autocomplete="current-password" style="margin-bottom:10px;">'+
    '<div class="rt-row"><button class="rt-btn" onclick="AG_auth(\'in\')">Anmelden</button>'+
-   '<button class="rt-btn2" onclick="AG_auth(\'up\')">Registrieren</button></div>';
+   '<button class="rt-btn2" onclick="AG_auth(\'up\')">Registrieren</button></div>'+'<div style="text-align:right;margin-top:8px;"><a href="#" onclick="AG_auth(\'reset\');return false;" style="font-size:12px;color:var(--tx3);">Passwort vergessen?</a></div>';
   if(AG_msg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(AG_msg)+'</div>';
   h+='</div>';
  }
@@ -1434,6 +1435,16 @@ function AG_render(){
  el.innerHTML=h;
 }
 function AG_skip(){ try{ localStorage.setItem(AG_KEY,'1'); }catch(e){} AG_render(); }
+function AG_errText(e){
+ var m=(e&&(e.message||e.error_description||e.msg))||String(e||'');
+ var l=m.toLowerCase();
+ if(l.indexOf('invalid login')>=0||l.indexOf('invalid credentials')>=0) return 'E-Mail oder Passwort ist nicht korrekt. Tipp: „Passwort vergessen?“ setzt es neu.';
+ if(l.indexOf('already registered')>=0||l.indexOf('already been registered')>=0||l.indexOf('user already')>=0) return 'Diese E-Mail ist bereits registriert – bitte melde dich an (oder nutze „Passwort vergessen?“).';
+ if(l.indexOf('email not confirmed')>=0) return 'Bitte zuerst den Bestätigungslink in deiner Registrierungs-E-Mail öffnen.';
+ if(l.indexOf('rate limit')>=0||l.indexOf('too many')>=0) return 'Zu viele Versuche in kurzer Zeit – bitte kurz warten und erneut versuchen.';
+ if(l.indexOf('password should be')>=0||l.indexOf('at least 6')>=0) return 'Das Passwort muss mindestens 6 Zeichen haben.';
+ return m;
+}
 async function AG_auth(mode){
  var em=document.getElementById('ag-em').value.trim();
  if(mode==='magic'){
@@ -1448,6 +1459,18 @@ async function AG_auth(mode){
   AG_render();
   return;
  }
+  if(mode==='reset'){
+  if(!em){ AG_msg='Bitte zuerst deine E-Mail-Adresse oben eingeben, dann erneut auf "Passwort vergessen?" tippen.'; AG_render(); return; }
+  AG_msg='';
+  try{
+   var redirectTo=window.location.origin+window.location.pathname;
+   var rr=await sb.auth.resetPasswordForEmail(em,{redirectTo:redirectTo});
+   if(rr.error)throw rr.error;
+   AG_msg='Wir haben dir eine E-Mail zum Zurücksetzen des Passworts geschickt. Öffne den Link darin – danach kannst du hier direkt ein neues Passwort vergeben.';
+  }catch(e){ AG_msg='E-Mail konnte nicht gesendet werden: '+AG_errText(e); }
+  AG_render();
+  return;
+ }
  var pw=document.getElementById('ag-pw').value;
  if(!em||pw.length<6){ AG_msg='E-Mail und Passwort (mind. 6 Zeichen) eingeben.'; AG_render(); return; }
  AG_msg='';
@@ -1455,8 +1478,36 @@ async function AG_auth(mode){
   var r=(mode==='up')?await sb.auth.signUp({email:em,password:pw}):await sb.auth.signInWithPassword({email:em,password:pw});
   if(r.error)throw r.error;
   if(mode==='up'&&!r.data.session){ AG_msg='Registriert – bitte Bestätigungslink in der E-Mail öffnen, dann anmelden.'; AG_render(); return; }
- }catch(e){ AG_msg='Anmeldung fehlgeschlagen: '+(e.message||e); AG_render(); return; }
+ }catch(e){ AG_msg=AG_errText(e); AG_render(); return; }
  if(!AG_joinCode)AG_render();
+}
+var AG_recoveryMsg='';
+/* Wird nach Klick auf den Passwort-Zuruecksetzen-Link in der E-Mail aufgerufen (Supabase feuert
+   dann PASSWORD_RECOVERY mit gueltiger Session). Zeigt ein Overlay zum Vergeben eines neuen
+   Passworts - danach ist der Nutzer regulaer eingeloggt. */
+function AG_recoveryPrompt(){
+ var el=document.getElementById('auth-gate'); if(!el) return;
+ el.style.display='block';
+ var h='<div style="max-width:420px;margin:0 auto;">';
+ h+='<h1 style="margin-bottom:4px;">Fairway<em>Pilot</em></h1>';
+ h+='<div class="rtc"><div class="rt-ct">Neues Passwort vergeben</div>'+
+  '<div class="rt-cs" style="margin-bottom:8px;">Gib jetzt dein neues Passwort ein (mind. 6 Zeichen). Danach bist du direkt angemeldet.</div>'+
+  '<span class="rt-lbl">Neues Passwort</span><input class="rt-inp" id="ag-newpw" type="password" autocomplete="new-password" style="margin-bottom:10px;">'+
+  '<button class="rt-btn" style="width:100%;" onclick="AG_setNewPassword()">Passwort speichern</button>';
+ if(AG_recoveryMsg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(AG_recoveryMsg)+'</div>';
+ h+='</div></div>';
+ el.innerHTML=h;
+}
+async function AG_setNewPassword(){
+ var el=document.getElementById('ag-newpw'); var pw=el?el.value:'';
+ if(!pw||pw.length<6){ AG_recoveryMsg='Bitte mindestens 6 Zeichen eingeben.'; AG_recoveryPrompt(); return; }
+ AG_recoveryMsg='';
+ try{
+  var r=await sb.auth.updateUser({password:pw});
+  if(r.error)throw r.error;
+  try{ localStorage.setItem(AG_KEY,'1'); }catch(e){}
+  AG_msg=''; AG_render();
+ }catch(e){ AG_recoveryMsg='Passwort konnte nicht gespeichert werden: '+AG_errText(e); AG_recoveryPrompt(); return; }
 }
 async function AG_claim(){
  if(!sb||!sbUser||!AG_joinCode)return;
@@ -1662,7 +1713,9 @@ function RT_rUser(){
  else if(RT_connections.length){
   h+='<div class="rtc"><div class="rt-ct">Meine Verbindungen</div>'+
    '<div class="rt-cs">Diese Personen sind mit deinem Konto verkn\u00fcpft.</div>';
-  RT_connections.forEach(function(c){
+  var _seenConn={};
+   var connList=(RT_connections||[]).filter(function(c){ var k=(c&&(c.other_email||c.other_display_name||c.player_name)||'').trim().toLowerCase(); if(!k) return true; if(_seenConn[k]) return false; _seenConn[k]=true; return true; });
+   connList.forEach(function(c){
    var who=c.other_display_name||c.other_email;
    var cnt=RT_connRoundCount(c); var email=c.other_email||c.other_display_name||who;
    var desc=c.direction==='incoming'
@@ -1684,7 +1737,8 @@ function RT_rUser(){
  var plSaved=(RT_getSavedPlayers()||[]).filter(function(sp){
  return !RT_isSelfName(sp.name);
 });
- if(!plSaved.length){h+='<div class="rt-note">Noch keine einladbaren Mitspieler. Lege sie beim Anlegen einer Runde \u00fcber "+ Neuer Spieler" an.</div>';}
+ plSaved=RT_dedupInvitees(plSaved);
+  if(!plSaved.length){h+='<div class="rt-note">Noch keine einladbaren Mitspieler. Lege sie beim Anlegen einer Runde \u00fcber "+ Neuer Spieler" an.</div>';}
  else plSaved.forEach(function(sp){
  if(RT_needsSelfConfirm(sp.name)){ h+=RT_selfConfirmHtml(sp.name); return; }
   var st=PL_statusFor(sp.name);
@@ -1692,11 +1746,9 @@ function RT_rUser(){
   var emailMode=RT_state.plEmailFor===sp.name;
   h+='<div style="margin-top:8px;">';
   h+='<div style="display:flex;gap:8px;align-items:center;">'+
-   '<div style="flex:none;width:72px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+rtEsc(sp.name)+'</div>';
-  if(linked)h+='<div style="flex:1;text-align:center;">'+
-   '<span class="rt-btn2" style="display:inline-block;width:auto;padding:8px 16px;background:#1F8A4D;border-color:#1F8A4D;color:#fff;font-weight:700;">verknüpft &#10003;</span>'+
-   '</div>';
-  else h+='<button class="rt-btn2" style="flex:1;width:auto;" onclick="PL_showEmail(\''+rtJsEsc(sp.name)+'\')">'+(emailMode?'Abbrechen':(st?'Erneut per E-Mail senden':'Einladen'))+'</button>';
+   '<div style="flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+rtEsc(sp.name)+'</div>';
+  if(linked)h+='<span class="rt-btn2" style="flex:none;width:128px;box-sizing:border-box;margin:0;padding:9px 8px;text-align:center;background:#1F8A4D;border-color:#1F8A4D;color:#fff;font-weight:700;">verknüpft &#10003;</span>';
+  else h+='<button class="rt-btn2" style="flex:none;width:128px;box-sizing:border-box;margin:0;padding:9px 8px;text-align:center;" onclick="PL_showEmail(\''+rtJsEsc(sp.name)+'\')">'+(emailMode?'Abbrechen':(st?'Erneut senden':'Einladen'))+'</button>';
   if(!linked&&st)h+='<button class="rt-btn3" style="flex:none;padding:8px 10px;" onclick="PL_copy(\''+rtJsEsc(st.invite_code)+'\')" title="Link kopieren">&#128279;</button>';
   h+='</div>';
   if(!linked&&emailMode){
@@ -2968,6 +3020,33 @@ function RT_getSavedPlayers(){
  var hist=RT_historicPlayerNames();
  Object.keys(hist).forEach(function(nm){ if(!byName[nm]) byName[nm]=hist[nm]; });
  return Object.keys(byName).map(function(nm){ return byName[nm]; });
+}
+/* Ein Mitspieler, der seinen Namen geaendert hat (z.B. "Mark" -> "Mark Maetschke"), taucht sonst
+   mehrfach in der Einladen-Liste auf. Verknuepfte Eintraege werden pro linked_user_id auf EINEN
+   reduziert (zuletzt bestaetigter bzw. laengster Anzeigename gewinnt); nicht verknuepfte Namen,
+   die klar zu einem bereits gezeigten verknuepften Namen gehoeren, werden ausgeblendet. */
+function RT_dedupInvitees(list){
+ if(!list||!list.length) return list||[];
+ var pick={};
+ list.forEach(function(sp){
+  var st=(typeof PL_statusFor==='function')?PL_statusFor(sp.name):null;
+  var uid=st&&st.linked_user_id; if(!uid) return;
+  var cur=pick[uid];
+  if(!cur){ pick[uid]={sp:sp,st:st}; return; }
+  var at=(cur.st&&cur.st.claimed_at)||'', bt=(st&&st.claimed_at)||'';
+  if(bt>at || (bt===at && (sp.name||'').length>(cur.sp.name||'').length)) pick[uid]={sp:sp,st:st};
+ });
+ var keepLinked={}, linkedNames=[];
+ Object.keys(pick).forEach(function(uid){ var nm=pick[uid].sp.name; keepLinked[nm]=true; linkedNames.push(nm); });
+ var out=[];
+ list.forEach(function(sp){
+  var st=(typeof PL_statusFor==='function')?PL_statusFor(sp.name):null;
+  var uid=st&&st.linked_user_id;
+  if(uid){ if(keepLinked[sp.name]) out.push(sp); return; }
+  var dup=linkedNames.some(function(ln){ return ln!==sp.name && RT_namesLikelySame(sp.name,ln); });
+  if(!dup) out.push(sp);
+ });
+ return out;
 }
 function RT_setSavedPlayers(list){ rtSet(RT_PLAYERSAV_KEY,list); }
 /* Versucht, fuer einen Spieler den zuletzt gespeicherten Abschlag (per Name) im GERADE

@@ -361,34 +361,53 @@ function RT_whsIndex(){
  return {value:fin, raw:Math.round(raw*10)/10, lowHi:Math.round(lowHi*10)/10, capped:capped,
   count:cnt, use:rule?Math.min(rule.use,cnt):0, total:diffs.length};
 }
+/* Repraesentativer Wert des bisherigen (groeberen) theoretischen 9L×2-Verlaufs: dieselbe
+   Bestenauswahl wie beim WHS-Index (beste N der 20 juengsten), aber auf die PRO-NEUN hochge-
+   rechneten Differenziale (HV_D.hi) angewendet - so unterscheidet sich nur die Methode, nicht
+   die Aggregation. */
+function RT_theoIndex(){
+ var arr=(typeof HV_D!=='undefined'&&HV_D)?HV_D.filter(function(d){return d&&d.hi!==null&&d.hi!==undefined&&!isNaN(d.hi);}).slice():[];
+ if(arr.length<3) return null;
+ arr.sort(function(a,b){ var ka=(a.date||'')+'T'+(a.time||'00:00'), kb=(b.date||'')+'T'+(b.time||'00:00'); return ka<kb?1:(ka>kb?-1:0); });
+ var win=arr.slice(0,20).map(function(d){return d.hi;});
+ var v=RT_whsCalc(win);
+ if(v===null) return null;
+ return {value:Math.round(v*10)/10, count:Math.min(win.length,20)};
+}
 function HV_renderWhsIndex(){
  var el=document.getElementById('whs-index'); if(!el) return;
  var w=RT_whsIndex();
- if(!w){
-  el.innerHTML='<div style="font-size:13px;font-weight:700;color:#143522;margin-bottom:2px;">Berechneter Handicap-Index</div>'+
-   '<div style="font-size:11px;color:rgba(93,112,96,.95);">Noch nicht genug gewertete Runden – ab 3 gewerteten Runden wird hier ein Index nach WHS-Schema berechnet.</div>';
+ var t=RT_theoIndex();
+ if(!w && !t){
+  el.innerHTML='<div style="font-size:13px;font-weight:700;color:#143522;margin-bottom:2px;">Handicap-Index</div>'+
+   '<div style="font-size:11px;color:rgba(93,112,96,.95);">Noch nicht genug gewertete Runden \u2013 ab 3 gewerteten Runden erscheint hier ein Index nach WHS-Schema.</div>';
   return;
  }
- var col=HV_hiCol(w.value);
- var stored=RT_ownHandicap();
- var same=Math.abs(stored-w.value)<0.05;
- var sub='Beste '+w.use+' von '+w.count+' jüngsten Runden (WHS-Schema, je Runde ein Differenzial)'+(w.capped?(' · gedeckelt (Soft/Hard-Cap über Low HI '+rtDe(w.lowHi)+')'):'');
- var h='<div style="display:flex;align-items:center;gap:14px;">'+
-  '<div style="flex:none;min-width:82px;text-align:center;background:'+col.bg+';border-radius:12px;padding:10px 6px;">'+
-   '<div style="font-size:30px;font-weight:800;line-height:1;color:'+col.tc+';">'+rtDe(w.value)+'</div>'+
-   '<div style="font-size:8.5px;color:rgba(84,104,88,.9);margin-top:3px;letter-spacing:.3px;">WHS-INDEX</div>'+
-  '</div>'+
-  '<div style="flex:1;min-width:0;">'+
-   '<div style="font-size:13px;font-weight:700;color:#143522;">Berechneter Handicap-Index</div>'+
-   '<div style="font-size:11px;color:rgba(93,112,96,.95);margin-top:3px;line-height:1.4;">'+sub+'</div>';
- if(same){
-  h+='<div style="font-size:11px;color:#187040;font-weight:700;margin-top:6px;">Entspricht deinem eingetragenen Handicap.</div>';
- }else{
-  h+='<div style="font-size:11px;color:rgba(93,112,96,.95);margin-top:6px;">Dein eingetragenes Handicap: '+rtDe(stored)+'</div>'+
-   '<button class="rt-btn2" style="width:auto;margin-top:8px;padding:9px 14px;font-size:12px;" onclick="RT_whsAdopt()">Als mein Handicap übernehmen</button>';
+ function box(label, val, colObj, sub){
+  return '<div style="flex:1;min-width:0;text-align:center;background:'+colObj.bg+';border-radius:12px;padding:12px 8px;">'+
+   '<div style="font-size:26px;font-weight:800;line-height:1;color:'+colObj.tc+';">'+(val===null||val===undefined?'\u2013':rtDe(val))+'</div>'+
+   '<div style="font-size:9px;font-weight:700;color:rgba(84,104,88,.95);margin-top:4px;letter-spacing:.2px;">'+label+'</div>'+
+   '<div style="font-size:8.5px;color:rgba(84,104,88,.75);margin-top:2px;">'+sub+'</div>'+
+  '</div>';
  }
- h+='<div style="font-size:10px;color:rgba(84,104,88,.7);margin-top:6px;">Ohne Platz-/Wetter-Korrektur (PCC) – im Einzelspieler-Betrieb nicht ermittelbar.</div>';
- h+='</div></div>';
+ var neutral={bg:'rgba(120,120,0,.12)',tc:'#8A7A00'};
+ var tCol=t?HV_hiCol(t.value):neutral;
+ var wCol=w?HV_hiCol(w.value):neutral;
+ var h='<div style="display:flex;gap:10px;">'+
+  box('THEORETISCH', t?t.value:null, tCol, '9L\u00d72-Verlauf')+
+  box('WHS-INDEX', w?w.value:null, wCol, w&&w.capped?'amtlich \u00b7 gedeckelt':'amtlich')+
+  '</div>';
+ if(w){
+  var stored=RT_ownHandicap(); var same=Math.abs(stored-w.value)<0.05;
+  h+='<div style="font-size:11px;color:rgba(93,112,96,.95);margin-top:10px;line-height:1.45;">Der <b>WHS-Index</b> ist die amtliche Rechnung: beste '+w.use+' von '+w.count+' j\u00fcngsten Runden (je Runde ein Differenzial)'+(w.capped?(', gedeckelt \u00fcber Low HI '+rtDe(w.lowHi)):'')+'. Der <b>theoretische</b> Wert stammt aus dem gr\u00f6beren 9L\u00d72-Verlauf im Diagramm.</div>';
+  if(same){
+   h+='<div style="font-size:11px;color:#187040;font-weight:700;margin-top:8px;">WHS-Index entspricht deinem eingetragenen Handicap.</div>';
+  }else{
+   h+='<div style="font-size:11px;color:rgba(93,112,96,.95);margin-top:8px;">Eingetragenes Handicap: '+rtDe(stored)+'</div>'+
+    '<button class="rt-btn2" style="width:auto;margin-top:8px;padding:9px 14px;font-size:12px;" onclick="RT_whsAdopt()">WHS-Index als mein Handicap \u00fcbernehmen</button>';
+  }
+  h+='<div style="font-size:10px;color:rgba(84,104,88,.7);margin-top:8px;">Ohne Platz-/Wetter-Korrektur (PCC) \u2013 im Einzelspieler-Betrieb nicht ermittelbar.</div>';
+ }
  el.innerHTML=h;
 }
 function RT_whsAdopt(){

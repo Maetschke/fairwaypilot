@@ -3441,7 +3441,6 @@ function RT_hidePreset(key){
 /* Platz-Presets. CR/SL sind Startwerte und im Setup je Spieler editierbar. */
 var RT_COURSES={
  georg:{name:'Georghausen', address:'Georghausen 8, 51789 Lindlar',
-  photoUrl:'/course-images/georghausen/cover.jpg',
   nines:{
    F:{lbl:'Front 9 (1\u20139)', nums:[1,2,3,4,5,6,7,8,9], par:[4,4,5,4,3,4,4,4,5], si:[2,7,1,4,8,6,3,9,5], si18:[3,9,1,7,15,13,5,17,11]},
    B:{lbl:'Back 9 (10\u201318)', nums:[10,11,12,13,14,15,16,17,18], par:[3,5,4,4,3,4,3,5,4], si:[8,6,5,4,7,3,9,2,1], si18:[16,10,14,8,12,6,18,4,2]}
@@ -3452,7 +3451,6 @@ var RT_COURSES={
    {name:'Rot L (Damen)', cr:{F:36.5,B:36.9,A:73.4}, sl:{F:130,B:134,A:132}}
   ]},
  waldhof:{name:'GC Hamburg Gut Waldhof (A\u2013B)', address:'Am Waldhof 3, 24629 Kisdorf', lat:53.81383, lon:10.08614,
-  photoUrl:'https://www.gut-waldhof.de/uploads/3/2/1/1/32119905/platz-bersicht-18-loch-gut-waldhof-golfclub-hamburg_1_orig.jpg',
   nines:{
    F:{lbl:'A-Platz (1\u20139)', nums:[1,2,3,4,5,6,7,8,9], par:[4,4,3,4,5,4,4,4,4], si:null, si18:null},
    B:{lbl:'B-Platz (10\u201318)', nums:[10,11,12,13,14,15,16,17,18], par:[4,3,4,4,5,3,5,4,4], si:null, si18:null}
@@ -5726,7 +5724,7 @@ function RT_rCoursePick(){
   (pIdx>0?'<button class="rt-btn3" style="width:28px;height:28px;min-height:28px;box-sizing:border-box;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="event.stopPropagation();RT_platzMove(\''+k+'\',-1)"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+
   (pIdx<pArr.length-2?'<button class="rt-btn3" style="width:28px;height:28px;min-height:28px;box-sizing:border-box;border-radius:50%;background:rgba(20,53,34,.85);color:#fff;font-size:13px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="event.stopPropagation();RT_platzMove(\''+k+'\',1)"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+
  '</div>':'')+
-   (c.photoUrl?'<img src="'+c.photoUrl+'" loading="lazy" style="width:100%;height:150px;object-fit:cover;display:block;background:#EAF1E3;" onerror="RT_imgErr(this)">':'')+
+   '<img src="'+RT_coursePhotoFor(k,c)+'" loading="lazy" style="width:100%;height:150px;object-fit:cover;display:block;background:#EAF1E3;" onerror="RT_imgErr(this)">'+
    '<div style="padding:14px 14px 15px;">'+
    '<div class="rt-ct" style="margin:0;">'+rtEsc(ch[1])+'</div>'+
    (c.address?'<div class="rt-cs" style="margin:6px 0 0;">'+rtEsc(c.address)+'</div>':'')+
@@ -5745,7 +5743,7 @@ function RT_rSetup(){
   var pc=RT_COURSES[RT_su.course];
   h+='<div class="rtc" style="padding:0;overflow:hidden;">'+
    '<div style="width:100%;height:150px;background:#EAF1E3;position:relative;">'+
-    (pc.photoUrl?'<img src="'+pc.photoUrl+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)">':'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#8A9C8E;">Kein Platzbild hinterlegt</div>')+
+    '<img src="'+RT_coursePhotoFor(RT_su.course,pc)+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)">'+
     '<label style="position:absolute;bottom:8px;right:8px;background:rgba(20,53,34,.72);color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:100px;cursor:pointer;display:flex;align-items:center;">'+
      (RT_state.photoBusy==='photoUrl'?'<span class="rt-spin"></span>Lädt hoch…':(pc.photoUrl?'Platzbild ändern':'Platzbild hochladen'))+
      '<input type="file" accept="image/*" style="display:none;" onchange="RT_photoFile(event,\'photoUrl\')" '+(RT_state.photoBusy?'disabled':'')+'></label>'+
@@ -6536,14 +6534,27 @@ function RT_applyAddrOverrides(){
    Plaetze aber unterschiedlich. */
 var RT_BG_BASE='/round-bg/';
 var RT_BG_POOL=['course-1.jpg','course-2.jpg','course-3.jpg','course-4.jpg','course-5.jpg'];
+/* Deterministische Auswahl EINES der fuenf Standardbilder aus /round-bg/ anhand des
+   Platzschluessels (bzw. Namens). Grundlage fuer die Vorbelegung von Platz- und Rundenbild
+   bei Neuinstallationen - beide nutzen denselben Seed und damit dasselbe Standardbild. */
+function RT_stdBgFor(key,name){
+ var seed=key||name||'x';
+ var hsh=0;
+ for(var i=0;i<seed.length;i++){ hsh=(hsh*31+seed.charCodeAt(i))>>>0; }
+ return RT_BG_BASE+RT_BG_POOL[hsh%RT_BG_POOL.length];
+}
+/* Effektives Platzbild: selbst hochgeladenes Foto (photoUrl) falls vorhanden, sonst eines der
+   fuenf Standardbilder. Presets tragen bewusst KEIN eigenes Default-Foto mehr, damit bei
+   Neuinstallationen nie ein mitgeliefertes/persoenliches Bild als Platzbild erscheint. */
+function RT_coursePhotoFor(key,co){
+ if(co&&co.photoUrl) return co.photoUrl;
+ return RT_stdBgFor(key, co&&co.name);
+}
 function RT_bgForKey(key,fallbackName){
  var co=key?RT_COURSES[key]:null;
  if(co&&co.bgUrls&&co.bgUrls.length) return co.bgUrls[0];
  if(co&&co.bgUrl) return co.bgUrl;
- var seed=key||fallbackName||'x';
- var hsh=0;
- for(var i=0;i<seed.length;i++){ hsh=(hsh*31+seed.charCodeAt(i))>>>0; }
- return RT_BG_BASE+RT_BG_POOL[hsh%RT_BG_POOL.length];
+ return RT_stdBgFor(key,fallbackName);
 }
 function RT_roundBgUrl(rd){
  var key=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(rd.courseName,rd):null;

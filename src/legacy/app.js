@@ -1872,11 +1872,14 @@ function AG_render(){
  h+='<div style="font-size:12px;color:var(--tx3);margin-bottom:20px;">Deine Runden, dein Handicap-Verlauf – privat und geräteübergreifend synchronisiert.</div>';
  if(AG_joinCode){
   h+='<div class="rtc" style="margin-bottom:16px;"><div class="rt-ct">Einladung</div>'+
-   '<div class="rt-cs">Du wurdest eingeladen, gemeinsam gespielte Runden in dein eigenes, privates Profil zu übernehmen.</div></div>';
-  h+='<div class="rtc"><div class="rt-ct">Mit E-Mail fortfahren</div>'+
-   '<div class="rt-cs" style="margin-bottom:8px;">Kein Passwort nötig – du bekommst einen Login-Link per E-Mail.</div>'+
-   '<span class="rt-lbl">E-Mail</span><input class="rt-inp" id="ag-em" type="email" autocomplete="email" style="margin-bottom:10px;">'+
-   '<button class="rt-btn" style="width:100%;" onclick="AG_auth(\'magic\')">Login-Link senden</button>';
+   '<div class="rt-cs">Du wurdest zu einer gemeinsamen Runde eingeladen. Melde dich an – die Einladung wird danach automatisch in dein Profil übernommen.</div></div>';
+  h+='<div class="rtc"><div class="rt-ct">Anmelden</div>'+
+   '<span class="rt-lbl">E-Mail</span><input class="rt-inp" id="ag-em" type="email" autocomplete="email" style="margin-bottom:8px;">'+
+   '<span class="rt-lbl">Passwort</span><input class="rt-inp" id="ag-pw" type="password" autocomplete="current-password" style="margin-bottom:10px;">'+
+   '<div class="rt-row"><button class="rt-btn" onclick="AG_auth(\'in\')">Anmelden</button>'+
+   '<button class="rt-btn2" onclick="AG_auth(\'up\')">Registrieren</button></div>'+
+   '<div style="text-align:right;margin-top:8px;"><a href="#" onclick="AG_auth(\'reset\');return false;" style="font-size:12px;color:var(--tx3);">Passwort vergessen?</a></div>'+
+   '<div style="text-align:center;margin-top:10px;padding-top:10px;border-top:1px solid #DCE7D4;"><a href="#" onclick="AG_auth(\'magic\');return false;" style="font-size:12px;color:var(--tx3);">Kein Passwort? Login-Link per E-Mail senden</a></div>';
   if(AG_msg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(AG_msg)+'</div>';
   h+='</div>';
  }else{

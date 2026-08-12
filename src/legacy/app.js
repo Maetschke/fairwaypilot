@@ -5770,13 +5770,14 @@ if(cd){
   h+='<div class="rtc"><div class="rt-ct">Abschläge</div><div class="rt-cs">Course Rating und Slope je Abschlag – wie recherchiert, bei Bedarf anpassen. Front, Back und 18 Loch sind unabhängige, amtlich ausgewiesene Werte – bitte alle drei einzeln aus der Course-Rating-Tabelle eintragen.</div>';
   var teeHasTwoNines = c.nines && c.nines.B && c.nines.B.lbl !== '–';
   var teeOrd=RT_teeOrderResolved(c);
+  var _teesOpen=!!RT_su.teesOpen;
+  h+='<div onclick="RT_teesToggle()" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 2px 2px;user-select:none;"><span style="color:#1F8A4D;font-size:13px;width:14px;text-align:center;">'+(_teesOpen?'▾':'▸')+'</span><span style="flex:1;font-weight:700;color:#143522;font-size:14px;">'+teeOrd.length+' Abschläge hinterlegt</span><span style="font-size:12px;color:#1F8A4D;font-weight:700;">'+(_teesOpen?'ausblenden':'anzeigen')+'</span></div>';
+  if(_teesOpen){
   teeOrd.forEach(function(ti,pos){
    var t=c.tees[ti];
-   var _teeOpen=!!(RT_su.teeOpen&&RT_su.teeOpen[ti]);
-   h+='<div style="margin-bottom:'+(_teeOpen?(teeHasTwoNines?'16':'20'):'8')+'px;">'+
-    ((teeOrd.length>1||c.tees.length>1)?'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+(teeOrd.length>1?'<div style="display:flex;gap:6px;">'+(pos>0?'<button class="rt-btn3" style="background:rgba(20,53,34,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeMove('+pos+',-1)" title="Nach oben"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+(pos<teeOrd.length-1?'<button class="rt-btn3" style="background:rgba(20,53,34,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeMove('+pos+',1)" title="Nach unten"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+'</div>':'<div></div>')+(c.tees.length>1?'<button class="rt-btn3" style="background:rgba(176,58,58,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeRemove('+ti+')" title="Abschlag entfernen">&#10005;</button>':'')+'</div>':'')+RT_teeToggleHdr(ti,t,_teeOpen);
-   if(_teeOpen){
-   h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-items:flex-end;">'+
+   h+='<div style="margin-bottom:'+(teeHasTwoNines?'16':'20')+'px;">'+
+    ((teeOrd.length>1||c.tees.length>1)?'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+(teeOrd.length>1?'<div style="display:flex;gap:6px;">'+(pos>0?'<button class="rt-btn3" style="background:rgba(20,53,34,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeMove('+pos+',-1)" title="Nach oben"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+(pos<teeOrd.length-1?'<button class="rt-btn3" style="background:rgba(20,53,34,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeMove('+pos+',1)" title="Nach unten"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+'</div>':'<div></div>')+(c.tees.length>1?'<button class="rt-btn3" style="background:rgba(176,58,58,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeRemove('+ti+')" title="Abschlag entfernen">&#10005;</button>':'')+'</div>':'')+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-items:flex-end;">'+
      '<div style="grid-column:span 2;"><span class="rt-lbl">Abschlag</span><input class="rt-inp" value="'+rtEsc(t.name)+'" oninput="RT_teeName('+ti+',this.value)"></div>'+
      '<div><span class="rt-lbl">CR (18L)</span><input class="rt-inp" id="tee-cr-'+ti+'" type="text" inputmode="decimal" value="'+rtDe((t.cr&&t.cr.A!==null&&t.cr.A!==undefined)?t.cr.A:'')+'" oninput="RT_teeNum('+ti+',\'cr\',this.value.replace(\',\',\'.\'))"></div>'+
      '<div><span class="rt-lbl">Slope (18L)</span><input class="rt-inp" id="tee-sl-'+ti+'" type="number" value="'+((t.sl&&t.sl.A!==null&&t.sl.A!==undefined)?t.sl.A:'')+'" oninput="RT_teeNum('+ti+',\'sl\',this.value)"></div>'+
@@ -5789,10 +5790,10 @@ if(cd){
      '<div><span class="rt-lbl">Slope Back</span><input class="rt-inp" id="tee-slB-'+ti+'" type="number" value="'+((t.sl&&t.sl.B!==null&&t.sl.B!==undefined)?t.sl.B:'')+'" oninput="RT_teeSide('+ti+',\'sl\',\'B\',this.value)"></div>'+
     '</div>';
    }
-   }
    h+='</div>';
   });
   h+='<button class="rt-btn2" onclick="RT_teeAdd()">+ Abschlag</button>';
+  }
   h+='</div>';
   /* Spieler */
   h+='<div class="rtc"><div class="rt-ct">Spieler</div><div class="rt-cs">HI, Abschlag und CR/Slope je Spieler &ndash; Spielvorgabe wird live berechnet</div>';
@@ -6345,6 +6346,7 @@ function RT_teeOrderResolved(c){
  for(var i=0;i<n;i++){ if(ord.indexOf(i)===-1) ord.push(i); }
  return ord;
 }
+function RT_teesToggle(){ RT_su.teesOpen=!RT_su.teesOpen; RT_render(); }
 function RT_teeToggle(ti){ if(!RT_su.teeOpen)RT_su.teeOpen={}; RT_su.teeOpen[ti]=!RT_su.teeOpen[ti]; RT_render(); }
 function RT_teeToggleHdr(ti,t,open){
  var chev=open?'▾':'▸';

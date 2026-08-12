@@ -1528,7 +1528,12 @@ function RT_setupInviteHtml(name){
  if(!sbUser||(typeof RT_isSelfName==='function'&&RT_isSelfName(name))) return '';
  var st=(typeof PL_statusFor==='function')?PL_statusFor(name):null;
  var linked=st&&st.linked_user_id;
- if(linked) return '<div style="margin-top:8px;font-size:11.5px;color:#187040;font-weight:700;">\u2713 verkn\u00fcpft \u2013 kann live mitscoren</div>';
+ if(linked){
+  var lh='<div style="margin-top:8px;font-size:11.5px;color:#187040;font-weight:700;">\u2713 verkn\u00fcpft \u2013 bekommt beim Start den Live-Link zur Runde</div>';
+  if(RT_round&&!RT_round.done){ lh+='<button class="rt-btn3" style="color:#1F8A4D;font-weight:700;padding:4px 0;font-size:12px;" onclick="RT_inviteLinkedNow(\''+rtJsEsc(name)+'\')">\ud83d\udcf2 Jetzt Live-Link senden</button>'; }
+  if(RT_state.liveInvMsgFor===name && PL_msg){ lh+='<div class="rt-warn" style="margin-top:4px;margin-bottom:0;font-size:11px;">'+rtEsc(PL_msg)+'</div>'; }
+  return lh;
+ }
  var emailMode=RT_state.plEmailFor===name;
  var h='<div style="margin-top:8px;">';
  if(st&&st.invite_email){ h+='<div style="font-size:11.5px;color:#187040;font-weight:700;margin-bottom:4px;">✉️ Eingeladen: '+rtEsc(st.invite_email)+' – bekommt beim Start den Link</div>'; }
@@ -6702,6 +6707,19 @@ async function RT_research(){
  RT_state.busy=false;RT_render();
 }
 
+async function RT_inviteLinkedNow(name){
+ var st=(typeof PL_statusFor==='function')?PL_statusFor(name):null;
+ if(!st||!st.linked_user_id||!RT_round){ return; }
+ RT_state.liveInvMsgFor=name; PL_msg='Live-Link wird gesendet \u2026'; RT_render();
+ try{
+  var inviter=(typeof RT_myDisplayName==='function')?RT_myDisplayName():'Ein Mitspieler';
+  var label=(RT_round.courseName||'einer Runde')+(RT_round.date?(' am '+(''+RT_round.date).split('-').reverse().join('.')):'');
+  var res=await sb.functions.invoke('send-invite',{body:{toUserId:st.linked_user_id,playerName:name,inviterName:inviter,roundLabel:label,joinCode:st.invite_code||'',roundId:RT_round.id}});
+  if(res&&res.error) throw res.error;
+  PL_msg=name+' wurde der Live-Link gesendet.';
+ }catch(e){ PL_msg='Senden fehlgeschlagen: '+((e&&e.message)||e); }
+ RT_render();
+}
 async function RT_sendRoundInvites(rd){
  if(!sb||!sbUser||!rd||!rd.players) return;
  var inviter=(typeof RT_myDisplayName==='function')?RT_myDisplayName():'Ein Mitspieler';
@@ -6712,9 +6730,9 @@ async function RT_sendRoundInvites(rd){
   if(!pn||(typeof RT_isSelfName==='function'&&RT_isSelfName(pn))) continue;
   if(rd.invitesSentTo.indexOf(pn)>=0) continue;
   var st=(typeof PL_statusFor==='function')?PL_statusFor(pn):null;
-  if(!st||!st.invite_email) continue;
+  if(!st||!st.linked_user_id) continue;   // verknuepfte Spieler bekommen beim Start den Live-Link (Nicht-Verknuepfte: E-Mail-Einladung beim Klick)
   try{
-   var res=await sb.functions.invoke('send-invite',{body:{to:st.invite_email,playerName:pn,inviterName:inviter,roundLabel:label,joinCode:st.invite_code,roundId:rd.id}});
+   var res=await sb.functions.invoke('send-invite',{body:{toUserId:st.linked_user_id,playerName:pn,inviterName:inviter,roundLabel:label,joinCode:st.invite_code||'',roundId:rd.id}});
    if(!res||!res.error) rd.invitesSentTo.push(pn);
   }catch(e){}
  }
@@ -6752,6 +6770,7 @@ function RT_start(){
   })};
  rtSet(RT_ACT,RT_round);
  if(sb&&sbUser){ try{ sbPushRound(RT_round); }catch(e){} }
+ try{ RT_sendRoundInvites(RT_round); }catch(e){}
  RT_go('play');
 }
 function RT_discard(){

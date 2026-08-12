@@ -1474,6 +1474,7 @@ function RT_handoffScoring(uid){
  rd.scorerId=uid;
  RT_pendingHandoff=null;
  rtSet(RT_ACT,rd); RT_syncActiveToSaved();
+ try{ sbPushCanonical(rd); }catch(e){}
  if(RT_RT.ch){ try{ RT_RT.ch.send({type:'broadcast',event:'state',payload:{data:rd}}); }catch(e){} }
  RT_render();
 }
@@ -1532,6 +1533,7 @@ function RT_reclaimScoring(){
  rd.scorerId=sbUser.id;
  RT_pendingHandoff=null;
  rtSet(RT_ACT,rd); RT_syncActiveToSaved();
+ try{ sbPushCanonical(rd); }catch(e){}
  if(RT_RT.ch){ try{ RT_RT.ch.send({type:'broadcast',event:'state',payload:{data:rd}}); }catch(e){} }
  RT_render();
 }
@@ -1798,6 +1800,26 @@ async function sbPushRound(rd){
   var r=await sb.from('rounds').upsert({id:rd.id,date:rd.date,course_name:rd.courseName,data:rd});
   if(r.error)throw r.error;
  }catch(e){sbMsg='Cloud-Speichern fehlgeschlagen: '+rtEsc(e.message||e);RT_render();}
+}
+/* Kanonisches Schreiben einer GETEILTEN Runde: der aktuelle Scorer schreibt IMMER in die EINE
+   Eigentuemer-Zeile - keine Dubletten, alle lesen/schreiben dieselbe Wahrheit. Bin ich der
+   Eigentuemer -> normaler Upsert meiner Zeile. Bin ich ein verknuepfter Mitspieler (nach
+   Uebergabe) -> plain UPDATE der Eigentuemer-Zeile (RLS rounds_update_shared_active erlaubt das
+   bei aktiver Runde inkl. Beenden; ein Upsert wuerde an der INSERT-Policy scheitern bzw. eine
+   eigene Dublette anlegen). Weiches Fehlschlagen: der Live-Broadcast traegt den Stand ohnehin. */
+async function sbPushCanonical(rd){
+ if(!sb||!sbUser||!rd) return;
+ var owner=RT_roundOwners[rd.id];
+ var mine=(!owner||owner===sbUser.id);
+ try{
+  if(mine){
+   var r=await sb.from('rounds').upsert({id:rd.id,date:rd.date,course_name:rd.courseName,data:rd});
+   if(r.error) throw r.error;
+  }else{
+   var r2=await sb.from('rounds').update({date:rd.date,course_name:rd.courseName,data:rd}).eq('id',rd.id).eq('user_id',owner);
+   if(r2.error) throw r2.error;
+  }
+ }catch(e){}
 }
 async function sbDelRound(id){if(!sb||!sbUser)return;try{await sb.from('rounds').delete().eq('id',id);}catch(e){}}
 async function sbDelCourse(id){if(!sb||!sbUser)return;try{await sb.from('courses').delete().eq('id',id);}catch(e){}}
@@ -7090,10 +7112,9 @@ function RT_autosaveHole(rd,prevIdx){
  if(rd.cur===prevIdx) return;
  if(!RT_holeComplete(rd,prevIdx)) return;
  if(!sb||!sbUser) return;
- /* Eine FREMDE, geteilte Runde nie in die Cloud pushen - der Client wuerde sonst eine eigene
-    Kopie (user_id = ich) mit derselben id anlegen (Dublette). Der Mitspieler-Stand geht live
-    ueber Broadcast; die kanonische Zeile schreibt allein der Eigentuemer. */
- if(RT_isForeignRound(rd)) return;
+ /* Geteilte Runde: nur der aktuelle Scorer schreibt, und zwar in die kanonische Eigentuemer-
+    Zeile. Zuschauer schreiben nie (keine Dubletten). Solo-Runde: normaler Push. */
+ if(RT_roundIsShared(rd)){ if(!RT_amScorer(rd)) return; sbPushCanonical(rd); return; }
  sbPushRound(rd);
 }
 function RT_setHole(i){
@@ -7156,11 +7177,10 @@ function RT_syncActiveToSaved(){
 var RT_liveDbTs=0, RT_liveDbPending=false;
 function RT_liveDbPush(){
  var rd=RT_round; if(!rd||rd.done||!sb||!sbUser) return;
- if(RT_isForeignRound(rd)) return;
  if(!RT_roundIsShared(rd)||!RT_amScorer(rd)) return;
  var now=Date.now();
- if(now-RT_liveDbTs>2500){ RT_liveDbTs=now; try{ sbPushRound(rd); }catch(e){} }
- else if(!RT_liveDbPending){ RT_liveDbPending=true; setTimeout(function(){ RT_liveDbPending=false; RT_liveDbTs=Date.now(); try{ if(RT_round&&!RT_round.done&&!RT_isForeignRound(RT_round)&&RT_amScorer(RT_round)) sbPushRound(RT_round); }catch(e){} }, 2600); }
+ if(now-RT_liveDbTs>2500){ RT_liveDbTs=now; try{ sbPushCanonical(rd); }catch(e){} }
+ else if(!RT_liveDbPending){ RT_liveDbPending=true; setTimeout(function(){ RT_liveDbPending=false; RT_liveDbTs=Date.now(); try{ if(RT_round&&!RT_round.done&&RT_roundIsShared(RT_round)&&RT_amScorer(RT_round)) sbPushCanonical(RT_round); }catch(e){} }, 2600); }
 }
 /* Mitspieler-seitiger Poll-Fallback: solange eine FREMDE, aktive Runde auf dem Spielscreen
    offen ist, alle 5s die Owner-Zeile lesen und bei Aenderung anwenden. Zusammen mit dem
@@ -7168,7 +7188,7 @@ function RT_liveDbPush(){
 var RT_livePoll=null, RT_livePollId=null;
 function RT_livePollSync(){
  var rd=RT_round;
- var active=!!(rd&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_isForeignRound(rd));
+ var active=!!(rd&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_roundIsShared(rd)&&!RT_amScorer(rd));
  if(active){
   if(RT_livePollId!==rd.id){
    if(RT_livePoll){ clearInterval(RT_livePoll); RT_livePoll=null; }
@@ -7283,7 +7303,7 @@ function RT_finish(){
  if(idx>=0){ saved[idx]=RT_round; } else { saved.push(RT_round); }
  RT_editingExisting=false;
  rtSet(RT_KEY,saved);
- sbPushRound(RT_round);
+ if(RT_roundIsShared(RT_round)&&RT_amScorer(RT_round)){ try{ sbPushCanonical(RT_round); }catch(e){} } else { sbPushRound(RT_round); }
  RT_rtBroadcastState();
  rtDel(RT_ACT);
  if(RT_round.promoted) RT_hydrateHistoricalData();

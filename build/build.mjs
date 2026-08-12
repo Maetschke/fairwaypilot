@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync, cpSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, cpSync, rmSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -56,3 +56,6 @@ cpSync(r('assets/course-images'), resolve(pub, 'course-images'), { recursive: tr
 try { cpSync(r('assets/shots'), resolve(pub, 'shots'), { recursive: true }); } catch (e) { /* Landing-Screenshots optional */ }
 try { cpSync(r('assets/vendor'), resolve(pub, 'vendor'), { recursive: true }); } catch (e) { /* vendor optional */ }
 console.log('public/ mit Icons, Rundenbildern und Platzbildern erzeugt.');
+// macOS-Muell nicht mitdeployen: .DS_Store rekursiv aus public/ entfernen
+const stripDS = (dir) => { for (const e of readdirSync(dir)) { const fp = resolve(dir, e); const st = statSync(fp); if (st.isDirectory()) stripDS(fp); else if (e === '.DS_Store') rmSync(fp, { force: true }); } };
+try { stripDS(pub); console.log('public/ von .DS_Store bereinigt.'); } catch (e) {}

@@ -1529,9 +1529,15 @@ function RT_setupInviteHtml(name){
  var st=(typeof PL_statusFor==='function')?PL_statusFor(name):null;
  var linked=st&&st.linked_user_id;
  if(linked){
-  var lh='<div style="margin-top:8px;font-size:11.5px;color:#187040;font-weight:700;">\u2713 verkn\u00fcpft \u2013 bekommt beim Start den Live-Link zur Runde</div>';
-  if(RT_round&&!RT_round.done){ lh+='<button class="rt-btn3" style="color:#1F8A4D;font-weight:700;padding:4px 0;font-size:12px;" onclick="RT_inviteLinkedNow(\''+rtJsEsc(name)+'\')">\ud83d\udcf2 Jetzt Live-Link senden</button>'; }
-  if(RT_state.liveInvMsgFor===name && PL_msg){ lh+='<div class="rt-warn" style="margin-top:4px;margin-bottom:0;font-size:11px;">'+rtEsc(PL_msg)+'</div>'; }
+  var pp=(RT_su&&RT_su.players)?RT_su.players.filter(function(x){return x.name===name;})[0]:null;
+  var on=!!(pp&&pp.liveInvite);
+  var lh='<div style="margin-top:8px;font-size:11.5px;color:#187040;font-weight:700;">\u2713 verkn\u00fcpft</div>';
+  if(on){
+   lh+='<div style="margin-top:4px;font-size:11.5px;color:#187040;font-weight:700;">\ud83d\udcf2 Live-Einladung aktiv \u2013 Link geht beim Start der Runde raus. <a href="#" onclick="RT_toggleLiveInvite(\''+rtJsEsc(name)+'\');return false;" style="color:#8A9C8E;font-weight:600;">abbrechen</a></div>';
+  }else{
+   lh+='<button class="rt-btn3" style="color:#1F8A4D;font-weight:700;padding:4px 0;font-size:12px;" onclick="RT_toggleLiveInvite(\''+rtJsEsc(name)+'\')">\ud83d\udcf2 Zur Live-Runde einladen</button>';
+   lh+='<div style="font-size:11px;color:#8A9C8E;margin-top:2px;">Ohne Einladung wird '+rtEsc(name)+' nur gewertet \u2013 die Ergebnisse sieht sie/er erst beim Beenden der Runde.</div>';
+  }
   return lh;
  }
  var emailMode=RT_state.plEmailFor===name;
@@ -6740,6 +6746,11 @@ async function RT_research(){
  RT_state.busy=false;RT_render();
 }
 
+function RT_toggleLiveInvite(name){
+ if(!RT_su||!RT_su.players)return;
+ for(var i=0;i<RT_su.players.length;i++){ if(RT_su.players[i].name===name){ RT_su.players[i].liveInvite=!RT_su.players[i].liveInvite; break; } }
+ RT_render();
+}
 async function RT_inviteLinkedNow(name){
  var st=(typeof PL_statusFor==='function')?PL_statusFor(name):null;
  if(!st||!st.linked_user_id||!RT_round){ return; }
@@ -6763,7 +6774,8 @@ async function RT_sendRoundInvites(rd){
   if(!pn||(typeof RT_isSelfName==='function'&&RT_isSelfName(pn))) continue;
   if(rd.invitesSentTo.indexOf(pn)>=0) continue;
   var st=(typeof PL_statusFor==='function')?PL_statusFor(pn):null;
-  if(!st||!st.linked_user_id) continue;   // verknuepfte Spieler bekommen beim Start den Live-Link (Nicht-Verknuepfte: E-Mail-Einladung beim Klick)
+  if(!st||!st.linked_user_id) continue;
+  if(!rd.players[i].liveInvite) continue;   // nur wenn aktiv zur Live-Runde eingeladen
   try{
    var res=await sb.functions.invoke('send-invite',{body:{toUserId:st.linked_user_id,playerName:pn,inviterName:inviter,roundLabel:label,joinCode:st.invite_code||'',roundId:rd.id}});
    if(!res||!res.error) rd.invitesSentTo.push(pn);
@@ -6797,7 +6809,7 @@ function RT_start(){
    var teeName=p.tee>=0&&cd.tees[p.tee]?cd.tees[p.tee].name:'Manuell';
    var mk=function(v){var a=[];for(var i=0;i<cd.cnt;i++)a.push(v);return a;};
    var mkEmpty=function(){var a=[];for(var i=0;i<cd.cnt;i++)a.push([]);return a;};
-   return{name:p.name, hi:parseFloat(p.hi), tee:teeName, cr:cr, sl:sl,
+   return{name:p.name, hi:parseFloat(p.hi), tee:teeName, cr:cr, sl:sl, liveInvite:!!p.liveInvite,
     ph:RT_ph(parseFloat(p.hi),cr,sl,cd.parSum,cd.cnt),
     sc:mk(null), pu:mk(null), fw:mk(null), pe:mk(0), sa:mk(0), cx:mk(0), pins:mkEmpty()};
   })};

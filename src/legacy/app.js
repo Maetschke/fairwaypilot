@@ -9769,6 +9769,11 @@ if('serviceWorker' in navigator){ window.addEventListener('load',function(){ nav
 function RT_flushActive(){ try{ if(RT_round && !RT_round.done) rtSet(RT_ACT,RT_round); }catch(e){} }
 window.addEventListener('pagehide',RT_flushActive);
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') RT_flushActive(); });
+/* Rueckkehr in den Vordergrund (Firefox/iOS verwirft Hintergrund-Tabs aggressiv und laesst
+   das Auth-Token ablaufen -> Nutzer 'fliegt raus'). Session hier neu abrufen; getSession()
+   erneuert ein abgelaufenes Token, statt still abzumelden. onAuthStateChange rendert danach. */
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible' && sb){ try{ sb.auth.getSession().then(function(r){ try{ var u=r&&r.data&&r.data.session&&r.data.session.user; if(u) sbUser=u; }catch(e){} }); }catch(e){} } });
+window.addEventListener('focus',function(){ if(sb){ try{ sb.auth.getSession(); }catch(e){} } });
 
 /* ============================================================
    Premium / Paywall (Stripe) — Client-Entitlement + Gating

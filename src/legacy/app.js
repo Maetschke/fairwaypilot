@@ -1485,7 +1485,7 @@ function RT_handoffMenu(){
  function close(){ if(ov&&ov.parentNode) ov.parentNode.removeChild(ov); }
  ov.addEventListener('click',function(e){ if(e.target===ov) close(); });
  document.getElementById('rt-ho-cancel').onclick=close;
- Array.prototype.forEach.call(ov.querySelectorAll('.rt-ho-opt'),function(b){ b.onclick=function(){ var uid=b.dataset.uid; close(); RT_pageConfirm('Scoringkarte \u00fcbergeben? Danach tr\u00e4gt der andere Spieler ein, du siehst nur mit.', function(){ RT_handoffScoring(uid); }); }; });
+ Array.prototype.forEach.call(ov.querySelectorAll('.rt-ho-opt'),function(b){ b.onclick=function(){ var uid=b.dataset.uid; close(); RT_pageConfirm('Scoringkarte \u00fcbergeben? Danach tr\u00e4gt der andere Spieler ein, du siehst nur mit.', function(){ RT_handoffScoring(uid); }, '\u00dcbergeben', '#1F8A4D'); }; });
 }
 /* Einladung im Runden-Setup: neuen/vorhandenen Mitspieler VOR dem Spiel per E-Mail einladen und
    verknuepfen (nutzt dieselbe PL_-Mechanik wie die Konto-Seite). */
@@ -1554,7 +1554,7 @@ function RT_rtOnRequest(payload){
  try{ RT_render(); }catch(e){}
  RT_pageConfirm(rtEsc(nm)+' m\u00f6chte die Scoringkarte \u00fcbernehmen. \u00dcbergeben?', function(){
   if(payload&&payload.uid) RT_handoffScoring(payload.uid);
- }, '\u00dcbergeben');
+ }, '\u00dcbergeben', '#1F8A4D');
 }
 function RT_setupInviteHtml(name){
  if(!sbUser||(typeof RT_isSelfName==='function'&&RT_isSelfName(name))) return '';
@@ -2971,11 +2971,11 @@ function RT_sizeRotatedMap(el,rotDeg){
  el.style.left=Math.round((W-nw)/2)+'px'; el.style.top=Math.round((H-nh)/2)+'px';
 }
 var RT_fullSelPin=null,RT_fullTapIdx=null,RT_fullTapT=0;
-function RT_pageConfirm(msg,onOk,okLabel){
+function RT_pageConfirm(msg,onOk,okLabel,okColor){
  var ex=document.getElementById('rt-pageconfirm'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
  var ov=document.createElement('div'); ov.id='rt-pageconfirm';
  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(8,20,12,.42);display:flex;align-items:center;justify-content:center;padding:24px;';
- ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:340px;width:100%;padding:20px 20px 14px;box-shadow:0 12px 44px rgba(0,0,0,.32);font-family:Inter,-apple-system,sans-serif;">'+'<div style="font-size:15px;color:#143522;font-weight:600;line-height:1.35;margin-bottom:16px;">'+msg+'</div>'+'<div style="display:flex;gap:10px;justify-content:flex-end;">'+'<button id="rt-pc-cancel" style="padding:9px 16px;border-radius:10px;border:1px solid #DCE7D4;background:#fff;color:#3C5546;font-weight:600;font-size:14px;cursor:pointer;">Abbrechen</button>'+'<button id="rt-pc-ok" style="padding:9px 18px;border-radius:10px;border:none;background:#B03A3A;color:#fff;font-weight:700;font-size:14px;cursor:pointer;">'+(okLabel||'Löschen')+'</button>'+'</div></div>';
+ ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:340px;width:100%;padding:20px 20px 14px;box-shadow:0 12px 44px rgba(0,0,0,.32);font-family:Inter,-apple-system,sans-serif;">'+'<div style="font-size:15px;color:#143522;font-weight:600;line-height:1.35;margin-bottom:16px;">'+msg+'</div>'+'<div style="display:flex;gap:10px;justify-content:flex-end;">'+'<button id="rt-pc-cancel" style="padding:9px 16px;border-radius:10px;border:1px solid #DCE7D4;background:#fff;color:#3C5546;font-weight:600;font-size:14px;cursor:pointer;">Abbrechen</button>'+'<button id="rt-pc-ok" style="padding:9px 18px;border-radius:10px;border:none;background:'+(okColor||'#B03A3A')+';color:#fff;font-weight:700;font-size:14px;cursor:pointer;">'+(okLabel||'Löschen')+'</button>'+'</div></div>';
  document.body.appendChild(ov);
  function close(){ if(ov&&ov.parentNode) ov.parentNode.removeChild(ov); }
  ov.addEventListener('click',function(e){ if(e.target===ov) close(); });

@@ -2028,11 +2028,21 @@ async function AG_claim(){
    Eintraege). */
 async function AG_claimByEmail(){
  if(!sb||!sbUser)return;
- try{
-  var r=await sb.rpc('claim_by_email');
-  if(r.error)throw r.error;
-  if(r.data&&r.data.length){ await sbPull(); await PL_load(); RT_loadConnections(); AG_render(); }
- }catch(e){}
+ /* Bis zu 3 Versuche mit Backoff: der Claim laeuft nur einmal beim Login, und ein transienter
+    Fehler (z.B. PostgREST laedt gerade seinen Schema-Cache nach einer DDL-Aenderung, oder ein
+    kurzer Netzaussetzer) wuerde die Einladung sonst still unverknuepft lassen. Idempotent -
+    ein erfolgreicher Lauf (auch ohne Treffer) beendet die Schleife sofort. */
+ for(var attempt=0;attempt<3;attempt++){
+  try{
+   var r=await sb.rpc('claim_by_email');
+   if(r.error)throw r.error;
+   if(r.data&&r.data.length){ await sbPull(); await PL_load(); RT_loadConnections(); AG_render(); }
+   return;
+  }catch(e){
+   if(attempt>=2) return;
+   await new Promise(function(res){ setTimeout(res,1500*(attempt+1)); });
+  }
+ }
 }
 
 /* Manuelles Gegenstueck zu AG_claim(): nimmt den Code direkt aus einem Eingabefeld statt aus

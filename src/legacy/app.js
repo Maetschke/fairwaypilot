@@ -1907,6 +1907,7 @@ function AG_errText(e){
  if(l.indexOf('invalid login')>=0||l.indexOf('invalid credentials')>=0) return 'E-Mail oder Passwort ist nicht korrekt. Tipp: „Passwort vergessen?“ setzt es neu.';
  if(l.indexOf('already registered')>=0||l.indexOf('already been registered')>=0||l.indexOf('user already')>=0) return 'Diese E-Mail ist bereits registriert – bitte melde dich an (oder nutze „Passwort vergessen?“).';
  if(l.indexOf('email not confirmed')>=0) return 'Bitte zuerst den Bestätigungslink in deiner Registrierungs-E-Mail öffnen.';
+ if(l.indexOf('you can only request')>=0||l.indexOf('security purposes')>=0) return 'Bitte kurz warten (ca. 30 Sekunden) und den Login-Link erneut anfordern.';
  if(l.indexOf('rate limit')>=0||l.indexOf('too many')>=0) return 'Zu viele Versuche in kurzer Zeit – bitte kurz warten und erneut versuchen.';
  if(l.indexOf('password should be')>=0||l.indexOf('at least 6')>=0) return 'Das Passwort muss mindestens 6 Zeichen haben.';
  return m;
@@ -1921,7 +1922,7 @@ async function AG_auth(mode){
    var r=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:redirectTo}});
    if(r.error)throw r.error;
    AG_msg='Login-Link verschickt – bitte E-Mail-Postfach öffnen und den Link antippen.';
-  }catch(e){ AG_msg='Versand fehlgeschlagen: '+(e.message||e); }
+  }catch(e){ AG_msg=AG_errText(e); }
   AG_render();
   return;
  }

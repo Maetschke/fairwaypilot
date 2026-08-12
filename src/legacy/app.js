@@ -2300,8 +2300,18 @@ function RT_rUser(){
     wird (siehe RT_defSu). Fr\u00fcher war hier fest "mark" hinterlegt - das war nur fuer Marks
     eigenes Konto korrekt und h\u00e4tte bei jedem anderen Konto (z.B. einem eingeladenen
     Mitspieler mit eigenem Account) nicht gegriffen. */
+ /* Nur ECHTE Mitspieler in der Einladen-Liste: wer in mindestens einer noch vorhandenen Runde
+    vorkommt ODER verknuepft/eingeladen ist (player_link vorhanden). Reine lokale Roster-Reste
+    (in RT_PLAYERSAV_KEY, aber in keiner Runde und ohne Verknuepfung) - "Karteileichen" - fallen
+    dadurch automatisch raus, ohne manuelles Entfernen. Das Runden-Setup-Roster bleibt davon
+    unberuehrt (dort ist die Schnell-Auswahl auch fuer selten gespielte Mitspieler gewollt). */
+ var _invNorm=function(x){ return (x||'').trim().toLowerCase(); };
+ var _invInRounds={}; var _hpn=RT_historicPlayerNames(); Object.keys(_hpn).forEach(function(nm){ _invInRounds[_invNorm(nm)]=1; });
  var plSaved=(RT_getSavedPlayers()||[]).filter(function(sp){
- return !RT_isSelfName(sp.name);
+ if(RT_isSelfName(sp.name)) return false;
+ if(_invInRounds[_invNorm(sp.name)]) return true;
+ var st=(typeof PL_statusFor==='function')?PL_statusFor(sp.name):null;
+ return !!(st&&(st.linked_user_id||st.invite_email||st.invite_code));
 });
  plSaved=RT_dedupInvitees(plSaved);
   if(!plSaved.length){h+='<div class="rt-note">Noch keine einladbaren Mitspieler. Lege sie beim Anlegen einer Runde \u00fcber "+ Neuer Spieler" an.</div>';}

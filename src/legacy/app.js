@@ -1531,13 +1531,14 @@ function RT_setupInviteHtml(name){
  if(linked) return '<div style="margin-top:8px;font-size:11.5px;color:#187040;font-weight:700;">\u2713 verkn\u00fcpft \u2013 kann live mitscoren</div>';
  var emailMode=RT_state.plEmailFor===name;
  var h='<div style="margin-top:8px;">';
- h+='<button class="rt-btn3" style="color:#1F8A4D;font-weight:700;padding:4px 0;font-size:12px;" onclick="PL_showEmail(\''+rtJsEsc(name)+'\')">'+(emailMode?'Abbrechen':(st?'Erneut per E-Mail einladen':'\u2709\ufe0f Per E-Mail einladen (gemeinsam scoren)'))+'</button>';
+ if(st&&st.invite_email){ h+='<div style="font-size:11.5px;color:#187040;font-weight:700;margin-bottom:4px;">✉️ Eingeladen: '+rtEsc(st.invite_email)+' – bekommt beim Start den Link</div>'; }
+ h+='<button class="rt-btn3" style="color:#1F8A4D;font-weight:700;padding:4px 0;font-size:12px;" onclick="PL_showEmail(\''+rtJsEsc(name)+'\')">'+(emailMode?'Abbrechen':(st?'E-Mail ändern':'\u2709\ufe0f Einladen (E-Mail + Live-Zugriff)'))+'</button>';
  if(emailMode){
   h+='<div style="display:flex;gap:8px;align-items:center;margin-top:6px;">'
-   +'<input class="rt-inp" id="'+PL_domId(name)+'" type="email" placeholder="E-Mail von '+rtEsc(name)+'" style="flex:1;margin:0;">'
-   +'<button class="rt-btn" style="flex:none;width:auto;padding:10px 14px;margin:0;" onclick="PL_sendInvite(\''+rtJsEsc(name)+'\')">Senden</button></div>';
+   +'<input class="rt-inp" id="'+PL_domId(name)+'" type="email" value="'+rtEsc((st&&st.invite_email)||'')+'" placeholder="E-Mail von '+rtEsc(name)+'" style="flex:1;margin:0;">'
+   +'<button class="rt-btn" style="flex:none;width:auto;padding:10px 14px;margin:0;" onclick="PL_sendInvite(\''+rtJsEsc(name)+'\')">Einladen</button></div>';
   if(PL_msg) h+='<div class="rt-warn" style="margin-top:6px;margin-bottom:0;font-size:11px;">'+rtEsc(PL_msg)+'</div>';
- }
+ }else if(!st||!st.invite_email){ h+='<div style="font-size:11px;color:#8A9C8E;margin-top:2px;">Ohne Einladung wird '+rtEsc(name)+' nur gewertet (kein Zugriff, keine E-Mail).</div>'; }
  h+='</div>';
  return h;
 }
@@ -1712,6 +1713,7 @@ async function sbPull(firstEverLogin){
   if(RT_curTab==='hi'||RT_curTab==='detail'){ showTab(RT_curTab); }
  }catch(e){sbMsg='Sync-Fehler: '+rtEsc(e.message||e);}
  RT_render();
+ try{ RT_tryOpenPendingRound(); }catch(e){}
 }
 async function sbPushRound(rd){
  if(!sb||!sbUser)return;
@@ -1735,6 +1737,7 @@ async function sbPushCourse(id,courseObj){
 /* ===== Auth-Gate: eigene Anmeldeseite + Mitspieler-Einladungen ===== */
 var AG_KEY='golflog_guest_v1';
 var AG_PENDING_JOIN_KEY='golflog_pending_join_v1';
+var AG_PENDING_ROUND_KEY='golflog_pending_round_v1', AG_pendingRound=null;
 var AG_joinCode=null;
 /* Der Einladungscode wird zusaetzlich dauerhaft (localStorage) gemerkt, nicht nur im
    JS-Speicher. Grund: verlangt Supabase eine E-Mail-Bestaetigung bei der Registrierung,
@@ -1749,6 +1752,9 @@ var AG_joinCode=null;
   var fromUrl=qs.get('join');
   if(fromUrl){ AG_joinCode=fromUrl; localStorage.setItem(AG_PENDING_JOIN_KEY,fromUrl); }
   else{ var pending=localStorage.getItem(AG_PENDING_JOIN_KEY); if(pending) AG_joinCode=pending; }
+  var rndUrl=qs.get('round');
+  if(rndUrl){ AG_pendingRound=rndUrl; localStorage.setItem(AG_PENDING_ROUND_KEY,rndUrl); }
+  else{ var pr=localStorage.getItem(AG_PENDING_ROUND_KEY); if(pr) AG_pendingRound=pr; }
  }catch(e){}
 })();
 var AG_msg='';
@@ -2031,9 +2037,9 @@ async function PL_sendInvite(name){
  var subject='Einladung zu FairwayPilot';
  var body='Hallo '+name+',\n\nich m\u00f6chte dich zu FairwayPilot einladen, damit unsere gemeinsam gespielten Golfrunden auch in deinem eigenen, privaten Profil erscheinen.\n\n\u00d6ffne einfach diesen Link, um dich zu registrieren:\n'+link+'\n\nViele Gr\u00fc\u00dfe';
  var mailto='mailto:'+encodeURIComponent(em)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
- window.location.href=mailto;
+ 
  RT_state.plEmailFor=null;
- PL_msg='Mail-App f\u00fcr '+rtEsc(em)+' ge\u00f6ffnet.';
+ PL_msg=rtEsc(name)+' ist eingeladen – beim Start der Runde geht die E-Mail mit dem Link an '+rtEsc(em)+' raus.';
  RT_render();
 }
 function sbCard(){
@@ -6671,6 +6677,37 @@ async function RT_research(){
  RT_state.busy=false;RT_render();
 }
 
+async function RT_sendRoundInvites(rd){
+ if(!sb||!sbUser||!rd||!rd.players) return;
+ var inviter=(typeof RT_myDisplayName==='function')?RT_myDisplayName():'Ein Mitspieler';
+ var label=(rd.courseName||'einer Runde')+(rd.date?(' am '+(''+rd.date).split('-').reverse().join('.')):'');
+ rd.invitesSentTo=rd.invitesSentTo||[];
+ for(var i=0;i<rd.players.length;i++){
+  var pn=rd.players[i].name;
+  if(!pn||(typeof RT_isSelfName==='function'&&RT_isSelfName(pn))) continue;
+  if(rd.invitesSentTo.indexOf(pn)>=0) continue;
+  var st=(typeof PL_statusFor==='function')?PL_statusFor(pn):null;
+  if(!st||!st.invite_email) continue;
+  try{
+   var res=await sb.functions.invoke('send-invite',{body:{to:st.invite_email,playerName:pn,inviterName:inviter,roundLabel:label,joinCode:st.invite_code,roundId:rd.id}});
+   if(!res||!res.error) rd.invitesSentTo.push(pn);
+  }catch(e){}
+ }
+ try{ if(RT_round&&RT_round.id===rd.id) rtSet(RT_ACT,rd); if(sb&&sbUser) sbPushRound(rd); }catch(e){}
+}
+function RT_tryOpenPendingRound(){
+ try{
+  if(!AG_pendingRound) return;
+  var rounds=rtGet(RT_KEY)||[];
+  var hit=rounds.some(function(r){ return r&&r.id===AG_pendingRound; });
+  if(hit){
+   var id=AG_pendingRound; AG_pendingRound=null;
+   try{ localStorage.removeItem(AG_PENDING_ROUND_KEY); }catch(e){}
+   try{ var u=new URL(window.location.href); u.searchParams.delete('round'); window.history.replaceState({},'',u.toString()); }catch(e){}
+   if(typeof RT_openView==='function') RT_openView(id);
+  }
+ }catch(e){}
+}
 function RT_start(){
  var cd=RT_courseData(); if(!cd)return;
  var si=cd.si;
@@ -6689,6 +6726,8 @@ function RT_start(){
     sc:mk(null), pu:mk(null), fw:mk(null), pe:mk(0), sa:mk(0), cx:mk(0), pins:mkEmpty()};
   })};
  rtSet(RT_ACT,RT_round);
+ if(sb&&sbUser){ try{ sbPushRound(RT_round); }catch(e){} }
+ try{ RT_sendRoundInvites(RT_round); }catch(e){}
  RT_go('play');
 }
 function RT_discard(){

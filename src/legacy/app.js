@@ -8699,9 +8699,9 @@ function RT_TRC_colRGB(){ var c=(RT_TRC.col||'#F2C230').replace('#',''); if(c.le
 function RT_TRC_strokeTrace(ctx,w,h,pr,baseW){
  var rgb=RT_TRC_colRGB(); var N=160; var prev=null;
  ctx.lineJoin='round'; ctx.lineCap='round';
- var wS=baseW*2.4, wE=baseW*0.45;   // breit am Ball -> duenn zum Ziel
+ var wS=baseW*3.6, wE=baseW*0.45;   // Start ~50% breiter, duenn zum Ziel
  for(var i=0;i<=N;i++){ var t=i/N; if(t>pr) break; var p=RT_TRC_path(t); var X=p.x*w, Y=p.y*h;
-  if(prev){ var a=0.40+0.60*t; var lw=Math.max(1,wS+(wE-wS)*t);  // transparent am Ball -> klar zum Ziel
+  if(prev){ var a=Math.min(1,0.45+1.0*t); var lw=Math.max(1,wS+(wE-wS)*t);  // Start leicht transparent -> zum Ziel volle Deckkraft
    ctx.strokeStyle='rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a.toFixed(3)+')'; ctx.lineWidth=lw;
    ctx.beginPath(); ctx.moveTo(prev[0],prev[1]); ctx.lineTo(X,Y); ctx.stroke(); }
   prev=[X,Y];

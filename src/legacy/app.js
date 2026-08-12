@@ -1562,6 +1562,15 @@ function RT_rtBroadcastState(){
 }
 function RT_rtApplyState(nd){
  if(!nd||!nd.id) return;
+ /* Zuschauer (nicht der aktuelle Scorer) darf eigenstaendig durch die Loecher blaettern:
+    seinen lokal betrachteten Loch-Index (cur) behalten, statt bei jedem Broadcast/Poll auf das
+    Loch des Scorers gezogen zu werden. Nur die Score-Daten werden uebernommen. */
+ try{
+  if(RT_round && RT_round.id===nd.id && typeof RT_amScorer==='function' && !RT_amScorer(nd)){
+   var _kc=RT_round.cur, _cnt=nd.cnt||(nd.par?nd.par.length:0)||999;
+   if(typeof _kc==='number' && _kc>=0 && _kc<_cnt) nd.cur=_kc;
+  }
+ }catch(e){}
  var saved=rtGet(RT_KEY)||[]; var found=false;
  for(var i=0;i<saved.length;i++){ if(saved[i].id===nd.id){ saved[i]=nd; found=true; break; } }
  if(!found) saved.push(nd);

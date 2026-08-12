@@ -3335,8 +3335,15 @@ function RT_namesLikelySame(a,b){
    RT_confirmSelfName). Wird genutzt, um Kontakte aus der Einladen-/Mitspieler-Auswahl herauszu-
    filtern, damit man sich nicht selbst einladen kann. */
 function RT_isSelfName(name){
- var my=RT_myDisplayName();
- if(RT_normName(name)===RT_normName(my)) return true;
+ var nn=RT_normName(name); if(!nn) return false;
+ if(nn===RT_normName(RT_myDisplayName())) return true;
+ /* Auch die eigene Konto-E-Mail (voll und der Teil vor @) gilt als ich: bei Magic-Link-
+    Registrierung ohne Anzeigename wird der E-Mail-Praefix als Spielername genutzt, sodass man
+    sich sonst selbst in der Einladen-Liste sieht. */
+ if(sbUser&&sbUser.email){ var em=RT_normName(sbUser.email); if(nn===em||nn===RT_normName(sbUser.email.split('@')[0])) return true; }
+ /* Namen, unter denen ICH in fremden Runden als Spieler verknuepft bin (RT_myPlayerNameByOwner),
+    sind ebenfalls ich - deckt den Fall ab, dass mein Spielername eine E-Mail ist. */
+ try{ if(RT_myPlayerNameByOwner){ for(var k in RT_myPlayerNameByOwner){ if(RT_normName(RT_myPlayerNameByOwner[k])===nn) return true; } } }catch(e){}
  var decisions=RT_selfNameDecisions();
  return decisions[name]==='self';
 }

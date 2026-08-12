@@ -765,12 +765,18 @@ if(_segStbfEl){ _segStbfEl.addEventListener('click',function(e){
 function barChart(svgId, series, colors, labels, dataArr, tipId, seriesLabels){
   dataArr = dataArr || SC;
   var svg=document.getElementById(svgId);
+  if(!svg) return;
   var W=340,H=140,pb={t:20,r:10,b:36,l:32};
   var cW=W-pb.l-pb.r,cH=H-pb.t-pb.b;
   var n=labels.length;
   var allVals=[];
   series.forEach(function(s){s.forEach(function(v){allVals.push(v);});});
+  /* Neuanmeldung/keine Runden: kein Balken, sondern schlichter Hinweis wie im Handicap-Diagramm.
+     Ohne diesen Guard liefert Math.max([]) = -Infinity und die Achsenbeschriftung zeigt
+     "-Infinity"/"NaN". */
+  if(!n || !dataArr.length || !allVals.length){ svg.innerHTML='<text x="170" y="74" text-anchor="middle" font-size="12" fill="rgba(100,118,102,.95)" font-family="Inter,sans-serif">Keine Daten</text>'; return; }
   var mx=Math.ceil(Math.max.apply(null,allVals)+1);
+  if(!isFinite(mx)||mx<1) mx=1;
   var g='';
   // Grid
   for(var i=0;i<=4;i++){
@@ -1444,14 +1450,21 @@ function RT_scorerBlock(){
 function RT_handoffScoring(uid){
  var rd=RT_round; if(!rd||!RT_amScorer(rd)||!uid) return;
  rd.scorerId=uid;
+ RT_pendingHandoff=null;
  rtSet(RT_ACT,rd); RT_syncActiveToSaved();
  if(RT_RT.ch){ try{ RT_RT.ch.send({type:'broadcast',event:'state',payload:{data:rd}}); }catch(e){} }
  RT_render();
 }
 function RT_requestScoring(){
- if(RT_RT.ch&&sbUser){ try{ RT_RT.ch.send({type:'broadcast',event:'request',payload:{name:(typeof RT_myDisplayName==='function'?RT_myDisplayName():'Ein Mitspieler'),uid:sbUser.id}}); RT_state.saveWarn='Übergabe angefordert – warte auf den aktuellen Scorer.'; RT_render(); return; }catch(e){} }
- RT_state.saveWarn='Bitte '+RT_scorerName(RT_round)+', dir die Scoringkarte zu übergeben.';
- RT_render();
+ if(RT_round&&RT_amScorer(RT_round)) return;
+ try{ RT_rtSync(); }catch(e){}
+ var who=RT_scorerName(RT_round);
+ if(RT_RT.ch&&sbUser){
+  try{ RT_RT.ch.send({type:'broadcast',event:'request',payload:{name:(typeof RT_myDisplayName==='function'?RT_myDisplayName():'Ein Mitspieler'),uid:sbUser.id}}); }catch(e){}
+  RT_toast('Anfrage an '+who+' gesendet. Sobald '+who+' zustimmt, kannst du selbst scoren \u2013 der aktuelle Scorer muss die Runde ge\u00f6ffnet haben.');
+  return;
+ }
+ RT_toast('Live-Verbindung noch nicht bereit \u2013 kurz warten und erneut tippen. Der aktuelle Scorer muss die Runde ge\u00f6ffnet haben.');
 }
 function RT_handoffMenu(){
  var rd=RT_round; if(!rd||!RT_amScorer(rd)) return;
@@ -1476,6 +1489,18 @@ function RT_handoffMenu(){
    'fp-round-<id>'; Zuschauer ziehen live mit. Uebergabe und Anforderung laufen ueber denselben
    Kanal. Faellt der Kanal aus, bleibt der pull-basierte Sync (Stufe 1) als Fallback. ===== */
 var RT_RT={ch:null,id:null};
+var RT_pendingHandoff=null;
+/* Kurzer, gut sichtbarer Hinweis unten mittig - fuer Live-Aktionen wie die Scoring-Anfrage,
+   deren bisherige Rueckmeldung ganz unten auf der langen Spielseite unbemerkt blieb. */
+function RT_toast(msg){
+ var ex=document.getElementById('rt-toast'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
+ var d=document.createElement('div'); d.id='rt-toast';
+ d.style.cssText='position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 88px);transform:translateX(-50%);z-index:100000;max-width:88vw;background:#143522;color:#fff;font-family:Inter,-apple-system,sans-serif;font-size:13px;line-height:1.4;padding:12px 16px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.35);text-align:center;';
+ d.textContent=msg;
+ document.body.appendChild(d);
+ setTimeout(function(){ if(d&&d.parentNode) d.parentNode.removeChild(d); },5600);
+}
+function RT_dismissHandoff(){ RT_pendingHandoff=null; try{ RT_render(); }catch(e){} }
 function RT_rtWantId(){
  var rd=RT_round;
  return (rd&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_roundIsShared(rd))?rd.id:null;
@@ -1520,9 +1545,11 @@ function RT_rtOnState(payload){
 function RT_rtOnRequest(payload){
  var rd=RT_round; if(!rd||!RT_amScorer(rd)) return;
  var nm=(payload&&payload.name)||'Ein Mitspieler';
- RT_pageConfirm(rtEsc(nm)+' möchte die Scoringkarte übernehmen. Übergeben?', function(){
+ if(payload&&payload.uid) RT_pendingHandoff={name:nm,uid:payload.uid,ts:Date.now()};
+ try{ RT_render(); }catch(e){}
+ RT_pageConfirm(rtEsc(nm)+' m\u00f6chte die Scoringkarte \u00fcbernehmen. \u00dcbergeben?', function(){
   if(payload&&payload.uid) RT_handoffScoring(payload.uid);
- });
+ }, '\u00dcbergeben');
 }
 function RT_setupInviteHtml(name){
  if(!sbUser||(typeof RT_isSelfName==='function'&&RT_isSelfName(name))) return '';
@@ -1644,6 +1671,11 @@ async function sbPull(firstEverLogin){
   var owners={};
   r.data.forEach(function(x){ if(x.data&&x.data.id) owners[x.data.id]=x.user_id; });
   RT_roundOwners=owners;
+  /* Vom Mitspieler verlassene geteilte Runden nicht erneut aus der Cloud einblenden:
+     der DB-Server teilt sie weiter (RLS SELECT), lokal bleiben sie aber ausgeblendet, bis
+     ein neuer Einladungslink sie wieder oeffnet. Nur FREMDE Runden filtern, eigene nie. */
+  var _leftSet={}; (rtGet('golflog_left_rounds_v1')||[]).forEach(function(_id){ _leftSet[_id]=1; });
+  cloud=cloud.filter(function(x){ return !(x && _leftSet[x.id] && owners[x.id] && owners[x.id]!==sbUser.id); });
   await RT_loadMyPlayerNames();
   /* Bulletproof-Kopie fuer gemeinsames Scoring: Jede BEENDETE, mit mir GETEILTE Runde (der
      DB-Server gibt sie ueber player_links frei, also bin ich verifizierter Mitspieler) einmalig
@@ -6871,6 +6903,13 @@ function RT_rPlay(){
    +'<div style="flex:1;min-width:0;font-size:12.5px;color:#143522;"><b>'+(_amSc?'Du f\u00fchrst die Scoringkarte':(rtEsc(RT_scorerName(rd))+' f\u00fchrt die Scoringkarte'))+'</b><div style="font-size:11px;color:#6b7d70;margin-top:1px;">'+(_amSc?'Nur du tr\u00e4gst Schl\u00e4ge ein \u2013 du kannst die Karte \u00fcbergeben.':'Nur der aktuelle Scorer tr\u00e4gt ein \u2013 du kannst die \u00dcbergabe anfordern.')+'</div></div>'
    +(_amSc?'<button class="rt-btn2" style="width:auto;flex:none;padding:8px 12px;font-size:12px;margin:0;" onclick="RT_handoffMenu()">\u00dcbergeben</button>':'<button class="rt-btn2" style="width:auto;flex:none;padding:8px 12px;font-size:12px;margin:0;" onclick="RT_requestScoring()">Anfordern</button>')
    +'</div>';
+  if(_amSc && RT_pendingHandoff && RT_pendingHandoff.uid && (Date.now()-RT_pendingHandoff.ts<3600000)){
+   h+='<div class="rtc" style="padding:10px 12px;margin-bottom:10px;background:#FBF3E4;border:1px solid #EAD9AE;display:flex;align-items:center;gap:10px;">'
+    +'<div style="flex:1;min-width:0;font-size:12.5px;color:#143522;"><b>'+rtEsc(RT_pendingHandoff.name)+'</b> m\u00f6chte die Scoringkarte \u00fcbernehmen.</div>'
+    +'<button class="rt-btn" style="width:auto;flex:none;padding:8px 12px;font-size:12px;margin:0;" onclick="RT_handoffScoring(\''+rtJsEsc(RT_pendingHandoff.uid)+'\')">\u00dcbergeben</button>'
+    +'<button class="rt-btn3" style="flex:none;padding:8px 8px;font-size:12px;color:#8A9C8E;" onclick="RT_dismissHandoff()">Ablehnen</button>'
+    +'</div>';
+  }
  }
  /* Bahnen-Leiste */
  h+='<div class="rt-holes">';
@@ -7582,7 +7621,21 @@ function RT_rView(){
     '<div class="rt-row" style="margin-top:8px;margin-bottom:12px;"><button class="rt-btn2" style="color:#B03A3A;border-color:#E0BCBC;'+(RT_state.ask==='del'+rd.id?'background:#FBEAEA;font-weight:800;':'')+'" onclick="RT_delete(\''+rd.id+'\')">'+(RT_state.ask==='del'+rd.id?'Wirklich l\u00f6schen?':'Runde l\u00f6schen')+'</button></div>';
   }
  }
+ if(foreign){ h+='<div class="rt-row" style="margin-top:8px;margin-bottom:12px;"><button class="rt-btn2" style="color:#B03A3A;border-color:#E0BCBC;" onclick="RT_leaveRound(\''+rd.id+'\')">Runde verlassen \u2013 aus meiner \u00dcbersicht entfernen</button></div>'; }
  return h;
+}
+var RT_LEFT_KEY='golflog_left_rounds_v1';
+/* Mitspieler entfernt eine mit ihm GETEILTE (fremde) Runde aus seiner Uebersicht. Die Runde
+   bleibt beim Eigentuemer unveraendert; lokal wird sie ausgeblendet und in sbPull dauerhaft
+   herausgefiltert (golflog_left_rounds_v1), damit sie beim naechsten Sync nicht zurueckkommt. */
+function RT_leaveRound(id,confirmed){
+ if(!confirmed){ RT_pageConfirm('Diese geteilte Runde aus deiner \u00dcbersicht entfernen? Die Runde des Eigentuemers bleibt bestehen; du kannst sie sp\u00e4ter \u00fcber einen neuen Einladungslink wieder \u00f6ffnen.', function(){ RT_leaveRound(id,true); }); return; }
+ var left=rtGet(RT_LEFT_KEY)||[]; if(left.indexOf(id)<0){ left.push(id); rtSet(RT_LEFT_KEY,left); }
+ var saved=(rtGet(RT_KEY)||[]).filter(function(r){ return r&&r.id!==id; });
+ rtSet(RT_KEY,saved);
+ if(RT_round&&RT_round.id===id){ RT_round=null; try{ rtDel(RT_ACT); }catch(e){} }
+ try{ RT_hydrateHistoricalData(); }catch(e){}
+ RT_go('home');
 }
 function RT_delete(id,confirmed){
  var saved=rtGet(RT_KEY)||[];
@@ -8275,7 +8328,7 @@ function RT_rBag(){
    Platzsuche auf der Karte (OSM-Golfplaetze DE ueber /api/courses)
    + persoenliche Listen (gespeichert/bucket/heimat) & Bewertungen (Supabase)
    ============================================================ */
-var RT_CM={courses:null,map:null,layer:null,labels:null,mk:{},userLL:null,sel:null,lists:{},myR:{},agg:{},loading:false};
+var RT_CM={courses:null,map:null,layer:null,labels:null,mk:{},mkDot:{},userLL:null,sel:null,lists:{},myR:{},agg:{},loading:false};
 var RT_CM_DIFF=['','sehr leicht','leicht','mittel','schwer','sehr schwer'];
 function RT_cmOpen(){ RT_go('courseMap'); }
 function RT_rCourseMap(){
@@ -8335,7 +8388,7 @@ function RT_cmLoadLists(){
 function RT_cmUserDot(){ if(!RT_CM.userLL||!RT_CM.layer||typeof L==='undefined') return; L.marker([RT_CM.userLL.lat,RT_CM.userLL.lng],{interactive:false,keyboard:false,zIndexOffset:1000,icon:L.divIcon({className:'',iconSize:[18,18],iconAnchor:[9,9],html:'<div style="width:14px;height:14px;border-radius:50%;background:#0A84FF;border:2px solid #fff;box-shadow:0 0 0 2px rgba(10,132,255,.35);"></div>'})}).addTo(RT_CM.layer); }
 function RT_cmMarkers(){
  var map=RT_CM.map; if(!map||!RT_CM.courses) return;
- RT_CM.layer.clearLayers(); RT_CM.mk={};
+ RT_CM.layer.clearLayers(); RT_CM.mk={}; RT_CM.mkDot={};
  if(RT_CM.userLL){ try{ RT_cmUserDot(); }catch(e){} }
  var bnds=null; try{ bnds=map.getBounds().pad(0.4); }catch(e){}
  var n=0;
@@ -8343,9 +8396,15 @@ function RT_cmMarkers(){
   if(c.lat==null||c.lon==null) continue;
   if(bnds&&!bnds.contains([c.lat,c.lon])) continue;
   var st=(RT_CM.lists||{})[c.ref]||{}; var col=st.home?'#1F8A4D':(st.saved||st.bucket?'#e0913a':'#B03A3A');
-  var m=L.circleMarker([c.lat,c.lon],{radius:7,color:'#fff',weight:2,fillColor:col,fillOpacity:.98});
-  (function(cc){ m.on('click',function(e){ if(e&&e.originalEvent) e.originalEvent.stopPropagation(); RT_CM._selAt=+new Date(); RT_cmSelect(cc); }); })(c);
-  m.addTo(RT_CM.layer); RT_CM.mk[c.ref]=m;
+  /* Platz als geografische Flaeche (Radius in Metern) statt fester Pixel-Punkt: beim
+     Hineinzoomen waechst der Kreis zur echten Platzausdehnung. Radius grob nach Lochzahl
+     (18 groesser, 9 kleiner), Fallback fuer unbekannte Lochzahl. Zusaetzlich ein kleiner,
+     immer sichtbarer Mittelpunkt als Tap-Anker fuer die Landesuebersicht. */
+  var rMet=(c.holes!=null)?(c.holes>=18?520:(c.holes<=9?300:430)):430;
+  var area=L.circle([c.lat,c.lon],{radius:rMet,color:col,weight:1.5,opacity:.9,fillColor:col,fillOpacity:.16});
+  var dot=L.circleMarker([c.lat,c.lon],{radius:5,color:'#fff',weight:2,fillColor:col,fillOpacity:.98});
+  (function(cc){ var sel=function(e){ if(e&&e.originalEvent) e.originalEvent.stopPropagation(); RT_CM._selAt=+new Date(); RT_cmSelect(cc); }; area.on('click',sel); dot.on('click',sel); })(c);
+  area.addTo(RT_CM.layer); dot.addTo(RT_CM.layer); RT_CM.mk[c.ref]=area; RT_CM.mkDot[c.ref]=dot;
   if(++n>=400) break;
  }
  RT_cmLabels();
@@ -8436,7 +8495,7 @@ function RT_cmToggle(ref,kind){
   sb.from('course_lists').upsert({user_id:sbUser.id,course_ref:ref,kind:kind,name:c?c.name:null,lat:c?c.lat:null,lon:c?c.lon:null,holes:c?c.holes:null}).then(function(){});
  }
  if(RT_CM.sel&&RT_CM.sel.ref===ref) RT_cmSheet(RT_CM.sel);
- var mk=RT_CM.mk[ref]; if(mk){ var s2=RT_CM.lists[ref]||{}; mk.setStyle({fillColor:(s2.home?'#1F8A4D':(s2.saved||s2.bucket?'#e0913a':'#B03A3A'))}); }
+ var mk=RT_CM.mk[ref]; if(mk){ var s2=RT_CM.lists[ref]||{}; var c2=(s2.home?'#1F8A4D':(s2.saved||s2.bucket?'#e0913a':'#B03A3A')); mk.setStyle({color:c2,fillColor:c2}); var dd=(RT_CM.mkDot||{})[ref]; if(dd) dd.setStyle({fillColor:c2}); }
 }
 function RT_cmRate(ref,stars){
  if(!(sbReady()&&sb&&sbUser)){ return; }

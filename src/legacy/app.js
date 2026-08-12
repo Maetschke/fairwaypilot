@@ -5368,6 +5368,7 @@ function RT_render(){
  else r.innerHTML=RT_rHome();
  try{ if(typeof RT_rtSync==='function') RT_rtSync(); }catch(e){}
  try{ if(typeof RT_livePollSync==='function') RT_livePollSync(); }catch(e){}
+ try{ if(RT_state.screen==='play'){ RT_wakeReq(); } else { RT_wakeRelease(); } }catch(e){}
 }
 function RT_go(s){if(s!=='play')RT_stopGeoWatch();RT_state.screen=s;RT_state.ask='';try{if(s==='play')rtSet('golflog_screen_v1','play');else rtDel('golflog_screen_v1');}catch(e){}RT_render();var _ap=document.getElementById('app');if(_ap)_ap.scrollTop=0;}
 
@@ -9767,13 +9768,29 @@ if('serviceWorker' in navigator){ window.addEventListener('load',function(){ nav
    beforeunload - pagehide/visibilitychange sind zuverlaessiger). Jeder Klick speichert bereits,
    das hier faengt zusaetzlich In-Memory-Zwischenstaende (z.B. laufendes Marker-Ziehen) ab. */
 function RT_flushActive(){ try{ if(RT_round && !RT_round.done) rtSet(RT_ACT,RT_round); }catch(e){} }
+/* Bildschirm waehrend einer laufenden Runde wachhalten: verhindert Auto-Sperre und damit einen
+   Grossteil des Tab-Entladens durch iOS (Nutzer 'fliegt raus'). Feature-detected (Safari 16.4+/
+   PWA); wo nicht vorhanden, passiert nichts. Muss nach Sichtbarkeitswechsel neu angefordert
+   werden, da das System den Lock beim Ausblenden freigibt. */
+var RT_wakeLockObj=null;
+function RT_wakeReq(){
+ try{
+  if(!('wakeLock' in navigator)) return;
+  if(document.visibilityState!=='visible') return;
+  if(!(RT_state.screen==='play' && RT_round && !RT_round.done)) return;
+  if(RT_wakeLockObj) return;
+  navigator.wakeLock.request('screen').then(function(w){ RT_wakeLockObj=w; try{ w.addEventListener('release',function(){ RT_wakeLockObj=null; }); }catch(e){} }).catch(function(){ RT_wakeLockObj=null; });
+ }catch(e){ RT_wakeLockObj=null; }
+}
+function RT_wakeRelease(){ try{ if(RT_wakeLockObj){ RT_wakeLockObj.release(); RT_wakeLockObj=null; } }catch(e){} }
 window.addEventListener('pagehide',RT_flushActive);
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') RT_flushActive(); });
 /* Rueckkehr in den Vordergrund (Firefox/iOS verwirft Hintergrund-Tabs aggressiv und laesst
    das Auth-Token ablaufen -> Nutzer 'fliegt raus'). Session hier neu abrufen; getSession()
    erneuert ein abgelaufenes Token, statt still abzumelden. onAuthStateChange rendert danach. */
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible' && sb){ try{ sb.auth.getSession().then(function(r){ try{ var u=r&&r.data&&r.data.session&&r.data.session.user; if(u) sbUser=u; }catch(e){} }); }catch(e){} } });
-window.addEventListener('focus',function(){ if(sb){ try{ sb.auth.getSession(); }catch(e){} } });
+window.addEventListener('focus',function(){ if(sb){ try{ sb.auth.getSession(); }catch(e){} } try{ RT_wakeReq(); }catch(e){} });
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'){ try{ RT_wakeReq(); }catch(e){} } });
 
 /* ============================================================
    Premium / Paywall (Stripe) — Client-Entitlement + Gating

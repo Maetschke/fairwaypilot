@@ -2038,8 +2038,17 @@ async function PL_sendInvite(name){
  var body='Hallo '+name+',\n\nich m\u00f6chte dich zu FairwayPilot einladen, damit unsere gemeinsam gespielten Golfrunden auch in deinem eigenen, privaten Profil erscheinen.\n\n\u00d6ffne einfach diesen Link, um dich zu registrieren:\n'+link+'\n\nViele Gr\u00fc\u00dfe';
  var mailto='mailto:'+encodeURIComponent(em)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
  
+ PL_msg='E-Mail wird an '+rtEsc(em)+' gesendet …'; RT_render();
+ try{
+  var _inv=(typeof RT_myDisplayName==='function')?RT_myDisplayName():'Ein Mitspieler';
+  var _lab='einer Golfrunde', _rid='';
+  if(RT_round&&!RT_round.done){ _lab=(RT_round.courseName||'einer Runde')+(RT_round.date?(' am '+(''+RT_round.date).split('-').reverse().join('.')):''); _rid=RT_round.id; }
+  else if(RT_su&&RT_su.course&&RT_su.course!=='other'){ var _cc=RT_COURSES[RT_su.course]; _lab=((_cc&&_cc.name)||'einer Runde')+(RT_su.date?(' am '+(''+RT_su.date).split('-').reverse().join('.')):''); }
+  var _res=await sb.functions.invoke('send-invite',{body:{to:em,playerName:name,inviterName:_inv,roundLabel:_lab,joinCode:st.invite_code,roundId:_rid}});
+  if(_res&&_res.error) throw _res.error;
+  PL_msg='Einladung an '+rtEsc(em)+' gesendet.';
+ }catch(e){ PL_msg='Versand fehlgeschlagen: '+((e&&e.message)||e); }
  RT_state.plEmailFor=null;
- PL_msg=rtEsc(name)+' ist eingeladen – beim Start der Runde geht die E-Mail mit dem Link an '+rtEsc(em)+' raus.';
  RT_render();
 }
 function sbCard(){
@@ -3208,6 +3217,7 @@ async function RT_deleteAccount(){
 }
 
 var RT_KEY='golflog_runden_v1', RT_ACT='golflog_aktiv_v1', RT_AUTOCOUNT_KEY='golflog_autocount_v1', RT_CUSTOM_KEY='golflog_custom_courses_v1', RT_SIOV_KEY='golflog_si_overrides_v1', RT_PAROV_KEY='golflog_par_overrides_v1', RT_NAMEOV_KEY='golflog_name_overrides_v1', RT_TEEOV_KEY='golflog_tee_overrides_v1', RT_PHOTOOV_KEY='golflog_photo_overrides_v1', RT_ADDROV_KEY='golflog_addr_overrides_v1', RT_PLAYERSAV_KEY='golflog_saved_players_v1', RT_HISTDEL_KEY='golflog_deleted_historical_v1', RT_OWNHI_KEY='golflog_own_hi_v1', RT_REFOV_KEY='golflog_ref_overrides_v1', RT_DISTUNIT_KEY='golflog_dist_unit_v1', RT_TEEORDOV_KEY='golflog_tee_order_v1', RT_PLATZORDER_KEY='golflog_platz_order_v1';
+var RT_HIDPLAY_KEY='golflog_hidden_players_v1';
 /* Eigenes Handicap des Kontoinhabers: bei angemeldeten Nutzern in sbUser.user_metadata.handicap
    (geräteübergreifend synchron, analog zu display_name/avatar_url), sonst lokal als Fallback.
    Ersetzt den frueher hart codierten Standardwert 54 ueberall dort, wo eine neue Runde fuer den
@@ -3433,7 +3443,7 @@ function RT_getSavedPlayers(){
  (rtGet(RT_PLAYERSAV_KEY)||[]).forEach(function(sp){ if(sp&&sp.name) byName[sp.name]=sp; });
  var hist=RT_historicPlayerNames();
  Object.keys(hist).forEach(function(nm){ if(!byName[nm]) byName[nm]=hist[nm]; });
- return Object.keys(byName).map(function(nm){ return byName[nm]; });
+ var hid={}; (rtGet(RT_HIDPLAY_KEY)||[]).forEach(function(n){ hid[n]=1; }); return Object.keys(byName).filter(function(nm){ return !hid[nm]; }).map(function(nm){ return byName[nm]; });
 }
 /* Ein Mitspieler, der seinen Namen geaendert hat (z.B. "Mark" -> "Mark Maetschke"), taucht sonst
    mehrfach in der Einladen-Liste auf. Verknuepfte Eintraege werden pro linked_user_id auf EINEN
@@ -5762,9 +5772,11 @@ if(cd){
   var teeOrd=RT_teeOrderResolved(c);
   teeOrd.forEach(function(ti,pos){
    var t=c.tees[ti];
-   h+='<div style="margin-bottom:'+(teeHasTwoNines?'16':'20')+'px;">'+
-    ((teeOrd.length>1||c.tees.length>1)?'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+(teeOrd.length>1?'<div style="display:flex;gap:6px;">'+(pos>0?'<button class="rt-btn3" style="background:rgba(20,53,34,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeMove('+pos+',-1)" title="Nach oben"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+(pos<teeOrd.length-1?'<button class="rt-btn3" style="background:rgba(20,53,34,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeMove('+pos+',1)" title="Nach unten"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+'</div>':'<div></div>')+(c.tees.length>1?'<button class="rt-btn3" style="background:rgba(176,58,58,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeRemove('+ti+')" title="Abschlag entfernen">&#10005;</button>':'')+'</div>':'')+
-    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-items:flex-end;">'+
+   var _teeOpen=!!(RT_su.teeOpen&&RT_su.teeOpen[ti]);
+   h+='<div style="margin-bottom:'+(_teeOpen?(teeHasTwoNines?'16':'20'):'8')+'px;">'+
+    ((teeOrd.length>1||c.tees.length>1)?'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+(teeOrd.length>1?'<div style="display:flex;gap:6px;">'+(pos>0?'<button class="rt-btn3" style="background:rgba(20,53,34,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeMove('+pos+',-1)" title="Nach oben"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid #fff;"></span></button>':'')+(pos<teeOrd.length-1?'<button class="rt-btn3" style="background:rgba(20,53,34,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeMove('+pos+',1)" title="Nach unten"><span style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #fff;"></span></button>':'')+'</div>':'<div></div>')+(c.tees.length>1?'<button class="rt-btn3" style="background:rgba(176,58,58,.85);width:26px;height:26px;min-height:26px;box-sizing:border-box;border-radius:50%;color:#fff;font-size:12px;line-height:1;padding:0;border:none;display:flex;align-items:center;justify-content:center;" onclick="RT_teeRemove('+ti+')" title="Abschlag entfernen">&#10005;</button>':'')+'</div>':'')+RT_teeToggleHdr(ti,t,_teeOpen);
+   if(_teeOpen){
+   h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-items:flex-end;">'+
      '<div style="grid-column:span 2;"><span class="rt-lbl">Abschlag</span><input class="rt-inp" value="'+rtEsc(t.name)+'" oninput="RT_teeName('+ti+',this.value)"></div>'+
      '<div><span class="rt-lbl">CR (18L)</span><input class="rt-inp" id="tee-cr-'+ti+'" type="text" inputmode="decimal" value="'+rtDe((t.cr&&t.cr.A!==null&&t.cr.A!==undefined)?t.cr.A:'')+'" oninput="RT_teeNum('+ti+',\'cr\',this.value.replace(\',\',\'.\'))"></div>'+
      '<div><span class="rt-lbl">Slope (18L)</span><input class="rt-inp" id="tee-sl-'+ti+'" type="number" value="'+((t.sl&&t.sl.A!==null&&t.sl.A!==undefined)?t.sl.A:'')+'" oninput="RT_teeNum('+ti+',\'sl\',this.value)"></div>'+
@@ -5776,6 +5788,7 @@ if(cd){
      '<div><span class="rt-lbl">CR Back</span><input class="rt-inp" id="tee-crB-'+ti+'" type="text" inputmode="decimal" value="'+rtDe((t.cr&&t.cr.B!==null&&t.cr.B!==undefined)?t.cr.B:'')+'" oninput="RT_teeSide('+ti+',\'cr\',\'B\',this.value.replace(\',\',\'.\'))"></div>'+
      '<div><span class="rt-lbl">Slope Back</span><input class="rt-inp" id="tee-slB-'+ti+'" type="number" value="'+((t.sl&&t.sl.B!==null&&t.sl.B!==undefined)?t.sl.B:'')+'" oninput="RT_teeSide('+ti+',\'sl\',\'B\',this.value)"></div>'+
     '</div>';
+   }
    }
    h+='</div>';
   });
@@ -6127,8 +6140,10 @@ function RT_suRm(i){RT_su.players.splice(i,1);RT_render();}
    da dies unwiderruflich ist (Name/HI/zuletzt genutzter Abschlag gehen verloren). */
 function RT_deleteSavedPlayer(name){
  if(RT_state.ask!=='delplayer'+name){ RT_state.ask='delplayer'+name; RT_render(); return; }
- var list=RT_getSavedPlayers().filter(function(sp){ return sp.name!==name; });
+ var list=(rtGet(RT_PLAYERSAV_KEY)||[]).filter(function(sp){ return !sp||sp.name!==name; });
  RT_setSavedPlayers(list);
+ var hid=rtGet(RT_HIDPLAY_KEY)||[]; if(hid.indexOf(name)<0){ hid.push(name); rtSet(RT_HIDPLAY_KEY,hid); }
+ try{ if(sb&&sbUser){ var _st=(typeof PL_statusFor==='function')?PL_statusFor(name):null; if(_st&&!_st.linked_user_id){ sb.from('player_links').delete().eq('owner_id',sbUser.id).eq('player_name',name); if(PL_list) PL_list=PL_list.filter(function(x){return x.player_name!==name;}); } } }catch(e){}
  RT_state.ask='';
  RT_render();
 }
@@ -6329,6 +6344,14 @@ function RT_teeOrderResolved(c){
  var seen={}; ord=ord.filter(function(i){ if(seen[i])return false; seen[i]=true; return true; });
  for(var i=0;i<n;i++){ if(ord.indexOf(i)===-1) ord.push(i); }
  return ord;
+}
+function RT_teeToggle(ti){ if(!RT_su.teeOpen)RT_su.teeOpen={}; RT_su.teeOpen[ti]=!RT_su.teeOpen[ti]; RT_render(); }
+function RT_teeToggleHdr(ti,t,open){
+ var chev=open?'▾':'▸';
+ return '<div onclick="RT_teeToggle('+ti+')" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 2px;user-select:none;">'
+  +'<span style="color:#1F8A4D;font-size:13px;width:14px;text-align:center;">'+chev+'</span>'
+  +'<span style="flex:1;font-weight:700;color:#143522;font-size:14px;">'+rtEsc(t.name||'Abschlag')+'</span>'
+  +'<span style="font-size:11px;color:#8A9C8E;">'+(open?'schließen':'öffnen')+'</span></div>';
 }
 function RT_teeMove(pos,dir){
  var key=RT_su&&RT_su.course; var c=key&&RT_COURSES[key]; if(!c)return;
@@ -6727,7 +6750,6 @@ function RT_start(){
   })};
  rtSet(RT_ACT,RT_round);
  if(sb&&sbUser){ try{ sbPushRound(RT_round); }catch(e){} }
- try{ RT_sendRoundInvites(RT_round); }catch(e){}
  RT_go('play');
 }
 function RT_discard(){

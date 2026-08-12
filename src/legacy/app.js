@@ -1423,8 +1423,13 @@ function RT_scorerId(rd){
 function RT_roundIsShared(rd){
  if(!rd) return false;
  if(RT_isForeignRound(rd)) return true;
+ /* Auch beim Eigentuemer als geteilt behandeln, sobald die Runde JEMALS geteilt wurde
+    (E-Mail-Einladung raus, verknuepfter Mitspieler oder Live-Einladung). Ohne diese breitere
+    Erkennung abonnierte der Owner den Live-Kanal nicht und der Mitspieler sah Eingaben erst
+    nach Neuladen. */
+ if(rd.invitesSentTo && rd.invitesSentTo.length) return true;
  if(rd.players&&rd.players.length>1&&typeof PL_statusFor==='function'){
-  return rd.players.some(function(pp){ var st=PL_statusFor(pp.name); return !!(st&&st.linked_user_id); });
+  return rd.players.some(function(pp){ if(pp&&pp.liveInvite) return true; var st=PL_statusFor(pp.name); return !!(st&&(st.linked_user_id||st.invite_email||st.invite_code)); });
  }
  return false;
 }
@@ -5362,6 +5367,7 @@ function RT_render(){
  else if(RT_state.screen==='services')r.innerHTML=RT_rServices();
  else r.innerHTML=RT_rHome();
  try{ if(typeof RT_rtSync==='function') RT_rtSync(); }catch(e){}
+ try{ if(typeof RT_livePollSync==='function') RT_livePollSync(); }catch(e){}
 }
 function RT_go(s){if(s!=='play')RT_stopGeoWatch();RT_state.screen=s;RT_state.ask='';try{if(s==='play')rtSet('golflog_screen_v1','play');else rtDel('golflog_screen_v1');}catch(e){}RT_render();var _ap=document.getElementById('app');if(_ap)_ap.scrollTop=0;}
 
@@ -7088,6 +7094,52 @@ function RT_syncActiveToSaved(){
  rtSet(RT_KEY,saved);
  if(isNew&&sb&&sbUser) sbPushRound(rd);
  RT_rtBroadcastState();
+ RT_liveDbPush();
+}
+/* Der Scorer schreibt den laufenden Stand gedrosselt (<= alle ~2,5s) zusaetzlich in die DB.
+   So bekommt der Mitspieler den Stand auch dann zeitnah, wenn ein Broadcast-Paket verloren
+   ging - sein Poll (RT_livePollTick) liest die frische Zeile. Nur der Owner der aktiven,
+   geteilten Runde schreibt; fremde Konten fassen die Owner-Zeile nicht an. */
+var RT_liveDbTs=0, RT_liveDbPending=false;
+function RT_liveDbPush(){
+ var rd=RT_round; if(!rd||rd.done||!sb||!sbUser) return;
+ if(RT_isForeignRound(rd)) return;
+ if(!RT_roundIsShared(rd)||!RT_amScorer(rd)) return;
+ var now=Date.now();
+ if(now-RT_liveDbTs>2500){ RT_liveDbTs=now; try{ sbPushRound(rd); }catch(e){} }
+ else if(!RT_liveDbPending){ RT_liveDbPending=true; setTimeout(function(){ RT_liveDbPending=false; RT_liveDbTs=Date.now(); try{ if(RT_round&&!RT_round.done&&!RT_isForeignRound(RT_round)&&RT_amScorer(RT_round)) sbPushRound(RT_round); }catch(e){} }, 2600); }
+}
+/* Mitspieler-seitiger Poll-Fallback: solange eine FREMDE, aktive Runde auf dem Spielscreen
+   offen ist, alle 5s die Owner-Zeile lesen und bei Aenderung anwenden. Zusammen mit dem
+   Live-Broadcast (sofort) sorgt das dafuer, dass Scorer-Eingaben ohne Neuladen erscheinen. */
+var RT_livePoll=null, RT_livePollId=null;
+function RT_livePollSync(){
+ var rd=RT_round;
+ var active=!!(rd&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_isForeignRound(rd));
+ if(active){
+  if(RT_livePollId!==rd.id){
+   if(RT_livePoll){ clearInterval(RT_livePoll); RT_livePoll=null; }
+   RT_livePollId=rd.id;
+   RT_livePoll=setInterval(RT_livePollTick,5000);
+  }
+ }else{
+  if(RT_livePoll){ clearInterval(RT_livePoll); RT_livePoll=null; }
+  RT_livePollId=null;
+ }
+}
+function RT_livePollTick(){
+ var rd=RT_round; if(!rd||rd.done||!sb||!sbUser||RT_state.screen!=='play'){ return; }
+ if(RT_amScorer(rd)) return;
+ sb.from('rounds').select('data,user_id').eq('id',rd.id).then(function(res){
+  if(!res||res.error||!res.data||!res.data.length) return;
+  var own=RT_roundOwners[rd.id], row=null;
+  for(var i=0;i<res.data.length;i++){ if(res.data[i].user_id===own){ row=res.data[i]; break; } }
+  if(!row) row=res.data[0];
+  var nd=row.data; if(!nd||nd.id!==(RT_round&&RT_round.id)) return;
+  if(RT_amScorer(RT_round)) return;
+  var changed=true; try{ changed=(JSON.stringify(nd)!==JSON.stringify(RT_round)); }catch(e){}
+  if(changed) RT_rtApplyState(nd);
+ });
 }
 function RT_addTrackedPoint(type,shotNum,pi){
  var rd=RT_round; if(!rd) return;

@@ -2057,7 +2057,7 @@ var RT_connections=null;
    sichere RPC get_my_connections() - loest Marks Anliegen "Verbindungen sollten sichtbar
    sein", da bisher nur die eigenen ausgehenden Einladungen (player_links.owner_id=self)
    abgefragt wurden, nie die eingehende Seite. */
-function RT_connRoundCount(c){ if(c&&c.rounds_count!=null) return c.rounds_count; if(c&&c.round_count!=null) return c.round_count; var name=((c&&c.player_name)||'').trim().toLowerCase(); if(!name) return 0; var rounds=rtGet(RT_KEY)||[]; var n=0; rounds.forEach(function(rd){ if(rd&&rd.players&&rd.players.some(function(p){return p&&((p.name||'').trim().toLowerCase()===name);})) n++; }); return n; }
+function RT_connRoundCount(c){ if(c&&c.rounds_count!=null) return c.rounds_count; if(c&&c.round_count!=null) return c.round_count; var name=((c&&c.player_name)||'').trim().toLowerCase(); if(!name) return 0; var rounds=rtGet(RT_KEY)||[]; var n=0; rounds.forEach(function(rd){ if(!rd||rd.hidden) return; if(rd.players&&rd.players.some(function(p){return p&&((p.name||'').trim().toLowerCase()===name);})) n++; }); return n; }
 async function RT_loadConnections(){
  if(!sb||!sbUser)return;
  try{

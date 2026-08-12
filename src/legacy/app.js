@@ -1415,13 +1415,26 @@ function RT_isForeignLocked(rd){
    man immer selbst Scorer (RT_amScorer() liefert dann true). Live-Aktualisierung = Stufe 2. */
 function RT_scorerId(rd){
  if(!rd) return null;
- if(rd.scorerId) return rd.scorerId;
- /* Der wahre Eigentuemer (aus dem Cloud-Pull) ist der Standard-Scorer - VOR ownerHint.
-    Sonst koennte eine fremde, lokal neu aufgebaute Runde mit falschem ownerHint das eigene
-    Konto zum Scorer machen und zwei Geraete wuerden gleichzeitig schreiben. */
- if(RT_roundOwners&&RT_roundOwners[rd.id]) return RT_roundOwners[rd.id];
- if(rd.ownerHint) return rd.ownerHint;
- return sbUser?sbUser.id:null;
+ /* Standard-Scorer ist der wahre Eigentuemer (aus dem Cloud-Pull) - VOR ownerHint. Sonst
+    koennte eine fremde, lokal neu aufgebaute Runde mit falschem ownerHint das eigene Konto
+    zum Scorer machen. */
+ var owner=(RT_roundOwners&&RT_roundOwners[rd.id])||rd.ownerHint||(sbUser&&sbUser.id)||null;
+ if(rd.scorerId){
+  if(rd.scorerId===owner) return rd.scorerId;
+  if(sbUser&&rd.scorerId===sbUser.id) return rd.scorerId;
+  /* Nur der EIGENTUEMER kann verlaesslich pruefen, ob der eingetragene Scorer noch ein
+     aktuell verknuepfter Mitspieler ist (nur er hat die player_links). Ist der Scorer verwaist
+     - z.B. Konto geloescht oder entknuepft -, faellt die Karte an den Eigentuemer zurueck,
+     sonst bliebe die eigene Runde mit einem nicht mehr existierenden Scorer gesperrt.
+     Zuschauer/verknuepfte Geraete zeigen den scorerId unveraendert an (kein Fehlurteil). */
+  if(sbUser && owner===sbUser.id){
+   var valid=false;
+   if(rd.players&&typeof PL_statusFor==='function'){ for(var i=0;i<rd.players.length;i++){ var st=PL_statusFor(rd.players[i].name); if(st&&st.linked_user_id&&st.linked_user_id===rd.scorerId){ valid=true; break; } } }
+   return valid?rd.scorerId:owner;
+  }
+  return rd.scorerId;
+ }
+ return owner;
 }
 /* Fremde (geteilte) Runde fortsetzen, OHNE sie ueber den Bearbeiten-Pfad (RT_applyEdit) neu
    aufzubauen: das echte Rundenobjekt (mit scorerId/ownerHint des Eigentuemers und aktuellem

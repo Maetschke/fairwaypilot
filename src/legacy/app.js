@@ -1493,6 +1493,14 @@ function RT_handoffMenu(){
  var rd=RT_round; if(!rd||!RT_amScorer(rd)) return;
  var opts=[];
  if(rd.players){ rd.players.forEach(function(pp){ var st=(typeof PL_statusFor==='function')?PL_statusFor(pp.name):null; if(st&&st.linked_user_id&&st.linked_user_id!==(sbUser&&sbUser.id)) opts.push({name:pp.name,uid:st.linked_user_id}); }); }
+ /* Bin ich selbst ein eingeladener Scorer (fremde Runde), taucht der Eigentuemer nicht in
+    MEINEN player_links auf - er waere sonst kein Uebergabe-Ziel und die Karte liesse sich nicht
+    zurueckgeben. Eigentuemer (aus RT_roundOwners) daher explizit als erstes Ziel anbieten. */
+ var _own=RT_roundOwners[rd.id];
+ if(_own && sbUser && _own!==sbUser.id && !opts.some(function(o){ return o.uid===_own; })){
+  var _on=(rd.players&&rd.players[0]&&rd.players[0].name)||'Eigent\u00fcmer';
+  opts.unshift({name:_on,uid:_own});
+ }
  if(!opts.length){ RT_state.saveWarn='Noch kein verkn\u00fcpfter Mitspieler zum \u00dcbergeben. Lade zuerst jemanden per E-Mail ein.'; RT_render(); return; }
  var ex=document.getElementById('rt-handoff'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
  var ov=document.createElement('div'); ov.id='rt-handoff';

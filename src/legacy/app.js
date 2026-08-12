@@ -5683,17 +5683,8 @@ function RT_rSetup(){
     '<span class="rt-lbl">Platzname</span><input class="rt-inp" id="rt-coursename" value="'+rtEsc(pc.name)+'" onchange="RT_renameCourse(this.value)" style="margin-bottom:10px;">'+
     '<span class="rt-lbl">Adresse</span><input class="rt-inp" id="rt-courseaddr" value="'+rtEsc(pc.address||'')+'" placeholder="Straße, PLZ Ort" onchange="RT_renameAddress(this.value)">'+
    '</div>'+
-   /* Zweites, separates Bild: Hintergrund der Rundenkarten auf der Startseite. Ohne eigenes
-      Bild wird eines von fuenf mitgelieferten Golfmotiven verwendet (RT_roundBgUrl). */
-   '<div style="width:100%;height:150px;background:#EAF1E3;position:relative;border-top:1px solid #EDF2E9;">'+
-    '<img src="'+RT_bgForKey(RT_su.course,pc.name)+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)">'+
-    (pc.bgUrl?'':'<div style="position:absolute;left:10px;bottom:8px;color:#fff;font-size:11px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.6);">Standardbild (zufällig gewählt)</div>')+
-    '<label style="position:absolute;bottom:8px;right:8px;background:rgba(20,53,34,.72);color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:100px;cursor:pointer;display:flex;align-items:center;">'+
-     (RT_state.photoBusy==='bgUrl'?'<span class="rt-spin"></span>Lädt hoch…':(pc.bgUrl?'Rundenbild ändern':'Rundenbild hochladen'))+
-     '<input type="file" accept="image/*" style="display:none;" onchange="RT_photoFile(event,\'bgUrl\')" '+(RT_state.photoBusy?'disabled':'')+'></label>'+
-   '</div>'+
-
   '</div>';
+  h+=RT_roundPhotosBoxHtml(pc);
  }
  /* Datum & Uhrzeit - eigene Dropdown-Auswahl statt nativer type="date"/"time"-Felder:
     iOS oeffnet bei diesen Eingabetypen ein natives, vom Web-Code nicht beeinflussbares
@@ -6457,6 +6448,7 @@ function RT_applyPhotoOverrides(){
   if(typeof v==='string'){ RT_COURSES[key].photoUrl=v; return; }
   if(v&&v.photoUrl) RT_COURSES[key].photoUrl=v.photoUrl;
   if(v&&v.bgUrl) RT_COURSES[key].bgUrl=v.bgUrl;
+  if(v&&v.bgUrls) RT_COURSES[key].bgUrls=v.bgUrls;
  });
 }
 function RT_getAddrOverrides(){ return rtGet(RT_ADDROV_KEY)||{}; }
@@ -6475,6 +6467,7 @@ var RT_BG_BASE='/round-bg/';
 var RT_BG_POOL=['course-1.jpg','course-2.jpg','course-3.jpg','course-4.jpg','course-5.jpg'];
 function RT_bgForKey(key,fallbackName){
  var co=key?RT_COURSES[key]:null;
+ if(co&&co.bgUrls&&co.bgUrls.length) return co.bgUrls[0];
  if(co&&co.bgUrl) return co.bgUrl;
  var seed=key||fallbackName||'x';
  var hsh=0;
@@ -6513,6 +6506,46 @@ function RT_setPhoto(dataUrl,field){
  }
  RT_render();
 }
+function RT_persistPhotoField(key,field,val){
+ if(!key||key==='other'||!RT_COURSES[key])return;
+ RT_COURSES[key][field]=val;
+ var custom=RT_loadCustomCourses();
+ if(custom[key]){ custom[key][field]=val; rtSet(RT_CUSTOM_KEY,custom); sbPushCourse(key,custom[key]); }
+ else{
+  var ov=RT_getPhotoOverrides();
+  ov[key]=(typeof ov[key]==='object'&&ov[key])?ov[key]:(typeof ov[key]==='string'?{photoUrl:ov[key]}:{});
+  ov[key][field]=val; rtSet(RT_PHOTOOV_KEY,ov);
+  sbPushCourse(key,RT_COURSES[key]);
+ }
+}
+function RT_roundPhotoList(co){ return (co&&co.bgUrls&&co.bgUrls.length)?co.bgUrls.slice():((co&&co.bgUrl)?[co.bgUrl]:[]); }
+function RT_addRoundPhoto(url){
+ var key=RT_su&&RT_su.course; var co=key&&RT_COURSES[key]; if(!co)return;
+ var arr=RT_roundPhotoList(co); arr.push(url);
+ RT_persistPhotoField(key,'bgUrls',arr); RT_persistPhotoField(key,'bgUrl',arr[0]); RT_render();
+}
+function RT_removeRoundPhoto(idx){
+ var key=RT_su&&RT_su.course; var co=key&&RT_COURSES[key]; if(!co)return;
+ var arr=RT_roundPhotoList(co); if(idx<0||idx>=arr.length)return;
+ arr.splice(idx,1);
+ RT_persistPhotoField(key,'bgUrls',arr); RT_persistPhotoField(key,'bgUrl',arr.length?arr[0]:null); RT_render();
+}
+function RT_applyUploadedPhoto(url,field){ if(field==='bgAdd') RT_addRoundPhoto(url); else RT_setPhoto(url,field); }
+function RT_roundPhotosBoxHtml(pc){
+ var list=RT_roundPhotoList(pc);
+ var h='<div class="rtc"><div class="rt-ct">Rundenbilder</div><div class="rt-cs">Fotos der Runde \u2013 erscheinen als Hintergrund der Rundenkarte. Du kannst mehrere hinterlegen; das erste wird als Hauptbild verwendet.</div>';
+ h+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">';
+ if(!list.length){
+  h+='<div style="position:relative;width:104px;height:104px;border-radius:12px;overflow:hidden;border:1px solid #DCE7D4;"><img src="'+RT_bgForKey(RT_su.course,pc.name)+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)"><div style="position:absolute;left:6px;bottom:5px;color:#fff;font-size:10px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.6);">Standardbild</div></div>';
+ }else{
+  list.forEach(function(u,idx){
+   h+='<div style="position:relative;width:104px;height:104px;border-radius:12px;overflow:hidden;border:1px solid #DCE7D4;"><img src="'+u+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)">'+(idx===0?'<div style="position:absolute;left:6px;top:5px;background:rgba(31,138,77,.92);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:100px;">Hauptbild</div>':'')+'<button onclick="RT_removeRoundPhoto('+idx+')" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(176,58,58,.92);color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer;">\u2715</button></div>';
+  });
+ }
+ h+='<label style="width:104px;height:104px;border-radius:12px;border:1.5px dashed #B9CDB0;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#1F8A4D;font-size:12px;font-weight:700;gap:2px;">'+(RT_state.photoBusy==='bgAdd'?'<span class="rt-spin"></span>':'<span style="font-size:26px;line-height:1;">+</span>Bild')+'<input type="file" accept="image/*" style="display:none;" onchange="RT_photoFile(event,\'bgAdd\')" '+(RT_state.photoBusy?'disabled':'')+'></label>';
+ h+='</div></div>';
+ return h;
+}
 function RT_photoFile(ev,field){
  field=field||'photoUrl';
  var f=ev.target.files&&ev.target.files[0]; if(!f)return;
@@ -6528,7 +6561,7 @@ function RT_photoFile(ev,field){
    var ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,w,h);
    if(sb&&sbUser&&cv.toBlob){
     cv.toBlob(async function(blob){
-     if(!blob){ RT_setPhoto(cv.toDataURL('image/jpeg',0.72),field); return; }
+     if(!blob){ RT_applyUploadedPhoto(cv.toDataURL('image/jpeg',0.72),field); return; }
      RT_state.photoBusy=field; RT_render();
      try{
       var path=key+'-'+field+'-'+Date.now()+'.jpg';
@@ -6536,16 +6569,16 @@ function RT_photoFile(ev,field){
       if(up.error)throw up.error;
       var pub=sb.storage.from('course-photos').getPublicUrl(path);
       RT_state.photoBusy=false;
-      RT_setPhoto(pub.data.publicUrl,field);
+      RT_applyUploadedPhoto(pub.data.publicUrl,field);
      }catch(err){
       /* Cloud-Upload fehlgeschlagen (z.B. offline) - lokal als Fallback speichern, damit das\n         Foto trotzdem sofort sichtbar ist; beim naechsten Login/Sync erneut versuchen. */
       RT_state.photoBusy=false;
-      RT_setPhoto(cv.toDataURL('image/jpeg',0.72),field);
+      RT_applyUploadedPhoto(cv.toDataURL('image/jpeg',0.72),field);
      }
     },'image/jpeg',0.85);
    }else{
     /* Nicht angemeldet oder kein Blob-Support: Foto nur lokal (Base64) speichern - fuer\n       dauerhaften, geraeteuebergreifenden Speicher bitte zuerst anmelden (Konto & Cloud-Sync). */
-    RT_setPhoto(cv.toDataURL('image/jpeg',0.72),field);
+    RT_applyUploadedPhoto(cv.toDataURL('image/jpeg',0.72),field);
    }
   };
   img.src=e.target.result;

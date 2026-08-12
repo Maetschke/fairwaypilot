@@ -8697,10 +8697,11 @@ function RT_TRC_path(t){
 }
 function RT_TRC_colRGB(){ var c=(RT_TRC.col||'#F2C230').replace('#',''); if(c.length===3)c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2]; return {r:parseInt(c.slice(0,2),16)||0,g:parseInt(c.slice(2,4),16)||0,b:parseInt(c.slice(4,6),16)||0}; }
 function RT_TRC_strokeTrace(ctx,w,h,pr,baseW){
- var rgb=RT_TRC_colRGB(); var N=110; var prev=null;
+ var rgb=RT_TRC_colRGB(); var N=160; var prev=null;
  ctx.lineJoin='round'; ctx.lineCap='round';
+ var wS=baseW*2.4, wE=baseW*0.45;   // breit am Ball -> duenn zum Ziel
  for(var i=0;i<=N;i++){ var t=i/N; if(t>pr) break; var p=RT_TRC_path(t); var X=p.x*w, Y=p.y*h;
-  if(prev){ var fade=Math.min(1,t/0.16); var a=0.12+0.85*fade; var lw=baseW*(0.28+0.72*fade);
+  if(prev){ var a=0.40+0.60*t; var lw=Math.max(1,wS+(wE-wS)*t);  // transparent am Ball -> klar zum Ziel
    ctx.strokeStyle='rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a.toFixed(3)+')'; ctx.lineWidth=lw;
    ctx.beginPath(); ctx.moveTo(prev[0],prev[1]); ctx.lineTo(X,Y); ctx.stroke(); }
   prev=[X,Y];

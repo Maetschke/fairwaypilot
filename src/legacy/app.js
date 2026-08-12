@@ -1523,6 +1523,18 @@ function RT_toast(msg){
  setTimeout(function(){ if(d&&d.parentNode) d.parentNode.removeChild(d); },5600);
 }
 function RT_dismissHandoff(){ RT_pendingHandoff=null; try{ RT_render(); }catch(e){} }
+/* Der EIGENTUEMER der Runde kann die Scoringkarte jederzeit zurueckholen - auch ohne Zustimmung
+   des aktuellen Scorers. Verhindert ein Aussperren, wenn nach einer Uebergabe der Mitspieler
+   offline geht. Nur der echte Eigentuemer (RT_roundOwners) darf das. */
+function RT_reclaimScoring(){
+ var rd=RT_round; if(!rd||!sbUser) return;
+ if(!(RT_roundOwners[rd.id]&&RT_roundOwners[rd.id]===sbUser.id)) return;
+ rd.scorerId=sbUser.id;
+ RT_pendingHandoff=null;
+ rtSet(RT_ACT,rd); RT_syncActiveToSaved();
+ if(RT_RT.ch){ try{ RT_RT.ch.send({type:'broadcast',event:'state',payload:{data:rd}}); }catch(e){} }
+ RT_render();
+}
 function RT_rtWantId(){
  var rd=RT_round;
  return (rd&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_roundIsShared(rd))?rd.id:null;
@@ -6941,9 +6953,10 @@ function RT_rPlay(){
   '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
  if(RT_roundIsShared(rd)){
   var _amSc=RT_amScorer(rd);
+  var _amOwner=!!(RT_roundOwners[rd.id]&&sbUser&&RT_roundOwners[rd.id]===sbUser.id);
   h+='<div class="rtc" style="padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:10px;background:'+(_amSc?'#EAF6EE':'#FBF3E4')+';border:1px solid '+(_amSc?'#BFE3CB':'#EAD9AE')+';">'
-   +'<div style="flex:1;min-width:0;font-size:12.5px;color:#143522;"><b>'+(_amSc?'Du f\u00fchrst die Scoringkarte':(rtEsc(RT_scorerName(rd))+' f\u00fchrt die Scoringkarte'))+'</b><div style="font-size:11px;color:#6b7d70;margin-top:1px;">'+(_amSc?'Nur du tr\u00e4gst Schl\u00e4ge ein \u2013 du kannst die Karte \u00fcbergeben.':'Nur der aktuelle Scorer tr\u00e4gt ein \u2013 du kannst die \u00dcbergabe anfordern.')+'</div></div>'
-   +(_amSc?'<button class="rt-btn2" style="width:auto;flex:none;padding:8px 12px;font-size:12px;margin:0;" onclick="RT_handoffMenu()">\u00dcbergeben</button>':'<button class="rt-btn2" style="width:auto;flex:none;padding:8px 12px;font-size:12px;margin:0;" onclick="RT_requestScoring()">Anfordern</button>')
+   +'<div style="flex:1;min-width:0;font-size:12.5px;color:#143522;"><b>'+(_amSc?'Du f\u00fchrst die Scoringkarte':(rtEsc(RT_scorerName(rd))+' f\u00fchrt die Scoringkarte'))+'</b><div style="font-size:11px;color:#6b7d70;margin-top:1px;">'+(_amSc?'Nur du tr\u00e4gst Schl\u00e4ge ein \u2013 du kannst die Karte \u00fcbergeben.':(_amOwner?'Nur der aktuelle Scorer tr\u00e4gt ein \u2013 als Eigent\u00fcmer kannst du die Karte zur\u00fcckholen.':'Nur der aktuelle Scorer tr\u00e4gt ein \u2013 du kannst die \u00dcbergabe anfordern.'))+'</div></div>'
+   +(_amSc?'<button class="rt-btn2" style="width:auto;flex:none;padding:8px 12px;font-size:12px;margin:0;" onclick="RT_handoffMenu()">\u00dcbergeben</button>':(_amOwner?'<button class="rt-btn2" style="width:auto;flex:none;padding:8px 12px;font-size:12px;margin:0;" onclick="RT_reclaimScoring()">Karte zur\u00fcckholen</button>':'<button class="rt-btn2" style="width:auto;flex:none;padding:8px 12px;font-size:12px;margin:0;" onclick="RT_requestScoring()">Anfordern</button>'))
    +'</div>';
   if(_amSc && RT_pendingHandoff && RT_pendingHandoff.uid && (Date.now()-RT_pendingHandoff.ts<3600000)){
    h+='<div class="rtc" style="padding:10px 12px;margin-bottom:10px;background:#FBF3E4;border:1px solid #EAD9AE;display:flex;align-items:center;gap:10px;">'
@@ -7077,6 +7090,10 @@ function RT_autosaveHole(rd,prevIdx){
  if(rd.cur===prevIdx) return;
  if(!RT_holeComplete(rd,prevIdx)) return;
  if(!sb||!sbUser) return;
+ /* Eine FREMDE, geteilte Runde nie in die Cloud pushen - der Client wuerde sonst eine eigene
+    Kopie (user_id = ich) mit derselben id anlegen (Dublette). Der Mitspieler-Stand geht live
+    ueber Broadcast; die kanonische Zeile schreibt allein der Eigentuemer. */
+ if(RT_isForeignRound(rd)) return;
  sbPushRound(rd);
 }
 function RT_setHole(i){
@@ -7326,7 +7343,9 @@ function RT_editRound(id,direct){
  var rd=null;
  for(var i=0;i<saved.length;i++)if(saved[i].id===id)rd=saved[i];
  if(!rd)return;
- if(RT_isForeignLocked(rd))return;
+ /* Fremde (geteilte) Runde nie ueber den Bearbeiten-/Neuaufbau-Pfad oeffnen: aktiv -> nur
+    ansehen/mitscoren (RT_resumeShared, Scoring-Gate bleibt korrekt); beendet -> gesperrt. */
+ if(RT_isForeignRound(rd)){ if(!rd.done) RT_resumeShared(id); return; }
  RT_editSourceRound=JSON.parse(JSON.stringify(rd));
  var key=RT_courseKeyFromName(rd.courseName,rd);
  var holesSel=key?RT_holesSelFromRound(rd,key):(rd.cnt===18?'A':((rd.nums&&rd.nums[0]===1)?'F':'B'));

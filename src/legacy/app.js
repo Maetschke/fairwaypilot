@@ -1416,9 +1416,26 @@ function RT_isForeignLocked(rd){
 function RT_scorerId(rd){
  if(!rd) return null;
  if(rd.scorerId) return rd.scorerId;
- if(rd.ownerHint) return rd.ownerHint;
+ /* Der wahre Eigentuemer (aus dem Cloud-Pull) ist der Standard-Scorer - VOR ownerHint.
+    Sonst koennte eine fremde, lokal neu aufgebaute Runde mit falschem ownerHint das eigene
+    Konto zum Scorer machen und zwei Geraete wuerden gleichzeitig schreiben. */
  if(RT_roundOwners&&RT_roundOwners[rd.id]) return RT_roundOwners[rd.id];
+ if(rd.ownerHint) return rd.ownerHint;
  return sbUser?sbUser.id:null;
+}
+/* Fremde (geteilte) Runde fortsetzen, OHNE sie ueber den Bearbeiten-Pfad (RT_applyEdit) neu
+   aufzubauen: das echte Rundenobjekt (mit scorerId/ownerHint des Eigentuemers und aktuellem
+   Loch) wird direkt geoeffnet. So bleibt der Scoring-Gate korrekt - der Mitspieler sieht nur
+   mit und kann erst nach einer Uebergabe selbst eintragen. */
+function RT_resumeShared(id){
+ var saved=rtGet(RT_KEY)||[]; var rd=null;
+ for(var i=0;i<saved.length;i++){ if(saved[i].id===id){ rd=saved[i]; break; } }
+ if(!rd) return;
+ RT_round=rd;
+ RT_editingExisting=false;
+ RT_state.saveWarn='';
+ try{ rtSet(RT_ACT,rd); }catch(e){}
+ RT_go('play');
 }
 function RT_roundIsShared(rd){
  if(!rd) return false;
@@ -7667,7 +7684,7 @@ function RT_rView(){
   var _started=rd.players.some(function(p){ return (p.sc&&p.sc.some(function(v){return v!==null&&v!==undefined;}))||(p.pins&&p.pins.some(function(a){return a&&a.length;})); });
   var _ended=!!(rd.promoted||rd.historical);
   var _primLbl=_ended?'Runde ansehen':(_started?'Runde fortsetzen':'Runde starten');
-  h+='<div class="rt-row" style="margin-bottom:8px;"><button class="rt-btn" onclick="RT_editRound(\''+rd.id+'\',true)">'+_primLbl+'</button></div>';
+  h+='<div class="rt-row" style="margin-bottom:8px;"><button class="rt-btn" onclick="'+(foreign?('RT_resumeShared(\''+rd.id+'\')'):('RT_editRound(\''+rd.id+'\',true)'))+'">'+_primLbl+'</button></div>';
   if(!foreign){
    h+='<div class="rt-row"><button class="rt-btn2" onclick="RT_editRound(\''+rd.id+'\')">Runde bearbeiten</button>'+
     ((_started&&!_ended)?'<button class="rt-btn2" onclick="RT_promoteRound(\''+rd.id+'\')">Runde beenden</button>':'')+'</div>'+

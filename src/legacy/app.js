@@ -1635,6 +1635,8 @@ function RT_setupInviteHtml(name){
  }
  var emailMode=RT_state.plEmailFor===name;
  var h='<div style="margin-top:8px;">';
+ h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'+'<button class="rt-btn2" style="flex:none;width:auto;margin:0;padding:8px 12px;font-size:12px;" onclick="PL_share(\''+rtJsEsc(name)+'\')">\ud83d\udcf2 Link teilen</button>'+'<button class="rt-btn3" style="flex:none;padding:8px 10px;font-size:12px;" onclick="PL_qr(\''+rtJsEsc(name)+'\')">QR</button>'+'</div>';
+ if(RT_state.qrFor===name){ h+=RT_qrBoxHtml(name); }
  if(st&&st.invite_email){ h+='<div style="font-size:11.5px;color:#187040;font-weight:700;margin-bottom:4px;">✉️ Eingeladen: '+rtEsc(st.invite_email)+' – bekommt beim Start den Link</div>'; }
  h+='<button class="rt-btn3" style="color:#1F8A4D;font-weight:700;padding:4px 0;font-size:12px;" onclick="PL_showEmail(\''+rtJsEsc(name)+'\')">'+(emailMode?'Abbrechen':(st?'E-Mail ändern':'\u2709\ufe0f Einladen (E-Mail + Live-Zugriff)'))+'</button>';
  if(emailMode){
@@ -2128,6 +2130,65 @@ async function PL_copy(code){
 function PL_buildLink(code){
  return window.location.origin+window.location.pathname+'?join='+encodeURIComponent(code);
 }
+/* Legt bei Bedarf einen Einladungscode an - OHNE E-Mail (reine Verknuepfungs-Einladung zum
+   Teilen per Link/QR). Gibt den Code zurueck (oder null bei Fehler). */
+async function PL_ensureCode(name){
+ var st=(typeof PL_statusFor==='function')?PL_statusFor(name):null;
+ if(st&&st.invite_code) return st.invite_code;
+ if(!sb||!sbUser||!name) return null;
+ try{
+  var r=await sb.from('player_links').insert({owner_id:sbUser.id,player_name:name}).select('player_name,invite_code,linked_user_id,claimed_at').single();
+  if(r.error) throw r.error;
+  if(!PL_list)PL_list=[]; PL_list.push(r.data);
+  return r.data.invite_code;
+ }catch(e){ PL_msg='Link konnte nicht erstellt werden: '+(e.message||e); RT_render(); return null; }
+}
+/* Teilt den Einladungslink ueber den nativen Teilen-Dialog des Geraets (WhatsApp, iMessage,
+   AirDrop, ...). Faellt auf Kopieren zurueck, wenn kein Share-Dialog verfuegbar ist. */
+async function PL_share(name){
+ var code=await PL_ensureCode(name); if(!code) return;
+ var link=PL_buildLink(code);
+ var who=(typeof RT_myDisplayName==='function')?RT_myDisplayName():'Ein Mitspieler';
+ var msg=who+' l\u00e4dt dich zu FairwayPilot ein \u2013 \u00f6ffne den Link, um gemeinsam zu spielen:';
+ try{ if(navigator.share){ await navigator.share({title:'FairwayPilot Einladung', text:msg, url:link}); PL_msg=''; RT_render(); return; } }
+ catch(e){ if(e&&e.name==='AbortError') return; }
+ try{ await navigator.clipboard.writeText(link); PL_msg='Link kopiert: '+link; }catch(e){ PL_msg=link; }
+ RT_render();
+}
+/* QR-Ansicht fuer eine Zeile ein-/ausklappen (erzeugt bei Bedarf den Code). */
+function PL_qr(name){
+ RT_state.qrFor=(RT_state.qrFor===name)?null:name;
+ if(RT_state.qrFor){ PL_ensureCode(name).then(function(){ RT_render(); }); } else { RT_render(); }
+}
+/* Rendert einen scannbaren QR-Code (inline-SVG, EC-Level M) fuer den Einladungslink. Nutzt den
+   eingebundenen, gegen die Referenz verifizierten QR-Encoder (window.QR). Kein Drittanbieter. */
+function RT_qrSvg(text,px){
+ try{
+  if(typeof QR==='undefined'||!QR.matrix) return '';
+  var m=QR.matrix(text,'M'); var n=m.n, quiet=4, total=n+quiet*2;
+  var cell=Math.max(1,Math.floor((px||212)/total)); var size=cell*total;
+  var rects='';
+  for(var r=0;r<n;r++){ for(var c=0;c<n;c++){ if(m.dark[r][c]) rects+='<rect x="'+((c+quiet)*cell)+'" y="'+((r+quiet)*cell)+'" width="'+cell+'" height="'+cell+'"/>'; } }
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect width="'+size+'" height="'+size+'" fill="#ffffff"/><g fill="#12281b">'+rects+'</g></svg>';
+ }catch(e){ return ''; }
+}
+function RT_qrBoxHtml(name){
+ var st=(typeof PL_statusFor==='function')?PL_statusFor(name):null;
+ var code=st&&st.invite_code;
+ if(!code) return '<div style="margin-top:8px;font-size:12px;color:#8A9C8E;">Einladungslink wird erstellt \u2026</div>';
+ var link=PL_buildLink(code);
+ var svg=RT_qrSvg(link,212);
+ var h='<div style="margin-top:8px;padding:12px;border:1px solid #DCE7D4;border-radius:12px;background:#fff;text-align:center;">';
+ h+='<div style="font-size:12px;color:#3C5546;margin-bottom:8px;">'+rtEsc(name)+' scannt den Code (oder du teilst den Link) und landet direkt in der Einladung.</div>';
+ if(svg) h+='<div style="display:flex;justify-content:center;margin-bottom:8px;">'+svg+'</div>';
+ else h+='<div style="font-size:11px;color:#B03A3A;margin-bottom:8px;">QR-Code nicht verf\u00fcgbar \u2013 nutze den Link.</div>';
+ h+='<div style="font-size:11px;color:#8A9C8E;word-break:break-all;margin-bottom:10px;">'+rtEsc(link)+'</div>';
+ h+='<div style="display:flex;gap:8px;justify-content:center;">'+
+  '<button class="rt-btn" style="width:auto;flex:none;padding:9px 14px;margin:0;" onclick="PL_share(\''+rtJsEsc(name)+'\')">\ud83d\udcf2 Teilen</button>'+
+  '<button class="rt-btn2" style="width:auto;flex:none;padding:9px 14px;margin:0;" onclick="PL_copy(\''+rtJsEsc(code)+'\')">Link kopieren</button>'+
+  '</div></div>';
+ return h;
+}
 /* Blendet fuer eine Zeile das E-Mail-Eingabefeld ein/aus, statt den Link direkt zu kopieren -
    siehe PL_sendInvite fuer den eigentlichen Versand. */
 function PL_showEmail(name){
@@ -2324,8 +2385,9 @@ function RT_rUser(){
   h+='<div style="display:flex;gap:8px;align-items:center;">'+
    '<div style="flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+rtEsc(sp.name)+'</div>';
   if(linked)h+='<button class="rt-btn2" title="Verkn&uuml;pfung aufheben" onclick="PL_unlink(\''+rtJsEsc(sp.name)+'\')" style="flex:none;width:128px;box-sizing:border-box;margin:0;padding:9px 8px;display:flex;align-items:center;justify-content:center;background:#1F8A4D;border-color:#1F8A4D;color:#fff;font-weight:700;cursor:pointer;">verknüpft &#10003;</button>';
-  else h+='<button class="rt-btn2" style="flex:none;width:128px;box-sizing:border-box;margin:0;padding:9px 8px;text-align:center;" onclick="PL_showEmail(\''+rtJsEsc(sp.name)+'\')">'+(emailMode?'Abbrechen':(st?'Erneut senden':'Einladen'))+'</button>';
-  if(!linked&&st)h+='<button class="rt-btn3" style="flex:none;padding:8px 10px;" onclick="PL_copy(\''+rtJsEsc(st.invite_code)+'\')" title="Link kopieren">&#128279;</button>';
+  else { h+='<button class="rt-btn" style="flex:none;width:auto;box-sizing:border-box;margin:0;padding:9px 12px;text-align:center;" onclick="PL_share(\''+rtJsEsc(sp.name)+'\')" title="Einladungslink teilen">\ud83d\udcf2 Teilen</button>'+
+   '<button class="rt-btn3" style="flex:none;padding:8px 10px;" onclick="PL_qr(\''+rtJsEsc(sp.name)+'\')" title="QR-Code">QR</button>'+
+   '<button class="rt-btn3" style="flex:none;padding:8px 10px;" onclick="PL_showEmail(\''+rtJsEsc(sp.name)+'\')" title="Per E-Mail einladen">'+(emailMode?'\u2715':'\u2709\ufe0f')+'</button>'; }
   h+='</div>';
   if(!linked&&emailMode){
    h+='<div style="display:flex;gap:8px;align-items:center;margin-top:6px;padding-left:80px;">'+
@@ -2333,6 +2395,7 @@ function RT_rUser(){
     '<button class="rt-btn" style="flex:none;width:auto;padding:10px 14px;" onclick="PL_sendInvite(\''+rtJsEsc(sp.name)+'\')">Senden</button>'+
     '</div>';
   }
+  if(!linked&&RT_state.qrFor===sp.name){ h+=RT_qrBoxHtml(sp.name); }
   h+='</div>';
  });
  if(PL_msg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(PL_msg)+'</div>';

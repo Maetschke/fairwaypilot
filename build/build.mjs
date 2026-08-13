@@ -9,10 +9,11 @@ const read = (p) => readFileSync(r(p), 'utf8');
 
 const TOKEN = '/*__FAIRWAYPILOT_APP_JS__*/';
 const appJs = read('src/legacy/app.js');
+const qrJs = read('src/vendor/qrcode.js');
 const parts = read('src/pages/app.html').split(TOKEN);
 if (parts.length !== 2) throw new Error('App-JS-Platzhalter nicht eindeutig.');
 const tokens = read('src/styles/tokens.css');
-let HTML = parts[0] + appJs + parts[1];
+let HTML = parts[0] + qrJs + '\n' + appJs + parts[1];
 HTML = HTML.replace('<style>', '<style id="fp-tokens">\n' + tokens + '\n</style>\n<style>', 1);
 
 const pages = {

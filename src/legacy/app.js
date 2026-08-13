@@ -3171,7 +3171,7 @@ function RT_renderHoleFull(url,title){
  var rd=RT_round;
  var c=rd?rd.cur:null;
  var holeKey=rd?RT_holeMapKey(rd,c):null;
- var mapMode=!!(holeKey&&RT_mapSat());
+ var mapMode=!!(holeKey&&(RT_mapSat()||(typeof RT_holeImgFor==='function'&&!RT_holeImgFor(rd,c))));
  var toggleBtn=holeKey?('<button class="rt-btn3" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:64px;background:#fff;border:1.5px solid #DCE7D4;border-radius:100px;padding:8px 14px;font-size:12px;font-weight:700;color:#3C5546;z-index:2;" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?'\ud83d\uddbc\ufe0f Birdiekarte':'\ud83d\udef0\ufe0f Satellitenkarte')+'</button>'):'';
  var body;
  if(mapMode){
@@ -7381,7 +7381,7 @@ function RT_rPlay(){
    var rtScale=RT_HOLE_BIGGER[rd.nums[c]]||1;
    h+='<div class="rt-holemap" onclick="RT_openHoleFull(\''+rtImg.url+'\',\'Bahn '+rd.nums[c]+'\','+pi+')"><img src="'+rtImg.url+'" alt="Lochkarte" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block;transform:scale('+rtScale+');">'+RT_pinsOverlayHtml(rd,c,0,pi)+'<div class="rt-holemap-tap">&#8599;</div></div>';
   }else{
-   h+='<div class="rt-holemap" style="position:relative;"><div class="rt-holemap-inner" id="hole-map-'+pi+'"></div>'+(rtImg?'<div class="rt-holemap-tap" style="z-index:1200;pointer-events:auto;" onclick="event.stopPropagation();RT_openHoleFull(\''+rtImg.url+'\',\'Bahn '+rd.nums[c]+'\','+pi+')">&#8599;</div>':'')+'</div>';
+   h+='<div class="rt-holemap" style="position:relative;"><div class="rt-holemap-inner" id="hole-map-'+pi+'"></div>'+'<div class="rt-holemap-tap" style="z-index:1200;pointer-events:auto;" onclick="event.stopPropagation();RT_openHoleFull(\''+(rtImg?rtImg.url:'')+'\',\'Bahn '+rd.nums[c]+'\','+pi+')">&#8599;</div>'+'</div>';
    h+='<div id="map-ctrl-'+pi+'">'+RT_mapCtrlHtml(pi)+'</div>';
    h+='<div id="pin-hint-'+pi+'" style="font-size:9.5px;color:#8A9C8E;margin-top:4px;">'+((RT_pinMoveMode&&RT_pinMoveMode.pi===pi)?'Tippe die neue Position für die Markierung an.':'Karte antippen = neue Lage &middot; Markierung antippen = Menü (verschieben/löschen/Typ ändern)')+'</div>';
   }

@@ -2127,6 +2127,7 @@ async function PL_copy(code){
  try{ await navigator.clipboard.writeText(link); PL_msg='Link kopiert: '+link; }catch(e){ PL_msg=link; }
  RT_render();
 }
+async function PL_copyRaw(code){ try{ await navigator.clipboard.writeText(code); PL_msg='Code kopiert: '+code; }catch(e){ PL_msg='Code: '+code; } RT_render(); }
 function PL_buildLink(code){
  return window.location.origin+window.location.pathname+'?join='+encodeURIComponent(code);
 }
@@ -2182,10 +2183,12 @@ function RT_qrBoxHtml(name){
  h+='<div style="font-size:12px;color:#3C5546;margin-bottom:8px;">'+rtEsc(name)+' scannt den Code (oder du teilst den Link) und landet direkt in der Einladung.</div>';
  if(svg) h+='<div style="display:flex;justify-content:center;margin-bottom:8px;">'+svg+'</div>';
  else h+='<div style="font-size:11px;color:#B03A3A;margin-bottom:8px;">QR-Code nicht verf\u00fcgbar \u2013 nutze den Link.</div>';
- h+='<div style="font-size:11px;color:#8A9C8E;word-break:break-all;margin-bottom:10px;">'+rtEsc(link)+'</div>';
- h+='<div style="display:flex;gap:8px;justify-content:center;">'+
+ h+='<div style="font-size:11px;color:#8A9C8E;word-break:break-all;margin-bottom:8px;">'+rtEsc(link)+'</div>';
+ h+='<div style="font-size:11.5px;color:#3C5546;margin-bottom:10px;">Notfalls Code manuell eingeben: <b style="font-family:monospace;letter-spacing:.5px;">'+rtEsc(code)+'</b></div>';
+ h+='<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">'+
   '<button class="rt-btn" style="width:auto;flex:none;padding:9px 14px;margin:0;" onclick="PL_share(\''+rtJsEsc(name)+'\')">\ud83d\udcf2 Teilen</button>'+
   '<button class="rt-btn2" style="width:auto;flex:none;padding:9px 14px;margin:0;" onclick="PL_copy(\''+rtJsEsc(code)+'\')">Link kopieren</button>'+
+  '<button class="rt-btn3" style="width:auto;flex:none;padding:9px 14px;margin:0;" onclick="PL_copyRaw(\''+rtJsEsc(code)+'\')">Code kopieren</button>'+
   '</div></div>';
  return h;
 }
@@ -2251,7 +2254,10 @@ async function PL_sendInvite(name){
   var _res=await sb.functions.invoke('send-invite',{body:{to:em,playerName:name,inviterName:_inv,roundLabel:_lab,joinCode:st.invite_code,roundId:_rid}});
   if(_res&&_res.error) throw _res.error;
   PL_msg='Einladung an '+rtEsc(em)+' gesendet.';
- }catch(e){ PL_msg='Versand fehlgeschlagen: '+((e&&e.message)||e); }
+ }catch(e){
+  try{ window.location.href=mailto; PL_msg='Server-Versand nicht möglich \u2013 deine Mail-App wurde mit der Einladung an '+rtEsc(em)+' geöffnet. Bitte dort auf Senden tippen.'; }
+  catch(e2){ PL_msg='Versand fehlgeschlagen: '+((e&&e.message)||e)+'. Link zum Weitergeben: '+PL_buildLink(st.invite_code); }
+ }
  RT_state.plEmailFor=null;
  RT_render();
 }
@@ -6423,6 +6429,7 @@ function RT_hydrateCustomCourses(){
  RT_applyRefOverrides();
  RT_applyCmRefOv();
  RT_fixKuertenSI();
+ try{ if(typeof RT_CM!=='undefined'&&(!RT_CM.courses||!RT_CM.courses.length)){ var _cc=rtGet('fp_cm_courses_v2'); if(_cc&&_cc.list&&_cc.list.length) RT_CM.courses=_cc.list; } if(typeof RT_backfillCourseRefs==='function') RT_backfillCourseRefs(); }catch(e){}
 }
 /* Einmalige, robuste Korrektur der amtlichen 18-Loch-Stroke-Index-Werte fuer GC Kuerten
    (Meisterschaftsplatz) - unabhaengig davon, UNTER WELCHEM KEY der Platz tatsaechlich
@@ -6928,7 +6935,7 @@ function RT_buildCust(name,par,si,tees,address){
   var _hb=RT_COURSES[_dupKey].nines&&RT_COURSES[_dupKey].nines.B&&RT_COURSES[_dupKey].nines.B.lbl!=='\u2013';
   RT_su.holes=_hb?'A':'F';
   if(RT_su._cmRef!=null&&RT_COURSES[_dupKey].cmRef==null){ RT_COURSES[_dupKey].cmRef=RT_su._cmRef; if(RT_COURSES[_dupKey].lat==null&&RT_su._cmLat!=null){ RT_COURSES[_dupKey].lat=RT_su._cmLat; RT_COURSES[_dupKey].lon=RT_su._cmLon; } try{ RT_persistCourseRef(_dupKey); }catch(e){} }
-  RT_state.resOk=true; RT_state.resMsg='Dieser Platz ist bereits angelegt \u2013 wir nutzen den vorhandenen Eintrag.';
+  RT_state.resOk=true; RT_state.resMsg='Dieser Platz ist bereits angelegt \u2013 wir nutzen den vorhandenen Eintrag (kein Duplikat). Zum bewussten Neuanlegen oben umbenennen.';
   RT_render(); return;
  }
  var id=RT_newCourseId(name);
@@ -7001,12 +7008,13 @@ function RT_backfillCourseRefs(){
  var changed=false;
  Object.keys(RT_COURSES).forEach(function(key){
   var c=RT_COURSES[key]; if(!c||c.cmRef!=null) return;
-  var cn=RT_placeNorm(c.name); if(!cn||cn.length<5) return;
+  var cn=RT_placeNorm(c.name); if(!cn||cn.length<6) return;
   var found=null;
   for(var i=0;i<RT_CM.courses.length;i++){ var pp=RT_CM.courses[i]; if(!pp||pp.lat==null) continue;
    var pn=RT_placeNorm(pp.name); if(!pn) continue;
-   if(!(pn===cn||pn.indexOf(cn)>=0||cn.indexOf(pn)>=0)) continue;
-   if(c.lat!=null&&c.lon!=null){ if(RT_haversineM(c.lat,c.lon,pp.lat,pp.lon)>2000) continue; }
+   var _hasGeo=(c.lat!=null&&c.lon!=null);
+   if(_hasGeo){ if(!(pn===cn||pn.indexOf(cn)>=0||cn.indexOf(pn)>=0)) continue; if(RT_haversineM(c.lat,c.lon,pp.lat,pp.lon)>2000) continue; }
+   else { if(pn!==cn) continue; }
    found=pp; break;
   }
   if(found){ c.cmRef=found.ref; if(c.lat==null){ c.lat=found.lat; c.lon=found.lon; } try{ RT_persistCourseRef(key); }catch(e){} changed=true; }
@@ -8872,7 +8880,7 @@ function RT_rMyCourses(){
    out+='<div class="rt-ct" style="margin:14px 2px 8px;">'+titles[k]+' ('+arr.length+')</div>';
    arr.forEach(function(r){ var dist=RT_CM.userLL?RT_cmDistTxt({lat:r.lat,lon:r.lon}):null;
     var _mk=RT_placeMatch({ref:r.course_ref,name:r.name,lat:r.lat,lon:r.lon});
-    var _sub=((r.holes!=null)?(r.holes+' Löcher'):(_mk?'Spielbar ✓':'Löcher —'))+(dist?(' · '+dist):'');
+    var _sub=(_mk?('Spielbar ✓'+((r.holes!=null)?(' · '+r.holes+' Löcher'):'')):((r.holes!=null)?(r.holes+' Löcher'):'Löcher —'))+(dist?(' · '+dist):'');
     out+='<div class="rtc" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;"><div style="flex:1;"><div style="font-weight:700;color:#143522;">'+RT_cmEsc(r.name||r.course_ref)+(_mk?' <span style="color:#1F8A4D;font-size:11px;font-weight:800;">✓</span>':'')+'</div>'
      +'<div class="rt-cs" style="margin:2px 0 0;">'+_sub+'</div></div>'
      +'<button class="rt-btn3" style="color:#1F8A4D;font-weight:800;padding:6px 8px;" onclick="RT_mcStart(\''+r.course_ref+'\')">'+(_mk?'Spielen':'Anlegen')+'</button>'

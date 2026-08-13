@@ -7097,7 +7097,10 @@ async function RT_research(){
  if(!name){RT_state.resOk=false;RT_state.resMsg='Bitte zuerst einen Platznamen eingeben.';RT_render();return;}
  RT_state.busy=true;RT_state.resMsg='';RT_render();
  try{
-  var resp=await fetch('/api/research',{method:'POST',headers:{'Content-Type':'application/json'},
+  var _tok=(typeof RT_authToken==='function')?await RT_authToken():null;
+  var _hdr={'Content-Type':'application/json'};
+  if(_tok) _hdr['Authorization']='Bearer '+_tok;
+  var resp=await fetch('/api/research',{method:'POST',headers:_hdr,
    body:JSON.stringify({name:name, lat:(RT_su&&RT_su._cmLat!=null)?RT_su._cmLat:undefined, lon:(RT_su&&RT_su._cmLon!=null)?RT_su._cmLon:undefined})});
   var data=await resp.json();
   if(!resp.ok||data.error) throw new Error(data.error||('Server-Fehler ('+resp.status+')'));

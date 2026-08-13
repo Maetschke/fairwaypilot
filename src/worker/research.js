@@ -134,7 +134,14 @@ async function handleResearch(request, env) {
       const anthResp = await callAnthropic(apiKey, name, hint, attempt === 1);
       if (!anthResp.ok) {
         const errText = await anthResp.text();
-        return new Response(JSON.stringify({ error: "Anthropic API Fehler (" + anthResp.status + "): " + errText.slice(0, 300) }), { status: 502, headers: cors });
+        // Rohen API-Fehler nicht an den Nutzer durchreichen; bekannte Faelle sauber uebersetzen.
+        let msg = "Die Platzrecherche ist gerade nicht verfuegbar. Bitte spaeter erneut versuchen oder Par/SI unten manuell eintragen \u2013 der Platz wird trotzdem gespeichert.";
+        if (/credit balance is too low|billing|insufficient_quota|insufficient funds/i.test(errText)) {
+          msg = "Die Platzrecherche ist vor\u00fcbergehend nicht verf\u00fcgbar (Dienstkontingent ersch\u00f6pft). Bitte Par/SI unten manuell eintragen \u2013 der Platz wird trotzdem gespeichert.";
+        } else if (anthResp.status === 429 || /rate limit/i.test(errText)) {
+          msg = "Die Platzrecherche ist gerade stark ausgelastet. Bitte in einer Minute erneut versuchen oder Par/SI unten manuell eintragen.";
+        }
+        return new Response(JSON.stringify({ error: msg }), { status: 502, headers: cors });
       }
       const data = await anthResp.json();
       const ex = extractResult(data);

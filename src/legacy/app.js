@@ -7098,7 +7098,7 @@ async function RT_research(){
  RT_state.busy=true;RT_state.resMsg='';RT_render();
  try{
   var resp=await fetch('/api/research',{method:'POST',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({name:name})});
+   body:JSON.stringify({name:name, lat:(RT_su&&RT_su._cmLat!=null)?RT_su._cmLat:undefined, lon:(RT_su&&RT_su._cmLon!=null)?RT_su._cmLon:undefined})});
   var data=await resp.json();
   if(!resp.ok||data.error) throw new Error(data.error||('Server-Fehler ('+resp.status+')'));
   var js=data.result;

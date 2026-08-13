@@ -3016,7 +3016,7 @@ function RT_refOverlayHtml(rd,c,rotComp){
  return h;
 }
 
-function RT_refPointRowHtml(kind,teeName,label,pt){
+function RT_refPointRowHtml(kind,teeName,label,pt,hasImg){
  var hasGps=!!pt;
  var hasPx=!!(pt&&pt.px);
  var active=!!(RT_state.calibActive&&RT_state.calibActive.kind===kind&&(kind!=='tee'||RT_state.calibActive.teeName===teeName));
@@ -3033,7 +3033,7 @@ function RT_refPointRowHtml(kind,teeName,label,pt){
    +'<input class="rt-inp" placeholder="Breite, L\u00e4nge (z.B. 50.983245, 7.365198)" value="'+rtEsc(coordText)+'" style="flex:1;font-size:12px;" onchange="RT_setRefManual(\''+kind+'\',\''+teeArg+'\',this.value)">'
    +'<button class="rt-btn3" style="flex-shrink:0;padding:6px 10px;" title="Aktuelle GPS-Position hier eintragen" onclick="'+setFn+'">\ud83d\udccd</button>'
    +'</div>';
- if(hasGps||hasPx){
+ if((hasGps||hasPx)&&hasImg){
   h+='<button class="rt-btn3" style="width:100%;'+(active?'background:#BF5AF2;color:#fff;':(hasPx?'background:#EAF6EE;':'background:#F1F6EC;'))+'" onclick="RT_setActiveCalibPoint(\''+kind+'\',\''+teeArg+'\')">'
     +(hasPx?'\u2705 ':'\ud83d\uddbc\ufe0f ')+'Bildposition '+(active?'aktiv \u2013 im Bild unten antippen':(hasPx?'gesetzt (neu setzen)':'setzen'))+'</button>';
  }
@@ -3048,13 +3048,15 @@ function RT_refSetupHtml(rd,c){
  var num=rd.nums[c]; var nine=num<=9?'F':'B'; var idx=num<=9?num-1:num-10;
  var ref=co.refs[nine][idx]||{tees:{},pin:null,mid:null};
  if(!ref.tees) ref.tees={};
- var h='<div style="margin-top:8px;">';
- RT_teeOrderResolved(co).map(function(ti){return co.tees[ti];}).forEach(function(t){
-  h+=RT_refPointRowHtml('tee',t.name,t.name,ref.tees[t.name]);
- });
- h+=RT_refPointRowHtml('mid',null,'Bahnmitte',ref.mid);
- h+=RT_refPointRowHtml('pin',null,'Loch/Fahne',ref.pin);
  var rtImg=RT_holeImgFor(rd,c);
+ var hasImg=!!rtImg;
+ var h='<div style="margin-top:8px;">';
+ if(!hasImg){ h+='<div class="rt-cs" style="margin-bottom:8px;">F\u00fcr diesen Platz ist kein Bahn-Bild hinterlegt \u2013 setze hier nur die GPS-Koordinaten der Punkte (Abschl\u00e4ge, Bahnmitte, Loch). Distanzen und Balllagen laufen dann \u00fcber die Satellitenkarte. \u201eBildposition setzen\u201c erscheint nur bei Pl\u00e4tzen mit hinterlegter Bahn-Grafik.</div>'; }
+ RT_teeOrderResolved(co).map(function(ti){return co.tees[ti];}).forEach(function(t){
+  h+=RT_refPointRowHtml('tee',t.name,t.name,ref.tees[t.name],hasImg);
+ });
+ h+=RT_refPointRowHtml('mid',null,'Bahnmitte',ref.mid,hasImg);
+ h+=RT_refPointRowHtml('pin',null,'Loch/Fahne',ref.pin,hasImg);
  if(rtImg){
   h+='<div style="margin-top:8px;">';
   h+='<div class="rt-cs" style="margin-bottom:6px;">'+(RT_state.calibActive?('Bildposition f\u00fcr \u201e'+rtEsc(RT_activeCalibLabel())+'\u201c antippen'):'Zum Kalibrieren oben bei einem Punkt \u201eBildposition setzen\u201c antippen, dann hier im Bild antippen. Bereits gesetzte Marker lassen sich direkt im Bild verschieben. (Mind. 2 kalibrierte Punkte n\u00f6tig, damit Balllagen im Bild erscheinen.)')+'</div>';

@@ -2771,6 +2771,27 @@ function RT_computeCalib(ref){
  var rotDeg=((bearingImg-bearingReal)%360+360)%360;
  return {originLat:a.lat, originLng:a.lng, originPx:{x:a.px.x,y:a.px.y}, mPerDegLat:mPerDegLat, mPerDegLng:mPerDegLng, Tx:Tx, Ty:Ty, A:A, rotDeg:rotDeg};
 }
+/* GPS-Ausrichtung fuer Plaetze OHNE Bild-Kalibrierung (kein px): dreht die Vollbild-
+   Satellitenkarte so, dass die Fahne oben liegt. Herleitung: auf der nordausgerichteten
+   Karte erscheint die Peilung Abschlag->Fahne (brTP, im Uhrzeigersinn von Nord) als
+   Bildschirmwinkel brTP von oben. Die Karte wird per CSS um rotF im Uhrzeigersinn gedreht,
+   ein Vektor wandert also auf brTP+rotF. Fahne oben => rotF = -brTP. Da die Vollbildkarte
+   rotF = basePos.rot + RT_FULL_IMG_ROT anwendet, muss der zurueckgegebene Wert
+   (-brTP - RT_FULL_IMG_ROT) sein - dieselbe Rolle wie rotDeg aus der Bildkalibrierung. */
+function RT_gpsRotDeg(ref){
+ if(!ref) return null;
+ var A=null,B=null;
+ if(ref.tees){ var ks=Object.keys(ref.tees); for(var i=0;i<ks.length;i++){ var t=ref.tees[ks[i]]; if(t&&t.lat!=null){ A=t; break; } } }
+ if(ref.pin&&ref.pin.lat!=null) B=ref.pin; else if(ref.mid&&ref.mid.lat!=null) B=ref.mid;
+ if(!A&&ref.mid&&ref.mid.lat!=null&&ref.pin&&ref.pin.lat!=null){ A=ref.mid; B=ref.pin; }
+ if(!A||!B) return null;
+ var latRad=A.lat*Math.PI/180;
+ var mLat=110540, mLng=111320*Math.cos(latRad);
+ var east=(B.lng-A.lng)*mLng, north=(B.lat-A.lat)*mLat;
+ if(east*east+north*north<1) return null;
+ var brTP=Math.atan2(east,north)*180/Math.PI;
+ return ((((-brTP)-RT_FULL_IMG_ROT)%360)+360)%360;
+}
 function RT_projectLatLngToPx(calib,lat,lng){
  if(!calib) return null;
  var dxM=(lng-calib.originLng)*calib.mPerDegLng;
@@ -3314,7 +3335,7 @@ async function RT_initHoleFullMap(){
  var c=rd.cur;
  var hfRef=RT_refFor(rd,c);
  var hfCalib=hfRef?RT_computeCalib(hfRef):null;
- var hfAutoRot=hfCalib?hfCalib.rotDeg:null;
+ var hfAutoRot=hfCalib?hfCalib.rotDeg:RT_gpsRotDeg(hfRef);
  var savedView=(rd.holeViews&&rd.holeViews[RT_holeMapKey(rd,c)])||RT_holeViews()[RT_holeMapKey(rd,c)];
  if(!RT_savedViewUsable(rd,c,savedView)) savedView=null;
  var basePos=null;

@@ -3057,6 +3057,16 @@ function RT_refSetupHtml(rd,c){
  });
  h+=RT_refPointRowHtml('mid',null,'Bahnmitte',ref.mid,hasImg);
  h+=RT_refPointRowHtml('pin',null,'Loch/Fahne',ref.pin,hasImg);
+ var _ppts=[];
+ RT_teeOrderResolved(co).map(function(ti){return co.tees[ti];}).forEach(function(t){ _ppts.push(['tee',t.name,t.name]); });
+ _ppts.push(['mid','','Bahnmitte']); _ppts.push(['pin','','Loch']);
+ h+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid #EEF3EA;">';
+ h+='<div class="rt-cs" style="margin-bottom:6px;">Auf Karte setzen: oben einen Punkt w\u00e4hlen, dann in die Karte tippen. Bereits gesetzte Punkte lassen sich direkt verschieben.</div>';
+ h+='<div class="rt-chiprow" style="margin-bottom:8px;">';
+ _ppts.forEach(function(pp){ var on=!!(RT_refPickActive&&RT_refPickActive.kind===pp[0]&&((pp[0]!=='tee')||RT_refPickActive.teeName===pp[1])); h+='<button class="rt-chip'+(on?' on':'')+'" onclick="RT_refPick(\''+pp[0]+'\',\''+(pp[1]?rtJsEsc(pp[1]):'')+'\')">'+rtEsc(pp[2])+'</button>'; });
+ h+='</div>';
+ h+='<div id="ref-edit-map" style="width:100%;height:280px;border-radius:12px;overflow:hidden;background:#EAF1E3;"></div>';
+ h+='</div>';
  if(rtImg){
   h+='<div style="margin-top:8px;">';
   h+='<div class="rt-cs" style="margin-bottom:6px;">'+(RT_state.calibActive?('Bildposition f\u00fcr \u201e'+rtEsc(RT_activeCalibLabel())+'\u201c antippen'):'Zum Kalibrieren oben bei einem Punkt \u201eBildposition setzen\u201c antippen, dann hier im Bild antippen. Bereits gesetzte Marker lassen sich direkt im Bild verschieben. (Mind. 2 kalibrierte Punkte n\u00f6tig, damit Balllagen im Bild erscheinen.)')+'</div>';
@@ -3068,6 +3078,46 @@ function RT_refSetupHtml(rd,c){
  }
  h+='</div>';
  return h;
+}
+var RT_refEditMapInst=null, RT_refPickActive=null, RT_refEditView=null;
+function RT_refPick(kind,teeName){
+ teeName=teeName||null;
+ var a=RT_refPickActive;
+ if(a&&a.kind===kind&&a.teeName===teeName) RT_refPickActive=null; else RT_refPickActive={kind:kind,teeName:teeName};
+ RT_render();
+}
+function RT_refEditMarkers(){
+ var ctx=RT_curRefCtx(); if(!ctx) return [];
+ var e=ctx.entry; var out=[];
+ if(e.tees) Object.keys(e.tees).forEach(function(k){ var pt=e.tees[k]; if(pt&&pt.lat!=null){ var bg=RT_teeColorFor(k); out.push({kind:'tee',teeName:k,lat:pt.lat,lng:pt.lng,label:'T',bg:bg,fg:RT_teeTextColorFor(bg)}); } });
+ if(e.mid&&e.mid.lat!=null) out.push({kind:'mid',teeName:null,lat:e.mid.lat,lng:e.mid.lng,label:'M',bg:'#0A84FF',fg:'#fff'});
+ if(e.pin&&e.pin.lat!=null) out.push({kind:'pin',teeName:null,lat:e.pin.lat,lng:e.pin.lng,label:'\u26f3',bg:'#143522',fg:'#fff'});
+ return out;
+}
+function RT_initRefEditMap(){
+ if(RT_refEditMapInst){ try{RT_refEditMapInst.remove();}catch(e){} RT_refEditMapInst=null; }
+ var el=document.getElementById('ref-edit-map'); if(!el||!RT_round) return;
+ if(typeof L==='undefined'){ el.style.display='none'; return; }
+ var curKey=RT_holeMapKey(RT_round,RT_round.cur);
+ var mk=RT_refEditMarkers();
+ var center=null, zoom=17;
+ if(RT_refEditView&&RT_refEditView.key===curKey){ center=[RT_refEditView.lat,RT_refEditView.lng]; zoom=RT_refEditView.zoom; }
+ else if(mk.length){ var la=0,lo=0; mk.forEach(function(m){la+=m.lat;lo+=m.lng;}); center=[la/mk.length,lo/mk.length]; zoom=17; }
+ else { var ck=RT_courseKeyFromName(RT_round.courseName,RT_round); var co=ck?RT_COURSES[ck]:null; if(co&&co.lat!=null){ center=[co.lat,co.lon]; zoom=16; } else if(RT_curPos){ center=[RT_curPos.lat,RT_curPos.lng]; zoom=16; } else { center=[51.2,10.4]; zoom=6; } }
+ var map;
+ try{
+  map=L.map('ref-edit-map',{zoomControl:true,attributionControl:false}).setView(center,zoom);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,maxNativeZoom:19,noWrap:true,errorTileUrl:RT_TRANSPX}).addTo(map);
+ }catch(e){ el.style.display='none'; return; }
+ RT_refEditMapInst=map;
+ RT_refEditView={key:curKey,lat:center[0],lng:center[1],zoom:zoom};
+ mk.forEach(function(m){
+  var icon=L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:'<div style="width:20px;height:20px;border-radius:50%;background:'+m.bg+';color:'+m.fg+';border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;">'+m.label+'</div>'});
+  var mrk=L.marker([m.lat,m.lng],{icon:icon,draggable:true}).addTo(map);
+  (function(mm){ mrk.on('dragend',function(ev){ var ll=ev.target.getLatLng(); RT_setRefManual(mm.kind,mm.teeName,ll.lat+', '+ll.lng); }); })(m);
+ });
+ map.on('click',function(ev){ if(!RT_refPickActive){ RT_state.saveWarn='Bitte oben zuerst einen Punkt w\u00e4hlen, dann in die Karte tippen.'; RT_render(); return; } var a=RT_refPickActive; RT_setRefManual(a.kind,a.teeName,ev.latlng.lat+', '+ev.latlng.lng); });
+ map.on('moveend zoomend',function(){ try{ var cc=map.getCenter(); RT_refEditView={key:curKey,lat:cc.lat,lng:cc.lng,zoom:map.getZoom()}; }catch(e){} });
 }
 /* Einzelne Georghausen-Lochkarten wirken bei fester Kartenhoehe (180px) kleiner, weil ihr
    Quellbild ein hoeheres/schmaleres Seitenverhaeltnis hat als der Durchschnitt (Ursache: die
@@ -5539,7 +5589,7 @@ function RT_render(){
  var r=document.getElementById('rt-root'); if(!r)return;
  if(RT_state.screen==='setup'){ r.innerHTML=RT_rSetup(); RT_initMap(); }
  else if(RT_state.screen==='coursePick')r.innerHTML=RT_rCoursePick();
- else if(RT_state.screen==='play'){ r.innerHTML=RT_rPlay(); RT_initHoleMaps(); RT_startGeoWatch(); }
+ else if(RT_state.screen==='play'){ r.innerHTML=RT_rPlay(); RT_initHoleMaps(); RT_initRefEditMap(); RT_startGeoWatch(); }
  else if(RT_state.screen==='view')r.innerHTML=RT_rView();
  else if(RT_state.screen==='bag')r.innerHTML=RT_rBag();
  else if(RT_state.screen==='courseMap'){ r.innerHTML=RT_rCourseMap(); RT_cmInit(); }

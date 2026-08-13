@@ -6142,7 +6142,7 @@ function RT_suCourse(k){
   RT_su.holes=hasBack?'A':'F';
  }
  if(k!=='other'){ RT_su.players.forEach(function(p){ var side=(RT_su.holes==='A')?'A':RT_su.holes; p.tee=RT_hardestTeeIdx(k,side,p.sex||'m'); p.teeHalf=(RT_su.holes==='A')?null:RT_su.holes; RT_applySavedTee(p,k); }); }
- if(k==='other'){ RT_su.custName=''; RT_su.custPar=''; RT_su.custSi=''; RT_su.siEdit={}; RT_su.parEdit={}; RT_state.resMsg=''; }
+ if(k==='other'){ RT_su.custName=''; RT_su.custPar=''; RT_su.custSi=''; RT_su.siEdit={}; RT_su.parEdit={}; RT_su._cmRef=null; RT_su._cmLat=null; RT_su._cmLon=null; RT_state.resMsg=''; }
  RT_render();
 }
 function RT_suHoles(v){
@@ -6421,6 +6421,7 @@ function RT_hydrateCustomCourses(){
  RT_applyTeeOrderOverrides();
  RT_applyPhotoOverrides();
  RT_applyRefOverrides();
+ RT_applyCmRefOv();
  RT_fixKuertenSI();
 }
 /* Einmalige, robuste Korrektur der amtlichen 18-Loch-Stroke-Index-Werte fuer GC Kuerten
@@ -6921,6 +6922,15 @@ function RT_platzMove(key,dir){
 }
 function RT_buildCust(name,par,si,tees,address){
  var n9=par.length===9;
+ var _dupKey=RT_placeMatch({ref:(RT_su&&RT_su._cmRef),name:name,lat:(RT_su&&RT_su._cmLat),lon:(RT_su&&RT_su._cmLon)}, true);
+ if(_dupKey&&RT_COURSES[_dupKey]){
+  RT_su.course=_dupKey;
+  var _hb=RT_COURSES[_dupKey].nines&&RT_COURSES[_dupKey].nines.B&&RT_COURSES[_dupKey].nines.B.lbl!=='\u2013';
+  RT_su.holes=_hb?'A':'F';
+  if(RT_su._cmRef!=null&&RT_COURSES[_dupKey].cmRef==null){ RT_COURSES[_dupKey].cmRef=RT_su._cmRef; if(RT_COURSES[_dupKey].lat==null&&RT_su._cmLat!=null){ RT_COURSES[_dupKey].lat=RT_su._cmLat; RT_COURSES[_dupKey].lon=RT_su._cmLon; } try{ RT_persistCourseRef(_dupKey); }catch(e){} }
+  RT_state.resOk=true; RT_state.resMsg='Dieser Platz ist bereits angelegt \u2013 wir nutzen den vorhandenen Eintrag.';
+  RT_render(); return;
+ }
  var id=RT_newCourseId(name);
  var courseObj={name:name,
   address:address||undefined,
@@ -6932,6 +6942,7 @@ function RT_buildCust(name,par,si,tees,address){
          si:si?RT_si9(si.slice(9)):null, si18:si?si.slice(9):null}
   },
   tees:tees.length?tees:[{name:'Standard',cr:{F:null,B:null,A:null},sl:{F:null,B:null,A:null}}]};
+ if(RT_su&&RT_su._cmRef!=null){ courseObj.cmRef=RT_su._cmRef; if(RT_su._cmLat!=null){ courseObj.lat=RT_su._cmLat; courseObj.lon=RT_su._cmLon; } }
  RT_COURSES[id]=courseObj;
  var allCustom=RT_loadCustomCourses();
  allCustom[id]=courseObj;
@@ -6944,6 +6955,89 @@ function RT_buildCust(name,par,si,tees,address){
 function RT_si9(a){ /* 18er-SI-Segment auf Rang 1-9 innerhalb der 9 normieren */
  var sorted=a.slice().sort(function(x,y){return x-y;});
  return a.map(function(v){return sorted.indexOf(v)+1;});
+}
+
+/* ============================================================
+   Platz-Verknuepfung: "Meine Plaetze"/Karte <-> spielbare Plaetze.
+   Kanonische Identitaet = cmRef (OSM-ID des Karten-Platzes). "Spielbar"
+   (Loch-Daten) ist ein Attribut. Match ueber cmRef, sonst Geo<250m + Name.
+   ============================================================ */
+function RT_placeNorm(x){ return (x||'').toString().toLowerCase().replace(/[^a-z0-9äöüß]/g,''); }
+/* Findet zu einem Karten-/Listen-Platz (ref,lat,lon,name) den passenden SPIELBAREN
+   Platz-Key aus RT_COURSES. strict=true => nur exakter Name oder Geo-Treffer (kein
+   loser Teilstring-Match), fuer die Dublettenpruefung beim manuellen Anlegen. */
+function RT_placeMatch(place, strict){
+ if(!place) return null;
+ var ref=(place.ref!=null?place.ref:place.course_ref);
+ var keys=Object.keys(RT_COURSES), i, c;
+ if(ref!=null){ for(i=0;i<keys.length;i++){ c=RT_COURSES[keys[i]]; if(c&&c.cmRef!=null&&String(c.cmRef)===String(ref)) return keys[i]; } }
+ var pn=RT_placeNorm(place.name), plat=place.lat, plon=place.lon;
+ var best=null, bestD=1e12;
+ for(i=0;i<keys.length;i++){ c=RT_COURSES[keys[i]]; if(!c) continue;
+  var cn=RT_placeNorm(c.name);
+  var exact=(pn&&cn&&cn===pn);
+  var sub=(pn&&cn&&(cn.indexOf(pn)>=0||pn.indexOf(cn)>=0));
+  if(plat!=null&&plon!=null&&c.lat!=null&&c.lon!=null){
+   var d=RT_haversineM(plat,plon,c.lat,c.lon);
+   if(d<250&&(sub||d<80)){ if(d<bestD){ bestD=d; best=keys[i]; } continue; }
+  }
+  if(exact) return keys[i];
+  if(!strict && sub && pn.length>=6 && best===null){ best=keys[i]; }
+ }
+ return best;
+}
+function RT_getCmRefOv(){ return rtGet('golflog_cmref_v1')||{}; }
+function RT_applyCmRefOv(){ var ov=RT_getCmRefOv(); Object.keys(ov).forEach(function(k){ var c=RT_COURSES[k]; if(!c) return; var o=ov[k]||{}; if(o.cmRef!=null) c.cmRef=o.cmRef; if(o.lat!=null&&c.lat==null){ c.lat=o.lat; c.lon=o.lon; } }); }
+function RT_persistCourseRef(key){
+ var c=RT_COURSES[key]; if(!c) return;
+ var custom=RT_loadCustomCourses();
+ if(custom[key]){ custom[key].cmRef=c.cmRef; if(c.lat!=null){ custom[key].lat=c.lat; custom[key].lon=c.lon; } rtSet(RT_CUSTOM_KEY,custom); try{ sbPushCourse(key,custom[key]); }catch(e){} }
+ else{ var ov=RT_getCmRefOv(); ov[key]={cmRef:c.cmRef,lat:c.lat,lon:c.lon}; rtSet('golflog_cmref_v1',ov); }
+}
+/* Lazy Backfill: sobald die Karten-Plaetze geladen sind, spielbaren Plaetzen ohne cmRef
+   den passenden Karten-Platz zuordnen (Name; bei vorhandenen Koordinaten zusaetzlich Geo). */
+function RT_backfillCourseRefs(){
+ if(!RT_CM.courses||!RT_CM.courses.length) return;
+ var changed=false;
+ Object.keys(RT_COURSES).forEach(function(key){
+  var c=RT_COURSES[key]; if(!c||c.cmRef!=null) return;
+  var cn=RT_placeNorm(c.name); if(!cn||cn.length<5) return;
+  var found=null;
+  for(var i=0;i<RT_CM.courses.length;i++){ var pp=RT_CM.courses[i]; if(!pp||pp.lat==null) continue;
+   var pn=RT_placeNorm(pp.name); if(!pn) continue;
+   if(!(pn===cn||pn.indexOf(cn)>=0||cn.indexOf(pn)>=0)) continue;
+   if(c.lat!=null&&c.lon!=null){ if(RT_haversineM(c.lat,c.lon,pp.lat,pp.lon)>2000) continue; }
+   found=pp; break;
+  }
+  if(found){ c.cmRef=found.ref; if(c.lat==null){ c.lat=found.lat; c.lon=found.lon; } try{ RT_persistCourseRef(key); }catch(e){} changed=true; }
+ });
+ if(changed&&RT_state.screen==='myCourses'){ try{ RT_render(); }catch(e){} }
+}
+function RT_ensureSu(){ if(!RT_su){ RT_su=RT_defSu(); RT_editingExisting=false; RT_editSourceRound=null; } }
+/* Karten-/Listen-Platz ohne Loch-Daten -> Anlege-Flow, vorbelegt mit Name + cmRef/Geo,
+   damit der entstehende eigene Platz mit dem Karten-Platz verknuepft wird (keine Dublette). */
+function RT_cmStartCreate(place){
+ RT_ensureSu();
+ RT_su.course='other';
+ RT_su.custName=(place&&place.name)||'';
+ RT_su.custPar=''; RT_su.custSi=''; RT_su.siEdit={}; RT_su.parEdit={};
+ RT_su._cmRef=(place&&(place.ref!=null?place.ref:place.course_ref)); RT_su._cmLat=place&&place.lat; RT_su._cmLon=place&&place.lon;
+ RT_state.resMsg=''; RT_editingExisting=false;
+ RT_go('setup');
+}
+function RT_cmPlay(ref){
+ var c=RT_CM.sel; if(!c||c.ref!==ref){ for(var i=0;i<(RT_CM.courses||[]).length;i++){ if(RT_CM.courses[i].ref===ref){ c=RT_CM.courses[i]; break; } } }
+ if(!c) return;
+ var key=RT_placeMatch(c);
+ if(key){ RT_ensureSu(); RT_cmCloseSheet(); RT_pickCourse(key); return; }
+ RT_cmStartCreate(c);
+}
+function RT_mcStart(ref){
+ var r=(RT_CM._mc||{})[ref];
+ var place=r?{ref:r.course_ref,name:r.name,lat:r.lat,lon:r.lon,holes:r.holes}:{ref:ref};
+ var key=RT_placeMatch(place);
+ if(key){ RT_ensureSu(); RT_pickCourse(key); return; }
+ RT_cmStartCreate(place);
 }
 async function RT_research(){
  var name=(RT_su.custName||'').trim();
@@ -8606,7 +8700,7 @@ function RT_cmLoadCourses(tries){
  tries=tries||0;
  var cached=null; try{ cached=rtGet('fp_cm_courses_v2'); }catch(e){}
  var now=+new Date();
- if(cached&&cached.ts&&(now-cached.ts)<7*864e5&&cached.list&&cached.list.length>50){ RT_CM.courses=cached.list; RT_cmMarkers(); return; }
+ if(cached&&cached.ts&&(now-cached.ts)<7*864e5&&cached.list&&cached.list.length>50){ RT_CM.courses=cached.list; RT_cmMarkers(); try{RT_backfillCourseRefs();}catch(e){} return; }
  RT_CM.loading=true;
  var l0=document.getElementById('cm-loading'); if(l0){ l0.style.display='block'; l0.textContent='Lädt Plätze …'; }
  fetch('/api/courses').then(function(r){ return r.json(); }).then(function(j){
@@ -8614,7 +8708,7 @@ function RT_cmLoadCourses(tries){
   if(!list.length&&tries<2){ setTimeout(function(){ RT_cmLoadCourses(tries+1); },1500); return; }
   RT_CM.courses=list; RT_CM.loading=false;
   try{ if(list.length>50) rtSet('fp_cm_courses_v2',{ts:now,list:list}); }catch(e){}
-  RT_cmMarkers();
+  RT_cmMarkers(); try{RT_backfillCourseRefs();}catch(e){}
   var l=document.getElementById('cm-loading'); if(l){ l.style.display='block'; l.textContent=list.length+' Plätze'; setTimeout(function(){ var l2=document.getElementById('cm-loading'); if(l2) l2.style.display='none'; },1600); }
  }).catch(function(){ if(tries<2){ setTimeout(function(){ RT_cmLoadCourses(tries+1); },1800); return; } RT_CM.loading=false; var l=document.getElementById('cm-loading'); if(l) l.textContent='Plätze konnten nicht geladen werden.'; });
 }
@@ -8699,6 +8793,8 @@ function RT_cmSheet(c){
   +'<div style="padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 16px);">'
     +'<div style="font-size:18px;font-weight:800;color:#143522;line-height:1.25;">'+RT_cmEsc(c.name)+'</div>'
     +(meta.length?'<div style="font-size:13px;color:#5d7060;margin-top:5px;">'+meta.join(' · ')+'</div>':'');
+ var _pmKey=RT_placeMatch(c);
+ h+='<button onclick="RT_cmPlay(\''+c.ref+'\')" style="margin-top:13px;width:100%;border:none;background:#1F8A4D;color:#fff;font-family:Inter,sans-serif;font-weight:800;font-size:15px;padding:13px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">'+(_pmKey?'▶︎ Hier spielen':'▶︎ Hier spielen · Löcher anlegen')+'</button>';
  if(loggedIn){
   h+='<div style="margin-top:13px;padding-top:12px;border-top:1px solid #eef1ee;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">'
     +'<div><div style="font-size:12px;color:#5d7060;margin-bottom:2px;">Deine Bewertung</div>'+RT_cmStars(c.ref,mine.stars||0)+'</div>'
@@ -8767,7 +8863,7 @@ function RT_rMyCourses(){
  if(!(sbReady()&&sb&&sbUser)){ return h+'<div class="rt-note">Zum Speichern von Plätzen bitte im Konto anmelden.</div>'; }
  h+='<div id="mc-body"><div class="rt-cs">Lädt …</div></div>';
  sb.from('course_lists').select('course_ref,kind,name,lat,lon,holes,created_at').order('created_at',{ascending:false}).then(function(res){
-  var rows=(res&&res.data)||[]; var body=document.getElementById('mc-body'); if(!body) return;
+  var rows=(res&&res.data)||[]; var body=document.getElementById('mc-body'); if(!body) return; RT_CM._mc={}; rows.forEach(function(x){ RT_CM._mc[x.course_ref]=x; });
   if(!rows.length){ body.innerHTML='<div class="rtc"><div class="rt-cs" style="margin:0;">Noch keine Plätze gespeichert. Öffne „Auf der Karte suchen" und tippe einen Platz an.</div></div>'; return; }
   var groups={home:[],saved:[],bucket:[]}; rows.forEach(function(r){ (groups[r.kind]||(groups[r.kind]=[])).push(r); });
   var titles={home:'🏠 Heimatplätze',saved:'🔖 Gespeichert',bucket:'📋 Bucket-Liste'};
@@ -8775,8 +8871,11 @@ function RT_rMyCourses(){
   ['home','saved','bucket'].forEach(function(k){ var arr=groups[k]||[]; if(!arr.length) return;
    out+='<div class="rt-ct" style="margin:14px 2px 8px;">'+titles[k]+' ('+arr.length+')</div>';
    arr.forEach(function(r){ var dist=RT_CM.userLL?RT_cmDistTxt({lat:r.lat,lon:r.lon}):null;
-    out+='<div class="rtc" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;"><div style="flex:1;"><div style="font-weight:700;color:#143522;">'+RT_cmEsc(r.name||r.course_ref)+'</div>'
-     +'<div class="rt-cs" style="margin:2px 0 0;">'+((r.holes!=null)?(r.holes+' Löcher'):'Löcher —')+(dist?(' · '+dist):'')+'</div></div>'
+    var _mk=RT_placeMatch({ref:r.course_ref,name:r.name,lat:r.lat,lon:r.lon});
+    var _sub=((r.holes!=null)?(r.holes+' Löcher'):(_mk?'Spielbar ✓':'Löcher —'))+(dist?(' · '+dist):'');
+    out+='<div class="rtc" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;"><div style="flex:1;"><div style="font-weight:700;color:#143522;">'+RT_cmEsc(r.name||r.course_ref)+(_mk?' <span style="color:#1F8A4D;font-size:11px;font-weight:800;">✓</span>':'')+'</div>'
+     +'<div class="rt-cs" style="margin:2px 0 0;">'+_sub+'</div></div>'
+     +'<button class="rt-btn3" style="color:#1F8A4D;font-weight:800;padding:6px 8px;" onclick="RT_mcStart(\''+r.course_ref+'\')">'+(_mk?'Spielen':'Anlegen')+'</button>'
      +'<button class="rt-btn3" style="color:#B03A3A;padding:6px 8px;" onclick="RT_mcRemove(\''+r.course_ref+'\',\''+r.kind+'\')">Entfernen</button></div>';
    });
   });

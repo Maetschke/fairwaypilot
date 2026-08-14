@@ -3082,7 +3082,7 @@ function RT_refSetupHtml(rd,c){
  RT_teeOrderResolved(co).map(function(ti){return co.tees[ti];}).forEach(function(t){ _ppts.push(['tee',t.name,t.name]); });
  _ppts.push(['mid','','Bahnmitte']); _ppts.push(['pin','','Loch']);
  h+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid #EEF3EA;">';
- h+='<button class="rt-btn3" onclick="RT_refsFromOSM()"'+(RT_state.osmBusy?' disabled':'')+' style="width:100%;margin-bottom:8px;">'+(RT_state.osmBusy?'Lade aus OpenStreetMap\u2026':'Referenzpunkte automatisch aus OpenStreetMap laden')+'</button>';
+ h+='<button class="rt-btn2" onclick="RT_refsFromOSM()"'+(RT_state.osmBusy?' disabled':'')+' style="width:100%;margin-bottom:8px;">'+(RT_state.osmBusy?'Lade aus OpenStreetMap\u2026':'Referenzpunkte automatisch aus OpenStreetMap laden')+'</button>';
  if(RT_state.osmMsg) h+='<div class="rt-cs" style="margin-bottom:8px;color:#1F6E3C;background:#EAF5EE;padding:8px 10px;border-radius:8px;">'+rtEsc(RT_state.osmMsg)+'</div>';
  h+='<div class="rt-cs" style="margin-bottom:6px;">Auf Karte setzen: oben einen Punkt w\u00e4hlen, dann in die Karte tippen. Bereits gesetzte Punkte lassen sich direkt verschieben.</div>';
  h+='<div class="rt-chiprow" style="margin-bottom:8px;">';
@@ -3944,6 +3944,28 @@ async function RT_geocode(address){
   }
  }catch(e){}
  return null;
+}
+async function RT_reverseGeocode(lat,lon){
+ if(lat==null||lon==null) return null;
+ var key='r:'+(+lat).toFixed(5)+','+(+lon).toFixed(5);
+ var cache=RT_geoCache();
+ if(cache[key]) return (typeof cache[key]==='string')?cache[key]:null;
+ try{
+  var resp=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&lat='+encodeURIComponent(lat)+'&lon='+encodeURIComponent(lon),
+   {headers:{'Accept':'application/json'}});
+  var d=await resp.json();
+  var a=d&&d.address; if(!a) return null;
+  var road=a.road||a.pedestrian||a.footway||a.path||a.cycleway||'';
+  var hn=a.house_number||'';
+  var plz=a.postcode||'';
+  var city=a.city||a.town||a.village||a.municipality||a.hamlet||a.suburb||'';
+  var line1=(road+(hn?' '+hn:'')).trim();
+  var line2=((plz?plz+' ':'')+city).trim();
+  var addr=[line1,line2].filter(Boolean).join(', ');
+  if(!addr) addr=(d.display_name||'').split(',').slice(0,3).join(', ').trim();
+  if(addr){ cache[key]=addr; rtSet(RT_GEO_KEY,cache); }
+  return addr||null;
+ }catch(e){ return null; }
 }
 function RT_clearMap(){
  if(RT_leafletMap){ try{RT_leafletMap.remove();}catch(e){} RT_leafletMap=null; }
@@ -7114,6 +7136,14 @@ function RT_buildCust(name,par,si,tees,address){
  allCustom[id]=courseObj;
  rtSet(RT_CUSTOM_KEY, allCustom);
  sbPushCourse(id, courseObj);
+ if(!courseObj.address){
+  var _glat=courseObj.lat!=null?courseObj.lat:(RT_su&&RT_su._cmLat), _glon=courseObj.lon!=null?courseObj.lon:(RT_su&&RT_su._cmLon);
+  if(_glat!=null&&_glon!=null){ RT_reverseGeocode(_glat,_glon).then(function(addr){
+   if(!addr) return; var c=RT_COURSES[id]; if(!c||c.address) return; c.address=addr;
+   var cc=RT_loadCustomCourses(); if(cc[id]){ cc[id].address=addr; rtSet(RT_CUSTOM_KEY,cc); try{ sbPushCourse(id,cc[id]); }catch(e){} }
+   try{ RT_render(); }catch(e){}
+  }); }
+ }
  RT_su.course=id; RT_su.holes=n9?'F':'A';
  RT_state.resOk=true; RT_state.resMsg='Platz \u00fcbernommen: '+rtEsc(name)+' ('+par.length+' Loch). Erscheint jetzt dauerhaft in der Platzliste.';
  RT_render();
@@ -7191,6 +7221,7 @@ function RT_cmStartCreate(place){
  RT_su._cmRef=(place&&(place.ref!=null?place.ref:place.course_ref)); RT_su._cmLat=place&&place.lat; RT_su._cmLon=place&&place.lon;
  RT_state.resMsg=''; RT_editingExisting=false;
  RT_go('setup');
+ if((RT_su.custName||'').trim()){ setTimeout(function(){ try{ if(RT_su&&RT_su.course==='other'&&!RT_state.busy) RT_research(); }catch(e){} }, 80); }
 }
 function RT_cmPlay(ref){
  var c=RT_CM.sel; if(!c||c.ref!==ref){ for(var i=0;i<(RT_CM.courses||[]).length;i++){ if(RT_CM.courses[i].ref===ref){ c=RT_CM.courses[i]; break; } } }

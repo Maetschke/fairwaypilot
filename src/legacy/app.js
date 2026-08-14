@@ -3082,6 +3082,8 @@ function RT_refSetupHtml(rd,c){
  RT_teeOrderResolved(co).map(function(ti){return co.tees[ti];}).forEach(function(t){ _ppts.push(['tee',t.name,t.name]); });
  _ppts.push(['mid','','Bahnmitte']); _ppts.push(['pin','','Loch']);
  h+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid #EEF3EA;">';
+ h+='<button class="rt-btn3" onclick="RT_refsFromOSM()"'+(RT_state.osmBusy?' disabled':'')+' style="width:100%;margin-bottom:8px;">'+(RT_state.osmBusy?'Lade aus OpenStreetMap\u2026':'Referenzpunkte automatisch aus OpenStreetMap laden')+'</button>';
+ if(RT_state.osmMsg) h+='<div class="rt-cs" style="margin-bottom:8px;color:#1F6E3C;background:#EAF5EE;padding:8px 10px;border-radius:8px;">'+rtEsc(RT_state.osmMsg)+'</div>';
  h+='<div class="rt-cs" style="margin-bottom:6px;">Auf Karte setzen: oben einen Punkt w\u00e4hlen, dann in die Karte tippen. Bereits gesetzte Punkte lassen sich direkt verschieben.</div>';
  h+='<div class="rt-chiprow" style="margin-bottom:8px;">';
  _ppts.forEach(function(pp){ var on=!!(RT_refPickActive&&RT_refPickActive.kind===pp[0]&&((pp[0]!=='tee')||RT_refPickActive.teeName===pp[1])); h+='<button class="rt-chip'+(on?' on':'')+'" onclick="RT_refPick(\''+pp[0]+'\',\''+(pp[1]?rtJsEsc(pp[1]):'')+'\')">'+rtEsc(pp[2])+'</button>'; });
@@ -3106,6 +3108,45 @@ function RT_refPick(kind,teeName){
  var a=RT_refPickActive;
  if(a&&a.kind===kind&&a.teeName===teeName) RT_refPickActive=null; else RT_refPickActive={kind:kind,teeName:teeName};
  RT_render();
+}
+async function RT_refsFromOSM(){
+ var rd=RT_round; if(!rd) return;
+ var key=RT_courseKeyFromName(rd.courseName,rd);
+ if(!key){ RT_state.osmMsg='Unbekannter Platz – kein automatischer Abruf möglich.'; RT_render(); return; }
+ var co=RT_COURSES[key];
+ var lat=co?co.lat:null, lon=co?(co.lon!=null?co.lon:co.lng):null;
+ if(lat==null||lon==null){ RT_state.osmMsg='Für diesen Platz sind keine Koordinaten hinterlegt – bitte den Platz zuerst auf der Karte verknüpfen.'; RT_render(); return; }
+ RT_state.osmBusy=true; RT_state.osmMsg='Suche Bahnen in OpenStreetMap…'; RT_render();
+ try{
+  var resp=await fetch('/api/holes?lat='+encodeURIComponent(lat)+'&lon='+encodeURIComponent(lon));
+  var j=await resp.json();
+  if(!resp.ok||!j||!j.holes) throw new Error((j&&j.error)||('HTTP '+resp.status));
+  var holes=j.holes||[];
+  if(!holes.length){ RT_state.osmBusy=false; RT_state.osmMsg='OpenStreetMap enthält für diesen Platz keine einzelnen Bahn-Geometrien. Bitte die Punkte manuell auf der Karte setzen.'; RT_render(); return; }
+  RT_ensureRefsObj(co);
+  var teeNames=RT_teeOrderResolved(co).map(function(ti){return co.tees[ti].name;});
+  var set=0;
+  holes.forEach(function(hh){
+   var num=hh.hole; if(num<1||num>18) return;
+   var nine=num<=9?'F':'B'; var idx=num<=9?num-1:num-10;
+   var e=co.refs[nine][idx]; if(!e){ e={tees:{},pin:null,mid:null}; co.refs[nine][idx]=e; }
+   if(!e.tees) e.tees={};
+   if(hh.tee&&hh.tee.lat!=null){
+    if(teeNames.length){ teeNames.forEach(function(tn){ var px=e.tees[tn]&&e.tees[tn].px; e.tees[tn]={lat:hh.tee.lat,lng:hh.tee.lng}; if(px)e.tees[tn].px=px; }); }
+    else { var px0=e.tees['Standard']&&e.tees['Standard'].px; e.tees['Standard']={lat:hh.tee.lat,lng:hh.tee.lng}; if(px0)e.tees['Standard'].px=px0; }
+   }
+   if(hh.pin&&hh.pin.lat!=null){ var ppx=e.pin&&e.pin.px; e.pin={lat:hh.pin.lat,lng:hh.pin.lng}; if(ppx)e.pin.px=ppx; }
+   set++;
+  });
+  RT_persistRefs(key);
+  RT_state.osmBusy=false;
+  RT_state.osmMsg=set+' von 18 Bahnen aus OpenStreetMap gesetzt (Abschlag + Fahne'+(teeNames.length>1?', alle Abschlagfarben':'')+'). Die Satellitenkarten richten sich nun automatisch von unten (Abschlag) nach oben (Fahne) aus. Feinjustierung: oben einen Punkt wählen und auf der Karte verschieben.';
+  RT_render();
+ }catch(err){
+  RT_state.osmBusy=false;
+  RT_state.osmMsg='Abruf fehlgeschlagen: '+((err&&err.message)||err)+'. Bitte die Punkte manuell auf der Karte setzen.';
+  RT_render();
+ }
 }
 function RT_refEditMarkers(){
  var ctx=RT_curRefCtx(); if(!ctx) return [];
@@ -7259,7 +7300,7 @@ function RT_start(){
    var teeName=p.tee>=0&&cd.tees[p.tee]?cd.tees[p.tee].name:'Manuell';
    var mk=function(v){var a=[];for(var i=0;i<cd.cnt;i++)a.push(v);return a;};
    var mkEmpty=function(){var a=[];for(var i=0;i<cd.cnt;i++)a.push([]);return a;};
-   return{name:p.name, hi:parseFloat(p.hi), tee:teeName, cr:cr, sl:sl, liveInvite:!!p.liveInvite,
+   return{name:p.name, hi:parseFloat(p.hi), tee:teeName, cr:cr, sl:sl, sex:(p.sex==='w')?'w':'m', liveInvite:!!p.liveInvite,
     ph:RT_ph(parseFloat(p.hi),cr,sl,cd.parSum,cd.cnt),
     sc:mk(null), pu:mk(null), fw:mk(null), pe:mk(0), sa:mk(0), cx:mk(0), pins:mkEmpty()};
   })};
@@ -7731,7 +7772,8 @@ function RT_editRound(id,direct){
      }
     }
    }
-   return {name:p.name, hi:p.hi, tee:teeIdx, cr:cr, sl:sl};
+   var pSex=(p.sex==='w'||p.sex==='m')?p.sex:((typeof p.tee==='string'&&p.tee.toLowerCase().indexOf('damen')>=0)?'w':'m');
+   return {name:p.name, hi:p.hi, tee:teeIdx, cr:cr, sl:sl, sex:pSex, teeHalf:(holesSel==='A')?null:holesSel};
   }),
   custName:key?'':rd.courseName, custPar:'', custSi:'', siEdit:{}, parEdit:{}
  };
@@ -7779,7 +7821,7 @@ function RT_applyEdit(){
     }
    }
   }
-  return{name:p.name, hi:parseFloat(p.hi), tee:teeName, cr:cr, sl:sl,
+  return{name:p.name, hi:parseFloat(p.hi), tee:teeName, cr:cr, sl:sl, sex:(p.sex==='w')?'w':'m',
    ph:RT_ph(parseFloat(p.hi),cr,sl,cd.parSum,cd.cnt),
    sc:sc, pu:pu, fw:fw, pe:pe, sa:sa, cx:cx, pins:pins};
  });

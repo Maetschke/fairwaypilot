@@ -4,6 +4,7 @@ import { handleWx } from './wx.js';
 import { handleElev } from './elev.js';
 import { handleDgm } from './dgm.js';
 import { handleCourses } from './courses.js';
+import { handleHoles } from './holes.js';
 import { handleResearch } from './research.js';
 import { handleAccountDelete } from './account.js';
 import { handleEntitlement, handleCheckout, handlePortal, handleRedeem, handleWebhook, guardResearch } from './billing.js';
@@ -62,6 +63,9 @@ export default {
     }
     if (url.pathname === "/api/courses") {
       return handleCourses(url);
+    }
+    if (url.pathname === "/api/holes") {
+      return handleHoles(url);
     }
     if (url.pathname === "/sw.js") {
       return new Response(SW_JS, { headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-cache" } });

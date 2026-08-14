@@ -6,8 +6,8 @@ workers_dev = true
 [vars]
 SUPABASE_URL = "https://qzeesflibjxkdorvxqyf.supabase.co"
 SUPABASE_ANON_KEY = "sb_publishable_vjpHBU2YE30WznFuaDoyWg_fxVmNDbW"
-STRIPE_PRICE_MONTHLY = "price_1U2tUBJuU1QEFsU7TnnmIymH"
-STRIPE_PRICE_YEARLY = "price_1U2tQIJuU1QEFsU7kNDFHZo8"
+STRIPE_PRICE_MONTHLY = "price_1U2mIp2Za8s7WKKLmMuiZ6oA"
+STRIPE_PRICE_YEARLY = "price_1U2mKF2Za8s7WKKL6C7lVmv7"
 
 [assets]
 directory = "./public"

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>FairwayPilot · Auto Shot-Tracer</title>
+<style>
+:root{--g:#1F8A4D;--gd:#143522;--acc:#34C759;--bg:#F5F8F0;--tx:#16301F;--mut:#7a8a7e;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Arial,sans-serif;}
+.wrap{max-width:640px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom,0)+24px);}
+header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+header .lg{font-weight:800;font-size:18px}.lg span{color:var(--acc)}
+.card{background:#fff;border:1px solid #E1EADA;border-radius:16px;padding:12px;margin-bottom:12px}
+.stagebar{display:flex;gap:6px;margin-bottom:12px;font-size:11px;color:var(--mut)}
+.stagebar div{flex:1;text-align:center;padding:6px 2px;border-radius:8px;background:#EEF3EA}
+.stagebar div.on{background:var(--gd);color:#fff;font-weight:700}
+.stageview{position:relative;background:#0d1712;border-radius:12px;overflow:hidden;touch-action:none}
+canvas{display:block;width:100%;height:auto}
+video{display:none}
+.btn{display:block;width:100%;text-align:center;background:var(--g);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px}
+.btn:disabled{opacity:.5}
+.btn2{background:#fff;color:var(--g);border:1.5px solid var(--g)}
+.btn3{background:#EEF3EA;color:var(--gd)}
+.row{display:flex;gap:8px}.row .btn{margin-top:0}
+.hint{font-size:12.5px;line-height:1.55;color:var(--mut);margin:8px 2px}
+.mut{color:var(--mut)}
+input[type=range]{width:100%}
+.chip{display:inline-block;background:#EAF5EE;color:#1F6E3C;border-radius:8px;padding:6px 10px;font-size:12px;margin:2px 4px 2px 0}
+label.file{display:block}
+label.file input{display:none}
+.prog{height:6px;background:#EEF3EA;border-radius:4px;overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;width:0;background:var(--g)}
+.loupe{position:absolute;width:120px;height:120px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.4);pointer-events:none;display:none;overflow:hidden;z-index:5;background:#000}
+.loupe canvas{width:100%;height:100%}
+.err{background:#FBF3E4;border:1px solid #EFDDB8;border-radius:10px;padding:10px;font-size:12.5px;color:#8a6d2f;margin-top:8px}
+small.k{font-size:11px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="lg">Fairway<span>Pilot</span> · Auto Shot-Tracer</div></header>
+
+<div class="stagebar">
+  <div id="s1" class="on">1 · Laden</div>
+  <div id="s2">2 · Ball</div>
+  <div id="s3">3 · Erzeugen</div>
+  <div id="s4">4 · Export</div>
+</div>
+
+<div class="card" id="cardLoad">
+  <label class="file btn btn2">Video auswählen
+    <input id="file" type="file" accept="video/*">
+  </label>
+  <div class="hint">Ideal: Kamera im rechten Winkel zu dir, Ball fliegt das Fairway hinunter weg; heller Ball, gutes Licht, möglichst ruhig gehalten, ≥1080p/60fps. Der Start des Balls muss im Bild sein.</div>
+</div>
+
+<div class="card" id="cardStage" style="display:none">
+  <div class="stageview" id="stageWrap">
+    <canvas id="view"></canvas>
+    <div class="loupe" id="loupe"><canvas id="loupeC" width="240" height="240"></canvas></div>
+  </div>
+
+  <!-- scrub / mark -->
+  <div id="ctrlMark">
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn3" id="back">‹ Bild</button>
+      <button class="btn btn3" id="fwd">Bild ›</button>
+    </div>
+    <input id="scrub" type="range" min="0" max="1000" value="0" step="1" style="margin-top:10px">
+    <div class="hint" id="markHint">Scrubbe zum <b>Treffmoment</b> und halte an. Tippe dann <b>genau auf den Ball</b> (Lupe hilft). Punkt sitzt: „Flugbahn erzeugen".</div>
+    <button class="btn" id="gen" disabled>Flugbahn erzeugen</button>
+    <div class="prog" id="progWrap" style="display:none"><i id="prog"></i></div>
+  </div>
+
+  <!-- preview / export -->
+  <div id="ctrlOut" style="display:none">
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn2" id="play">▶ Vorschau</button>
+      <button class="btn" id="dl">Video herunterladen</button>
+    </div>
+    <button class="btn btn3" id="manual" style="margin-top:8px">Bahn manuell anpassen</button>
+    <button class="btn btn3" id="restart" style="margin-top:8px">Neuer Ball / neu erzeugen</button>
+    <div class="hint" id="outHint"></div>
+  </div>
+
+  <div class="err" id="err" style="display:none"></div>
+</div>
+
+<div class="card">
+  <small class="k">Verarbeitung läuft komplett auf deinem Gerät. Kein Upload. Durchgezogene Linie = gemessen, gestrichelt = berechnet.</small>
+</div>
+</div>
+
+<video id="vid" playsinline muted preload="auto"></video>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const vid=$('vid'), view=$('view'), vctx=view.getContext('2d',{willReadFrequently:true});
+const loupe=$('loupe'), loupeC=$('loupeC'), lctx=loupeC.getContext('2d');
+let VW=0,VH=0,DUR=0,FPS=30, STEP=1/30;
+let dispScale=1;                 // view canvas px per video px
+let mark=null;                   // {x,y} in VIDEO px  (user tap)
+let impactT=0;                   // seconds of the paused/impact frame
+let result=null;                 // {measured:[{t,x,y}], calc:[{t,x,y}], impactT}
+let manualMode=false, manualPts=null;
+
+function setStage(n){ ['s1','s2','s3','s4'].forEach((id,i)=>$(id).classList.toggle('on',i===n-1)); }
+function showErr(m){ const e=$('err'); e.style.display='block'; e.textContent=m; }
+function clrErr(){ $('err').style.display='none'; }
+
+/* ---------- load ---------- */
+$('file').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  clrErr();
+  vid.src=URL.createObjectURL(f);
+  await new Promise((res,rej)=>{ vid.onloadedmetadata=res; vid.onerror=()=>rej(new Error('Video konnte nicht geladen werden.')); }).catch(showErr);
+  VW=vid.videoWidth; VH=vid.videoHeight; DUR=vid.duration||0;
+  FPS=await guessFps(); STEP=1/FPS;
+  layout();
+  $('cardLoad').style.display='none';
+  $('cardStage').style.display='block';
+  setStage(2);
+  await seekTo(Math.min(0.01,DUR));
+  drawView();
+});
+
+async function guessFps(){
+  // estimate via requestVideoFrameCallback over ~0.4s of playback; fallback 30
+  if(!('requestVideoFrameCallback' in HTMLVideoElement.prototype)) return 30;
+  try{
+    const t0=vid.currentTime; let cnt=0, first=null,last=null;
+    await new Promise(res=>{
+      const cb=(now,md)=>{ if(first==null)first=md.mediaTime; last=md.mediaTime; cnt++; if(cnt>=8){res();return;} vid.requestVideoFrameCallback(cb); };
+      vid.requestVideoFrameCallback(cb); vid.play().catch(()=>res());
+      setTimeout(res,800);
+    });
+    vid.pause(); await seekTo(t0);
+    if(cnt>=3 && last>first){ const fps=Math.round((cnt-1)/(last-first)); if(fps>=20&&fps<=120) return fps; }
+  }catch(e){}
+  return 30;
+}
+
+function layout(){
+  const wrapW=$('stageWrap').clientWidth||360;
+  dispScale=wrapW/VW;
+  view.width=VW; view.height=VH;            // internal = video px
+  view.style.width=wrapW+'px'; view.style.height=(VH*dispScale)+'px';
+}
+window.addEventListener('resize',()=>{ if(VW){layout(); drawView();} });
+
+/* ---------- seek helper ---------- */
+function seekTo(t){
+  return new Promise(res=>{
+    t=Math.max(0,Math.min(DUR-1e-3,t));
+    const done=()=>{ vid.removeEventListener('seeked',done); res(); };
+    vid.addEventListener('seeked',done);
+    try{ vid.currentTime=t; }catch(e){ res(); }
+  });
+}
+
+/* ---------- draw current frame + markers ---------- */
+function drawView(){
+  vctx.drawImage(vid,0,0,VW,VH);
+  if(!result){
+    if(mark){ dot(mark.x,mark.y,'#00cf3a','Ball'); }
+  }else{
+    drawTraceOnCtx(vctx, currentTraceUpTo(vid.currentTime), 1);
+  }
+}
+function dot(x,y,color,label){
+  vctx.beginPath(); vctx.arc(x,y,Math.max(5,VW*0.006),0,7); vctx.fillStyle=color; vctx.fill();
+  vctx.lineWidth=2; vctx.strokeStyle='#fff'; vctx.stroke();
+  if(label){ vctx.font='bold '+Math.round(VW*0.02)+'px sans-serif'; vctx.fillStyle=color; vctx.fillText(label,x+10,y+4); }
+}
+
+/* ---------- scrub + step ---------- */
+$('scrub').addEventListener('input',async e=>{
+  if(result) return;
+  await seekTo((e.target.value/1000)*DUR); drawView();
+});
+$('back').onclick=async()=>{ if(result)return; await seekTo(vid.currentTime-STEP); syncScrub(); drawView(); };
+$('fwd').onclick =async()=>{ if(result)return; await seekTo(vid.currentTime+STEP); syncScrub(); drawView(); };
+function syncScrub(){ $('scrub').value=Math.round((vid.currentTime/DUR)*1000); }
+
+/* ---------- tap to mark ball (with loupe) ---------- */
+function evtToVideo(ev){
+  const r=view.getBoundingClientRect();
+  const cx=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;
+  const cy=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top;
+  return { x:Math.max(0,Math.min(VW,cx/dispScale)), y:Math.max(0,Math.min(VH,cy/dispScale)), cx, cy };
+}
+function onTapMove(ev){
+  ev.preventDefault();
+  if(result){ return; }
+  const p=evtToVideo(ev); mark={x:p.x,y:p.y};
+  // loupe
+  const L=loupe, sz=120;
+  L.style.display='block';
+  L.style.left=Math.min(view.clientWidth-sz, Math.max(0, p.cx-sz/2))+'px';
+  L.style.top =Math.max(-10, p.cy-sz-20)+'px';
+  const src=Math.round(40); // video px window
+  lctx.imageSmoothingEnabled=false;
+  lctx.clearRect(0,0,240,240);
+  lctx.drawImage(vid, p.x-src/2, p.y-src/2, src, src, 0,0,240,240);
+  lctx.strokeStyle='#00cf3a'; lctx.lineWidth=2;
+  lctx.beginPath(); lctx.moveTo(120,90);lctx.lineTo(120,150);lctx.moveTo(90,120);lctx.lineTo(150,120); lctx.stroke();
+  drawView(); dot(mark.x,mark.y,'#00cf3a','Ball');
+  $('gen').disabled=false;
+}
+function onTapEnd(){ loupe.style.display='none'; }
+view.addEventListener('touchstart',onTapMove,{passive:false});
+view.addEventListener('touchmove',onTapMove,{passive:false});
+view.addEventListener('touchend',onTapEnd);
+view.addEventListener('mousedown',e=>{onTapMove(e); const mv=ev=>onTapMove(ev); const up=()=>{onTapEnd();document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}; document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);});
+
+/* ========================================================= *
+ *  CORE: seeded auto-trace                                   *
+ * ========================================================= */
+const WORKW=480;                       // processing width
+function grayFromVideo(wc,wctx,w,h){
+  wctx.drawImage(vid,0,0,w,h);
+  const d=wctx.getImageData(0,0,w,h).data, g=new Uint8ClampedArray(w*h);
+  for(let i=0,j=0;i<d.length;i+=4,j++) g[j]=(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114)|0;
+  return g;
+}
+// translation-only global motion: content shift (sx,sy) so prev(x-sx,y-sy)≈cur(x,y)
+function estMotion(cur,prev,w,h){
+  const SR=14, stepX=3, x0=w*0.12|0,x1=w*0.88|0,y0=h*0.12|0,y1=h*0.7|0;
+  let best=1e18,bx=0,by=0;
+  for(let sy=-SR;sy<=SR;sy+=2)for(let sx=-SR;sx<=SR;sx+=2){
+    let s=0,n=0;
+    for(let y=y0;y<y1;y+=4){ const yy=y-sy; if(yy<1||yy>=h-1)continue;
+      for(let x=x0;x<x1;x+=stepX){ const xx=x-sx; if(xx<1||xx>=w-1)continue;
+        s+=Math.abs(cur[y*w+x]-prev[yy*w+xx]); n++; if(s>best*1.02&&n>50){x=x1;break;} } }
+    if(n>0){ const v=s/n; if(v<best){best=v;bx=sx;by=sy;} }
+  }
+  // refine ±1
+  let rb=best;
+  for(let sy=by-1;sy<=by+1;sy++)for(let sx=bx-1;sx<=bx+1;sx++){
+    let s=0,n=0;
+    for(let y=y0;y<y1;y+=4){ const yy=y-sy; if(yy<1||yy>=h-1)continue;
+      for(let x=x0;x<x1;x+=stepX){ const xx=x-sx; if(xx<1||xx>=w-1)continue; s+=Math.abs(cur[y*w+x]-prev[yy*w+xx]); n++; } }
+    if(n>0){ const v=s/n; if(v<rb){rb=v;} else continue; bx=sx;by=sy; }
+  }
+  return {sx:bx,sy:by};
+}
+// bright moving blobs in cur, given motion-compensated prev
+function detect(cur,prev,mo,w,h){
+  const TD=26, TB=150, out=[];
+  const mask=new Uint8Array(w*h);
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+    const xx=x-mo.sx, yy=y-mo.sy; if(xx<0||xx>=w||yy<0||yy>=h)continue;
+    const c=cur[y*w+x];
+    if(c>=TB && Math.abs(c-prev[yy*w+xx])>TD) mask[y*w+x]=1;
+  }
+  // BFS label small comps
+  const seen=new Uint8Array(w*h), st=[];
+  for(let i=0;i<w*h;i++){ if(!mask[i]||seen[i])continue;
+    let head=0; st.length=0; st.push(i); seen[i]=1; let sx=0,sy=0,cnt=0,minx=1e9,maxx=-1,miny=1e9,maxy=-1;
+    while(head<st.length){ const p=st[head++]; const px=p%w, py=(p/w)|0; sx+=px;sy+=py;cnt++;
+      if(px<minx)minx=px;if(px>maxx)maxx=px;if(py<miny)miny=py;if(py>maxy)maxy=py;
+      const nb=[p-1,p+1,p-w,p+w];
+      for(const q of nb){ if(q>=0&&q<w*h&&mask[q]&&!seen[q]){seen[q]=1;st.push(q);} }
+    }
+    if(cnt<1||cnt>70) continue;
+    const bw=maxx-minx+1,bh=maxy-miny+1; if(bw>16||bh>16) continue; // compact
+    out.push({x:sx/cnt,y:sy/cnt,area:cnt});
+  }
+  return out;
+}
+
+async function generate(){
+  clrErr(); result=null; manualMode=false;
+  impactT=vid.currentTime;
+  $('gen').disabled=true; $('progWrap').style.display='block';
+  const wc=document.createElement('canvas'); wc.width=WORKW; wc.height=Math.round(WORKW*VH/VW);
+  const wctx=wc.getContext('2d',{willReadFrequently:true});
+  const w=wc.width,h=wc.height, sc=WORKW/VW;      // work px per video px
+  const seedW={x:mark.x*sc, y:mark.y*sc};
+
+  const WINDOW=Math.min(1.6, DUR-impactT);        // seconds
+  const nF=Math.max(6, Math.round(WINDOW*FPS));
+  let prevG=null, cum={x:0,y:0}, meas=[], vel=null, last=null, lostFrom=null, misses=0;
+
+  for(let k=0;k<=nF;k++){
+    const t=impactT+k*STEP; if(t>=DUR) break;
+    await seekTo(t);
+    const g=grayFromVideo(wc,wctx,w,h);
+    if(prevG){
+      const mo=estMotion(g,prevG,w,h);
+      cum.x+=mo.sx; cum.y+=mo.sy;
+      const cand=detect(g,prevG,mo,w,h).map(c=>({x:c.x-cum.x,y:c.y-cum.y,area:c.area})); // world coords
+      if(k===0){}
+      // seeded pick
+      const pred = last? {x:last.x+vel.x,y:last.y+vel.y} : {x:seedW.x-cum.x+cum.x, y:seedW.y}; // at first step predict near seed(world=seedW since cum baseline0)
+      let bp=null,bd=1e18;
+      for(const c of cand){ const dd=(c.x-pred.x)**2+(c.y-pred.y)**2; if(dd<bd){bd=dd;bp=c;} }
+      const gate=(last? 46 : 60)**2 * (misses+1);
+      if(bp && bd<gate){
+        if(last){ vel={x:(bp.x-last.x),y:(bp.y-last.y)}; } else { vel={x:bp.x-seedW.x,y:bp.y-seedW.y}; }
+        last=bp; meas.push({t,x:bp.x,y:bp.y,fi:k}); misses=0;
+      } else { misses++; if(last&&misses>=3){ lostFrom=k; break; } }
+    } else {
+      // impact frame: seed is the ball at rest -> world seed
+      last=null; vel=null;
+    }
+    prevG=g;
+    $('prog').style.width=Math.round(k/nF*100)+'%';
+  }
+  $('progWrap').style.display='none';
+
+  if(meas.length<3){
+    showErr('Der Ball konnte nicht sicher verfolgt werden (zu klein/kontraschwach oder falscher Treffmoment). Nutze „Bahn manuell anpassen" oder wähle den Treffmoment genauer.');
+    // still let manual work: define a straight seed
+    result={ sc, seedW, meas:[{t:impactT,x:seedW.x,y:seedW.y,fi:0}], calc:[], impactT, w, h, nF };
+    enterOutput(); await buildCamCache(); startManual(); return;
+  }
+
+  // fit in world coords using actual frame offsets (fi)
+  const ts=meas.map(m=>m.fi), xs=meas.map(m=>m.x), ys=meas.map(m=>m.y);
+  const cx=polyfit(ts,xs, meas.length>=4?2:1), cy=polyfit(ts,ys, meas.length>=4?2:1);
+  const calc=[];
+  const measEnd=meas[meas.length-1].fi;
+  // camera offset per absolute frame index reconstructed: we stored world already; for extrapolation we output world pts,
+  // rendering re-derives frame coords from cum at that time (recompute cum during render).
+  let ei=measEnd;
+  for(let i=measEnd+1;i<nF+ (lostFrom?40:6);i++){
+    const wx=evalp(cx,i), wy=evalp(cy,i);
+    // stop when off frame (approx, world≈frame near impact)
+    if(wy>h*1.25||wy<-h*0.4||wx<-w*0.4||wx>w*1.4) break;
+    calc.push({i,x:wx,y:wy}); ei=i;
+  }
+  // convert world coords back to VIDEO px (divide by sc). world at impact baseline; cum tracked during render below.
+  result={ sc, seedW, meas, calc, impactT, w, h, nF };
+  enterOutput();
+  await renderPreviewFirst();
+}
+
+function enterOutput(){
+  setStage(4);
+  $('ctrlMark').style.display='none'; $('ctrlOut').style.display='block';
+  $('outHint').innerHTML='Gelb = gemessen ('+ (result.meas? result.meas.length:0) +' Frames), orange gestrichelt = berechnet. Passt es nicht? „Bahn manuell anpassen".';
+}
+
+/* recompute per-frame camera offset while rendering (same estMotion path is expensive;
+   instead we store nothing and approximate: during preview we re-run motion to keep the line glued).
+   To stay light, we cache motion during generate. */
+</script>
+
+<script>
+/* ---------- math helpers ---------- */
+function solve(A,b){ const n=A.length;
+  for(let i=0;i<n;i++){ let p=i; for(let r=i+1;r<n;r++) if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;
+    [A[i],A[p]]=[A[p],A[i]];[b[i],b[p]]=[b[p],b[i]];
+    for(let r=0;r<n;r++){ if(r===i)continue; const f=A[r][i]/A[i][i]; for(let c=i;c<n;c++)A[r][c]-=f*A[i][c]; b[r]-=f*b[i]; } }
+  return b.map((v,i)=>v/A[i][i]); }
+function polyfit(ts,ys,deg){ const n=deg+1,A=Array.from({length:n},()=>Array(n).fill(0)),B=Array(n).fill(0);
+  for(let k=0;k<ts.length;k++){ const t=ts[k],pw=[];let p=1;for(let j=0;j<2*deg+1;j++){pw.push(p);p*=t;}
+    for(let i=0;i<n;i++){B[i]+=pw[i]*ys[k];for(let j=0;j<n;j++)A[i][j]+=pw[i+j];} }
+  return solve(A,B); }
+function evalp(c,t){ let r=0,p=1;for(const a of c){r+=a*p;p*=t;}return r; }
+</script>
+
+<script>
+/* ---------- render / preview / export ----------
+   To glue the line to the scene during preview/export we recompute camera offset
+   frame-by-frame with the same translation estimator (cached from generate would be
+   ideal; for simplicity we recompute on the fly at WORKW, cheap enough for ~1.6s). */
+let camCache=null;    // array of {t, cx, cy} cumulative offsets in WORK px, indexed by frame i from impact
+
+async function buildCamCache(){
+  const wc=document.createElement('canvas'); wc.width=WORKW; wc.height=Math.round(WORKW*VH/VW);
+  const wctx=wc.getContext('2d',{willReadFrequently:true}); const w=wc.width,h=wc.height;
+  camCache=[]; let prevG=null,cum={x:0,y:0};
+  const total=result.nF;
+  for(let i=0;i<=total;i++){ const t=result.impactT+i*STEP; if(t>=DUR)break; await seekTo(t);
+    const g=grayFromVideo(wc,wctx,w,h);
+    if(prevG){ const mo=estMotion(g,prevG,w,h); cum.x+=mo.sx; cum.y+=mo.sy; }
+    camCache.push({i,cx:cum.x,cy:cum.y}); prevG=g;
+  }
+}
+function camAt(i){
+  if(!camCache||!camCache.length) return {cx:0,cy:0};
+  const c=camCache[Math.max(0,Math.min(camCache.length-1,i))]; return {cx:c.cx,cy:c.cy};
+}
+// polyline (in VIDEO px) for the trace visible at frame index i
+function traceAtFrame(i){
+  const sc=result.sc, off=camAt(i);
+  const solid=[], dashed=[];
+  if(manualMode&&manualPts){
+    // quadratic bezier through start-apex-end in VIDEO px, no camera glue (manual is scene-fixed to impact frame)
+    const [P0,P1,P2]=manualPts; const pts=[];
+    for(let s=0;s<=1.0001;s+=0.04){ const mt=1-s;
+      pts.push({x:mt*mt*P0.x+2*mt*s*P1.x+s*s*P2.x, y:mt*mt*P0.y+2*mt*s*P1.y+s*s*P2.y}); }
+    return {solid:pts,dashed:[]};
+  }
+  // measured (glued): world -> frame = world + cum(i); grow with i
+  for(let k=0;k<result.meas.length;k++){ const m=result.meas[k]; if(m.fi>i)break;
+    solid.push({x:(m.x+off.cx)/sc, y:(m.y+off.cy)/sc}); }
+  const lastMeasI=result.meas[result.meas.length-1].fi;
+  if(i>lastMeasI && result.calc.length){
+    for(const c of result.calc){ if(c.i<=i){ dashed.push({x:(c.x+off.cx)/sc, y:(c.y+off.cy)/sc}); } }
+  }
+  return {solid,dashed};
+}
+function drawTraceOnCtx(ctx,poly,lw){
+  if(!poly) return;
+  const {solid,dashed}=poly, W=view.width;
+  if(solid&&solid.length){
+    ctx.lineWidth=Math.max(3,W*0.006); ctx.strokeStyle='#FFC83C'; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath(); ctx.moveTo(solid[0].x,solid[0].y); for(let j=1;j<solid.length;j++)ctx.lineTo(solid[j].x,solid[j].y); ctx.stroke();
+    // start marker
+    ctx.beginPath(); ctx.arc(solid[0].x,solid[0].y,Math.max(5,W*0.007),0,7); ctx.fillStyle='#00cf3a'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke();
+  }
+  if(dashed&&dashed.length){
+    ctx.lineWidth=Math.max(3,W*0.006); ctx.strokeStyle='#FF8A1E'; ctx.setLineDash([W*0.02,W*0.016]);
+    ctx.beginPath(); ctx.moveTo(dashed[0].x,dashed[0].y); for(let j=1;j<dashed.length;j++)ctx.lineTo(dashed[j].x,dashed[j].y); ctx.stroke();
+    ctx.setLineDash([]);
+    const hd=dashed[dashed.length-1];
+    ctx.beginPath(); ctx.arc(hd.x,hd.y,Math.max(5,W*0.007),0,7); ctx.fillStyle='#ff3b30'; ctx.fill();
+  }
+}
+function currentTraceUpTo(t){ const i=Math.round((t-result.impactT)/STEP); return traceAtFrame(i); }
+
+async function renderPreviewFirst(){
+  await buildCamCache();
+  await seekTo(result.impactT); drawView();
+}
+
+/* preview animation */
+let playing=false;
+$('play').onclick=async()=>{
+  if(playing) return; playing=true;
+  const total=(manualMode?24:result.nF);
+  for(let i=0;i<=total;i++){
+    const t=manualMode? Math.min(DUR-1e-3, result.impactT + i*STEP) : result.impactT+i*STEP;
+    if(t>=DUR)break; await seekTo(t);
+    vctx.drawImage(vid,0,0,VW,VH);
+    drawTraceOnCtx(vctx, traceAtFrame(i),1);
+    await new Promise(r=>setTimeout(r,1000/Math.min(FPS,30)));
+  }
+  playing=false;
+};
+
+/* export via MediaRecorder + requestFrame */
+$('dl').onclick=async()=>{
+  clrErr();
+  const outW=Math.min(VW,1280), outH=Math.round(outW*VH/VW);
+  const oc=document.createElement('canvas'); oc.width=outW; oc.height=outH;
+  const octx=oc.getContext('2d');
+  const scOut=outW/VW;
+  let mime=''; for(const m of ['video/mp4;codecs=h264','video/mp4','video/webm;codecs=vp9','video/webm']) if(window.MediaRecorder&&MediaRecorder.isTypeSupported(m)){mime=m;break;}
+  if(!window.MediaRecorder||!mime){ showErr('Video-Export wird von diesem Browser nicht unterstützt. Nutze die Vorschau, oder öffne die Datei in Chrome/aktuellem Safari.'); return; }
+  const stream=oc.captureStream(0); const vtrack=stream.getVideoTracks()[0];
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8e6}); const chunks=[];
+  rec.ondataavailable=e=>{ if(e.data.size)chunks.push(e.data); };
+  const doneP=new Promise(res=>rec.onstop=res);
+  rec.start();
+  const total=(manualMode?24:result.nF);
+  $('progWrap').style.display='block';
+  for(let i=0;i<=total;i++){
+    const t=result.impactT+i*STEP; if(t>=DUR)break; await seekTo(t);
+    octx.drawImage(vid,0,0,outW,outH);
+    // draw trace scaled to outW
+    const poly=traceAtFrame(i);
+    drawScaled(octx,poly,scOut,outW);
+    if(vtrack.requestFrame) vtrack.requestFrame();
+    await new Promise(r=>setTimeout(r,1000/Math.min(FPS,30)));
+    $('prog').style.width=Math.round(i/total*100)+'%';
+  }
+  $('progWrap').style.display='none';
+  rec.stop(); await doneP;
+  const blob=new Blob(chunks,{type:mime.split(';')[0]});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='FairwayPilot_Trace.'+(mime.indexOf('mp4')>=0?'mp4':'webm'); a.click();
+  $('outHint').innerHTML='Fertig – Video wurde heruntergeladen. (Auf iPhone ggf. über das Teilen-Menü sichern.)';
+};
+function drawScaled(ctx,poly,sc,W){
+  if(!poly)return; const {solid,dashed}=poly;
+  if(solid&&solid.length){ ctx.lineWidth=Math.max(3,W*0.006);ctx.strokeStyle='#FFC83C';ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.beginPath();ctx.moveTo(solid[0].x*sc,solid[0].y*sc);for(let j=1;j<solid.length;j++)ctx.lineTo(solid[j].x*sc,solid[j].y*sc);ctx.stroke();
+    ctx.beginPath();ctx.arc(solid[0].x*sc,solid[0].y*sc,Math.max(5,W*0.007),0,7);ctx.fillStyle='#00cf3a';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke(); }
+  if(dashed&&dashed.length){ ctx.lineWidth=Math.max(3,W*0.006);ctx.strokeStyle='#FF8A1E';ctx.setLineDash([W*0.02,W*0.016]);
+    ctx.beginPath();ctx.moveTo(dashed[0].x*sc,dashed[0].y*sc);for(let j=1;j<dashed.length;j++)ctx.lineTo(dashed[j].x*sc,dashed[j].y*sc);ctx.stroke();ctx.setLineDash([]);
+    const hd=dashed[dashed.length-1];ctx.beginPath();ctx.arc(hd.x*sc,hd.y*sc,Math.max(5,W*0.007),0,7);ctx.fillStyle='#ff3b30';ctx.fill(); }
+}
+
+/* ---------- manual fallback: drag start / apex / end ---------- */
+function startManual(){
+  manualMode=true;
+  const s=result.meas[0];
+  const start={x:s.x/result.sc, y:s.y/result.sc};
+  manualPts=[ start, {x:start.x*0.6+VW*0.25, y:start.y*0.5}, {x:VW*0.75, y:VH*0.3} ];
+  $('outHint').innerHTML='Ziehe die drei Punkte: <b>Start</b> (Ball), <b>Scheitel</b>, <b>Ende</b>. Dann Vorschau/Export.';
+  seekTo(result.impactT).then(()=>{ drawManual(); });
+  bindManualDrag();
+}
+$('manual').onclick=startManual;
+$('restart').onclick=()=>{ location.reload(); };
+let dragIdx=-1;
+function drawManual(){
+  vctx.drawImage(vid,0,0,VW,VH);
+  drawTraceOnCtx(vctx, traceAtFrame(0),1);
+  const names=['Start','Scheitel','Ende'];
+  manualPts.forEach((p,i)=>{ vctx.beginPath();vctx.arc(p.x,p.y,Math.max(7,VW*0.012),0,7);vctx.fillStyle=i==0?'#00cf3a':'#0A84FF';vctx.fill();vctx.lineWidth=2;vctx.strokeStyle='#fff';vctx.stroke();
+    vctx.font='bold '+Math.round(VW*0.018)+'px sans-serif';vctx.fillStyle='#fff';vctx.fillText(names[i],p.x+10,p.y-8); });
+}
+function bindManualDrag(){
+  const down=ev=>{ if(!manualMode)return; ev.preventDefault(); const p=evtToVideo(ev); dragIdx=-1; let bd=1e9;
+    manualPts.forEach((q,i)=>{const dd=(q.x-p.x)**2+(q.y-p.y)**2;if(dd<bd){bd=dd;dragIdx=i;}}); };
+  const move=ev=>{ if(!manualMode||dragIdx<0)return; ev.preventDefault(); const p=evtToVideo(ev); manualPts[dragIdx]={x:p.x,y:p.y}; drawManual(); };
+  const up=()=>{ dragIdx=-1; };
+  view.addEventListener('touchstart',down,{passive:false}); view.addEventListener('touchmove',move,{passive:false}); view.addEventListener('touchend',up);
+  view.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+}
+
+/* ---------- generate button ---------- */
+$('gen').onclick=()=>{ if(!mark){showErr('Bitte zuerst den Ball antippen.');return;} setStage(3); generate().catch(e=>{showErr('Fehler: '+e.message);}); };
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { HTML, LANDING_HTML, RECHNER_HTML, IMPRESSUM_HTML, DATENSCHUTZ_HTML, AGB_HTML, SW_JS } from './pages.generated.js';
+import { HTML, LANDING_HTML, RECHNER_HTML, IMPRESSUM_HTML, DATENSCHUTZ_HTML, AGB_HTML, SW_JS, TRACER_HTML } from './pages.generated.js';
 import { handleWind } from './wind.js';
 import { handleWx } from './wx.js';
 import { handleElev } from './elev.js';
@@ -42,6 +42,9 @@ export default {
     }
     if (url.pathname === "/agb") {
       return new Response(AGB_HTML, { headers: { "content-type": "text/html; charset=utf-8" } });
+    }
+    if (url.pathname === "/tracer-test") {
+      return new Response(TRACER_HTML, { headers: { "content-type": "text/html; charset=utf-8", "x-robots-tag": "noindex, nofollow", "cache-control": "no-store" } });
     }
     if (url.pathname === "/rechner") {
       if (url.searchParams.get("k") !== RECHNER_KEY) {

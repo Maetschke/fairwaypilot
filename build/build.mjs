@@ -23,6 +23,7 @@ const pages = {
   IMPRESSUM_HTML: read('src/pages/impressum.html'),
   DATENSCHUTZ_HTML: read('src/pages/datenschutz.html'),
   AGB_HTML: read('src/pages/agb.html'),
+  TRACER_HTML: read('src/pages/tracer.html'),
   SW_JS: read('src/sw.js'),
 };
 const gen = Object.entries(pages)

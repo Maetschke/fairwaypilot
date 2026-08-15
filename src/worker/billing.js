@@ -244,4 +244,49 @@ function subRow(userId, customer, s) {
   return { user_id: userId, status: status, plan: plan, stripe_customer_id: customer, stripe_subscription_id: s.id, current_period_end: cpe };
 }
 
-export { handleEntitlement, handleCheckout, handlePortal, handleRedeem, handleWebhook, guardResearch };
+// ============ Kuendigungsbutton (§ 312k BGB) ============
+async function handleCancelButton(request, env) {
+  let body = {};
+  try { body = await request.json(); } catch (e) {}
+  const email = (body.email || "").trim();
+  const name = (body.name || "").trim();
+  const art = (body.art === "ausserordentlich") ? "ausserordentlich" : "ordentlich";
+  const grund = (body.grund || "").trim().slice(0, 2000);
+  const kundennr = (body.kundennr || "").trim().slice(0, 120);
+  if (!email || email.indexOf("@") < 1 || !name) {
+    return j({ ok: false, error: "Name und gültige E-Mail sind erforderlich." }, 400);
+  }
+  const ref = "K-" + (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)).toUpperCase();
+  const received_at = new Date().toISOString();
+  const ip = request.headers.get("CF-Connecting-IP") || "";
+  const ua = (request.headers.get("User-Agent") || "").slice(0, 300);
+  let matched_customer = null, matched_subscription = null;
+  let effect = "kein aktives Abo zu dieser E-Mail gefunden – wird manuell geprüft";
+  try {
+    const cust = await stripe(env, "customers?email=" + encodeURIComponent(email) + "&limit=10");
+    const list = (cust && cust.data) || [];
+    for (const c of list) {
+      const subs = await stripe(env, "subscriptions?customer=" + encodeURIComponent(c.id) + "&status=all&limit=10");
+      const sd = (subs && subs.data) || [];
+      const active = sd.find((x) => x.status === "active" || x.status === "trialing" || x.status === "past_due");
+      if (active) {
+        matched_customer = c.id; matched_subscription = active.id;
+        if (!active.cancel_at_period_end) {
+          await stripe(env, "subscriptions/" + active.id, "POST", { cancel_at_period_end: true });
+        }
+        effect = "Abo wird zum Ende der laufenden Abrechnungsperiode beendet";
+        break;
+      }
+    }
+  } catch (e) {
+    effect = "Eingang erfasst – Verarbeitung erfolgt manuell";
+  }
+  try {
+    await supa(env, "cancellation_requests", "POST",
+      [{ email, name, art, grund, kundennr, matched_customer, matched_subscription, effect, ip, user_agent: ua, created_at: received_at }],
+      { "Prefer": "return=minimal" });
+  } catch (e) {}
+  return j({ ok: true, ref, received_at, effect });
+}
+
+export { handleEntitlement, handleCheckout, handlePortal, handleRedeem, handleWebhook, guardResearch, handleCancelButton };

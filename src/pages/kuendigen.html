@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vertrag kündigen · FairwayPilot</title>
+<style>
+:root{--g:#34C759;--gd:#1F8A4D;--tx:#16301F;--tx2:rgba(43,66,50,.85);--tx3:rgba(93,112,96,.95);--gl:#FFFFFF;--glb:#E1EADA;}
+html,body{margin:0;min-height:100%;background:#F5F8F0;color:var(--tx);font-family:'Inter',-apple-system,sans-serif;}
+.wrap{max-width:680px;margin:0 auto;padding:24px 20px 60px;}
+a.back{display:inline-block;margin-bottom:18px;color:var(--gd);text-decoration:none;font-weight:600;font-size:14px;}
+h1{font-size:22px;margin:0 0 4px;}
+.stand{color:var(--tx3);font-size:13px;margin-bottom:20px;}
+h2{font-size:16px;color:var(--gd);margin:26px 0 8px;}
+p{font-size:14.5px;line-height:1.6;color:var(--tx2);margin:6px 0;}
+label{display:block;font-size:14px;font-weight:600;color:var(--tx);margin:14px 0 4px;}
+input[type=text],input[type=email],textarea,select{width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--glb);border-radius:10px;font-size:15px;font-family:inherit;background:#fff;color:var(--tx);}
+textarea{min-height:70px;resize:vertical;}
+.radio{display:flex;align-items:flex-start;gap:8px;margin:8px 0;font-size:14.5px;color:var(--tx2);font-weight:400;cursor:pointer;}
+.radio input{margin-top:3px;}
+.hint{font-size:12.5px;color:var(--tx3);margin-top:2px;}
+.btn{display:block;width:100%;margin-top:22px;padding:14px;border:none;border-radius:12px;background:var(--gd);color:#fff;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;}
+.btn:disabled{opacity:.55;cursor:default;}
+.card{background:#fff;border:1px solid var(--glb);border-radius:14px;padding:18px 18px 20px;margin-top:8px;}
+.ok{background:#EAF6EE;border:1px solid #BFE3CB;border-radius:14px;padding:20px;margin-top:16px;}
+.ok h2{margin-top:0;color:#187040;}
+.err{color:#B03A3A;font-size:13.5px;margin-top:10px;font-weight:600;}
+.req{color:#B03A3A;}
+small{color:var(--tx3);}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="back" href="/">&#8249; Zurück zur App</a>
+<h1>Vertrag kündigen</h1>
+<div class="stand">Kündigung Ihres FairwayPilot-Premium-Abos gemäß § 312k BGB</div>
+
+<div id="form-view">
+<p>Über dieses Formular können Sie Ihr FairwayPilot-Premium-Abonnement direkt und ohne Anmeldung kündigen. Nach dem Absenden erhalten Sie eine Bestätigung des Eingangs mit Datum und Uhrzeit.</p>
+<div class="card">
+<form id="kform" onsubmit="return false;">
+  <label>Art der Kündigung <span class="req">*</span></label>
+  <label class="radio"><input type="radio" name="art" value="ordentlich" checked> Ordentliche Kündigung zum Ende der laufenden Laufzeit</label>
+  <label class="radio"><input type="radio" name="art" value="ausserordentlich"> Außerordentliche Kündigung aus wichtigem Grund</label>
+
+  <label for="grund">Grund (nur bei außerordentlicher Kündigung)</label>
+  <textarea id="grund" placeholder="Optional – nur bei außerordentlicher Kündigung erforderlich"></textarea>
+
+  <label>Zu kündigender Vertrag <span class="req">*</span></label>
+  <input type="text" id="vertrag" value="FairwayPilot Premium (Abonnement)" readonly>
+
+  <label for="name">Name <span class="req">*</span></label>
+  <input type="text" id="name" autocomplete="name" placeholder="Vor- und Nachname">
+
+  <label for="email">E-Mail-Adresse Ihres FairwayPilot-Kontos <span class="req">*</span></label>
+  <input type="email" id="email" autocomplete="email" placeholder="die E-Mail, mit der Sie das Abo abgeschlossen haben">
+  <div class="hint">Zur eindeutigen Zuordnung Ihres Vertrags. An diese Adresse senden wir auch die Bestätigung.</div>
+
+  <label for="kundennr">Kunden- oder Vertragsnummer</label>
+  <input type="text" id="kundennr" placeholder="Optional, falls vorhanden">
+
+  <button class="btn" id="submit" onclick="fpSubmit()">Jetzt kündigen</button>
+  <div class="err" id="err" style="display:none;"></div>
+  <p style="margin-top:14px;"><small>Verantwortlich: Mätschke Media &amp; Consulting GmbH, Niederstraße 18, 40789 Monheim am Rhein · info@fairwaypilot.com</small></p>
+</form>
+</div>
+</div>
+
+<div id="done-view" style="display:none;">
+<div class="ok">
+<h2>Kündigung eingegangen</h2>
+<p>Wir haben Ihre Kündigungserklärung erhalten. Diese Seite dient zugleich als Eingangsbestätigung – bitte speichern oder drucken Sie sie für Ihre Unterlagen.</p>
+<p id="done-details"></p>
+<p>Ihr Abo wird zum Ende der laufenden Abrechnungsperiode beendet; bis dahin bleibt Premium verfügbar. Eine Bestätigung geht Ihnen zusätzlich per E-Mail zu. Bei Rückfragen erreichen Sie uns unter info@fairwaypilot.com.</p>
+</div>
+<a class="back" style="margin-top:20px;" href="/">&#8249; Zurück zur App</a>
+</div>
+
+</div>
+<script>
+function fpSubmit(){
+  var err=document.getElementById('err'); err.style.display='none';
+  var name=document.getElementById('name').value.trim();
+  var email=document.getElementById('email').value.trim();
+  var art=(document.querySelector('input[name=art]:checked')||{}).value||'ordentlich';
+  var grund=document.getElementById('grund').value.trim();
+  var kundennr=document.getElementById('kundennr').value.trim();
+  if(!name){ err.textContent='Bitte geben Sie Ihren Namen an.'; err.style.display='block'; return; }
+  if(!email||email.indexOf('@')<1){ err.textContent='Bitte geben Sie eine gültige E-Mail-Adresse an.'; err.style.display='block'; return; }
+  if(art==='ausserordentlich' && !grund){ err.textContent='Bei außerordentlicher Kündigung geben Sie bitte einen Grund an.'; err.style.display='block'; return; }
+  var btn=document.getElementById('submit'); btn.disabled=true; btn.textContent='Wird gesendet …';
+  fetch('/api/kuendigen',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:name,email:email,art:art,grund:grund,kundennr:kundennr})})
+   .then(function(r){return r.json().catch(function(){return {};});})
+   .then(function(res){
+     if(!res||res.ok!==true){ throw new Error((res&&res.error)||'Senden fehlgeschlagen'); }
+     var when=res.received_at?new Date(res.received_at):new Date();
+     var d=document.getElementById('done-details');
+     d.innerHTML='<b>Eingang:</b> '+when.toLocaleString('de-DE')+'<br><b>Vorgangsnummer:</b> '+(res.ref||'–')+'<br><b>Art:</b> '+(art==='ordentlich'?'Ordentliche Kündigung zum Laufzeitende':'Außerordentliche Kündigung')+'<br><b>Vertrag:</b> FairwayPilot Premium<br><b>E-Mail:</b> '+email;
+     document.getElementById('form-view').style.display='none';
+     document.getElementById('done-view').style.display='block';
+     window.scrollTo(0,0);
+   })
+   .catch(function(e){
+     btn.disabled=false; btn.textContent='Jetzt kündigen';
+     err.textContent='Es gab ein Problem beim Senden. Bitte versuchen Sie es erneut oder kündigen Sie per E-Mail an info@fairwaypilot.com. ('+(e&&e.message||e)+')';
+     err.style.display='block';
+   });
+}
+</script>
+</body>
+</html>

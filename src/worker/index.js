@@ -1,4 +1,4 @@
-import { HTML, LANDING_HTML, RECHNER_HTML, IMPRESSUM_HTML, DATENSCHUTZ_HTML, AGB_HTML, SW_JS, TRACER_HTML } from './pages.generated.js';
+import { HTML, LANDING_HTML, RECHNER_HTML, IMPRESSUM_HTML, DATENSCHUTZ_HTML, AGB_HTML, KUENDIGEN_HTML, SW_JS, TRACER_HTML } from './pages.generated.js';
 import { handleWind } from './wind.js';
 import { handleWx } from './wx.js';
 import { handleElev } from './elev.js';
@@ -7,7 +7,7 @@ import { handleCourses } from './courses.js';
 import { handleHoles } from './holes.js';
 import { handleResearch } from './research.js';
 import { handleAccountDelete } from './account.js';
-import { handleEntitlement, handleCheckout, handlePortal, handleRedeem, handleWebhook, guardResearch } from './billing.js';
+import { handleEntitlement, handleCheckout, handlePortal, handleRedeem, handleWebhook, guardResearch, handleCancelButton } from './billing.js';
 
 const MANIFEST_JSON = JSON.stringify({
   name: "FairwayPilot",
@@ -18,8 +18,10 @@ const MANIFEST_JSON = JSON.stringify({
   background_color: "#ECF2E4",
   theme_color: "#1F8A4D",
   icons: [
-    { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-    { src: "/icon-512.png", sizes: "512x512", type: "image/png" }
+    { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+    { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+    { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+    { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
   ]
 });
 
@@ -42,6 +44,9 @@ export default {
     }
     if (url.pathname === "/agb") {
       return new Response(AGB_HTML, { headers: { "content-type": "text/html; charset=utf-8" } });
+    }
+    if (url.pathname === "/kuendigen") {
+      return new Response(KUENDIGEN_HTML, { headers: { "content-type": "text/html; charset=utf-8" } });
     }
     if (url.pathname === "/tracer-test") {
       return new Response(TRACER_HTML, { headers: { "content-type": "text/html; charset=utf-8", "x-robots-tag": "noindex, nofollow", "cache-control": "no-store" } });
@@ -85,6 +90,9 @@ export default {
     }
     if (url.pathname === "/api/portal" && request.method === "POST") {
       try { return await handlePortal(request, env); } catch (e) { return _jerr(e); }
+    }
+    if (url.pathname === "/api/kuendigen" && request.method === "POST") {
+      try { return await handleCancelButton(request, env); } catch (e) { return _jerr(e); }
     }
     if (url.pathname === "/api/redeem" && request.method === "POST") {
       try { return await handleRedeem(request, env); } catch (e) { return _jerr(e); }

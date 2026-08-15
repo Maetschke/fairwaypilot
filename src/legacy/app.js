@@ -10799,3 +10799,68 @@ function RT_onbMaybeTrialNudge(){
  }catch(e){}
 }
 try{ if(typeof RT_onbMaybeShow==='function'){ setTimeout(function(){ try{ RT_onbMaybeShow(); }catch(e){} }, 800); } }catch(e){}
+
+/* ===== Gemeinsames Scoring v2 (RSV2) — Client-Helferschicht (Stufe 2a) =====
+   Additive Zugriffsschicht auf round_meta/round_scores/round_members/round_presence + RPCs.
+   Aendert noch KEIN bestehendes Verhalten; wird in Folge-Stufen (2b ff.) verdrahtet. */
+var RSV2 = {
+  ch:null, chId:null, hbTimer:null,
+  ready:function(){ return !!(typeof sb!=='undefined' && sb && sbUser); },
+  /* Gemeinsame Runde anlegen (Owner). players:[{idx,name,scorer_uid?,member_uid?,data?}] */
+  create:async function(rid,meta,players){
+    if(!RSV2.ready()) return {ok:false,error:'not ready'};
+    try{ var r=await sb.rpc('create_shared_round',{_rid:rid,_meta:meta||{},_players:players||[]}); if(r.error) throw r.error; return {ok:true}; }
+    catch(e){ return {ok:false,error:(e&&e.message)||String(e)}; }
+  },
+  /* Runde laden: round_meta + alle round_scores. */
+  load:async function(rid){
+    if(!RSV2.ready()) return {ok:false};
+    try{
+      var m=await sb.from('round_meta').select('*').eq('round_id',rid).maybeSingle(); if(m.error) throw m.error;
+      var s=await sb.from('round_scores').select('*').eq('round_id',rid).order('player_idx',{ascending:true}); if(s.error) throw s.error;
+      return {ok:true, meta:(m.data||null), cards:(s.data||[])};
+    }catch(e){ return {ok:false,error:(e&&e.message)||String(e)}; }
+  },
+  /* Eine Karte schreiben mit rev-Pruefung. Erfolg->{ok:true,rev}. Konflikt->{ok:false,conflict:true}. */
+  writeCard:async function(rid,idx,data,expectedRev){
+    if(!RSV2.ready()) return {ok:false};
+    try{
+      var q=sb.from('round_scores').update({data:data, rev:((expectedRev|0)+1), updated_at:new Date().toISOString()}).eq('round_id',rid).eq('player_idx',idx);
+      if(typeof expectedRev==='number') q=q.eq('rev',expectedRev);
+      var r=await q.select(); if(r.error) throw r.error;
+      if(r.data && r.data.length) return {ok:true, rev:((expectedRev|0)+1)};
+      return {ok:false, conflict:true};
+    }catch(e){ return {ok:false,error:(e&&e.message)||String(e)}; }
+  },
+  /* Presence-Heartbeat fuer das eigene Konto. */
+  heartbeat:async function(rid){
+    if(!RSV2.ready()) return;
+    try{ await sb.from('round_presence').upsert({round_id:rid, uid:sbUser.id, last_seen:new Date().toISOString()},{onConflict:'round_id,uid'}); }catch(e){}
+  },
+  /* Karten-Scorer neu zuweisen / uebernehmen. */
+  assign:async function(rid,idx,newUid){
+    if(!RSV2.ready()) return {ok:false};
+    try{ var r=await sb.rpc('assign_scorer',{_rid:rid,_idx:idx,_new:newUid}); if(r.error) throw r.error; return {ok:true}; }
+    catch(e){ return {ok:false,error:(e&&e.message)||String(e)}; }
+  },
+  /* Runde serverseitig beenden. */
+  finish:async function(rid){
+    if(!RSV2.ready()) return {ok:false};
+    try{ var r=await sb.rpc('finish_shared_round',{_rid:rid}); if(r.error) throw r.error; return {ok:true}; }
+    catch(e){ return {ok:false,error:(e&&e.message)||String(e)}; }
+  },
+  /* Realtime: Aenderungen an round_scores/round_meta dieser Runde. cb(kind,payload). */
+  subscribe:function(rid,cb){
+    try{
+      RSV2.unsubscribe();
+      var ch=sb.channel('rsv2-'+rid);
+      ch.on('postgres_changes',{event:'*',schema:'public',table:'round_scores',filter:'round_id=eq.'+rid},function(p){ try{ cb&&cb('scores',p); }catch(e){} });
+      ch.on('postgres_changes',{event:'*',schema:'public',table:'round_meta',filter:'round_id=eq.'+rid},function(p){ try{ cb&&cb('meta',p); }catch(e){} });
+      ch.subscribe();
+      RSV2.ch=ch; RSV2.chId=rid;
+    }catch(e){ RSV2.ch=null; RSV2.chId=null; }
+  },
+  unsubscribe:function(){ try{ if(RSV2.ch){ sb.removeChannel(RSV2.ch); } }catch(e){} RSV2.ch=null; RSV2.chId=null; },
+  startHeartbeat:function(rid){ RSV2.stopHeartbeat(); if(!rid) return; try{ RSV2.heartbeat(rid); }catch(e){} RSV2.hbTimer=setInterval(function(){ try{ RSV2.heartbeat(rid); }catch(e){} },20000); },
+  stopHeartbeat:function(){ try{ if(RSV2.hbTimer) clearInterval(RSV2.hbTimer); }catch(e){} RSV2.hbTimer=null; }
+};

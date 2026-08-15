@@ -7516,7 +7516,8 @@ function RT_rPlay(){
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="'+(RT_editingExisting?'RT_cancelEdit()':'RT_go(\'home\')')+'">&#8249;</button>'+
   '<div style="flex:1;min-width:0;"><div class="rt-h1" style="font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+rtEsc(rd.courseName)+'</div>'+
   '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
- if(RT_roundIsShared(rd)){
+ if(rd.v2) h+=RT_v2BannerHtml(rd);
+ if(!rd.v2 && RT_roundIsShared(rd)){
   var _amSc=RT_amScorer(rd);
   var _amOwner=!!(RT_roundOwners[rd.id]&&sbUser&&RT_roundOwners[rd.id]===sbUser.id);
   h+='<div class="rtc" style="padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:10px;background:'+(_amSc?'#EAF6EE':'#FBF3E4')+';border:1px solid '+(_amSc?'#BFE3CB':'#EAD9AE')+';">'
@@ -7916,7 +7917,7 @@ function RT_validateRound(rd){
  return {ok:true};
 }
 function RT_finish(){
- if(RT_round&&!RT_round.ownCards&&!RT_amScorer(RT_round)){RT_scorerBlock();return;}
+ if(RT_round&&!RT_round.v2&&!RT_round.ownCards&&!RT_amScorer(RT_round)){RT_scorerBlock();return;}
  if(RT_round && RT_round.cnt===18 && !RT_editingExisting){ RT_finishPrompt(); return; }
  RT_finishDo();
 }
@@ -7936,7 +7937,7 @@ function RT_finishDo(){
  if(idx>=0){ saved[idx]=RT_round; } else { saved.push(RT_round); }
  RT_editingExisting=false;
  rtSet(RT_KEY,saved);
- if(RT_roundIsShared(RT_round)&&!RT_round.ownCards&&RT_amScorer(RT_round)){ try{ sbPushCanonical(RT_round); }catch(e){} } else { sbPushRound(RT_round); }
+ if(RT_round.v2){ try{ if(typeof RSV2!=='undefined') RSV2.finish(RT_round.id); }catch(e){} sbPushRound(RT_round); } else if(RT_roundIsShared(RT_round)&&!RT_round.ownCards&&RT_amScorer(RT_round)){ try{ sbPushCanonical(RT_round); }catch(e){} } else { sbPushRound(RT_round); }
  RT_rtBroadcastState();
  rtDel(RT_ACT);
  if(RT_round.promoted) RT_hydrateHistoricalData();
@@ -8084,7 +8085,7 @@ function RT_applyEdit(){
   par:cd.par, si:si, nums:cd.nums, cnt:cd.cnt, parSum:cd.parSum, cur:0, done:(src?!!src.done:false), holeViews:(src&&src.holeViews)?src.holeViews:{},
   ownerHint:(src&&src.ownerHint)?src.ownerHint:(sbUser?sbUser.id:null),
  autoCount:(src&&src.autoCount!==undefined&&src.autoCount!==null)?src.autoCount:RT_autoCountOn(),
-  historical:src?src.historical:undefined, histSrc:src?src.histSrc:undefined, promoted:src?src.promoted:undefined, ownCards:!!RT_su.ownCards,
+  historical:src?src.historical:undefined, histSrc:src?src.histSrc:undefined, promoted:src?src.promoted:undefined, ownCards:!!RT_su.ownCards, v2:(src&&src.v2)||undefined, scorerMap:(src&&src.scorerMap)?src.scorerMap:undefined,
   players:newPlayers};
  RT_state.saveWarn='';
  RT_go('play');
@@ -10931,8 +10932,10 @@ function RT_v2Sync(){
   var active=!!(rd && rd.v2 && !rd.done && typeof RSV2!=='undefined' && RSV2.ready() && RT_state.screen==='play');
   if(active){
    if(RSV2.chId!==rd.id){ RSV2.subscribe(rd.id, RT_v2OnRealtime); RSV2.startHeartbeat(rd.id); try{ RT_v2OnRealtime('init'); }catch(e){} }
+   if(!RT_v2PollT){ RT_v2PollT=setInterval(function(){ try{ if(RT_round&&RT_round.v2&&!RT_round.done&&RT_state.screen==='play') RT_v2OnRealtime('poll'); }catch(e){} }, 12000); }
   }else{
    if(RSV2.chId){ RSV2.unsubscribe(); RSV2.stopHeartbeat(); }
+   if(RT_v2PollT){ clearInterval(RT_v2PollT); RT_v2PollT=null; }
   }
  }catch(e){}
 }
@@ -10961,7 +10964,9 @@ async function RT_v2OnRealtime(kind, payload){
    }
   });
   if(res.meta && res.meta.done && !rd.done){ rd.done=true; changed=true; }
-  if(changed){ try{ rtSet(RT_ACT,rd); RT_syncActiveToSavedLocalOnly(rd); }catch(e){} try{ RT_render(); }catch(e){} }
+  try{ var prr=await RT_v2LoadPresenceRows(rd.id); rd._presence={}; (prr||[]).forEach(function(x){ rd._presence[x.uid]=Date.parse(x.last_seen)||0; }); }catch(e){}
+  try{ rtSet(RT_ACT,rd); RT_syncActiveToSavedLocalOnly(rd); }catch(e){}
+  try{ RT_render(); }catch(e){}
  }catch(e){}
 }
 /* Lokale Persistenz OHNE erneuten v2-Push (verhindert Schreib-Schleife beim Empfang). */
@@ -10984,4 +10989,43 @@ async function RT_v2PushMine(rd){
    }
   }
  }catch(e){}
+}
+
+
+/* ===== RSV2 Etappe 2e: Presence-Anzeige, Uebernahme, v2-Banner ===== */
+var RT_v2PollT=null;
+async function RT_v2LoadPresenceRows(rid){
+ try{ if(typeof sb==='undefined'||!sb) return []; var r=await sb.from('round_presence').select('uid,last_seen').eq('round_id',rid); return (r&&r.data)||[]; }catch(e){ return []; }
+}
+function RT_v2ScorerName(rd,i){
+ var uid=RT_v2ScorerFor(rd,i);
+ if(sbUser&&uid===sbUser.id) return 'Du';
+ if(rd&&rd.players){ for(var j=0;j<rd.players.length;j++){ if(RT_v2LinkedUid(rd.players[j].name)===uid) return rd.players[j].name; } }
+ return 'Mitspieler';
+}
+function RT_v2Reachable(rd,uid){ try{ var t=rd&&rd._presence&&rd._presence[uid]; return !!(t && (Date.now()-t)<45000); }catch(e){ return false; } }
+function RT_v2TakeCard(i){
+ var rd=RT_round; if(!rd||!rd.v2||!sbUser) return;
+ RT_pageConfirm('Karte von '+rtEsc(RT_v2ScorerName(rd,i))+' übernehmen? Du führst diese Karte dann selbst.', function(){
+  RSV2.assign(rd.id, i, sbUser.id).then(function(res){
+   if(res&&res.ok){ if(!rd.scorerMap)rd.scorerMap={}; rd.scorerMap[i]=sbUser.id; try{ RT_v2OnRealtime('after-assign'); }catch(e){} try{ RT_toast('Karte übernommen.'); }catch(e){} }
+   else{ try{ RT_toast('Übernahme nicht möglich – der Scorer ist evtl. noch erreichbar.'); }catch(e){} }
+  });
+ }, 'Übernehmen', '#187040');
+}
+function RT_v2BannerHtml(rd){
+ if(!rd||!rd.v2) return '';
+ var h='<div class="rtc" style="padding:10px 12px;margin-bottom:10px;background:#F3F8F2;border:1px solid #CFE3D2;"><div class="rt-ct" style="margin:0 0 6px;font-size:12.5px;">Scoring-Karten</div>';
+ rd.players.forEach(function(p,i){
+  var uid=RT_v2ScorerFor(rd,i);
+  var mine=!!(sbUser&&uid===sbUser.id);
+  var reach=mine||RT_v2Reachable(rd,uid);
+  var dot='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+(reach?'#2EA84F':'#C0392B')+';margin-right:6px;flex:none;"></span>';
+  h+='<div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#143522;padding:3px 0;">'+dot
+   +'<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><b>'+rtEsc(p.name)+'</b> · '+(mine?'Du führst':('führt: '+rtEsc(RT_v2ScorerName(rd,i))))+(!mine&&!reach?' (offline)':'')+'</div>'
+   +((!mine && !reach)?'<button class="rt-btn2" style="width:auto;flex:none;padding:5px 10px;font-size:11px;margin:0;" onclick="RT_v2TakeCard('+i+')">übernehmen</button>':'')
+   +'</div>';
+ });
+ h+='</div>';
+ return h;
 }

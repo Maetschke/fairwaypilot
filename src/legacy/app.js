@@ -8348,6 +8348,8 @@ function RT_openView(id){RT_state.viewId=id;RT_go('view');}
 var RT_fmtNet=true, RT_fmtOpen=false;
 function RT_fmtSetNet(v){ RT_fmtNet=!!v; RT_render(); }
 function RT_fmtToggleOpen(){ RT_fmtOpen=!RT_fmtOpen; RT_render(); }
+var RT_fmtPairA=0, RT_fmtPairB=1;
+function RT_fmtSetPair(w,v){ v=parseInt(v,10); if(w==='a') RT_fmtPairA=v; else RT_fmtPairB=v; RT_render(); }
 function RT_hcpStrokes(p,h,rd){ rd=rd||RT_round; return SC_netPar(rd.par[h],p.ph,rd.si[h],rd.cnt)-rd.par[h]; }
 function RT_grossH(p,h,rd){ rd=rd||RT_round; if(!RT_holeInSeg(rd,p,h)||p.cx[h]||p.sc[h]===null||p.sc[h]===undefined) return null; return p.sc[h]; }
 function RT_netScoreH(p,h,rd){ var g=RT_grossH(p,h,rd); if(g===null) return null; return g-RT_hcpStrokes(p,h,rd); }
@@ -8432,8 +8434,23 @@ function RT_fmtHtml(rd){
  var sk=RT_fmtSkins(rd,net);
  b+=RT_fmtRankHtml('Skins – '+(net?'Netto':'Brutto'), sk.rows, function(r){ return r.skins; }, 'Je Loch 1 Skin an den eindeutig Besten; Gleichstand → Carry-over.'+(sk.carry?' Offen im Topf: '+sk.carry+'.':''));
  if(rd.players.length>=2){
-  var ai=0,bi=1;
-  var pairNote=rd.players.length>2?' (erste zwei: '+rtEsc(rd.players[ai].name)+' vs. '+rtEsc(rd.players[bi].name)+')':'';
+  var np=rd.players.length;
+  var ai=RT_fmtPairA, bi=RT_fmtPairB;
+  if(ai<0||ai>=np) ai=0;
+  if(bi<0||bi>=np) bi=1;
+  if(bi===ai){ for(var _k=0;_k<np;_k++){ if(_k!==ai){ bi=_k; break; } } }
+  var pairNote='';
+  var pairSel='';
+  if(np>2){
+   var _oa='',_ob='';
+   for(var _pi=0;_pi<np;_pi++){ _oa+='<option value="'+_pi+'"'+(_pi===ai?' selected':'')+'>'+rtEsc(rd.players[_pi].name)+'</option>'; _ob+='<option value="'+_pi+'"'+(_pi===bi?' selected':'')+'>'+rtEsc(rd.players[_pi].name)+'</option>'; }
+   pairSel='<div style="font-weight:800;color:#143522;font-size:13px;margin-bottom:6px;">Paarung (Lochspiel &amp; Nassau)</div>'
+    +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">'
+    +'<select class="rt-inp" style="flex:1;margin:0;" onchange="RT_fmtSetPair(\'a\',this.value)">'+_oa+'</select>'
+    +'<span style="font-size:12px;color:#8A9C8E;">vs.</span>'
+    +'<select class="rt-inp" style="flex:1;margin:0;" onchange="RT_fmtSetPair(\'b\',this.value)">'+_ob+'</select></div>';
+  }
+  b+=pairSel;
   var mText=RT_fmtMatchText(rd,net,ai,bi,null);
   b+='<div style="margin-bottom:14px;"><div style="font-weight:800;color:#143522;font-size:13px;margin-bottom:6px;">Lochspiel (Match Play)'+pairNote+'</div>'
    +'<div style="font-size:14px;color:#143522;padding:6px 8px;background:#EEF4FB;border-radius:8px;">'+(mText||'–')+'</div>'

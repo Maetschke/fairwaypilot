@@ -3033,11 +3033,20 @@ function RT_teeTextColorFor(bg){
 /* Eindeutige Zeichen je Markierungsart - bewusst KEIN dreifaches "P":
    Abschlag = A (schwarz), Balllagen = 2..n (dunkelgruen), eingelocht = Fahne (schwarz),
    Strafschlag = S (rot), Bunker = B (gelb), Putt = P (gruen). */
-function RT_pinMarkerVisual(pt,idx){
+/* Index des LETZTEN Putt-Markers einer Bahn - dieser wird als eingelocht (Fahne) dargestellt,
+   sofern die Bahn nicht ohnehin schon einen expliziten Eingelocht-Marker hat. Rein visuell,
+   aendert keine Zaehlung (Putts kommen aus dem Stepper). */
+function RT_lastPuttIdx(pins){
+ if(!pins||!pins.length) return -1;
+ var hasHoled=false, last=-1;
+ for(var i=0;i<pins.length;i++){ var k=RT_pinKind(pins[i]); if(k==='holed') hasHoled=true; else if(k==='putt') last=i; }
+ return hasHoled?-1:last;
+}
+function RT_pinMarkerVisual(pt,idx,asHoled){
  var type=pt.type||'shot';
  if(type==='straf') return {label:'S', bg:'#D64550'};
  if(type==='sand') return {label:'B', bg:'#E0B400'};
- if(type==='putt') return {label:'P', bg:'#1F8A4D'};
+ if(type==='putt') return asHoled ? {label:'\u26f3', bg:'#1B1B1B'} : {label:'P', bg:'#1F8A4D'};
  if(pt.shot==='P') return {label:'\u26f3', bg:'#1B1B1B'};
  /* Positionsbasierte Nummerierung: jede Markierung (Ball ODER Straf/Sand/Putt) besetzt eine
     Position im gemeinsamen pins-Array. Normale Schlaege zeigen ihre Position (idx+1); Straf/Sand/
@@ -3053,10 +3062,11 @@ function RT_pinsOverlayHtml(rd,c,rotComp,pi){
  var pins=RT_pinsOf(rd,(pi===undefined||pi===null)?0:pi,c);
  if(!pins.length) return '';
  var h='';
+ var _lp=RT_lastPuttIdx(pins);
  pins.forEach(function(p,idx){
   var px=RT_projectLatLngToPx(calib,p.lat,p.lng); if(!px) return;
   var fx=Math.max(0.02,Math.min(0.98,px.x))*100, fy=Math.max(0.02,Math.min(0.98,px.y))*100;
-  var vis=RT_pinMarkerVisual(p,idx);
+  var vis=RT_pinMarkerVisual(p,idx,idx===_lp);
   h+='<div style="position:absolute;left:'+fx+'%;top:'+fy+'%;transform:translate(-50%,-50%) rotate('+(rotComp||0)+'deg);width:20px;height:20px;border-radius:50%;background:'+vis.bg+';color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.35);border:1.5px solid #fff;pointer-events:none;">'+vis.label+'</div>';
  });
  return h;
@@ -3405,9 +3415,10 @@ function RT_redrawFullPins(){
  var rd=RT_round; if(!rd) return;
  layer.clearLayers();
  var pins=RT_pinsOf(rd,pi,rd.cur);
+ var _lp=RT_lastPuttIdx(pins);
  pins.forEach(function(pt,idx){
   var sel=(RT_fullSelPin===idx);
-  var vis=RT_pinMarkerVisual(pt,idx);
+  var vis=RT_pinMarkerVisual(pt,idx,idx===_lp);
   var ring=sel?'box-shadow:0 0 0 3px #FFD23F,0 1px 4px rgba(0,0,0,.45);':'box-shadow:0 1px 3px rgba(0,0,0,.3);';
   var icon=L.divIcon({className:'',html:'<div style="width:22px;height:22px;border-radius:50%;background:'+vis.bg+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:2px solid #fff;'+ring+'transform:rotate('+(-rotF)+'deg);">'+vis.label+'</div>',iconSize:[22,22],iconAnchor:[11,11]});
   var m=L.marker([pt.lat,pt.lng],{icon:icon,interactive:true}).addTo(layer);
@@ -4433,9 +4444,10 @@ function RT_redrawPins(pi){
  var rot=inst.rot||0;
  inst.layer.clearLayers();
  var pins=p.pins[c]||[];
+ var _lp=RT_lastPuttIdx(pins);
  pins.forEach(function(pt,idx){
   /* Zahl/Icon im Pin immer gegen die Kartendrehung gegenrotieren, damit es lesbar aufrecht bleibt. */
-  var vis=RT_pinMarkerVisual(pt,idx);
+  var vis=RT_pinMarkerVisual(pt,idx,idx===_lp);
   var icon=L.divIcon({className:'',html:'<div style="width:22px;height:22px;border-radius:50%;background:'+vis.bg+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);transform:rotate('+(-rot)+'deg);">'+vis.label+'</div>',iconSize:[22,22],iconAnchor:[11,11]});
   var m=L.marker([pt.lat,pt.lng],{icon:icon}).addTo(inst.layer);
   m.on('click', function(ev){

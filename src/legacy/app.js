@@ -7435,6 +7435,7 @@ function RT_discard(){
 /* Stableford je Loch (nutzt SC_netPar aus dem Bestand) */
 function RT_stbfH(p,h,rd){
  rd=rd||RT_round;
+ if(!RT_holeInSeg(rd,p,h)) return null;
  if(p.cx[h])return null;
  if(p.sc[h]===null)return null;
  var np=SC_netPar(rd.par[h],p.ph,rd.si[h],rd.cnt);
@@ -7444,10 +7445,20 @@ function RT_cap(p,h,rd){
  rd=rd||RT_round;
  return SC_netPar(rd.par[h],p.ph,rd.si[h],rd.cnt)+2;
 }
+/* ===== Teil-Runden: ein Spieler kann nur die Front- ODER Back-9 einer 18-Loch-Runde
+   gespielt haben (p.only = 'F' | 'B'; sonst null = alle 18). Nicht gespielte Loecher werden
+   NICHT gewertet (kein NDB-Deckel) - Gesamt/Stableford/Handicap zaehlen nur das gespielte
+   Segment. Fuer 9-Loch-Runden ohne Belang. */
+function RT_holeInSeg(rd,p,hh){
+ if(!p||!p.only||!rd||rd.cnt!==18) return true;
+ var num=rd.nums[hh];
+ return p.only==='F' ? (num<=9) : (num>=10);
+}
 function RT_totals(p,rd){
  rd=rd||RT_round;
  var br=0,brRaw=0,st=0,pu=0,puC=0,pe=0,sa=0,fwC=0,fwT=0,played=0;
  for(var h=0;h<rd.cnt;h++){
+  if(!RT_holeInSeg(rd,p,h)) continue;
   var cap=RT_cap(p,h,rd);
   if(p.sc[h]!==null&&!p.cx[h]){
    /* Gespielt und nicht gestrichen: echte Schlagzahl zaehlt, Deckel nur bei "gewertet" */
@@ -7600,6 +7611,7 @@ function RT_rPlay(){
   '</div>';
  if(c<rd.cnt-1)h+='<button class="rt-btn2" style="width:100%;margin-bottom:12px;" onclick="RT_finish()">'+(RT_editingExisting?'Speichern':'Runde vorzeitig beenden &amp; speichern')+'</button>';
  else h+='<div style="margin-bottom:12px;"></div>';
+ if(rd.cnt===18&&!rd.ownCards&&RT_amScorer(rd)) h+='<button class="rt-btn3" style="width:100%;margin-bottom:12px;color:#6b7d70;font-size:12px;border:1px solid #E6ECDF;" onclick="RT_askConvertNine()">Auf 9 Löcher umstellen (nur gespielte werten)</button>';
  return h;
 }
 /* Prueft, ob fuer eine Bahn bei ALLEN Spielern ein Ergebnis erfasst ist (Schlagzahl gesetzt\n   oder Bahn gestrichen) - Grundlage fuer die automatische Cloud-Speicherung beim Bahnwechsel. */
@@ -7775,10 +7787,92 @@ function RT_cx(pi){
  p.cx[c]=p.cx[c]?0:1;
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
 }
+/* Ganze 18-Loch-Runde waehrend des Spiels auf eine echte 9-Loch-Runde umstellen: die nicht
+   gespielte Haelfte wird verworfen, CR/Slope/Spielvorgabe je Spieler auf die Neun umgerechnet,
+   Front oder Back automatisch anhand der bereits erfassten Loecher erkannt. */
+function RT_convertRoundToNine(){
+ var rd=RT_round; if(!rd||rd.cnt!==18) return;
+ var fCnt=0,bCnt=0;
+ for(var i=0;i<18;i++){ var pl=false; for(var pj=0;pj<rd.players.length;pj++){ if(rd.players[pj].sc[i]!==null){pl=true;break;} } if(pl){ if(rd.nums[i]<=9)fCnt++; else bCnt++; } }
+ var isFront=!(bCnt>fCnt);
+ var sIdx=isFront?0:9;
+ var half=rd.players.map(function(p){ return RT_halfCrSl(rd,p,isFront); });
+ var newPar=rd.par.slice(sIdx,sIdx+9), newSi=rd.si.slice(sIdx,sIdx+9), newNums=rd.nums.slice(sIdx,sIdx+9);
+ var newParSum=newPar.reduce(function(a,b){return a+b;},0);
+ rd.players.forEach(function(p,pi){
+  p.sc=p.sc.slice(sIdx,sIdx+9); p.pu=p.pu.slice(sIdx,sIdx+9); p.fw=p.fw.slice(sIdx,sIdx+9);
+  p.pe=p.pe.slice(sIdx,sIdx+9); p.sa=p.sa.slice(sIdx,sIdx+9); p.cx=p.cx.slice(sIdx,sIdx+9);
+  if(p.pins&&p.pins.length) p.pins=p.pins.slice(sIdx,sIdx+9);
+  var cr=half[pi]&&half[pi].cr, sl=half[pi]&&half[pi].sl;
+  if(cr!==null&&cr!==undefined) p.cr=cr;
+  if(sl!==null&&sl!==undefined) p.sl=sl;
+  var nph=RT_ph(p.hi,p.cr,p.sl,newParSum,9);
+  if(nph!==null&&!isNaN(nph)) p.ph=nph;
+  p.only=null;
+ });
+ rd.par=newPar; rd.si=newSi; rd.nums=newNums; rd.cnt=9; rd.parSum=newParSum;
+ rd.lbl=(isFront?'Front 9':'Back 9')+' · Par '+newParSum;
+ rd.cur=Math.max(0,Math.min(8,rd.cur));
+ rtSet(RT_ACT,rd); RT_syncActiveToSaved(); RT_render();
+}
+function RT_askConvertNine(){
+ var rd=RT_round; if(!rd||rd.cnt!==18) return;
+ var fCnt=0,bCnt=0;
+ for(var i=0;i<18;i++){ var pl=false; for(var pj=0;pj<rd.players.length;pj++){ if(rd.players[pj].sc[i]!==null){pl=true;break;} } if(pl){ if(rd.nums[i]<=9)fCnt++; else bCnt++; } }
+ var isFront=!(bCnt>fCnt);
+ RT_pageConfirm('Runde auf 9 Löcher umstellen? Die '+(isFront?'Back':'Front')+'-9 wird verworfen und die Runde als reine '+(isFront?'Front':'Back')+'-9-Runde gewertet.', function(){ RT_convertRoundToNine(); }, 'Umstellen', '#187040');
+}
+/* Beim Runde-Beenden: pro (bearbeitbaren) Spieler festlegen, ob alle 18 / nur Front 9 /
+   nur Back 9 gespielt wurden. Nicht gespielte Loecher werden als "-" dargestellt und nicht
+   gewertet (WHS-9-Loch-Wertung). */
+var RT_finishSel=null, RT_finishPis=[];
+function RT_finishPrompt(){
+ var rd=RT_round; if(!rd){ RT_finishDo(); return; }
+ var pis;
+ if(rd.ownCards){ var mi=RT_myPlayerIndex(rd); pis=(mi>=0)?[mi]:rd.players.map(function(_,i){return i;}); }
+ else { pis=rd.players.map(function(_,i){return i;}); }
+ RT_finishSel={};
+ pis.forEach(function(pi){
+  var p=rd.players[pi], f=false, b=false;
+  for(var i=0;i<rd.cnt;i++){ if(p.sc[i]!==null){ if(rd.nums[i]<=9)f=true; else b=true; } }
+  RT_finishSel[pi]=(p.only==='F'||p.only==='B')?p.only:(f&&!b?'F':(b&&!f?'B':'A'));
+ });
+ RT_finishPis=pis;
+ RT_renderFinishPrompt();
+}
+function RT_renderFinishPrompt(){
+ var rd=RT_round; if(!rd) return;
+ var ex=document.getElementById('rt-finishprompt'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
+ var ov=document.createElement('div'); ov.id='rt-finishprompt';
+ ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(8,20,12,.42);display:flex;align-items:flex-end;justify-content:center;';
+ var rows=RT_finishPis.map(function(pi){
+  var p=rd.players[pi], sel=RT_finishSel[pi];
+  var opt=function(v,lbl){ return '<button onclick="RT_finishSet('+pi+',\''+v+'\')" style="flex:1;padding:8px 4px;border-radius:8px;border:1px solid '+(sel===v?'#187040':'#DCE7D4')+';background:'+(sel===v?'#187040':'#fff')+';color:'+(sel===v?'#fff':'#143522')+';font-weight:700;font-size:12px;font-family:inherit;cursor:pointer;">'+lbl+'</button>'; };
+  return '<div style="margin-bottom:12px;"><div style="font-size:13px;font-weight:700;color:#143522;margin-bottom:6px;">'+rtEsc(p.name)+'</div><div style="display:flex;gap:6px;">'+opt('A','Alle 18')+opt('F','Nur Front 9')+opt('B','Nur Back 9')+'</div></div>';
+ }).join('');
+ ov.innerHTML='<div style="background:#fff;border-radius:18px 18px 0 0;max-width:480px;width:100%;padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 16px);box-shadow:0 -8px 32px rgba(0,0,0,.28);font-family:Inter,-apple-system,sans-serif;max-height:82vh;overflow:auto;">'
+  +'<div style="font-size:15px;font-weight:800;color:#143522;margin-bottom:4px;">Runde beenden</div>'
+  +'<div style="font-size:12px;color:#6b7d70;margin-bottom:14px;">Wer hat nur 9 Löcher gespielt? Nicht gespielte Löcher werden nicht gewertet.</div>'
+  +rows
+  +'<div style="display:flex;gap:8px;margin-top:8px;"><button onclick="RT_finishCancel()" style="flex:1;padding:11px;border-radius:10px;border:1px solid #DCE7D4;background:#fff;color:#143522;font-weight:700;font-family:inherit;cursor:pointer;">Abbrechen</button>'
+  +'<button onclick="RT_finishConfirm()" style="flex:2;padding:11px;border-radius:10px;border:none;background:#187040;color:#fff;font-weight:800;font-family:inherit;cursor:pointer;">Runde beenden</button></div>'
+  +'</div>';
+ document.body.appendChild(ov);
+}
+function RT_finishSet(pi,v){ if(RT_finishSel){ RT_finishSel[pi]=v; RT_renderFinishPrompt(); } }
+function RT_finishCancel(){ var ex=document.getElementById('rt-finishprompt'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex); RT_finishSel=null; }
+function RT_finishConfirm(){
+ var rd=RT_round;
+ var ex=document.getElementById('rt-finishprompt'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
+ if(rd&&RT_finishSel){ RT_finishPis.forEach(function(pi){ var v=RT_finishSel[pi]; rd.players[pi].only=(v==='F'||v==='B')?v:null; }); }
+ RT_finishSel=null;
+ RT_finishDo();
+}
 function RT_validateRound(rd){
  for(var h=0; h<rd.cnt; h++){
   for(var pi=0; pi<rd.players.length; pi++){
    var p=rd.players[pi];
+   if(!RT_holeInSeg(rd,p,h)) continue;
    var score=p.sc[h]===null?0:p.sc[h];
    var putts=p.pu[h]>0?p.pu[h]:0;
    var sum=putts+p.pe[h]+p.sa[h];
@@ -7789,6 +7883,10 @@ function RT_validateRound(rd){
 }
 function RT_finish(){
  if(RT_round&&!RT_round.ownCards&&!RT_amScorer(RT_round)){RT_scorerBlock();return;}
+ if(RT_round && RT_round.cnt===18 && !RT_editingExisting){ RT_finishPrompt(); return; }
+ RT_finishDo();
+}
+function RT_finishDo(){
  var check=RT_validateRound(RT_round);
  if(!check.ok){
   RT_state.saveWarn='Bahn '+check.hole+' bei '+check.player+': Putts + Strafschl\u00e4ge + Sandschl\u00e4ge d\u00fcrfen zusammen nicht mehr sein als die Schl\u00e4ge.';
@@ -8103,6 +8201,12 @@ function RT_convertRound(rd){
   var isFront=rd.nums[0]===1;
   var conv=RT_convertHalf(rd,p,0,isFront);
   if(conv){hv.push(conv.hv); sc.push(conv.sc);}
+ }else if(p.only==='F'){
+  var convOF=RT_convertHalf(rd,p,0,true);
+  if(convOF){hv.push(convOF.hv); sc.push(convOF.sc);}
+ }else if(p.only==='B'){
+  var convOB=RT_convertHalf(rd,p,9,false);
+  if(convOB){hv.push(convOB.hv); sc.push(convOB.sc);}
  }else{
   var convF=RT_convertHalf(rd,p,0,true);
   var convB=RT_convertHalf(rd,p,9,false);
@@ -8226,6 +8330,10 @@ function RT_rView(){
     '<div><div style="font-size:19px;font-weight:800;color:#B7791F;">'+(t.fwPct===null?'\u2013':t.fwPct+'%')+'</div><div style="font-size:8.5px;color:#8A9C8E;">FW MITTE</div></div>'+
    '</div><div class="rt-hgrid">';
   for(var hh=0;hh<rd.cnt;hh++){
+   if(!RT_holeInSeg(rd,p,hh)){
+    h+='<div class="rt-hg" style="opacity:.38;"><div class="a">'+rd.nums[hh]+'</div><div class="p">Par '+rd.par[hh]+'</div><div class="b">–</div><div class="c">–</div></div>';
+    continue;
+   }
    var st=RT_stbfH(p,hh,rd);
    var stC=st===null?'#9AAB9E':st>=3?'#187040':st===2?'#2F6BAE':st===1?'#8A6A1F':'#B03A3A';
    var capped=p.sc[hh]!==null&&!p.cx[hh]&&p.sc[hh]>RT_cap(p,hh,rd);

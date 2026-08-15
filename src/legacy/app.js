@@ -8323,7 +8323,7 @@ function RT_rView(){
   var t=RT_totals(p,rd);
   h+='<div class="rtc rtc-hd"'+(foreignLocked?'':' style="cursor:pointer;" onclick="RT_editRound(\''+rd.id+'\',true)"')+'><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">'+
    '<div class="rt-ct" style="margin:0;">'+rtEsc(p.name)+'</div>'+
-   '<div style="font-size:10.5px;color:#8A9C8E;">'+rtEsc(p.tee)+' &middot; HI '+p.hi+' &middot; SV '+p.ph+'</div></div>'+
+   '<div style="font-size:10.5px;color:#8A9C8E;">'+rtEsc(p.tee)+' &middot; HI '+p.hi+' &middot; SV '+p.ph+(p.only?' &middot; <span style="color:#B7791F;font-weight:700;">nur '+(p.only==='F'?'Front 9':'Back 9')+'</span>':'')+'</div></div>'+
    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;text-align:center;">'+
     '<div><div style="font-size:19px;font-weight:800;color:#143522;">'+t.br+'</div><div style="font-size:8.5px;color:#8A9C8E;">SCHL\u00c4GE</div></div>'+
     '<div><div style="font-size:19px;font-weight:800;color:#187040;">'+t.stbf+'</div><div style="font-size:8.5px;color:#8A9C8E;">STABLEFORD</div></div>'+

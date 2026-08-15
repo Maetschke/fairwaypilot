@@ -8111,7 +8111,7 @@ function RT_hydrateHistoricalData(){
  rounds=rounds.filter(function(r){return !r.hidden;});
  var hv=[], sc=[];
  rounds.forEach(function(rd){
-  if(!rd.historical && !rd.promoted) return;
+  if(!rd.historical && !rd.promoted && !rd.done) return;
   var conv=RT_convertRound(rd);
   hv=hv.concat(conv.hv);
   sc=sc.concat(conv.sc);

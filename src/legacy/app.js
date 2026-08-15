@@ -2534,6 +2534,7 @@ function RT_startGeoWatchNow(){
  RT_geoWatchId=navigator.geolocation.watchPosition(function(pos){
   RT_curPos={lat:pos.coords.latitude,lng:pos.coords.longitude,acc:pos.coords.accuracy};
   RT_updDistanceDisplays();
+  if(typeof RT_hfUpdateGps==='function') RT_hfUpdateGps();
  },function(err){},{enableHighAccuracy:true,maximumAge:2000,timeout:10000});
 }
 function RT_stopGeoWatch(){
@@ -3213,7 +3214,11 @@ function RT_renderHoleFull(url,title){
  var c=rd?rd.cur:null;
  var holeKey=rd?RT_holeMapKey(rd,c):null;
  var mapMode=!!(holeKey&&(RT_mapSat()||(typeof RT_holeImgFor==='function'&&!RT_holeImgFor(rd,c))));
- var toggleBtn=holeKey?('<button class="rt-btn3" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:64px;background:#fff;border:1.5px solid #DCE7D4;border-radius:100px;padding:8px 14px;font-size:12px;font-weight:700;color:#3C5546;z-index:2;" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?'\ud83d\uddbc\ufe0f Birdiekarte':'\ud83d\udef0\ufe0f Satellitenkarte')+'</button>'):'';
+ var fs=!!RT_state.holeFS;
+ var _hbtn='background:#fff;border:1.5px solid #DCE7D4;border-radius:100px;padding:8px 14px;font-size:12px;font-weight:700;color:#3C5546;font-family:inherit;cursor:pointer;';
+ var fsBtn='<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleFS(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(fs?'Standard':'Vollbild')+'</button>';
+ var toggleBtn=holeKey?('<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?'🖼️ Birdiekarte':'🛰️ Satellitenkarte')+'</button>'):'';
+ var topBar='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:'+(fs?'16px':'64px')+';z-index:4;display:flex;gap:8px;">'+fsBtn+toggleBtn+'</div>';
  var body;
  if(mapMode){
   body='<div style="position:absolute;inset:0;overflow:hidden;"><div id="hole-full-map" style="position:absolute;width:160%;height:160%;left:-30%;top:-30%;transform-origin:center center;"></div></div>'+RT_grabberOverlayHtml();
@@ -3225,15 +3230,14 @@ function RT_renderHoleFull(url,title){
  var _ni=rd?rd.cur:0, _nn=(rd&&rd.nums)?rd.nums.length:0;
  function _navBtn(dir,dis,glyph){ return '<button onclick="RT_holeFullNav('+dir+')" '+(dis?'disabled ':'')+'style="width:40px;height:40px;border-radius:50%;background:#fff;border:1.5px solid #DCE7D4;font-size:20px;line-height:1;color:'+(dis?'#C2CFC0':'#3C5546')+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(20,53,34,.18);">'+glyph+'</button>'; }
  var navBar=rd?('<div style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 40px);display:flex;align-items:center;gap:16px;z-index:3;">'+_navBtn(-1,_ni<=0,'\u2039')+_navBtn(1,_ni>=_nn-1,'\u203a')+'</div>'):'';
- el.innerHTML='<button class="rt-holefull-close" onclick="RT_closeHoleFull()">&#10005;</button>'+
-  toggleBtn+
-  '<div class="rt-holefull-title">'+rtEsc(title)+'</div>'+
-  '<div class="rt-holefull-card"><div class="rt-holefull-imgwrap">'+body+'</div></div>'+navBar;
+ el.innerHTML=(fs?'':'<button class="rt-holefull-close" onclick="RT_closeHoleFull()">&#10005;</button>')+topBar+(fs?'':'<div class="rt-holefull-title">'+rtEsc(title)+'</div>')+'<div class="rt-holefull-card"'+(fs?' style="top:0;left:0;right:0;bottom:0;border-radius:0;"':'')+'><div class="rt-holefull-imgwrap">'+body+'</div></div>'+(fs?'':navBar);
  if(mapMode) RT_initHoleFullMap();
 }
+function RT_toggleHoleFS(url,title){ RT_state.holeFS=!RT_state.holeFS; RT_renderHoleFull(url,title); }
 function RT_closeHoleFull(){
  var el=document.getElementById('hole-full'); if(!el)return;
  if(RT_holeFullMapInst){ try{RT_holeFullMapInst.remove();}catch(e){} RT_holeFullMapInst=null; }
+ RT_holeFullGpsMarker=null; RT_state.holeFS=false;
  el.style.display='none'; el.innerHTML='';
 }
 function RT_sizeRotatedMap(el,rotDeg){
@@ -3327,7 +3331,7 @@ function RT_pinMenu(pi,idx){
  if(!RT_amScorer(rd)){RT_scorerBlock();return;}
  var pins=RT_pinsOf(rd,pi,rd.cur); var pt=pins[idx]; if(!pt) return;
  var cur=RT_pinKind(pt);
- var kinds=[['ball','Schlag'],['straf','Straf'],['sand','Sand'],['putt','Putt'],['holed','Eingelocht']];
+ var kinds=[['ball','Schlag'],['straf','Strafschlag'],['sand','Bunkerschlag'],['putt','Putt'],['holed','Eingelocht']];
  var ex=document.getElementById('rt-pinmenu'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
  var ov=document.createElement('div'); ov.id='rt-pinmenu';
  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(8,20,12,.42);display:flex;align-items:flex-end;justify-content:center;';
@@ -3370,6 +3374,15 @@ function RT_redrawFullPins(){
   });
  });
 }
+var RT_holeFullGpsMarker=null;
+function RT_hfUpdateGps(){
+ var map=RT_holeFullMapInst; if(!map||typeof L==='undefined'||!RT_curPos||RT_curPos.lat==null) return;
+ try{
+  if(!RT_holeFullGpsMarker){
+   RT_holeFullGpsMarker=L.marker([RT_curPos.lat,RT_curPos.lng],{interactive:false,keyboard:false,icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:'<div class="rt-gpspulse"></div>'})}).addTo(map);
+  } else { RT_holeFullGpsMarker.setLatLng([RT_curPos.lat,RT_curPos.lng]); }
+ }catch(e){}
+}
 async function RT_initHoleFullMap(){
  var rd=RT_round; if(!rd) return;
  RT_fullSelPin=null;
@@ -3398,6 +3411,7 @@ async function RT_initHoleFullMap(){
  if(rd!==RT_round||c!==RT_round.cur) return;
  var el=document.getElementById('hole-full-map'); if(!el||!basePos||typeof L==='undefined') return;
  if(RT_holeFullMapInst){ try{RT_holeFullMapInst.remove();}catch(e){} RT_holeFullMapInst=null; }
+ RT_holeFullGpsMarker=null;
  var rotF=((((basePos.rot||0)+RT_FULL_IMG_ROT)%360)+360)%360;
  el.style.transform='rotate('+rotF+'deg)';
  RT_sizeRotatedMap(el,rotF);
@@ -3423,6 +3437,7 @@ async function RT_initHoleFullMap(){
     die selbst gesetzten Markierungen sichtbar sein (siehe RT_initHoleMaps). */
  RT_holeFullMapInst._layer=layer; RT_holeFullMapInst._rotF=rotF; RT_holeFullMapInst._el=el; RT_holeFullMapInst._pi=RT_state.fullPi||0;
  RT_redrawFullPins();
+ RT_hfUpdateGps();
  map.on('click', function(e){
   if(RT_suppressMapClick && RT_suppressMapClick['full']) return;
   if(!RT_pinMoveMode) return;

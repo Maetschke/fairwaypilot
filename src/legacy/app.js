@@ -1482,6 +1482,36 @@ function RT_scorerBlock(){
  RT_state.saveWarn=RT_scorerName(RT_round)+' f\u00fchrt gerade die Scoringkarte. Fordere die \u00dcbergabe an, um selbst zu scoren.';
  RT_render();
 }
+/* ===== Eigene-Karten-Modus (Item 6): in einer geteilten Runde kann jeder Spieler auf seinem
+   eigenen Geraet ausschliesslich seine EIGENE Scorecard fuehren und bei Mitspielern nichts
+   aendern. Alles unten ist strikt hinter rd.ownCards gekapselt - ohne dieses Flag bleibt der
+   bisherige gemeinsame Scoring-Pfad voellig unberuehrt. */
+function RT_canEditPlayer(rd,pi){
+ if(!rd) return true;
+ if(rd.ownCards && RT_roundIsShared(rd)){
+  if(!sbUser) return true;
+  return pi===RT_myPlayerIndex(rd);
+ }
+ return RT_amScorer(rd);
+}
+function RT_editBlock(rd){
+ if(rd && rd.ownCards){
+  RT_state.saveWarn='Eigene-Karten-Modus: Du kannst nur deine eigene Scorecard bearbeiten.';
+  RT_render();
+  return;
+ }
+ RT_scorerBlock();
+}
+function RT_uidToPi(rd,uid){
+ if(!rd||!uid) return -1;
+ var owner=(RT_roundOwners&&RT_roundOwners[rd.id])||rd.ownerHint||null;
+ if(owner&&uid===owner) return 0;
+ if(rd.players&&typeof PL_statusFor==='function'){
+  for(var i=0;i<rd.players.length;i++){ var st=PL_statusFor(rd.players[i].name); if(st&&st.linked_user_id&&st.linked_user_id===uid) return i; }
+ }
+ return -1;
+}
+function RT_suOwnCards(v){ if(RT_su){ RT_su.ownCards=!!v; RT_render(); } }
 function RT_handoffScoring(uid){
  var rd=RT_round; if(!rd||!RT_amScorer(rd)||!uid) return;
  rd.scorerId=uid;
@@ -1577,12 +1607,25 @@ function RT_rtSync(){
  }catch(e){ RT_RT.ch=null; RT_RT.id=null; }
 }
 function RT_rtBroadcastState(){
- if(RT_RT.ch&&RT_round&&RT_RT.id===RT_round.id&&RT_amScorer(RT_round)){
-  try{ RT_RT.ch.send({type:'broadcast',event:'state',payload:{data:RT_round}}); }catch(e){}
+ if(RT_RT.ch&&RT_round&&RT_RT.id===RT_round.id){
+  var _ok=RT_round.ownCards?RT_roundIsShared(RT_round):RT_amScorer(RT_round);
+  if(_ok){ try{ RT_RT.ch.send({type:'broadcast',event:'state',payload:{data:RT_round,uid:(sbUser&&sbUser.id)||null}}); }catch(e){} }
  }
 }
-function RT_rtApplyState(nd){
+function RT_rtApplyState(nd,senderUid){
  if(!nd||!nd.id) return;
+ if(RT_round && RT_round.id===nd.id && RT_round.ownCards && senderUid){
+  var _spi=RT_uidToPi(RT_round,senderUid), _mi=RT_myPlayerIndex(RT_round);
+  if(_spi>=0 && _spi!==_mi && nd.players && nd.players[_spi] && RT_round.players[_spi]){
+   RT_round.players[_spi]=nd.players[_spi];
+   try{ rtSet(RT_ACT,RT_round); }catch(e){}
+   var _sv=rtGet(RT_KEY)||[];
+   for(var _i=0;_i<_sv.length;_i++){ if(_sv[_i].id===RT_round.id){ _sv[_i]=RT_round; break; } }
+   rtSet(RT_KEY,_sv);
+   RT_render();
+  }
+  return;
+ }
  /* Zuschauer (nicht der aktuelle Scorer) darf eigenstaendig durch die Loecher blaettern:
     seinen lokal betrachteten Loch-Index (cur) behalten, statt bei jedem Broadcast/Poll auf das
     Loch des Scorers gezogen zu werden. Nur die Score-Daten werden uebernommen. */
@@ -1602,11 +1645,11 @@ function RT_rtApplyState(nd){
 function RT_rtOnState(payload){
  var nd=payload&&payload.data; var rd=RT_round;
  if(!nd||!rd||rd.id!==nd.id) return;
- RT_rtApplyState(nd);
+ RT_rtApplyState(nd,payload&&payload.uid);
  /* Finaler (beendeter) Stand: eigene, eigenstaendige Kopie in der Cloud sichern, damit die
     fertige Runde dauerhaft auch bei MIR vorliegt - unabhaengig vom anderen Spieler. Spaetere
     Aenderungen bleiben danach isoliert (kein Live-Kanal mehr bei done:true). */
- if(nd.done && sb && sbUser){ try{ sbPushRound(nd); }catch(e){} }
+ if(nd.done && sb && sbUser && !rd.ownCards){ try{ sbPushRound(nd); }catch(e){} }
 }
 function RT_rtOnRequest(payload){
  var rd=RT_round; if(!rd||!RT_amScorer(rd)) return;
@@ -2937,7 +2980,7 @@ function RT_markShotLabel(rd,c,pi){
 }
 function RT_markShot(pi){
  var rd=RT_round; if(!rd) return;
- if(!RT_amScorer(rd)){RT_scorerBlock();return;}
+ if(!RT_canEditPlayer(rd,(typeof pi==='number'?pi:0))){RT_editBlock(rd);return;}
  var c=rd.cur;
  /* Anschlag (erste Markierung der Bahn = "A"): immer den hinterlegten Abschlag des Spielers
     verwenden, nicht die am Tee oft ungenaue GPS-Position. Fehlt der Abschlag, faellt es auf GPS zurueck. */
@@ -3328,7 +3371,7 @@ function RT_pinStartMove(pi,idx){
 }
 function RT_pinMenu(pi,idx){
  var rd=RT_round; if(!rd) return;
- if(!RT_amScorer(rd)){RT_scorerBlock();return;}
+ if(!RT_canEditPlayer(rd,(typeof pi==='number'?pi:0))){RT_editBlock(rd);return;}
  var pins=RT_pinsOf(rd,pi,rd.cur); var pt=pins[idx]; if(!pt) return;
  var cur=RT_pinKind(pt);
  var kinds=[['ball','Schlag'],['straf','Strafschlag'],['sand','Bunkerschlag'],['putt','Putt'],['holed','Eingelocht']];
@@ -3386,8 +3429,8 @@ function RT_hfUpdateGps(){
 function RT_hfAddPinAt(cx,cy){
  var map=RT_holeFullMapInst; if(!map||typeof L==='undefined') return;
  if(RT_pinMoveMode) return;
- if(!RT_amScorer(RT_round)){ RT_scorerBlock(); return; }
  var el=map._el, rotF=map._rotF||0, pi=map._pi||0;
+ if(!RT_canEditPlayer(RT_round,pi)){ RT_editBlock(RT_round); return; }
  var ll=RT_correctedLatLng(map,el,rotF,cx,cy); if(!ll) return;
  var pins=RT_pinsOf(RT_round,pi,RT_round.cur);
  pins.push({lat:ll.lat,lng:ll.lng});
@@ -3898,7 +3941,7 @@ function RT_playerMove(i,dir){
  var players=[{name:RT_myDisplayName(), hi:RT_ownHandicap(), sex:'m', tee:RT_hardestTeeIdx('georg',defHoles,'m'), teeHalf:(defHoles==='A')?null:defHoles, cr:null, sl:null}];
  RT_applySavedTee(players[0],'georg');
  return {course:'georg', holes:defHoles, date:RT_today(), time:RT_nowTime(),
-  players:players,
+  players:players, ownCards:false,
   custName:'', custPar:'', custSi:'', siEdit:{}, parEdit:{}};
 }
 
@@ -4355,7 +4398,7 @@ async function RT_initHoleMaps(){
   });
   map.on('click', function(e){
    if(RT_suppressMapClick['h'+pi]) return;
-   if(!RT_amScorer(RT_round)){RT_scorerBlock();return;}
+   if(!RT_canEditPlayer(RT_round,pi)){RT_editBlock(RT_round);return;}
    if(!p.pins[c])p.pins[c]=[];
    var inst=RT_holeMapInst[pi];
    var rot=(inst&&inst.rot)||0;
@@ -6275,6 +6318,17 @@ if(cd){
      (RT_su.players.length>1?'<button class="rt-btn3" onclick="RT_suRm('+i+')">Entfernen</button>':'')+
     '</div>'+RT_setupInviteHtml(p.name)+'</div>';
   });
+  if(RT_su.players.length>1){
+   var _oc=!!RT_su.ownCards;
+   h+='<div style="margin-top:6px;padding-top:10px;border-top:1px solid #ECF2E6;">'+
+    '<span class="rt-lbl">Scorecard-Modus</span>'+
+    '<div style="display:inline-flex;margin-left:8px;border:1.5px solid #DCE7D4;border-radius:10px;overflow:hidden;vertical-align:middle;">'+
+     '<button type="button" onclick="RT_suOwnCards(false)" style="border:none;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;'+(_oc?'background:#F1F6EC;color:#5b6b5e;':'background:#143522;color:#fff;')+'">Gemeinsame Karte</button>'+
+     '<button type="button" onclick="RT_suOwnCards(true)" style="border:none;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;'+(_oc?'background:#143522;color:#fff;':'background:#F1F6EC;color:#5b6b5e;')+'">Jeder eigene Karte</button>'+
+    '</div>'+
+    '<div class="rt-cs" style="margin-top:6px;">'+(_oc?'Jeder Spieler führt auf seinem eigenen Gerät seine Scorecard und kann bei Mitspielern nichts ändern.':'Ein Spieler führt die gemeinsame Scoringkarte für alle – Übergabe jederzeit möglich.')+'</div>'+
+   '</div>';
+  }
   var savedNotInRound=RT_getSavedPlayers().filter(function(sp){
    if(RT_isSelfName(sp.name)) return false;
    return !RT_su.players.some(function(p){ return p.name===sp.name; });
@@ -7357,7 +7411,7 @@ function RT_start(){
  if(!si){si=[];for(var i=0;i<cd.cnt;i++)si.push(i+1);}
  RT_round={id:'r'+Date.now(), date:RT_su.date||RT_today(), time:RT_su.time||'', courseName:cd.name, lbl:cd.lbl+' \u00b7 Par '+cd.parSum,
   par:cd.par, si:si, nums:cd.nums, cnt:cd.cnt, parSum:cd.parSum, cur:0, done:false, holeViews:{},
-  ownerHint:sbUser?sbUser.id:null, autoCount:RT_autoCountOn(),
+  ownerHint:sbUser?sbUser.id:null, autoCount:RT_autoCountOn(), ownCards:!!RT_su.ownCards,
   players:RT_su.players.map(function(p){
    var cr=RT_pCr(p,cd), sl=RT_pSl(p,cd);
    if(cr===null)cr=cd.parSum; if(sl===null)sl=113;
@@ -7559,7 +7613,7 @@ function RT_autosaveHole(rd,prevIdx){
  if(!sb||!sbUser) return;
  /* Geteilte Runde: nur der aktuelle Scorer schreibt, und zwar in die kanonische Eigentuemer-
     Zeile. Zuschauer schreiben nie (keine Dubletten). Solo-Runde: normaler Push. */
- if(RT_roundIsShared(rd)){ if(!RT_amScorer(rd)) return; sbPushCanonical(rd); return; }
+ if(RT_roundIsShared(rd)&&!rd.ownCards){ if(!RT_amScorer(rd)) return; sbPushCanonical(rd); return; }
  sbPushRound(rd);
 }
 function RT_setHole(i){
@@ -7622,6 +7676,7 @@ function RT_syncActiveToSaved(){
 var RT_liveDbTs=0, RT_liveDbPending=false;
 function RT_liveDbPush(){
  var rd=RT_round; if(!rd||rd.done||!sb||!sbUser) return;
+ if(rd.ownCards) return;
  if(!RT_roundIsShared(rd)||!RT_amScorer(rd)) return;
  var now=Date.now();
  if(now-RT_liveDbTs>2500){ RT_liveDbTs=now; try{ sbPushCanonical(rd); }catch(e){} }
@@ -7633,7 +7688,7 @@ function RT_liveDbPush(){
 var RT_livePoll=null, RT_livePollId=null;
 function RT_livePollSync(){
  var rd=RT_round;
- var active=!!(rd&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_roundIsShared(rd)&&!RT_amScorer(rd));
+ var active=!!(rd&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_roundIsShared(rd)&&!rd.ownCards&&!RT_amScorer(rd));
  if(active){
   if(RT_livePollId!==rd.id){
    if(RT_livePoll){ clearInterval(RT_livePoll); RT_livePoll=null; }
@@ -7647,6 +7702,7 @@ function RT_livePollSync(){
 }
 function RT_livePollTick(){
  var rd=RT_round; if(!rd||rd.done||!sb||!sbUser||RT_state.screen!=='play'){ return; }
+ if(rd.ownCards) return;
  if(RT_amScorer(rd)) return;
  sb.from('rounds').select('data,user_id').eq('id',rd.id).then(function(res){
   if(!res||res.error||!res.data||!res.data.length) return;
@@ -7679,7 +7735,7 @@ function RT_removeLastTrackedPoint(type,pi){
 }
 function RT_scAdjust(pi,d){ var p=RT_round.players[pi],c=RT_round.cur; if(p.sc[c]===null){ if(d>0)p.sc[c]=1; } else { var nv=p.sc[c]+d; p.sc[c]=nv<1?null:nv; } }
 function RT_sc(pi,d){
- if(!RT_amScorer(RT_round)){RT_scorerBlock();return;}
+ if(!RT_canEditPlayer(RT_round,pi)){RT_editBlock(RT_round);return;}
  var p=RT_round.players[pi],c=RT_round.cur;
  if(p.sc[c]===null){p.sc[c]=d>0?1:Math.max(1,RT_round.par[c]-1);}
  else{var nv=p.sc[c]+d;p.sc[c]=nv<1?null:nv;}
@@ -7692,7 +7748,7 @@ function RT_sc(pi,d){
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
 }
 function RT_mini(pi,f,d){
- if(!RT_amScorer(RT_round)){RT_scorerBlock();return;}
+ if(!RT_canEditPlayer(RT_round,pi)){RT_editBlock(RT_round);return;}
  var p=RT_round.players[pi],c=RT_round.cur;
  if(f==='pu'){p.pu[c]=p.pu[c]===null?(d>0?1:0):Math.max(0,p.pu[c]+d);}
  else{p[f][c]=Math.max(0,p[f][c]+d);}
@@ -7708,13 +7764,13 @@ function RT_mini(pi,f,d){
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
 }
 function RT_fwSet(pi,v){
- if(!RT_amScorer(RT_round)){RT_scorerBlock();return;}
+ if(!RT_canEditPlayer(RT_round,pi)){RT_editBlock(RT_round);return;}
  var p=RT_round.players[pi],c=RT_round.cur;
  p.fw[c]=p.fw[c]===v?null:v;
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
 }
 function RT_cx(pi){
- if(!RT_amScorer(RT_round)){RT_scorerBlock();return;}
+ if(!RT_canEditPlayer(RT_round,pi)){RT_editBlock(RT_round);return;}
  var p=RT_round.players[pi],c=RT_round.cur;
  p.cx[c]=p.cx[c]?0:1;
  rtSet(RT_ACT,RT_round);RT_syncActiveToSaved();RT_render();
@@ -7732,7 +7788,7 @@ function RT_validateRound(rd){
  return {ok:true};
 }
 function RT_finish(){
- if(RT_round&&!RT_amScorer(RT_round)){RT_scorerBlock();return;}
+ if(RT_round&&!RT_round.ownCards&&!RT_amScorer(RT_round)){RT_scorerBlock();return;}
  var check=RT_validateRound(RT_round);
  if(!check.ok){
   RT_state.saveWarn='Bahn '+check.hole+' bei '+check.player+': Putts + Strafschl\u00e4ge + Sandschl\u00e4ge d\u00fcrfen zusammen nicht mehr sein als die Schl\u00e4ge.';
@@ -7748,7 +7804,7 @@ function RT_finish(){
  if(idx>=0){ saved[idx]=RT_round; } else { saved.push(RT_round); }
  RT_editingExisting=false;
  rtSet(RT_KEY,saved);
- if(RT_roundIsShared(RT_round)&&RT_amScorer(RT_round)){ try{ sbPushCanonical(RT_round); }catch(e){} } else { sbPushRound(RT_round); }
+ if(RT_roundIsShared(RT_round)&&!RT_round.ownCards&&RT_amScorer(RT_round)){ try{ sbPushCanonical(RT_round); }catch(e){} } else { sbPushRound(RT_round); }
  RT_rtBroadcastState();
  rtDel(RT_ACT);
  if(RT_round.promoted) RT_hydrateHistoricalData();
@@ -7839,6 +7895,7 @@ function RT_editRound(id,direct){
    var pSex=(p.sex==='w'||p.sex==='m')?p.sex:((typeof p.tee==='string'&&p.tee.toLowerCase().indexOf('damen')>=0)?'w':'m');
    return {name:p.name, hi:p.hi, tee:teeIdx, cr:cr, sl:sl, sex:pSex, teeHalf:(holesSel==='A')?null:holesSel};
   }),
+  ownCards:!!rd.ownCards,
   custName:key?'':rd.courseName, custPar:'', custSi:'', siEdit:{}, parEdit:{}
  };
  /* WICHTIG: RT_su.siEdit hier NICHT aus rd.si vorbelegen. RT_su.siEdit wirkt als Override,
@@ -7894,7 +7951,7 @@ function RT_applyEdit(){
   par:cd.par, si:si, nums:cd.nums, cnt:cd.cnt, parSum:cd.parSum, cur:0, done:(src?!!src.done:false), holeViews:(src&&src.holeViews)?src.holeViews:{},
   ownerHint:(src&&src.ownerHint)?src.ownerHint:(sbUser?sbUser.id:null),
  autoCount:(src&&src.autoCount!==undefined&&src.autoCount!==null)?src.autoCount:RT_autoCountOn(),
-  historical:src?src.historical:undefined, histSrc:src?src.histSrc:undefined, promoted:src?src.promoted:undefined,
+  historical:src?src.historical:undefined, histSrc:src?src.histSrc:undefined, promoted:src?src.promoted:undefined, ownCards:!!RT_su.ownCards,
   players:newPlayers};
  RT_state.saveWarn='';
  RT_go('play');

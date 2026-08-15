@@ -25,8 +25,12 @@ const SUBMIT_TOOL = {
           type: "object",
           properties: {
             name: { type: "string" },
-            cr: { type: "number" },
-            slope: { type: "number" }
+            cr: { type: "number", description: "Course Rating fuer die volle Runde (18 Loch; bei 9-Loch-Plaetzen die 9-Loch-CR)" },
+            slope: { type: "number", description: "Slope fuer die volle Runde (18 Loch; bei 9-Loch-Plaetzen der 9-Loch-Slope)" },
+            cr_front: { type: "number", description: "NUR falls amtlich ausgewiesen: Course Rating der Front 9 (Loch 1-9)" },
+            slope_front: { type: "number", description: "NUR falls amtlich ausgewiesen: Slope der Front 9 (Loch 1-9)" },
+            cr_back: { type: "number", description: "NUR falls amtlich ausgewiesen: Course Rating der Back 9 (Loch 10-18)" },
+            slope_back: { type: "number", description: "NUR falls amtlich ausgewiesen: Slope der Back 9 (Loch 10-18)" }
           },
           required: ["name", "cr", "slope"]
         }
@@ -40,7 +44,8 @@ const SUBMIT_TOOL = {
 function buildPrompt(name, hint, stricter) {
   let p = 'Recherchiere die offiziellen Platzdaten des Golfplatzes "' + name + '"';
   if (hint) p += ' (' + hint + ')';
-  p += ': Par je Loch in Spielreihenfolge, HCP/Stroke-Index je Loch, sowie die Abschlaege (Tees) mit Course Rating (CR) und Slope fuer die uebliche 18-Loch- bzw. 9-Loch-Runde, ausserdem die vollstaendige postalische Adresse des Clubs (Strasse, Hausnummer, PLZ, Ort).';
+  p += ': Par je Loch in Spielreihenfolge, HCP/Stroke-Index je Loch, sowie die Abschlaege (Tees) mit Course Rating (CR) und Slope fuer die uebliche 18-Loch- bzw. 9-Loch-Runde, ausserdem die vollstaendige postalische Adresse des Clubs (Strasse, Hausnummer, PLZ, Ort).'
+  p += ' Fuer 18-Loch-Plaetze zusaetzlich - sofern die Course-Rating-Tabelle sie amtlich getrennt ausweist - CR und Slope SEPARAT fuer die Front 9 (Loch 1-9) und die Back 9 (Loch 10-18) angeben (Felder cr_front/slope_front/cr_back/slope_back). Diese Neuner-Werte unterscheiden sich real von der Haelfte des 18-Loch-Werts (die beiden Neunen sind unterschiedlich schwer). Nur wenn ausschliesslich der 18-Loch-Wert auffindbar ist, die Per-9-Felder weglassen.';
   p += ' Vorgehen: (1) Suche gezielt nach dem Platz und seiner Scorecard/HCP-Tabelle, z.B. "Scorecard ' + name + '", "HCP Tabelle ' + name + '", "PC Caddie Bahnenverzeichnis ' + name + '", "DGV Platzdatenbank ' + name + '". (2) OEFFNE die vielversprechendste gefundene Seite mit dem web_fetch-Tool - besonders die offizielle Scorecard bzw. das Bahnenverzeichnis (haeufig eine PDF-Datei oder eine PC-Caddie-/DGV-Seite) - und LIES die exakten Zahlen direkt daraus ab, statt sie aus Suchsnippets zu schaetzen. Fetche notfalls mehrere Kandidatenseiten.';
   p += ' Erkennungshinweis Stroke-Index: die SI-Werte einer Bahn (9 oder 18 Loch) sind IMMER eine Permutation von 1..9 bzw. 1..18 - jede Zahl genau einmal, keine Wiederholung, keine Luecke. Findest du eine je-Loch-Zahlenreihe, die exakt dieses Muster erfuellt (auch ohne Beschriftung "Stroke Index"/"SI"), ist das mit hoher Sicherheit die SI-Tabelle.';
   p += ' Regeln fuer das Ergebnis: Das par-Array MUSS genau so viele Werte enthalten wie holes (9 oder 18) - findest du fuer ein einzelnes Loch keinen gesicherten Wert, schaetze anhand der Bahnlaenge plausibel (3/4/5), lasse aber NIE ein Loch weg. Das si-Array MUSS - falls angegeben - eine vollstaendige Permutation von 1..holes sein; im Zweifel lieber leer lassen.';

@@ -7367,13 +7367,26 @@ async function RT_research(){
   var js=data.result;
   var par=(js.par||[]).map(Number), si=(js.si||[]).map(Number);
   if(par.length!==9&&par.length!==18)throw new Error('Unvollst\u00e4ndige Par-Liste erhalten ('+par.length+' statt 9 oder 18 Werte). Bitte erneut versuchen oder Par unten manuell eintragen.');
+  var teeApprox=false;
   var tees=(js.tees||[]).filter(function(t){return t&&t.name&&!isNaN(parseFloat(t.cr))&&!isNaN(parseFloat(t.slope));})
    .map(function(t){
     var cr=parseFloat(t.cr),sl=parseFloat(t.slope);
-    if(par.length===18)return{name:t.name,cr:{F:Math.round(cr/2*10)/10,B:Math.round(cr/2*10)/10,A:cr},sl:{F:sl,B:sl,A:sl}};
-    return{name:t.name,cr:{F:cr,B:cr,A:cr*2},sl:{F:sl,B:sl,A:sl}};
+    var crF=parseFloat(t.cr_front),crB=parseFloat(t.cr_back),slF=parseFloat(t.slope_front),slB=parseFloat(t.slope_back);
+    if(par.length===18){
+     /* Echte Per-9-CR/Slope nutzen, wenn die Recherche sie geliefert hat; sonst als
+        Naeherung die 18-Loch-Werte splitten (CR/2, Slope unveraendert) und Nutzer zum
+        Nachtragen der amtlichen Neuner-Werte anstupsen. */
+     var hasF=!isNaN(crF)&&!isNaN(slF), hasB=!isNaN(crB)&&!isNaN(slB);
+     if(!hasF||!hasB) teeApprox=true;
+     return{name:t.name,
+      cr:{F:hasF?Math.round(crF*10)/10:Math.round(cr/2*10)/10, B:hasB?Math.round(crB*10)/10:Math.round(cr/2*10)/10, A:cr},
+      sl:{F:hasF?slF:sl, B:hasB?slB:sl, A:sl}};
+    }
+    /* 9-Loch-Platz: gelieferte cr/slope sind die Neuner-Werte. */
+    return{name:t.name,cr:{F:cr,B:!isNaN(crB)?crB:cr,A:Math.round(cr*2*10)/10},sl:{F:sl,B:!isNaN(slB)?slB:sl,A:sl}};
    });
   RT_buildCust(js.name||name,par,si.length===par.length?si:null,tees,(js.address&&String(js.address).trim())||null);
+  if(teeApprox){RT_state.resMsg+=' Getrennte Front/Back-9 CR/Slope waren nicht sicher auffindbar – Front und Back wurden aus dem 18-Loch-Wert genähert. Bitte die amtlichen Neuner-Werte oben je Abschlag prüfen/eintragen (v.a. für 9-Loch-Runden wichtig).';RT_state.resOk=true;}
   if(js.siRejected){RT_state.resMsg+=' Gefundene SI-Werte waren keine g\u00fcltige Permutation (1\u2013'+par.length+' je genau einmal) und wurden verworfen \u2013 bitte pr\u00fcfen/eintragen.';RT_state.resOk=true;}
   else if(si.length!==par.length){RT_state.resMsg+=' SI wurde nicht sicher gefunden \u2013 bitte pr\u00fcfen/eintragen.';RT_state.resOk=true;}
  }catch(e){

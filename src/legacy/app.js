@@ -7586,6 +7586,13 @@ function RT_rPlay(){
      '<button class="rt-mbtn" onclick="RT_mini('+pi+',\'sa\',-1)">&minus;</button><span class="rt-mval">'+p.sa[c]+'</span><button class="rt-mbtn" onclick="RT_mini('+pi+',\'sa\',1)">+</button></div>'+'<div class="rt-mini"><span style="font-size:10px;color:#8A9C8E;">Putts</span>'+
      '<button class="rt-mbtn" onclick="RT_mini('+pi+',\'pu\',-1)">&minus;</button><span class="rt-mval">'+(p.pu[c]===null?'\u2013':p.pu[c])+'</span><button class="rt-mbtn" onclick="RT_mini('+pi+',\'pu\',1)">+</button></div>'+
    '</div>';
+  var _pinN=(p.pins&&p.pins[c])?p.pins[c].length:0;
+  var _scCur=(p.sc[c]===null||p.sc[c]===undefined)?0:p.sc[c];
+  if(RT_roundAutoCount(rd) && _pinN>_scCur && RT_canEditPlayer(rd,pi)){
+   h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:7px 9px;border-radius:9px;background:#FBF3E4;border:1px solid #EAD9AE;">'
+    +'<div style="flex:1;min-width:0;font-size:11px;color:#8A6A1F;line-height:1.3;"><b>'+_pinN+' Markierungen</b>, aber nur <b>'+_scCur+' Schl\u00e4ge</b> notiert.</div>'
+    +'<button class="rt-btn3" style="flex:none;padding:6px 10px;font-size:11px;background:#F1E4C4;border-radius:8px;font-weight:700;color:#8A6A1F;" onclick="RT_scReconcile('+pi+')">Angleichen</button></div>';
+  }
   if(rd.par[c]>=4){
    h+='<div style="display:flex;gap:6px;align-items:center;"><span style="font-size:10px;color:#8A9C8E;flex:none;">Fairway</span>';
    [['L','L','onL'],['C','&#9711;','on'],['R','R','onR'],['S','&#8595;','onS']].forEach(function(o){
@@ -7795,6 +7802,19 @@ function RT_removeLastTrackedPoint(type,pi){
  }
 }
 function RT_scAdjust(pi,d){ var p=RT_round.players[pi],c=RT_round.cur; if(p.sc[c]===null){ if(d>0)p.sc[c]=1; } else { var nv=p.sc[c]+d; p.sc[c]=nv<1?null:nv; } }
+/* N1-Vereinheitlichung: Karten-Pins und Schlagzaehler zusammenfuehren. Im Auto-Count-Modus
+   erhoeht jede Markierung (Balllage/Straf/Sand/Putt/eingelocht) den Schlagzaehler mit - dort
+   MUSS also gelten: Anzahl Markierungen <= notierte Schlaege. Ist das verletzt (z.B. Altdaten
+   aus der Zeit vor der Kopplung), gleicht dieser Helfer den Schlagzaehler an die Markierungen
+   an. Im manuellen Modus (autoCount aus) sind Markierungen bewusst rein positionsbezogen -
+   dort wird nicht angeglichen. */
+function RT_scReconcile(pi){
+ if(!RT_canEditPlayer(RT_round,pi)){RT_editBlock(RT_round);return;}
+ var p=RT_round.players[pi],c=RT_round.cur;
+ var n=(p.pins&&p.pins[c])?p.pins[c].length:0;
+ var cur=(p.sc[c]===null||p.sc[c]===undefined)?0:p.sc[c];
+ if(n>cur){ p.sc[c]=n; rtSet(RT_ACT,RT_round); RT_syncActiveToSaved(); RT_render(); }
+}
 function RT_sc(pi,d){
  if(!RT_canEditPlayer(RT_round,pi)){RT_editBlock(RT_round);return;}
  var p=RT_round.players[pi],c=RT_round.cur;

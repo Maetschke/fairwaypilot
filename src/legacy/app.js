@@ -7636,6 +7636,7 @@ function RT_rPlay(){
    '<input id="rt-gpx-input" type="file" accept=".gpx" style="display:none;" onchange="RT_gpxFile(event)"></label>'+
   '</div></div>';
 
+ h+=RT_fmtHtml(rd);
  /* Navigation */
  if(RT_state.saveWarn) h+='<div class="rt-warn">'+rtEsc(RT_state.saveWarn)+'</div>';
  h+='<div class="rt-row" style="margin-bottom:10px;">'+
@@ -8341,6 +8342,114 @@ function RT_cancelEdit(){
 }
 
 function RT_openView(id){RT_state.viewId=id;RT_go('view');}
+/* ===== Spielformate / Auswertung (berechnete Schicht ueber den Scores, aendert die Eingabe nicht) =====
+   Netto = Brutto minus Vorgabeschlaege je Loch (aus SC_netPar). Ranglisten (Zaehlspiel/Stableford/Skins)
+   fuer beliebig viele Spieler; Lochspiel/Nassau fuer zwei (bei mehr: die ersten beiden). */
+var RT_fmtNet=true, RT_fmtOpen=false;
+function RT_fmtSetNet(v){ RT_fmtNet=!!v; RT_render(); }
+function RT_fmtToggleOpen(){ RT_fmtOpen=!RT_fmtOpen; RT_render(); }
+function RT_hcpStrokes(p,h,rd){ rd=rd||RT_round; return SC_netPar(rd.par[h],p.ph,rd.si[h],rd.cnt)-rd.par[h]; }
+function RT_grossH(p,h,rd){ rd=rd||RT_round; if(!RT_holeInSeg(rd,p,h)||p.cx[h]||p.sc[h]===null||p.sc[h]===undefined) return null; return p.sc[h]; }
+function RT_netScoreH(p,h,rd){ var g=RT_grossH(p,h,rd); if(g===null) return null; return g-RT_hcpStrokes(p,h,rd); }
+function RT_fmtStroke(rd,net){
+ var rows=rd.players.map(function(p,pi){ var s=0,n=0; for(var h=0;h<rd.cnt;h++){ var v=net?RT_netScoreH(p,h,rd):RT_grossH(p,h,rd); if(v!==null){ s+=v; n++; } } return {pi:pi,name:p.name,total:s,played:n}; });
+ rows.sort(function(a,b){ return a.total-b.total; }); return rows;
+}
+function RT_fmtStbf(rd){
+ var rows=rd.players.map(function(p,pi){ var s=0,n=0; for(var h=0;h<rd.cnt;h++){ var v=RT_stbfH(p,h,rd); if(v!==null){ s+=v; n++; } } return {pi:pi,name:p.name,total:s,played:n}; });
+ rows.sort(function(a,b){ return b.total-a.total; }); return rows;
+}
+function RT_fmtSkins(rd,net){
+ var wins={}; rd.players.forEach(function(p,pi){ wins[pi]=0; });
+ var carry=0;
+ for(var h=0;h<rd.cnt;h++){
+  var vals=[],ok=true;
+  for(var pi=0;pi<rd.players.length;pi++){ var p=rd.players[pi]; if(!RT_holeInSeg(rd,p,h)) continue; var v=net?RT_netScoreH(p,h,rd):RT_grossH(p,h,rd); if(v===null){ ok=false; break; } vals.push({pi:pi,v:v}); }
+  if(!ok||vals.length<2) continue;
+  var min=Math.min.apply(null,vals.map(function(x){return x.v;}));
+  var low=vals.filter(function(x){return x.v===min;});
+  var pot=carry+1;
+  if(low.length===1){ wins[low[0].pi]+=pot; carry=0; } else { carry=pot; }
+ }
+ var rows=rd.players.map(function(p,pi){ return {pi:pi,name:p.name,skins:wins[pi]}; });
+ rows.sort(function(a,b){ return b.skins-a.skins; }); return {rows:rows,carry:carry};
+}
+function RT_fmtMatch(rd,net,ai,bi,filt){
+ var a=rd.players[ai],b=rd.players[bi];
+ var up=0,played=0,closed=null,open=0;
+ for(var h=0;h<rd.cnt;h++){
+  if(filt&&!filt(rd,h)) continue;
+  if(!RT_holeInSeg(rd,a,h)||!RT_holeInSeg(rd,b,h)) continue;
+  var va=net?RT_netScoreH(a,h,rd):RT_grossH(a,h,rd);
+  var vb=net?RT_netScoreH(b,h,rd):RT_grossH(b,h,rd);
+  if(va===null||vb===null){ open++; continue; }
+  played++;
+  if(va<vb) up++; else if(vb<va) up--;
+  var rem=0; for(var k=h+1;k<rd.cnt;k++){ if(filt&&!filt(rd,k)) continue; if(!RT_holeInSeg(rd,a,k)||!RT_holeInSeg(rd,b,k)) continue; rem++; }
+  if(!closed && Math.abs(up)>rem){ closed={by:Math.abs(up),rem:rem,leader:up>0?ai:bi}; }
+ }
+ return {up:up,played:played,closed:closed,open:open,ai:ai,bi:bi};
+}
+function RT_fmtMatchText(rd,net,ai,bi,filt){
+ var m=RT_fmtMatch(rd,net,ai,bi,filt);
+ if(m.played===0) return null;
+ var a=rd.players[ai].name,b=rd.players[bi].name;
+ if(m.closed) return rtEsc(rd.players[m.closed.leader].name)+' '+m.closed.by+'&'+m.closed.rem;
+ if(m.up===0) return (m.open?'Stand: ':'')+'Unentschieden (A/S)';
+ var lead=m.up>0?a:b;
+ return (m.open?'Stand: ':'')+rtEsc(lead)+' '+Math.abs(m.up)+' auf';
+}
+function RT_fmtFront(rd,h){ return rd.nums[h]<=9; }
+function RT_fmtBack(rd,h){ return rd.nums[h]>=10; }
+function RT_fmtMedal(i){ return i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.'; }
+function RT_fmtRankHtml(title,rows,valFn,sub){
+ var h='<div style="margin-bottom:14px;"><div style="font-weight:800;color:#143522;font-size:13px;margin-bottom:6px;">'+title+'</div>';
+ rows.forEach(function(r,i){
+  h+='<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:8px;'+(i===0?'background:#EAF6EE;':'')+'margin-bottom:3px;">'
+   +'<span style="width:24px;text-align:center;font-size:13px;">'+RT_fmtMedal(i)+'</span>'
+   +'<span style="flex:1;min-width:0;font-size:13px;color:#143522;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+rtEsc(r.name)+'</span>'
+   +'<span style="font-weight:800;color:#187040;font-size:14px;">'+valFn(r)+'</span></div>';
+ });
+ if(sub) h+='<div style="font-size:10.5px;color:#9AAB9E;margin-top:2px;">'+sub+'</div>';
+ return h+'</div>';
+}
+function RT_fmtHtml(rd){
+ if(!rd||!rd.players||!rd.players.length) return '';
+ var head='<div class="rtc" style="margin-bottom:12px;padding:0;overflow:hidden;">'
+  +'<button class="rt-btn3" style="width:100%;text-align:left;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;background:#F1F6EC;" onclick="RT_fmtToggleOpen()">'
+  +'<span style="font-weight:800;color:#143522;">🏆 Spielformate &amp; Auswertung</span>'
+  +'<span style="font-size:12px;color:#8A9C8E;">'+(RT_fmtOpen?'Zuklappen ▲':'Aufklappen ▼')+'</span></button>';
+ if(!RT_fmtOpen) return head+'</div>';
+ var net=RT_fmtNet;
+ var b='<div style="padding:12px 14px 14px;">';
+ b+='<div style="display:flex;gap:6px;margin-bottom:14px;">'
+  +'<button class="rt-btn3" style="flex:1;padding:8px;border-radius:8px;font-weight:700;'+(net?'background:#187040;color:#fff;':'background:#F1F6EC;color:#5a6d5e;')+'" onclick="RT_fmtSetNet(true)">Netto</button>'
+  +'<button class="rt-btn3" style="flex:1;padding:8px;border-radius:8px;font-weight:700;'+(!net?'background:#187040;color:#fff;':'background:#F1F6EC;color:#5a6d5e;')+'" onclick="RT_fmtSetNet(false)">Brutto</button></div>';
+ var stroke=RT_fmtStroke(rd,net);
+ b+=RT_fmtRankHtml('Zählspiel – '+(net?'Netto':'Brutto'), stroke, function(r){ return r.total; }, 'Wenige Schläge = besser. Gewertet: gespielte Löcher'+(stroke[0]?' ('+stroke[0].played+')':'')+'.');
+ var stbf=RT_fmtStbf(rd);
+ b+=RT_fmtRankHtml('Stableford', stbf, function(r){ return r.total+' P'; }, 'Meiste Punkte = besser (Netto-basiert).');
+ var sk=RT_fmtSkins(rd,net);
+ b+=RT_fmtRankHtml('Skins – '+(net?'Netto':'Brutto'), sk.rows, function(r){ return r.skins; }, 'Je Loch 1 Skin an den eindeutig Besten; Gleichstand → Carry-over.'+(sk.carry?' Offen im Topf: '+sk.carry+'.':''));
+ if(rd.players.length>=2){
+  var ai=0,bi=1;
+  var pairNote=rd.players.length>2?' (erste zwei: '+rtEsc(rd.players[ai].name)+' vs. '+rtEsc(rd.players[bi].name)+')':'';
+  var mText=RT_fmtMatchText(rd,net,ai,bi,null);
+  b+='<div style="margin-bottom:14px;"><div style="font-weight:800;color:#143522;font-size:13px;margin-bottom:6px;">Lochspiel (Match Play)'+pairNote+'</div>'
+   +'<div style="font-size:14px;color:#143522;padding:6px 8px;background:#EEF4FB;border-radius:8px;">'+(mText||'–')+'</div>'
+   +'<div style="font-size:10.5px;color:#9AAB9E;margin-top:3px;">Loch für Loch; „X&amp;Y“ = X Löcher vorn bei Y Rest. '+(net?'Netto':'Brutto')+'.</div></div>';
+  if(rd.cnt===18){
+   var nF=RT_fmtMatchText(rd,net,ai,bi,RT_fmtFront);
+   var nB=RT_fmtMatchText(rd,net,ai,bi,RT_fmtBack);
+   b+='<div style="margin-bottom:4px;"><div style="font-weight:800;color:#143522;font-size:13px;margin-bottom:6px;">Nassau (3 Matches)'+pairNote+'</div>'
+    +'<div style="font-size:13px;color:#143522;padding:5px 8px;border-radius:8px;background:#F1F6EC;margin-bottom:3px;">Front 9: <b>'+(nF||'–')+'</b></div>'
+    +'<div style="font-size:13px;color:#143522;padding:5px 8px;border-radius:8px;background:#F1F6EC;margin-bottom:3px;">Back 9: <b>'+(nB||'–')+'</b></div>'
+    +'<div style="font-size:13px;color:#143522;padding:5px 8px;border-radius:8px;background:#F1F6EC;">Gesamt 18: <b>'+(mText||'–')+'</b></div></div>';
+  }
+ }
+ return head+b+'</div></div>';
+}
+
 function RT_rView(){
  var saved=rtGet(RT_KEY)||[];
  var rd=null;
@@ -8354,6 +8463,7 @@ function RT_rView(){
   '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
  if(foreignLocked)h+='<div class="rt-note" style="margin-bottom:10px;">Diese Runde wurde von einem anderen Konto geteilt \u2013 hier nur ansehbar, nicht bearbeitbar.</div>';
  else if(foreign)h+='<div class="rt-note" style="margin-bottom:10px;">Gemeinsame laufende Runde \u2013 du kannst hier deine eigenen Schl\u00e4ge eintragen, solange die Runde noch nicht beendet ist.</div>';
+ h+=RT_fmtHtml(rd);
  rd.players.forEach(function(p){
   var t=RT_totals(p,rd);
   h+='<div class="rtc rtc-hd"'+(foreignLocked?'':' style="cursor:pointer;" onclick="RT_editRound(\''+rd.id+'\',true)"')+'><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">'+

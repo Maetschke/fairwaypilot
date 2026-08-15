@@ -2362,6 +2362,11 @@ function RT_rUser(){
   '</div>';
   h+='<div class="rtc"><div class="rt-ct">Golfbag</div><div class="rt-cs" style="margin-bottom:8px;">'+(RT_bagCount()?(RT_bagCount()+' Schläger im Bag'):'Noch keine Schläger ausgewählt')+'</div><button class="rt-btn2" onclick="RT_go(\'bag\')">Schlägerauswahl &#8250;</button></div>';
  h+='<div class="rtc"><div class="rt-ct">Verbundene Dienste</div><div class="rt-cs" style="margin-bottom:8px;">'+RT_svcSummaryLine()+'</div><button class="rt-btn2" onclick="RT_go(\'services\')">Dienste verwalten &#8250;</button></div>';
+ /* RSV2-TEST-TOGGLE (temporaer, spaeter entfernen) === */
+ h+='<div class="rtc" style="border:1.5px dashed #C77D0A;background:#FFF8EC;"><div class="rt-ct" style="color:#B7791F;">\ud83d\udd27 [TEST \u00b7 vorl\u00e4ufig] Gemeinsames Scoring v2</div>'
+  +'<div class="rt-cs" style="margin-bottom:8px;">Interner Testschalter f\u00fcr die neue, server-erzwungene Scoring-Sync. Nur zum Testen \u2013 wird sp\u00e4ter wieder entfernt.</div>'
+  +'<button class="rt-btn2" style="width:auto;" onclick="RSV2_toggle()">'+(RSV2_ON()?'v2-Scoring ist AN \u2013 ausschalten':'v2-Scoring einschalten')+'</button></div>';
+ /* === /RSV2-TEST-TOGGLE */
  h+='<div class="rtc"><div class="rt-ct">Eigenes Handicap</div>'+
   '<div class="rt-cs">Wird bei einer neuen Runde als Standard-HI vorbelegt, statt jedes Mal 54 eintragen zu m\u00fcssen.</div>'+
   '<input class="rt-inp" id="usr-hcp" type="number" step="0.1" min="-10" max="54" value="'+rtEsc(RT_ownHandicapStored())+'" placeholder="z.\u2009B. 24.5" style="margin-bottom:8px;">'+
@@ -6335,7 +6340,9 @@ if(cd){
      (RT_su.players.length>1?'<button class="rt-btn3" onclick="RT_suRm('+i+')">Entfernen</button>':'')+
     '</div>'+RT_setupInviteHtml(p.name)+'</div>';
   });
-  if(RT_su.players.length>1){
+  if(RT_su.players.length>1 && RSV2_ON()){
+   h+=RT_suScorerHtml();
+  } else if(RT_su.players.length>1){
    var _oc=!!RT_su.ownCards;
    h+='<div style="margin-top:6px;padding-top:10px;border-top:1px solid #ECF2E6;">'+
     '<span class="rt-lbl">Scorecard-Modus</span>'+
@@ -7440,8 +7447,13 @@ function RT_start(){
     ph:RT_ph(parseFloat(p.hi),cr,sl,cd.parSum,cd.cnt),
     sc:mk(null), pu:mk(null), fw:mk(null), pe:mk(0), sa:mk(0), cx:mk(0), pins:mkEmpty()};
   })};
+ if(RSV2_ON() && RT_round.players.length>1 && sbUser){
+  RT_round.v2=true; RT_round.scorerMap={};
+  for(var _si=0;_si<RT_round.players.length;_si++){ RT_round.scorerMap[_si]=(RT_su.scorerMap&&RT_su.scorerMap[_si])||((sbUser&&sbUser.id)||null); }
+ }
  rtSet(RT_ACT,RT_round);
  if(sb&&sbUser){ try{ sbPushRound(RT_round); }catch(e){} }
+ if(RT_round.v2){ try{ RT_v2Create(RT_round); }catch(e){} }
  try{ RT_sendRoundInvites(RT_round); }catch(e){}
  RT_go('play');
 }
@@ -10864,3 +10876,45 @@ var RSV2 = {
   startHeartbeat:function(rid){ RSV2.stopHeartbeat(); if(!rid) return; try{ RSV2.heartbeat(rid); }catch(e){} RSV2.hbTimer=setInterval(function(){ try{ RSV2.heartbeat(rid); }catch(e){} },20000); },
   stopHeartbeat:function(){ try{ if(RSV2.hbTimer) clearInterval(RSV2.hbTimer); }catch(e){} RSV2.hbTimer=null; }
 };
+
+
+/* ===== RSV2 Etappe 2b: Flag/Toggle, Scorer-Zuweisung im Setup, v2-Runde anlegen ===== */
+function RSV2_ON(){ try{ return !!rtGet('fp_rsv2_v1'); }catch(e){ return false; } }
+function RSV2_toggle(){ try{ rtSet('fp_rsv2_v1', !RSV2_ON()); }catch(e){} try{ RT_render(); }catch(e){} }
+function RT_v2Owner(){ return (sbUser&&sbUser.id)||null; }
+function RT_v2LinkedUid(name){ try{ var st=(typeof PL_statusFor==='function')?PL_statusFor(name):null; return (st&&st.linked_user_id)||null; }catch(e){ return null; } }
+function RT_v2ScorerFor(rd,i){ if(rd&&rd.scorerMap&&rd.scorerMap[i]) return rd.scorerMap[i]; return RT_v2Owner(); }
+function RT_v2Meta(rd){ return {courseName:rd.courseName, date:rd.date, time:rd.time||'', lbl:rd.lbl, par:rd.par, si:rd.si, nums:rd.nums, cnt:rd.cnt, parSum:rd.parSum, courseKey:rd.courseKey||null, autoCount:rd.autoCount, scorerMap:rd.scorerMap||{}, v2:true}; }
+function RT_v2CardData(p){ return {hi:p.hi,tee:p.tee,cr:p.cr,sl:p.sl,ph:p.ph,sex:p.sex, sc:p.sc,pu:p.pu,fw:p.fw,pe:p.pe,sa:p.sa,cx:p.cx,pins:p.pins}; }
+function RT_v2PlayersPayload(rd){
+ return rd.players.map(function(p,i){ return {idx:i, name:p.name, scorer_uid:RT_v2ScorerFor(rd,i), member_uid:RT_v2LinkedUid(p.name), data:RT_v2CardData(p)}; });
+}
+async function RT_v2Create(rd){
+ try{
+  if(!RSV2.ready()) return;
+  rd._cardRev={}; for(var i=0;i<rd.players.length;i++) rd._cardRev[i]=1;
+  await RSV2.create(rd.id, RT_v2Meta(rd), RT_v2PlayersPayload(rd));
+ }catch(e){}
+}
+/* Setup-UI: pro Spieler festlegen, welches Konto die Karte fuehrt (nur bei RSV2_ON). */
+function RT_suSetScorer(i,uid){ if(RT_su){ if(!RT_su.scorerMap)RT_su.scorerMap={}; RT_su.scorerMap[i]=uid; RT_render(); } }
+function RT_suScorerHtml(){
+ if(!RSV2_ON() || !RT_su || !RT_su.players || RT_su.players.length<2) return '';
+ if(!RT_su.scorerMap) RT_su.scorerMap={};
+ var me=RT_v2Owner();
+ var accounts=[];
+ if(me) accounts.push({uid:me, label:'Ich'+((typeof RT_myDisplayName==='function'&&RT_myDisplayName()!=='Ich')?(' ('+RT_myDisplayName()+')'):'')});
+ RT_su.players.forEach(function(p){ var lu=RT_v2LinkedUid(p.name); if(lu&&lu!==me&&!accounts.some(function(a){return a.uid===lu;})) accounts.push({uid:lu, label:p.name}); });
+ var h='<div style="margin-top:6px;padding-top:10px;border-top:1px solid #ECF2E6;">'
+  +'<span class="rt-lbl">Wer führt welche Karte?</span>'
+  +'<div class="rt-cs" style="margin:4px 0 8px;">Je Spieler festlegen, welches Konto die Karte führt – nur der zugewiesene Scorer kann sie schreiben, alle anderen sehen live mit.</div>';
+ RT_su.players.forEach(function(p,i){
+  var cur=RT_su.scorerMap[i]||me;
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="flex:1;font-size:13px;font-weight:600;color:#143522;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+rtEsc(p.name)+'</div>'
+   +'<select class="rt-inp" style="flex:none;width:auto;max-width:58%;" onchange="RT_suSetScorer('+i+',this.value)">';
+  accounts.forEach(function(a){ h+='<option value="'+rtEsc(a.uid)+'"'+(a.uid===cur?' selected':'')+'>'+rtEsc(a.label)+'</option>'; });
+  h+='</select></div>';
+ });
+ h+='</div>';
+ return h;
+}

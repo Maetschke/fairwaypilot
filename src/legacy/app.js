@@ -1488,6 +1488,7 @@ function RT_scorerBlock(){
    bisherige gemeinsame Scoring-Pfad voellig unberuehrt. */
 function RT_canEditPlayer(rd,pi){
  if(!rd) return true;
+ if(rd.v2){ if(!sbUser) return false; return RT_v2ScorerFor(rd,pi)===sbUser.id; }
  if(rd.ownCards && RT_roundIsShared(rd)){
   if(!sbUser) return true;
   return pi===RT_myPlayerIndex(rd);
@@ -1495,6 +1496,7 @@ function RT_canEditPlayer(rd,pi){
  return RT_amScorer(rd);
 }
 function RT_editBlock(rd){
+ if(rd && rd.v2){ RT_state.saveWarn='Diese Karte wird von einem anderen Konto geführt – du siehst live mit. Über „Karte übernehmen" kannst du sie übernehmen, falls das Gerät nicht erreichbar ist.'; RT_render(); return; }
  if(rd && rd.ownCards){
   RT_state.saveWarn='Eigene-Karten-Modus: Du kannst nur deine eigene Scorecard bearbeiten.';
   RT_render();
@@ -5779,6 +5781,7 @@ function RT_render(){
  else r.innerHTML=RT_rHome();
  try{ if(typeof RT_rtSync==='function') RT_rtSync(); }catch(e){}
  try{ if(typeof RT_livePollSync==='function') RT_livePollSync(); }catch(e){}
+ try{ if(typeof RT_v2Sync==='function') RT_v2Sync(); }catch(e){}
  try{ if(RT_state.screen==='play'){ RT_wakeReq(); } else { RT_wakeRelease(); } }catch(e){}
 }
 function RT_go(s){if(s!=='play')RT_stopGeoWatch();RT_state.screen=s;RT_state.ask='';try{if(s==='play')rtSet('golflog_screen_v1','play');else rtDel('golflog_screen_v1');}catch(e){}RT_render();var _ap=document.getElementById('app');if(_ap)_ap.scrollTop=0;}
@@ -7708,6 +7711,7 @@ function RT_syncActiveToSaved(){
  if(idx>=0) saved[idx]=rd; else saved.push(rd);
  rtSet(RT_KEY,saved);
  if(isNew&&sb&&sbUser) sbPushRound(rd);
+ if(rd.v2){ try{ RT_v2PushMine(rd); }catch(e){} return; }
  RT_rtBroadcastState();
  RT_liveDbPush();
 }
@@ -10917,4 +10921,67 @@ function RT_suScorerHtml(){
  });
  h+='</div>';
  return h;
+}
+
+
+/* ===== RSV2 Etappe 2c/2d: Live lesen/schreiben, Presence, Konflikt-Retry ===== */
+function RT_v2Sync(){
+ try{
+  var rd=RT_round;
+  var active=!!(rd && rd.v2 && !rd.done && typeof RSV2!=='undefined' && RSV2.ready() && RT_state.screen==='play');
+  if(active){
+   if(RSV2.chId!==rd.id){ RSV2.subscribe(rd.id, RT_v2OnRealtime); RSV2.startHeartbeat(rd.id); try{ RT_v2OnRealtime('init'); }catch(e){} }
+  }else{
+   if(RSV2.chId){ RSV2.unsubscribe(); RSV2.stopHeartbeat(); }
+  }
+ }catch(e){}
+}
+/* Fremde Karten (nicht von mir gefuehrt) live uebernehmen; meine Karten nur rev nachziehen. */
+async function RT_v2OnRealtime(kind, payload){
+ try{
+  var rd=RT_round; if(!rd||!rd.v2) return;
+  var res=await RSV2.load(rd.id);
+  if(!res || !res.ok) return;
+  if(RT_round!==rd) return;
+  rd._cardRev=rd._cardRev||{};
+  if(res.meta && res.meta.data && res.meta.data.scorerMap) rd.scorerMap=res.meta.data.scorerMap;
+  var changed=false;
+  (res.cards||[]).forEach(function(c){
+   var i=c.player_idx; if(i<0||i>=rd.players.length) return;
+   if(!rd.scorerMap) rd.scorerMap={};
+   rd.scorerMap[i]=c.scorer_uid;
+   var mine=!!(sbUser && c.scorer_uid===sbUser.id);
+   if(!mine){
+    var d=c.data||{}, p=rd.players[i];
+    ['sc','pu','fw','pe','sa','cx','pins'].forEach(function(k){ if(d[k]!==undefined && d[k]!==null) p[k]=d[k]; });
+    if(d.hi!==undefined) p.hi=d.hi; if(d.ph!==undefined) p.ph=d.ph; if(d.tee!==undefined) p.tee=d.tee;
+    rd._cardRev[i]=c.rev; changed=true;
+   }else{
+    if(typeof c.rev==='number' && (!rd._cardRev[i] || c.rev>rd._cardRev[i])) rd._cardRev[i]=c.rev;
+   }
+  });
+  if(res.meta && res.meta.done && !rd.done){ rd.done=true; changed=true; }
+  if(changed){ try{ rtSet(RT_ACT,rd); RT_syncActiveToSavedLocalOnly(rd); }catch(e){} try{ RT_render(); }catch(e){} }
+ }catch(e){}
+}
+/* Lokale Persistenz OHNE erneuten v2-Push (verhindert Schreib-Schleife beim Empfang). */
+function RT_syncActiveToSavedLocalOnly(rd){
+ try{ var saved=rtGet(RT_KEY)||[]; var idx=-1; for(var i=0;i<saved.length;i++){ if(saved[i].id===rd.id){ idx=i; break; } } if(idx>=0) saved[idx]=rd; else saved.push(rd); rtSet(RT_KEY,saved); }catch(e){}
+}
+/* Meine Karten schreiben (rev-geprueft, ein Konflikt-Retry). */
+async function RT_v2PushMine(rd){
+ try{
+  if(!rd||!rd.v2||typeof RSV2==='undefined'||!RSV2.ready()) return;
+  rd._cardRev=rd._cardRev||{};
+  for(var i=0;i<rd.players.length;i++){
+   if(RT_v2ScorerFor(rd,i)!==sbUser.id) continue;
+   var res=await RSV2.writeCard(rd.id, i, RT_v2CardData(rd.players[i]), rd._cardRev[i]||1);
+   if(res.ok){ rd._cardRev[i]=res.rev; continue; }
+   if(res.conflict){
+    var lr=await RSV2.load(rd.id);
+    if(lr.ok){ (lr.cards||[]).forEach(function(c){ if(c.player_idx===i){ rd._cardRev[i]=c.rev; if(rd.scorerMap) rd.scorerMap[i]=c.scorer_uid; } }); }
+    if(RT_v2ScorerFor(rd,i)===sbUser.id){ var r2=await RSV2.writeCard(rd.id,i,RT_v2CardData(rd.players[i]),rd._cardRev[i]||1); if(r2.ok) rd._cardRev[i]=r2.rev; }
+   }
+  }
+ }catch(e){}
 }

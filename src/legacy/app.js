@@ -3004,6 +3004,7 @@ function RT_markShot(pi){
   var pins=RT_pinsOf(rd,pi,c);
   pins.push({lat:la,lng:ln,shot:(holed?'P':RT_ballShotSuggest(rd,c,pi))});
   RT_scAdjust(pi,1);
+  if(holed){ var _hp=rd.players[(typeof pi==='number'?pi:0)]; if(_hp) RT_pinCounterAdjust(_hp,c,'holed',1); }
   /* Backlog A2: Markieren setzt AUSSCHLIESSLICH die Position. Der Schlagzaehler wird hier
      jetzt gekoppelt: +1 pro Balllage. Die +/- Stepper zaehlen weiter nur die Zahl. Die fruehere
      Kopplung erzeugte gefuehlte Phantomschlaege, sobald nur eine Balllage markiert wurde.
@@ -3344,7 +3345,7 @@ function RT_pinKind(pt){
 function RT_pinCounterAdjust(p,c,kind,delta){
  if(kind==='straf'){ p.pe[c]=Math.max(0,(p.pe[c]||0)+delta); }
  else if(kind==='sand'){ p.sa[c]=Math.max(0,(p.sa[c]||0)+delta); }
- else if(kind==='putt'){ if(p.pu[c]===null||p.pu[c]===undefined){ p.pu[c]=delta>0?delta:0; } else { p.pu[c]=Math.max(0,p.pu[c]+delta); } }
+ else if(kind==='putt'||kind==='holed'){ if(p.pu[c]===null||p.pu[c]===undefined){ p.pu[c]=delta>0?delta:0; } else { p.pu[c]=Math.max(0,p.pu[c]+delta); } }
 }
 function RT_pinApplyKind(pt,kind){
  delete pt.type; delete pt.shot;

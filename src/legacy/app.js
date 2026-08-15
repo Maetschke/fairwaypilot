@@ -6333,7 +6333,7 @@ if(cd){
    if(RT_isSelfName(sp.name)) return false;
    return !RT_su.players.some(function(p){ return p.name===sp.name; });
   });
-  if(savedNotInRound.length){
+  if(savedNotInRound.length && RT_su.players.length<4){
    h+='<div class="rt-cs" style="margin-bottom:6px;">Kontakte \u2013 antippen f\u00fcr diese Runde dazunehmen</div>';
    h+='<div class="rt-chiprow" style="margin-bottom:8px;">';
    savedNotInRound.forEach(function(sp){
@@ -6353,7 +6353,7 @@ if(cd){
    });
    h+='</div>';
   }
-  h+='<div class="rt-row"><button class="rt-btn2" onclick="RT_suAdd()">+ Neuer Spieler</button></div></div>';
+  h+=(RT_su.players.length>=4)?'<div class="rt-cs" style="margin-top:2px;">Maximal 4 Spieler pro Flight.</div></div>':'<div class="rt-row"><button class="rt-btn2" onclick="RT_suAdd()">+ Neuer Spieler</button></div></div>';
   var ready=RT_su.players.every(function(p){
    return p.name&&!isNaN(parseFloat(p.hi));
   });
@@ -6611,13 +6611,14 @@ function RT_suApplyDup(i){
  RT_render();
 }
 function RT_suDismissDup(i){ var p=RT_su.players[i]; if(p){ p._dupHint=null; } RT_render(); }
-function RT_suAdd(){var side=(RT_su.holes==='A')?'A':RT_su.holes;RT_su.players.push({name:'',hi:54,sex:'m',tee:RT_hardestTeeIdx(RT_su.course,side,'m'),teeHalf:(RT_su.holes==='A')?null:RT_su.holes,cr:null,sl:null});RT_render();}
+function RT_suAdd(){if(RT_su.players.length>=4){RT_toast('Maximal 4 Spieler pro Flight.');return;}var side=(RT_su.holes==='A')?'A':RT_su.holes;RT_su.players.push({name:'',hi:54,sex:'m',tee:RT_hardestTeeIdx(RT_su.course,side,'m'),teeHalf:(RT_su.holes==='A')?null:RT_su.holes,cr:null,sl:null});RT_render();}
 /* Fuegt einen bereits bekannten/gespeicherten Mitspieler (Name, HI, zuletzt genutzter
    Abschlag) direkt zur aktuellen Runde hinzu, statt eine leere Spielerkarte zu erzeugen -
    siehe die Schnellauswahl-Chips ueber "+ Neuer Spieler". */
 function RT_suAddSaved(name){
  var sp=RT_getSavedPlayers().find(function(x){ return x.name===name; });
  if(!sp) return;
+ if(RT_su.players.length>=4){ RT_toast('Maximal 4 Spieler pro Flight.'); return; }
  var sx=(sp.sex==='w')?'w':'m';
  var side=(RT_su.holes==='A')?'A':RT_su.holes;
  var p={name:sp.name, hi:(sp.hi!==undefined&&sp.hi!==null&&!isNaN(sp.hi))?sp.hi:54, sex:sx, tee:RT_hardestTeeIdx(RT_su.course,side,sx), teeHalf:(RT_su.holes==='A')?null:RT_su.holes, cr:null, sl:null};

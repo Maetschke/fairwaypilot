@@ -1666,7 +1666,7 @@ function sbInit(){
    if(lastUid&&lastUid!==sbUser.id){ RT_clearLocalSyncedData(); }
    var firstEverLogin=!lastUid;
    try{ localStorage.setItem(RT_LAST_UID_KEY,sbUser.id); }catch(e){}
-   sbPull(firstEverLogin); PL_load().then(RT_render); RT_loadConnections(); if(AG_joinCode) AG_claim(); AG_claimByEmail(); RT_LRN_cloudPull(); RT_loadEntitlement();
+   sbPull(firstEverLogin); PL_load().then(RT_render); RT_loadConnections(); if(AG_joinCode) AG_claim(); AG_claimByEmail(); RT_LRN_cloudPull(); RT_bagCloudPull(); RT_loadEntitlement();
    try{ var _dn=sbUser.user_metadata&&sbUser.user_metadata.display_name; if(!_dn||!(''+_dn).trim()){ AG_needName=true; setTimeout(function(){ try{ AG_namePrompt(); }catch(e){} },0); } }catch(e){}
   }
   else RT_render();
@@ -3698,7 +3698,7 @@ function RT_getSiOverrides(){ if(!RT_siOverrides) RT_siOverrides=rtGet(RT_SIOV_K
 var RT_parOverrides=null;
 function RT_getParOverrides(){ if(!RT_parOverrides) RT_parOverrides=rtGet(RT_PAROV_KEY)||{}; return RT_parOverrides; }
 var RT_MEM={};
-function rtSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){RT_MEM[k]=v;} if(!RT_LRN_pulling&&typeof k==='string'&&k.indexOf('fp_lrn_')===0){try{RT_LRN_cloudPush();}catch(e){}}}
+function rtSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){RT_MEM[k]=v;} if(!RT_LRN_pulling&&typeof k==='string'&&k.indexOf('fp_lrn_')===0){try{RT_LRN_cloudPush();}catch(e){}} if(typeof k==='string'&&k==='fp_bag'){try{if(typeof RT_bagCloudPush==='function')RT_bagCloudPush();}catch(e){}}}
 function rtGet(k){try{var r=localStorage.getItem(k);if(r!==null)return JSON.parse(r);}catch(e){}return RT_MEM[k]!==undefined?RT_MEM[k]:null;}
 function rtDel(k){try{localStorage.removeItem(k);}catch(e){}delete RT_MEM[k];}
 function rtEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -8848,6 +8848,30 @@ function RT_bagGraphic(inBag,w){
 }
 function RT_bagData(){ return rtGet('fp_bag')||{}; }
 function RT_bagSave(b){ rtSet('fp_bag',b); }
+var RT_bagPushT=null;
+function RT_bagCloudPush(now){
+ if(!sb||!sbUser) return;
+ if(RT_bagPushT){ clearTimeout(RT_bagPushT); RT_bagPushT=null; }
+ var doPush=function(){ if(!sb||!sbUser) return; try{ sb.from('golfbag').upsert({user_id:sbUser.id,data:RT_bagData(),updated_at:new Date().toISOString()}).then(function(){},function(){}); }catch(e){} };
+ if(now){ doPush(); } else { RT_bagPushT=setTimeout(doPush,1200); }
+}
+function RT_bagCloudPull(){
+ if(!sb||!sbUser) return;
+ try{
+  sb.from('golfbag').select('data').eq('user_id',sbUser.id).maybeSingle().then(function(r){
+   if(r&&!r.error&&r.data&&r.data.data){
+    var cloud=r.data.data, local=RT_bagData(), changed=false;
+    Object.keys(cloud).forEach(function(id){ var cv=cloud[id]; if(!cv) return;
+     if(!local[id]){ local[id]=cv; changed=true; }
+     else if((local[id].d==null||isNaN(local[id].d)) && cv.d!=null){ local[id].d=cv.d; changed=true; }
+    });
+    if(changed){ RT_bagSave(local); if(RT_state.screen==='bag'){ try{ RT_render(); }catch(e){} } }
+   }
+   RT_bagCloudPush(true);
+  },function(){});
+ }catch(e){}
+}
+
 function RT_bagCount(){ var b=RT_bagData(),n=0; for(var k in b){ if(b.hasOwnProperty(k)) n++; } return n; }
 function RT_bagInOrder(){ var b=RT_bagData(); return RT_BAG_CLUBS.filter(function(c){ return b[c.id]; }); }
 function RT_bagAdd(id){ var b=RT_bagData(); if(!b[id]) b[id]={d:null}; RT_bagSave(b); RT_render(); }

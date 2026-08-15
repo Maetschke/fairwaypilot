@@ -3383,6 +3383,19 @@ function RT_hfUpdateGps(){
   } else { RT_holeFullGpsMarker.setLatLng([RT_curPos.lat,RT_curPos.lng]); }
  }catch(e){}
 }
+function RT_hfAddPinAt(cx,cy){
+ var map=RT_holeFullMapInst; if(!map||typeof L==='undefined') return;
+ if(RT_pinMoveMode) return;
+ if(!RT_amScorer(RT_round)){ RT_scorerBlock(); return; }
+ var el=map._el, rotF=map._rotF||0, pi=map._pi||0;
+ var ll=RT_correctedLatLng(map,el,rotF,cx,cy); if(!ll) return;
+ var pins=RT_pinsOf(RT_round,pi,RT_round.cur);
+ pins.push({lat:ll.lat,lng:ll.lng});
+ RT_scAdjust(pi,1);
+ rtSet(RT_ACT,RT_round); RT_syncActiveToSaved();
+ RT_redrawFullPins();
+ RT_pinMenu(pi,pins.length-1);
+}
 async function RT_initHoleFullMap(){
  var rd=RT_round; if(!rd) return;
  RT_fullSelPin=null;
@@ -3438,6 +3451,11 @@ async function RT_initHoleFullMap(){
  RT_holeFullMapInst._layer=layer; RT_holeFullMapInst._rotF=rotF; RT_holeFullMapInst._el=el; RT_holeFullMapInst._pi=RT_state.fullPi||0;
  RT_redrawFullPins();
  RT_hfUpdateGps();
+ (function(){ var lt=0,lx=0,ly=0,dx=0,dy=0,mv=false;
+  el.addEventListener('pointerdown',function(ev){ dx=ev.clientX; dy=ev.clientY; mv=false; },true);
+  el.addEventListener('pointermove',function(ev){ if(Math.abs(ev.clientX-dx)>10||Math.abs(ev.clientY-dy)>10) mv=true; },true);
+  el.addEventListener('pointerup',function(ev){ if(mv){ lt=0; return; } var now=Date.now(); if(now-lt<350&&Math.abs(ev.clientX-lx)<30&&Math.abs(ev.clientY-ly)<30){ lt=0; RT_hfAddPinAt(ev.clientX,ev.clientY); } else { lt=now; lx=ev.clientX; ly=ev.clientY; } },true);
+ })();
  map.on('click', function(e){
   if(RT_suppressMapClick && RT_suppressMapClick['full']) return;
   if(!RT_pinMoveMode) return;

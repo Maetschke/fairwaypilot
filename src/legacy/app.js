@@ -7554,7 +7554,7 @@ function RT_rPlay(){
   }else{
    h+='<div class="rt-holemap" style="position:relative;"><div class="rt-holemap-inner" id="hole-map-'+pi+'"></div>'+'<div class="rt-holemap-tap" style="z-index:1200;pointer-events:auto;" onclick="event.stopPropagation();RT_openHoleFull(\''+(rtImg?rtImg.url:'')+'\',\'Bahn '+rd.nums[c]+'\','+pi+')">&#8599;</div>'+'</div>';
    h+='<div id="map-ctrl-'+pi+'">'+RT_mapCtrlHtml(pi)+'</div>';
-   h+='<div id="pin-hint-'+pi+'" style="font-size:9.5px;color:#8A9C8E;margin-top:4px;">'+((RT_pinMoveMode&&RT_pinMoveMode.pi===pi)?'Tippe die neue Position für die Markierung an.':'Karte antippen = neue Lage &middot; Markierung antippen = Menü (verschieben/löschen/Typ ändern)')+'</div>';
+   h+='<div id="pin-hint-'+pi+'" style="font-size:9.5px;color:#8A9C8E;margin-top:4px;">'+((RT_pinMoveMode&&RT_pinMoveMode.pi===pi)?'Tippe die neue Position für die Markierung an.':'Karte antippen = neue Lage<br>Markierung antippen = Menü (verschieben/löschen/Typ ändern)')+'</div>';
   }
   /* Ein Button je Spieler, links unter der Karte: setzt die naechste Markierung an der
      aktuellen GPS-Position und zaehlt zugleich einen Schlag hoch (A, dann 2..n, am Loch

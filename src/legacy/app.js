@@ -3629,6 +3629,7 @@ async function RT_deleteAccount(){
 }
 
 var RT_KEY='golflog_runden_v1', RT_ACT='golflog_aktiv_v1', RT_AUTOCOUNT_KEY='golflog_autocount_v1', RT_CUSTOM_KEY='golflog_custom_courses_v1', RT_SIOV_KEY='golflog_si_overrides_v1', RT_PAROV_KEY='golflog_par_overrides_v1', RT_NAMEOV_KEY='golflog_name_overrides_v1', RT_TEEOV_KEY='golflog_tee_overrides_v1', RT_PHOTOOV_KEY='golflog_photo_overrides_v1', RT_ADDROV_KEY='golflog_addr_overrides_v1', RT_PLAYERSAV_KEY='golflog_saved_players_v1', RT_HISTDEL_KEY='golflog_deleted_historical_v1', RT_OWNHI_KEY='golflog_own_hi_v1', RT_REFOV_KEY='golflog_ref_overrides_v1', RT_DISTUNIT_KEY='golflog_dist_unit_v1', RT_TEEORDOV_KEY='golflog_tee_order_v1', RT_PLATZORDER_KEY='golflog_platz_order_v1';
+var RT_ONBOARD_KEY='fp_onboard_v1', RT_LOCALNAME_KEY='fp_local_name_v1', RT_CHECKDISMISS_KEY='fp_checklist_dismiss_v1', RT_TRIALNUDGE_KEY='fp_trialnudge_v1';
 var RT_HIDPLAY_KEY='golflog_hidden_players_v1';
 /* Eigenes Handicap des Kontoinhabers: bei angemeldeten Nutzern in sbUser.user_metadata.handicap
    (geräteübergreifend synchron, analog zu display_name/avatar_url), sonst lokal als Fallback.
@@ -3656,6 +3657,7 @@ function RT_myDisplayName(){
   if(dn&&dn.trim())return dn.trim();
   if(sbUser.email)return sbUser.email.split('@')[0];
  }
+ var _ln=rtGet(RT_LOCALNAME_KEY); if(_ln&&(''+_ln).trim()) return (''+_ln).trim();
  return 'Ich';
 }
 var RT_SELFNAME_KEY='golflog_selfname_decisions_v1';
@@ -6010,9 +6012,11 @@ function RT_rHome(){
    '<div class="rt-cs">Platz, Spieler und Abschl\u00e4ge festlegen &ndash; dann Loch f\u00fcr Loch eintragen</div>'+
    '<button class="rt-btn" onclick="RT_newRound()">Neue Runde starten</button></div>';
  }
+ h+=RT_onbChecklistHtml();
  h+='<div class="rtc"><div class="rt-ct">Gespeicherte Runden</div>';
  if(!saved.length){
-  h+='<div style="font-size:12px;color:#8A9C8E;padding:14px 0 6px;text-align:center;">Noch keine Runden gespeichert.<br>Deine erste Runde erscheint hier.</div>';
+  h+='<div style="font-size:12px;color:#8A9C8E;padding:14px 0 10px;text-align:center;">Noch keine Runden gespeichert.<br>Deine erste Runde erscheint hier.</div>'
+   +'<button class="rt-btn" style="width:100%;" onclick="RT_newRound()">Erste Runde starten</button>';
  }else{
   h+='<div class="rt-cs">'+saved.length+' Runde'+(saved.length>1?'n':'')+' &middot; auf diesem Ger\u00e4t gespeichert</div>';
   var sortedSaved=saved.slice().sort(function(a,b){
@@ -7908,6 +7912,7 @@ function RT_finishDo(){
  rtDel(RT_ACT);
  if(RT_round.promoted) RT_hydrateHistoricalData();
  RT_state.viewId=RT_round.id;
+ try{ RT_onbMaybeTrialNudge(); }catch(e){}
  RT_round=null;
  RT_go('view');
 }
@@ -10650,3 +10655,134 @@ try{ if(typeof location!=='undefined' && (location.search||'').indexOf('abo=ok')
    "Abo verwalten"-Button nicht als "…" haengen bleibt; bei echter Rueckkehr Entitlement neu laden. */
 window.addEventListener('pageshow', function(e){ try{ RT_state.aboBusy=false; RT_state.redeemBusy=false; RT_render(); if(e&&e.persisted) RT_loadEntitlement(); }catch(_){} });
 
+
+
+/* ================= Onboarding (Erststart-Flow + Erste-Schritte-Checkliste + Trial-Nudge) ================= */
+var RT_onbStep=0, RT_onbData={name:'',hi:''};
+function RT_onbHasData(){
+ try{ if((rtGet(RT_KEY)||[]).length>0) return true; }catch(e){}
+ var hs=RT_ownHandicapStored(); if(hs!==''&&hs!==null&&hs!==undefined) return true;
+ try{ if(sbUser&&sbUser.user_metadata&&sbUser.user_metadata.display_name) return true; }catch(e){}
+ return false;
+}
+function RT_onbCloseEl(){ var e=document.getElementById('rt-onb'); if(e&&e.parentNode) e.parentNode.removeChild(e); }
+function RT_onbMaybeShow(){
+ try{
+  if(rtGet(RT_ONBOARD_KEY)) return;
+  if(RT_round&&!RT_round.done) return;
+  if(RT_state&&RT_state.screen&&RT_state.screen!=='home') return;
+  if(document.getElementById('rt-onb')) return;
+  if(RT_onbHasData()){ rtSet(RT_ONBOARD_KEY,{done:true,auto:true}); return; }
+  RT_onbStep=0; RT_onbData={name:'',hi:''};
+  RT_onbShow();
+ }catch(e){}
+}
+function RT_startOnboarding(){ try{ RT_onbStep=0; RT_onbData={name:'',hi:''}; RT_onbShow(); }catch(e){} }
+function RT_onbFinish(startRound){
+ try{ rtSet(RT_ONBOARD_KEY,{done:true}); }catch(e){}
+ RT_onbCloseEl();
+ try{ RT_render(); }catch(e){}
+ if(startRound){ try{ RT_newRound(); }catch(e){} }
+}
+function RT_onbSaveName(v){
+ v=(v||'').trim(); RT_onbData.name=v;
+ if(v){ try{ rtSet(RT_LOCALNAME_KEY,v); }catch(e){} if(sb&&sbUser){ try{ sb.auth.updateUser({data:{display_name:v}}).then(function(r){ if(r&&r.data&&r.data.user) sbUser=r.data.user; }); }catch(e){} } }
+}
+function RT_onbSaveHi(v){
+ v=(''+(v||'')).replace(',','.').trim(); RT_onbData.hi=v;
+ var num=parseFloat(v);
+ if(v!==''&&!isNaN(num)){ try{ rtSet(RT_OWNHI_KEY,num); }catch(e){} if(sb&&sbUser){ try{ sb.auth.updateUser({data:{handicap:num}}).then(function(r){ if(r&&r.data&&r.data.user) sbUser=r.data.user; }); }catch(e){} } }
+}
+function RT_onbShow(){
+ RT_onbCloseEl();
+ var ov=document.createElement('div'); ov.id='rt-onb';
+ ov.style.cssText='position:fixed;inset:0;z-index:100001;background:rgba(8,18,12,.55);display:flex;align-items:flex-end;justify-content:center;';
+ var card=document.createElement('div'); card.id='rt-onb-card';
+ card.style.cssText='background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 18px);box-shadow:0 -6px 24px rgba(0,0,0,.3);font-family:Inter,-apple-system,sans-serif;max-height:88vh;overflow:auto;';
+ ov.appendChild(card); document.body.appendChild(ov);
+ RT_onbRender();
+}
+function RT_onbRender(){
+ var card=document.getElementById('rt-onb-card'); if(!card) return;
+ var total=4, step=RT_onbStep, i;
+ var dots=''; for(i=0;i<total;i++){ dots+='<span style="width:7px;height:7px;border-radius:50%;background:'+(i===step?'#1F8A4D':'#D6E2CF')+';display:inline-block;margin:0 3px;"></span>'; }
+ var head='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><img src="/icon-192.png" alt="" style="width:34px;height:34px;border-radius:9px;"><div style="flex:1;font-weight:800;font-size:16px;color:#12261b;">Willkommen bei FairwayPilot</div></div>';
+ var body='', foot='';
+ if(step===0){
+  body='<div style="font-size:15px;font-weight:800;color:#143522;margin-bottom:6px;">Dein digitaler Caddie fürs Handicap.</div>'
+   +'<div style="font-size:13.5px;line-height:1.6;color:#3a4a3e;">In 30 Sekunden startklar. FairwayPilot erfasst deine Runden, führt dein Handicap automatisch (WHS) und bietet Bahnkarten, GPS-Distanzen und KI-Schwunganalyse.</div>';
+  foot='<button id="rt-onb-next" class="rt-btn" style="width:100%;margin-top:16px;margin-bottom:8px;">Los geht’s</button>'
+   +'<button id="rt-onb-skip" class="rt-btn3" style="width:100%;color:#8A9C8E;">Überspringen</button>';
+ } else if(step===1){
+  var pn=RT_onbData.name||''; if(!pn){ var dn=RT_myDisplayName(); if(dn&&dn!=='Ich') pn=dn; }
+  body='<div style="font-size:15px;font-weight:800;color:#143522;margin-bottom:6px;">Wie heißt du?</div>'
+   +'<div style="font-size:13px;color:#6b7d70;margin-bottom:10px;">Dein Name erscheint als Spieler auf der Scorecard.</div>'
+   +'<input id="rt-onb-name" class="rt-inp" placeholder="Vorname" value="'+rtEsc(pn)+'" style="width:100%;box-sizing:border-box;">';
+  foot='<button id="rt-onb-next" class="rt-btn" style="width:100%;margin-top:16px;margin-bottom:8px;">Weiter</button>'
+   +'<button id="rt-onb-skip" class="rt-btn3" style="width:100%;color:#8A9C8E;">Überspringen</button>';
+ } else if(step===2){
+  var ph=RT_onbData.hi; if(ph===''){ var hs=RT_ownHandicapStored(); if(hs!==''&&hs!==null&&hs!==undefined) ph=''+hs; }
+  body='<div style="font-size:15px;font-weight:800;color:#143522;margin-bottom:6px;">Dein Handicap-Index</div>'
+   +'<div style="font-size:13px;color:#6b7d70;margin-bottom:10px;">Für die Spielvorgabe. Noch keins? Trag 54 ein – das passt sich automatisch an, sobald du Runden spielst.</div>'
+   +'<input id="rt-onb-hi" class="rt-inp" type="text" inputmode="decimal" placeholder="z. B. 54" value="'+rtEsc(ph===undefined?'':ph)+'" style="width:100%;box-sizing:border-box;">';
+  foot='<button id="rt-onb-next" class="rt-btn" style="width:100%;margin-top:16px;margin-bottom:8px;">Weiter</button>'
+   +'<button id="rt-onb-skip" class="rt-btn3" style="width:100%;color:#8A9C8E;">Überspringen</button>';
+ } else {
+  body='<div style="font-size:15px;font-weight:800;color:#143522;margin-bottom:6px;">Alles bereit – viel Erfolg!</div>'
+   +'<div style="font-size:13.5px;line-height:1.6;color:#3a4a3e;margin-bottom:12px;">Leg direkt mit deiner ersten Runde los. Auf der Startseite führt dich eine kurze Checkliste durch die nächsten Schritte.</div>'
+   +'<div style="background:#f3f8f2;border-radius:12px;padding:11px 13px;font-size:12.5px;color:#2c3b30;">Premium (KI-Analyse, Shot-Tracer, erweiterte Karten) kannst du <b>7 Tage kostenlos testen</b> – jederzeit im Konto.</div>';
+  foot='<button id="rt-onb-start" class="rt-btn" style="width:100%;margin-top:16px;margin-bottom:8px;">Erste Runde starten</button>'
+   +'<button id="rt-onb-done" class="rt-btn2" style="width:100%;">Später – zur Startseite</button>';
+ }
+ card.innerHTML=head+body+'<div style="text-align:center;margin:16px 0 2px;">'+dots+'</div>'+foot;
+ var byId=function(id){return document.getElementById(id);};
+ var saveCur=function(){ if(step===1){ var n=byId('rt-onb-name'); if(n) RT_onbSaveName(n.value); } else if(step===2){ var hh=byId('rt-onb-hi'); if(hh) RT_onbSaveHi(hh.value); } };
+ if(byId('rt-onb-next')) byId('rt-onb-next').addEventListener('click',function(){ saveCur(); RT_onbStep=Math.min(3,step+1); RT_onbRender(); });
+ if(byId('rt-onb-skip')) byId('rt-onb-skip').addEventListener('click',function(){ saveCur(); RT_onbFinish(false); });
+ if(byId('rt-onb-start')) byId('rt-onb-start').addEventListener('click',function(){ RT_onbFinish(true); });
+ if(byId('rt-onb-done')) byId('rt-onb-done').addEventListener('click',function(){ RT_onbFinish(false); });
+}
+function RT_onbChecklistDismissed(){ return !!rtGet(RT_CHECKDISMISS_KEY); }
+function RT_onbDismissChecklist(){ try{ rtSet(RT_CHECKDISMISS_KEY,1); }catch(e){} RT_render(); }
+function RT_onbChecklistHtml(){
+ try{
+  if(RT_onbChecklistDismissed()) return '';
+  var saved=(rtGet(RT_KEY)||[]).filter(function(r){return !r.hidden;});
+  var hasRound=saved.some(function(r){return (r.done||r.promoted)&&!r.historical;});
+  var hs=RT_ownHandicapStored(); var hasHi=(hs!==''&&hs!==null&&hs!==undefined);
+  var hasBag=(typeof RT_bagCount==='function')?(RT_bagCount()>0):false;
+  var isPrem=(typeof RT_isPremium==='function')?RT_isPremium():false;
+  var steps=[
+   {done:hasHi, t:'Handicap eintragen', a:"RT_go('user')"},
+   {done:hasRound, t:'Erste Runde spielen', a:'RT_newRound()'},
+   {done:hasBag, t:'Schläger ins Bag legen', a:"RT_go('bag')"},
+   {done:isPrem, t:'Premium 7 Tage gratis testen', a:"RT_showPaywall('premium')"}
+  ];
+  var doneCnt=0; steps.forEach(function(x){ if(x.done) doneCnt++; });
+  if(doneCnt>=steps.length) return '';
+  var rows=steps.map(function(x){
+   var box=x.done?'<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#1F8A4D;color:#fff;font-size:13px;flex:none;">✓</span>':'<span style="display:inline-block;width:22px;height:22px;border-radius:50%;border:2px solid #CBD8C4;box-sizing:border-box;flex:none;"></span>';
+   var txt='<span style="flex:1;font-size:13.5px;color:'+(x.done?'#8A9C8E':'#143522')+';'+(x.done?'text-decoration:line-through;':'font-weight:600;')+'">'+x.t+'</span>';
+   var arrow=x.done?'':'<span style="color:#1F8A4D;font-size:17px;flex:none;">›</span>';
+   var attr=x.done?'':(' onclick="'+x.a+'"');
+   return '<div'+attr+' style="display:flex;align-items:center;gap:10px;padding:8px 2px;cursor:'+(x.done?'default':'pointer')+';">'+box+txt+arrow+'</div>';
+  }).join('');
+  return '<div class="rtc" style="border-top-color:#1F8A4D;">'
+   +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;"><div class="rt-ct" style="margin:0;color:#1F8A4D;">Erste Schritte</div>'
+   +'<button onclick="RT_onbDismissChecklist()" aria-label="Ausblenden" style="border:none;background:#eef1ea;width:26px;height:26px;border-radius:50%;font-size:13px;cursor:pointer;color:#4a5a4e;">✕</button></div>'
+   +'<div class="rt-cs" style="margin-bottom:8px;">'+doneCnt+' von '+steps.length+' erledigt</div>'
+   +rows
+   +'</div>';
+ }catch(e){ return ''; }
+}
+function RT_onbMaybeTrialNudge(){
+ try{
+  if(rtGet(RT_TRIALNUDGE_KEY)) return;
+  if(typeof RT_isPremium==='function' && RT_isPremium()) return;
+  var done=(rtGet(RT_KEY)||[]).filter(function(r){return !r.hidden && (r.done||r.promoted) && !r.historical;});
+  if(done.length!==1) return;
+  rtSet(RT_TRIALNUDGE_KEY,1);
+  setTimeout(function(){ try{ if(typeof RT_showPaywall==='function') RT_showPaywall('swing'); }catch(e){} }, 900);
+ }catch(e){}
+}
+try{ if(typeof RT_onbMaybeShow==='function'){ setTimeout(function(){ try{ RT_onbMaybeShow(); }catch(e){} }, 800); } }catch(e){}

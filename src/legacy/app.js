@@ -4500,6 +4500,23 @@ function RT_wxBadgeHtml(rd){ if(!rd) return ''; var sp=null,tp=null; if(rd.wxSta
 var RT_wind={data:null,ts:0,key:'',loading:false,err:null,errKey:'',errTs:0};
 var RT_WIND_TTL_MS=10*60*1000;
 var RT_WIND_ERR_TTL_MS=60*1000;
+/* Wetter-/Windzeile fuer die gespeicherte Rundenansicht: zeigt den bei der Runde
+   aufgezeichneten Wind (Beginn aus rd.wxStart, sonst Mittel aus rd.wx) inkl. Temperatur.
+   Rein informativ - stammt aus den waehrend des Spiels geholten Open-Meteo-Werten. */
+function RT_wxRoundLine(rd){
+ if(!rd) return '';
+ var sp=null,tp=null,avg=null;
+ if(rd.wxStart&&rd.wxStart.spd!=null){ sp=Math.round(rd.wxStart.spd); tp=(rd.wxStart.temp!=null)?Math.round(rd.wxStart.temp):null; }
+ if(rd.wx&&rd.wx.n){ avg=Math.round(rd.wx.spd/rd.wx.n); if(tp==null&&rd.wx.tc){ tp=Math.round(rd.wx.temp/rd.wx.tc); } }
+ if(sp==null&&avg==null) return '';
+ var main=(sp!=null?sp:avg)+' km/h'+(tp!=null?' · '+tp+'°C':'');
+ var sub=(sp!=null?'Wind zu Rundenbeginn':'Wind Ø Runde');
+ if(sp!=null&&avg!=null&&avg!==sp) sub+=' · Ø '+avg+' km/h';
+ return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:9px 12px;background:#F8FBF5;border:1px solid #EDF2E9;border-radius:11px;">'
+  +'<img src="'+RT_IC_WIND+'" style="width:16px;height:16px;flex:none;display:block;">'
+  +'<div style="flex:1;min-width:0;"><div style="font-size:12.5px;font-weight:700;color:#143522;">'+main+'</div>'
+  +'<div style="font-size:10.5px;color:#8A9C8E;">'+sub+'</div></div></div>';
+}
 function RT_windRefPoint(rd,c){
  var ref=RT_refFor(rd,c);
  if(ref){
@@ -7583,6 +7600,7 @@ function RT_rPlay(){
   '<div style="font-size:11px;color:#7B8E80;">Par '+rd.par[c]+' &middot; SI '+rd.si[c]+'</div></div>'+
   
   (rtImg?('<div style="margin-bottom:10px;"><button class="rt-btn3" style="padding:6px 10px;background:#F1F6EC;border-radius:8px;" onclick="RT_toggleHoleView()">'+(mapMode?'\ud83d\uddbc\ufe0f Birdiekarte anzeigen':'\ud83d\udef0\ufe0f Satellitenkarte anzeigen')+'</button></div>'):'');
+ h+=RT_windCardHtml(rd,c);
  rd.players.forEach(function(p,pi){
   var np=SC_netPar(rd.par[c],p.ph,rd.si[c],rd.cnt);
   var st=RT_stbfH(p,c);
@@ -8533,6 +8551,7 @@ function RT_rView(){
   '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
  if(foreignLocked)h+='<div class="rt-note" style="margin-bottom:10px;">Diese Runde wurde von einem anderen Konto geteilt \u2013 hier nur ansehbar, nicht bearbeitbar.</div>';
  else if(foreign)h+='<div class="rt-note" style="margin-bottom:10px;">Gemeinsame laufende Runde \u2013 du kannst hier deine eigenen Schl\u00e4ge eintragen, solange die Runde noch nicht beendet ist.</div>';
+ h+=RT_wxRoundLine(rd);
  h+=RT_fmtHtml(rd);
  rd.players.forEach(function(p){
   var t=RT_totals(p,rd);

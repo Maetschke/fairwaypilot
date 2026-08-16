@@ -3535,7 +3535,7 @@ async function RT_initHoleFullMap(){
  setTimeout(function(){
   try{map.invalidateSize();}catch(e){}
   if(RT_state.grabberOn&&RT_state.grabberOn[RT_holeMapKey(rd,c)]) RT_setupFullGrabber();
-  if(RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,c)]){ RT_radarBuildOverlay(); RT_radarAttach(map); RT_wxFetch(false); }
+  if(RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,c)]){ RT_radarBuildOverlay(); RT_radarAttach(map); RT_wxFetch(false); RT_radarZoomOut(map); }
   if(RT_state.gvOn&&RT_state.gvOn[RT_holeMapKey(rd,c)]){ RT_gvBuildOverlay(); RT_gvAttach(); }
  },80);
 }
@@ -4523,9 +4523,9 @@ function RT_windFetch(rd,c,force){
    RT_wind.loading=false;
    if(!j||j.error||j.spd===undefined||j.spd===null){ RT_wind.err='nicht verfügbar'; RT_wind.errKey=key; RT_wind.errTs=Date.now(); }
    else { RT_wind.data=j; RT_wind.ts=Date.now(); RT_wind.key=key; RT_wind.err=null; RT_wind.errKey=''; RT_wind.errTs=0; try{RT_wxAdd(rd,j);}catch(e){} }
-   RT_render();
+   RT_render(); try{RT_windOverlayRefresh();}catch(e){}
   })
-  .catch(function(e){ RT_wind.loading=false; RT_wind.err='nicht verfügbar'; RT_wind.errKey=key; RT_wind.errTs=Date.now(); RT_render(); });
+  .catch(function(e){ RT_wind.loading=false; RT_wind.err='nicht verfügbar'; RT_wind.errKey=key; RT_wind.errTs=Date.now(); RT_render(); try{RT_windOverlayRefresh();}catch(e){} });
 }
 /* Spielrichtung: von der letzten eigenen Balllage (sonst vom eigenen Abschlag) zum Loch.
    Damit dreht sich die Nadel mit, sobald man die Bahn hinunterspielt. */
@@ -4721,6 +4721,13 @@ function RT_windGlyphSvg(sz,col){
  col=col||'#eaf2ea';
  return '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" style="flex:none;width:'+sz+'px;height:'+sz+'px;display:block;"><g fill="none" stroke="'+col+'" stroke-width="1.7" stroke-linecap="round"><path d="M3 8h8.2a2.1 2.1 0 10-2.1-2.1"/><path d="M3 12h12.5a2.3 2.3 0 11-2.3 2.3"/><path d="M3 16h6.5"/></g></svg>';
 }
+function RT_windOverlayRefresh(){
+ var ov=document.getElementById('rt-wind-ui'); if(!ov) return;
+ var rd=RT_round; if(!rd) return;
+ var key=RT_holeMapKey(rd,rd.cur);
+ var on=!!(RT_state.windOn&&RT_state.windOn[key]);
+ try{ ov.innerHTML=RT_windOverlayContent(rd,rd.cur); ov.style.display=on?'flex':'none'; }catch(e){}
+}
 function RT_windOverlayContent(rd,c){
  var w=RT_wind.data;
  if(!w){ return '<span style="font-size:12px;color:#fff;padding:2px 8px;white-space:nowrap;">Wind nicht verfügbar</span>'; }
@@ -4846,6 +4853,15 @@ function RT_wxCell(lbl,val){
 }
 function RT_wxDivider(){ return '<div style="width:1px;background:rgba(255,255,255,.12);margin:2px 0;"></div>'; }
 
+var RT_radarPrevView=null;
+/* RainViewer-Kacheln haben nur bis Zoom 10 echte Aufloesung. Auf dem tief herangezoomten
+   Loch (~Zoom 18) wird eine einzelne Radarzelle ueber die ganze Ansicht gestreckt -> man
+   sieht praktisch nichts. Beim Radar-Start daher auf eine radartaugliche Regionalansicht
+   (Zoom 9) um den Platz herauszoomen. */
+function RT_radarZoomOut(map){
+ if(!map) return;
+ try{ var rc=RT_radarCenter(); map.setView([rc.lat,rc.lng],9,{animate:true}); }catch(e){}
+}
 function RT_radarBuildOverlay(){
  var host=document.getElementById('hole-full'); if(!host) return;
  var ex=document.getElementById('rt-wxradar-ui'); if(ex&&ex.parentNode) ex.parentNode.removeChild(ex);
@@ -4873,8 +4889,11 @@ function RT_toggleRadarHole(){
  RT_state.radarOn[key]=!RT_state.radarOn[key];
  var on=!!RT_state.radarOn[key];
  RT_tileOp('rt-wxr-toggle',on);
- if(on){ RT_ovCloseOthers('radar'); RT_radarBuildOverlay(); RT_wxFetch(false); RT_radarAttach(RT_holeFullMapInst); }
- else { RT_radarRemoveOverlay(); RT_radarDetach(); }
+ if(on){ RT_ovCloseOthers('radar'); RT_radarBuildOverlay(); RT_wxFetch(false); RT_radarAttach(RT_holeFullMapInst);
+  try{ var _rm=RT_holeFullMapInst; if(_rm){ RT_radarPrevView={c:_rm.getCenter(),z:_rm.getZoom()}; } }catch(e){}
+  RT_radarZoomOut(RT_holeFullMapInst); }
+ else { RT_radarRemoveOverlay(); RT_radarDetach();
+  try{ if(RT_radarPrevView&&RT_holeFullMapInst){ RT_holeFullMapInst.setView(RT_radarPrevView.c,RT_radarPrevView.z,{animate:true}); } }catch(e){} RT_radarPrevView=null; }
 }
 function RT_radarPlayIcon(playing){
  return playing
@@ -5605,6 +5624,7 @@ function RT_toggleWind(){
  RT_state.windOn[key]=!RT_state.windOn[key];
  var on=!!RT_state.windOn[key];
  RT_tileOp('rt-wind-toggle',on);
+ if(on){ try{ RT_windFetch(RT_round,RT_round.cur,false); }catch(e){} }
  var ov=document.getElementById('rt-wind-ui');
  if(ov){ ov.innerHTML=RT_windOverlayContent(rd,rd.cur); ov.style.display=on?'flex':'none'; }
 }

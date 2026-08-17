@@ -7606,7 +7606,11 @@ function RT_rPlay(){
   }
  }
  /* Bahnen-Leiste */
- h+='<div class="rt-holes">';
+ var _nineSwap=!!(rd.cnt===18 && (function(){try{return rtGet('fp_nineSwap');}catch(e){return 0;}})());
+ if(rd.cnt===18){
+  h+='<div class="rt-nine-bar"><span class="rt-nine-grip" role="button" title="Reihenfolge der Neuner tauschen – nur Ansicht, ohne Auswirkung auf die Wertung" onclick="RT_toggleNineSwap()"><span class="dots">\u283f</span>'+(_nineSwap?'10\u201318 oben':'1\u20139 oben')+'</span></div>';
+ }
+ h+='<div class="rt-holes'+(_nineSwap?' swapped':'')+'">';
  for(var i=0;i<rd.cnt;i++){
   var done=rd.players.every(function(p){return p.sc[i]!==null||p.cx[i];});
   h+='<button class="rt-hb'+(i===rd.cur?' cur':done?' done':'')+'" onclick="RT_setHole('+i+')">'+
@@ -7744,6 +7748,13 @@ function RT_autosaveHole(rd,prevIdx){
     Zeile. Zuschauer schreiben nie (keine Dubletten). Solo-Runde: normaler Push. */
  if(RT_roundIsShared(rd)&&!rd.ownCards){ if(!RT_amScorer(rd)) return; sbPushCanonical(rd); return; }
  sbPushRound(rd);
+}
+/* Nur-optischer Tausch der beiden Neuner-Reihen (1-9 / 10-18) im Loch-Streifen.
+   Aendert ausschliesslich die Anzeige-Reihenfolge per CSS-order; Loch-Indizes, Wertung
+   und Daten bleiben voellig unberuehrt. Einstellung wird lokal gemerkt. */
+function RT_toggleNineSwap(){
+ try{ rtSet('fp_nineSwap', rtGet('fp_nineSwap')?0:1); }catch(e){}
+ try{ RT_render(); }catch(e){}
 }
 function RT_setHole(i){
  var rd=RT_round; if(!rd)return;

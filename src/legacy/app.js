@@ -7589,7 +7589,6 @@ function RT_rPlay(){
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="'+(RT_editingExisting?'RT_cancelEdit()':'RT_go(\'home\')')+'">&#8249;</button>'+
   '<div style="flex:1;min-width:0;"><div class="rt-h1" style="font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+rtEsc(rd.courseName)+'</div>'+
   '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
- if(rd.v2) h+=RT_v2BannerHtml(rd);
  if(!rd.v2 && RT_roundIsShared(rd)){
   var _amSc=RT_amScorer(rd);
   var _amOwner=!!(RT_roundOwners[rd.id]&&sbUser&&RT_roundOwners[rd.id]===sbUser.id);
@@ -7608,7 +7607,7 @@ function RT_rPlay(){
  /* Bahnen-Leiste */
  var _nineSwap=!!(rd.cnt===18 && (function(){try{return rtGet('fp_nineSwap');}catch(e){return 0;}})());
  if(rd.cnt===18){
-  h+='<div class="rt-nine-bar"><span class="rt-nine-grip" role="button" title="Reihenfolge der Neuner tauschen – nur Ansicht, ohne Auswirkung auf die Wertung" onclick="RT_toggleNineSwap()"><span class="dots">\u283f</span>'+(_nineSwap?'10\u201318 oben':'1\u20139 oben')+'</span></div>';
+  h+='<div class="rt-nine-bar"><span class="rt-nine-grip" role="button" title="Reihenfolge der Neuner tauschen – nur Ansicht, ohne Auswirkung auf die Wertung" onclick="RT_toggleNineSwap()"><span class="dots">\u21C5</span>'+(_nineSwap?'10\u201318 oben':'1\u20139 oben')+'</span></div>';
  }
  h+='<div class="rt-holes'+(_nineSwap?' swapped':'')+'">';
  for(var i=0;i<rd.cnt;i++){
@@ -7682,6 +7681,7 @@ function RT_rPlay(){
   h+='</div>';
  });
  h+='</div>';
+ if(rd.v2) h+=RT_v2BannerHtml(rd);
  /* Distanzen-Karte wie Referenzpunkte/Wegpunkte aufgebaut und standardmaessig zugeklappt:
     waehrend des Spiels braucht man sie nur punktuell. RT_state.distOpen ist beim Start
     undefined, also geschlossen. */
@@ -8571,13 +8571,15 @@ function RT_fmtRankHtml(title,rows,valFn,sub){
 }
 function RT_fmtHtml(rd){
  if(!rd||!rd.players||!rd.players.length) return '';
- var head='<div class="rtc" style="margin-bottom:12px;padding:0;overflow:hidden;">'
-  +'<button class="rt-btn3" style="width:100%;text-align:left;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;background:#F1F6EC;" onclick="RT_fmtToggleOpen()">'
-  +'<span style="font-weight:800;color:#143522;">🏆 Spielformate &amp; Auswertung</span>'
-  +'<span style="font-size:12px;color:#8A9C8E;">'+(RT_fmtOpen?'Zuklappen ▲':'Aufklappen ▼')+'</span></button>';
+ var head='<div class="rtc" style="margin-bottom:12px;padding:12px 14px;">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;'+(RT_fmtOpen?'margin-bottom:12px;':'')+'">'
+  +'<div><div class="rt-ct" style="margin:0;">Spielformate &amp; Auswertung</div>'
+  +'<div class="rt-cs" style="margin:0;">Zählspiel, Stableford, Skins, Lochspiel &amp; Nassau – aus den Scores berechnet</div></div>'
+  +'<button class="rt-btn2" style="margin:0;padding:9px 14px;font-size:12px;white-space:nowrap;flex:none;width:auto;min-width:120px;text-align:center;" onclick="RT_fmtToggleOpen()">'+(RT_fmtOpen?'Zuklappen':'Anzeigen')+'</button>'
+  +'</div>';
  if(!RT_fmtOpen) return head+'</div>';
  var net=RT_fmtNet;
- var b='<div style="padding:12px 14px 14px;">';
+ var b='<div>';
  b+='<div style="display:flex;gap:6px;margin-bottom:14px;">'
   +'<button class="rt-btn3" style="flex:1;padding:8px;border-radius:8px;font-weight:700;'+(net?'background:#187040;color:#fff;':'background:#F1F6EC;color:#5a6d5e;')+'" onclick="RT_fmtSetNet(true)">Netto</button>'
   +'<button class="rt-btn3" style="flex:1;padding:8px;border-radius:8px;font-weight:700;'+(!net?'background:#187040;color:#fff;':'background:#F1F6EC;color:#5a6d5e;')+'" onclick="RT_fmtSetNet(false)">Brutto</button></div>';
@@ -11513,30 +11515,20 @@ function RT_toggleScPanel(){ try{ rtSet('fp_scPanelOpen', RT_scPanelOpen()?0:1);
 function RT_v2BannerHtml(rd){
  if(!rd||!rd.v2) return '';
  var open=RT_scPanelOpen();
- var anyOffline=false;
- rd.players.forEach(function(p,i){ var uid=RT_v2ScorerFor(rd,i); var mine=!!(sbUser&&uid===sbUser.id); if(!mine && !RT_v2Reachable(rd,uid)) anyOffline=true; });
- var chev=open?'\u25B4':'\u25BE';
- var h='<div class="rtc" style="padding:10px 12px;margin-bottom:10px;background:#F3F8F2;border:1px solid #CFE3D2;">';
- h+='<div onclick="RT_toggleScPanel()" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;">'
-  +'<div class="rt-ct" style="margin:0;font-size:12.5px;flex:none;">Scoring-Karten</div>';
- if(!open){
-  /* Eingeklappt: kompakte Statuszeile - farbiger Punkt + Name je Spieler. */
-  var comp='';
-  rd.players.forEach(function(p,i){
-   var uid=RT_v2ScorerFor(rd,i); var mine=!!(sbUser&&uid===sbUser.id); var reach=mine||RT_v2Reachable(rd,uid);
-   comp+='<span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px;">'
-    +'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+(reach?'#2EA84F':'#C0392B')+';flex:none;"></span>'
-    +'<span style="color:#143522;">'+rtEsc(p.name)+'</span></span>';
-  });
-  h+='<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;">'+comp+'</div>';
- } else {
-  h+='<div style="flex:1;"></div>';
- }
- h+='<span style="flex:none;font-size:12px;color:#3C7A50;font-weight:700;">'+(open?'Einklappen':'Ausklappen')+' '+chev+'</span>'
-  +(anyOffline&&!open?'<span title="ein Spieler offline" style="flex:none;width:8px;height:8px;border-radius:50%;background:#C0392B;margin-left:4px;"></span>':'')
-  +'</div>';
+ /* Kompakte Statuszeile (auch eingeklappt sichtbar): farbiger Punkt + Name je Spieler. */
+ var sub='';
+ rd.players.forEach(function(p,i){
+  var uid=RT_v2ScorerFor(rd,i); var mine=!!(sbUser&&uid===sbUser.id); var reach=mine||RT_v2Reachable(rd,uid);
+  sub+='<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;">'
+   +'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+(reach?'#2EA84F':'#C0392B')+';flex:none;"></span>'
+   +'<span>'+rtEsc(p.name)+'</span></span>';
+ });
+ var h='<div class="rtc" style="padding:12px 14px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;'+(open?'margin-bottom:10px;':'')+'">'+
+  '<div style="min-width:0;"><div class="rt-ct" style="margin:0;">Scoring-Karten</div>'+
+  '<div class="rt-cs" style="margin:0;display:flex;flex-wrap:wrap;align-items:center;">'+sub+'</div></div>'+
+  '<button class="rt-btn2" style="margin:0;padding:9px 14px;font-size:12px;white-space:nowrap;flex:none;width:auto;min-width:120px;text-align:center;" onclick="RT_toggleScPanel()">'+(open?'Zuklappen':'Anzeigen')+'</button>'+
+  '</div>';
  if(open){
-  h+='<div style="margin-top:8px;">';
   rd.players.forEach(function(p,i){
    var uid=RT_v2ScorerFor(rd,i);
    var mine=!!(sbUser&&uid===sbUser.id);
@@ -11544,10 +11536,9 @@ function RT_v2BannerHtml(rd){
    var dot='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+(reach?'#2EA84F':'#C0392B')+';margin-right:6px;flex:none;"></span>';
    h+='<div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#143522;padding:3px 0;">'+dot
     +'<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><b>'+rtEsc(p.name)+'</b> · '+(mine?'Du führst':('führt: '+rtEsc(RT_v2ScorerName(rd,i))))+(!mine&&!reach?' (offline)':'')+'</div>'
-    +((!mine && !reach)?'<button class="rt-btn2" style="width:auto;flex:none;padding:5px 10px;font-size:11px;margin:0;" onclick="event.stopPropagation();RT_v2TakeCard('+i+')">übernehmen</button>':'')
+    +((!mine && !reach)?'<button class="rt-btn2" style="width:auto;flex:none;padding:5px 10px;font-size:11px;margin:0;" onclick="RT_v2TakeCard('+i+')">übernehmen</button>':'')
     +'</div>';
   });
-  h+='</div>';
  }
  h+='</div>';
  return h;

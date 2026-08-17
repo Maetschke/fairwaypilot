@@ -5091,7 +5091,7 @@ function RT_spData(){
   var along=s.x*ux+s.y*uy;
   var offR=-(ux*s.y-uy*s.x);
   if(along>=15) shots.push({lat:first.lat,lng:first.lng,along:along,off:offR,frac:Math.max(0,Math.min(1.05,along/len)),date:r.date||''});
-  for(var q=0;q<pts.length;q++){ var pq=pts[q]; if(!pq||pq.lat==null) continue; var sq=xy(pq); var offq=-(ux*sq.y-uy*sq.x); lies.push({lat:pq.lat,lng:pq.lng,off:offq}); }
+  for(var q=0;q<pts.length;q++){ var pq=pts[q]; if(!pq||pq.lat==null) continue; var sq=xy(pq); var offq=-(ux*sq.y-uy*sq.x); lies.push({lat:pq.lat,lng:pq.lng,off:offq,isTee:(pq===first)}); }
  });
  var TH=12, L=0,M=0,R=0;
  shots.forEach(function(s){ if(s.off>TH) R++; else if(s.off<-TH) L++; else M++; });
@@ -5153,8 +5153,14 @@ function RT_spPlot(d){
  } else {
   lies.forEach(function(s){
    if(s.lat==null) return;
-   var mid=(s.off<=d.TH&&s.off>=-d.TH), col=mid?'#48e08a':'#ffce45';
-   L.marker([s.lat,s.lng],{pane:'spdots',interactive:false,icon:L.divIcon({className:'',iconSize:[16,16],iconAnchor:[8,8],html:'<div style="width:13px;height:13px;border-radius:50%;background:'+col+';border:2px solid #0b160f;box-shadow:0 1px 3px rgba(0,0,0,.6);"></div>'})}).addTo(lg);
+   if(s.isTee){
+    /* Abschlag: gruen = Mittelkorridor, gelb = seitlich daneben. */
+    var mid=(s.off<=d.TH&&s.off>=-d.TH), col=mid?'#48e08a':'#ffce45';
+    L.marker([s.lat,s.lng],{pane:'spdots',interactive:false,icon:L.divIcon({className:'',iconSize:[16,16],iconAnchor:[8,8],html:'<div style="width:13px;height:13px;border-radius:50%;background:'+col+';border:2px solid #0b160f;box-shadow:0 1px 3px rgba(0,0,0,.6);"></div>'})}).addTo(lg);
+   } else {
+    /* Folgeschlaege: neutral (kein Mitte/daneben-Bezug wie beim Abschlag). */
+    L.marker([s.lat,s.lng],{pane:'spdots',interactive:false,icon:L.divIcon({className:'',iconSize:[13,13],iconAnchor:[6,6],html:'<div style="width:10px;height:10px;border-radius:50%;background:#eef2f4;border:2px solid #0b160f;box-shadow:0 1px 3px rgba(0,0,0,.55);"></div>'})}).addTo(lg);
+   }
   });
  }
 }

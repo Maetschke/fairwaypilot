@@ -9579,6 +9579,7 @@ function RT_mcRemove(ref,kind){
    ============================================================ */
 var RT_TRC={panel:'tab-analyse',video:null,canvas:null,url:null,fps:30,
   marks:{ball:null,land:null},apex:null,mode:null,handed:'r',dpr:1,drag:false,col:'#F2C230',
+  track:null,extrap:null,tracking:false,_prev:null,_lost:0,
   rec:null,recChunks:null,stream:null,built:false};
 
 var RT_TRC_SHAPES={
@@ -9651,12 +9652,13 @@ function RT_TRC_render(){
        +'<div style="font-weight:700;color:#143522;">Markieren</div>'
        +'<button class="trcb" id="trc-hand" onclick="RT_TRC_toggleHand()" style="padding:6px 10px;font-size:12px;">Rechtshänder</button>'
      +'</div>'
-     +'<div class="trchint">Passendes Bild ansteuern (⏮/⏭). Erst <b>Ball</b>, dann <b>Landung</b> ins Video tippen. Danach den <span style="color:#E0A000;">gelben Bogen-Punkt</span> auf die tatsächliche Flugkurve ziehen – die App erkennt den Ballflug automatisch.</div>'
+     +'<div class="trchint"><b>Automatisch:</b> Bild kurz nach dem Treffmoment ansteuern (⏮/⏭), <b>① Ball</b> antippen, dann <b>🎯 Ball verfolgen</b> – die App zeichnet den Ballflug Bild für Bild nach (durchgezogen) und extrapoliert ab Ball-Verlust den Rest (gestrichelt). <b>Manuell:</b> alternativ Ball + Landung tippen und den <span style="color:#E0A000;">gelben Punkt</span> auf die Kurve ziehen.</div>'
      +'<div class="trcrow">'
        +'<button class="trcb" id="trc-mb-ball" onclick="RT_TRC_setMode(\'ball\')">① Ball</button>'
        +'<button class="trcb" id="trc-mb-land" onclick="RT_TRC_setMode(\'land\')">② Landung</button>'
        +'<button class="trcb" onclick="RT_TRC_clearMarks()">Zurücksetzen</button>'
      +'</div>'
+     +'<div class="trcrow"><button class="trcb pri" id="trc-track" onclick="RT_TRC_armTrack()" style="flex:1;">🎯 Ball verfolgen (Bild-für-Bild)</button></div>'
      +RT_TRC_colorRowHtml()
      +'<div id="trc-analysis" style="margin-top:12px;"></div>'
    +'</div>'
@@ -9797,6 +9799,7 @@ function RT_TRC_ptrUp(ev){ if(RT_TRC.drag){ RT_TRC.drag=false; RT_TRC_renderAnal
 
 function RT_TRC_clearMarks(silent){
   RT_TRC.marks={ball:null,land:null};RT_TRC.apex=null;RT_TRC.mode=null;RT_TRC.drag=false;
+  RT_TRC.track=null;RT_TRC.extrap=null;RT_TRC.tracking=false;RT_TRC._prev=null;RT_TRC._lost=0;
   if(!silent){RT_TRC_syncButtons();RT_TRC_draw();RT_TRC_renderAnalysis();}
 }
 function RT_TRC_syncButtons(){
@@ -9909,16 +9912,110 @@ function RT_TRC_startPlayLoop(){ if(RT_TRC._loop) return; RT_TRC._loop=true; RT_
 function RT_TRC_stopPlayLoop(){ RT_TRC._loop=false; }
 function RT_TRC_playLoop(){
   if(!RT_TRC._loop) return;
-  var v=RT_TRC.video; if(!v||v.paused||v.ended){ RT_TRC._loop=false; return; }
-  if(RT_TRC.marks.ball&&RT_TRC.marks.land&&RT_TRC.apex) RT_TRC_draw(RT_TRC_progForTime());
+  var v=RT_TRC.video; if(!v||v.paused||v.ended){ RT_TRC._loop=false; if(RT_TRC.tracking&&RT_TRC.track&&RT_TRC.track.length>=3){ RT_TRC_finishTrack(); } return; }
+  if(RT_TRC.tracking){ RT_TRC_trackStep(); }
+  else if(RT_TRC.track&&RT_TRC.track.length){ RT_TRC_drawTracked(); }
+  else if(RT_TRC.marks.ball&&RT_TRC.marks.land&&RT_TRC.apex){ RT_TRC_draw(RT_TRC_progForTime()); }
   if(v.requestVideoFrameCallback){ v.requestVideoFrameCallback(RT_TRC_playLoop); } else { requestAnimationFrame(RT_TRC_playLoop); }
+}
+/* ===== Bild-fuer-Bild-Ball-Tracking (halb-automatisch) =====
+   Ball markieren -> beim Abspielen wird der Ball je Bild in einem Suchfenster um die
+   vorhergesagte Position gesucht (hell UND bewegt, per Frame-Differenz). Solange er klar
+   erkennbar ist, waechst die durchgezogene Linie. Ab Verlust wird die Restbahn aus der
+   bisherigen Bewegung (Geschwindigkeit + Schwerkraft im Bild) extrapoliert und gestrichelt
+   gezeichnet. Farbe = vom Nutzer gewaehlte Linienfarbe. Experimentell/qualitaetsabhaengig. */
+function RT_TRC_frameData(AW,AH){
+  var v=RT_TRC.video; if(!v) return null;
+  var ac=RT_TRC._acanvas; if(!ac){ ac=RT_TRC._acanvas=document.createElement('canvas'); }
+  if(ac.width!==AW||ac.height!==AH){ ac.width=AW; ac.height=AH; }
+  var ax=ac.getContext('2d',{willReadFrequently:true}); if(!ax) return null;
+  try{ ax.drawImage(v,0,0,AW,AH); return ax.getImageData(0,0,AW,AH); }catch(e){ return null; }
+}
+function RT_TRC_detect(now,prev,AW,AH,pred,rad){
+  var cx=pred.x*AW, cy=pred.y*AH;
+  var x0=Math.max(0,Math.floor(cx-rad)), x1=Math.min(AW-1,Math.ceil(cx+rad));
+  var y0=Math.max(0,Math.floor(cy-rad)), y1=Math.min(AH-1,Math.ceil(cy+rad));
+  var nd=now.data, pd=prev.data, sumX=0,sumY=0,sumW=0, cnt=0, best=0;
+  for(var y=y0;y<=y1;y++){ for(var x=x0;x<=x1;x++){ var i=(y*AW+x)*4;
+    var lum=(nd[i]*0.299+nd[i+1]*0.587+nd[i+2]*0.114)/255;
+    var d=(Math.abs(nd[i]-pd[i])+Math.abs(nd[i+1]-pd[i+1])+Math.abs(nd[i+2]-pd[i+2]))/765;
+    var sc=lum*d;
+    if(sc>0.06){ var wgt=sc*sc; sumX+=x*wgt; sumY+=y*wgt; sumW+=wgt; cnt++; if(sc>best)best=sc; }
+  } }
+  if(sumW<=0||cnt<2) return null;
+  return {x:(sumX/sumW)/AW, y:(sumY/sumW)/AH, conf:best, cnt:cnt};
+}
+function RT_TRC_trackStep(){
+  var v=RT_TRC.video; if(!v||!RT_TRC.tracking) return;
+  var vw=v.videoWidth||1280, vh=v.videoHeight||720;
+  var AW=320, AH=Math.max(1,Math.round(AW*vh/vw));
+  var now=RT_TRC_frameData(AW,AH); if(!now){ return; }
+  if(!RT_TRC._prev){ RT_TRC._prev=now; return; }
+  var tr=RT_TRC.track||[]; var n=tr.length, pred, rad;
+  if(n>=2){ var a=tr[n-1],b=tr[n-2]; pred={x:a.x+(a.x-b.x),y:a.y+(a.y-b.y)}; rad=AW*0.16; }
+  else if(n===1){ pred={x:tr[0].x,y:tr[0].y}; rad=AW*0.20; }
+  else { pred=RT_TRC.marks.ball||{x:0.5,y:0.5}; rad=AW*0.22; }
+  var det=RT_TRC_detect(now,RT_TRC._prev,AW,AH,pred,rad);
+  if(det&&det.conf>0.10){ tr.push({x:det.x,y:det.y,t:v.currentTime}); RT_TRC._lost=0; }
+  else { RT_TRC._lost=(RT_TRC._lost||0)+1; if(RT_TRC._lost>=3 && tr.length>=3){ RT_TRC._prev=now; RT_TRC_finishTrack(); return; } }
+  RT_TRC._prev=now;
+  RT_TRC_drawTracked();
+}
+function RT_TRC_finishTrack(){
+  RT_TRC.tracking=false;
+  var btn=document.getElementById('trc-track'); if(btn){ btn.className='trcb pri'; btn.textContent='🎯 Ball verfolgen (Bild-für-Bild)'; }
+  var tr=RT_TRC.track||[];
+  if(tr.length>=3){
+    var a=tr[tr.length-1], b=tr[tr.length-2], c=tr[tr.length-3];
+    var vx=a.x-b.x, vy=a.y-b.y;
+    var ay=(a.y-b.y)-(b.y-c.y); if(!(ay>0.0004)) ay=0.0009;   // Schwerkraft im Bild (nach unten)
+    var ex=[], px=a.x, py=a.y, cvy=vy;
+    for(var k=0;k<240;k++){ cvy+=ay; px+=vx; py+=cvy; ex.push({x:px,y:py}); if(py>=1.03||px<-0.05||px>1.05||py<-0.4) break; }
+    RT_TRC.extrap=ex;
+  }
+  RT_TRC_drawTracked(); RT_TRC_renderAnalysis();
+}
+function RT_TRC_armTrack(){
+  var v=RT_TRC.video, m=RT_TRC.marks;
+  if(!v||!v.duration){ RT_TRC_toast('Zuerst ein Video laden.'); return; }
+  if(RT_TRC.tracking){ RT_TRC.tracking=false; var b0=document.getElementById('trc-track'); if(b0){ b0.className='trcb pri'; b0.textContent='🎯 Ball verfolgen (Bild-für-Bild)'; } return; }
+  if(!m.ball){ RT_TRC_toast('Zuerst den Ball markieren (① Ball) – am besten kurz nach dem Treffmoment.'); return; }
+  RT_TRC.track=[{x:m.ball.x,y:m.ball.y,t:m.ball.t}]; RT_TRC.extrap=null; RT_TRC._prev=null; RT_TRC._lost=0; RT_TRC.tracking=true;
+  var b=document.getElementById('trc-track'); if(b){ b.className='trcb on'; b.textContent='● Analysiere … (abspielen lassen)'; }
+  var go=function(){ v.removeEventListener('seeked',go); try{ v.playbackRate=0.5; }catch(e){} var pp=v.play(); if(pp&&pp.catch) pp.catch(function(){}); };
+  v.addEventListener('seeked',go);
+  try{ v.currentTime=Math.max(0,(m.ball.t||0)); }catch(e){ go(); }
+}
+function RT_TRC_renderTrackedInto(ctx,W,H,curT){
+  var tr=RT_TRC.track; if(!tr||!tr.length) return;
+  var rgb=RT_TRC_colRGB(); var col='rgb('+rgb.r+','+rgb.g+','+rgb.b+')';
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  var lastPt=null, lastT=null, started=false;
+  ctx.strokeStyle=col; ctx.lineWidth=Math.max(3,W/150); ctx.beginPath();
+  for(var i=0;i<tr.length;i++){ var pt=tr[i]; if(curT!=null && pt.t>curT+1e-3) break; var X=pt.x*W, Y=pt.y*H; if(!started){ ctx.moveTo(X,Y); started=true; } else ctx.lineTo(X,Y); lastPt=[X,Y]; lastT=pt.t; }
+  if(started) ctx.stroke();
+  var ex=RT_TRC.extrap;
+  if(ex&&ex.length&&lastPt&&(curT==null||(lastT!=null&&curT>=lastT-1e-3))){
+    ctx.setLineDash([Math.max(6,W/70),Math.max(6,W/70)]); ctx.strokeStyle=col; ctx.lineWidth=Math.max(3,W/165);
+    ctx.beginPath(); ctx.moveTo(lastPt[0],lastPt[1]);
+    for(var j=0;j<ex.length;j++){ ctx.lineTo(ex[j].x*W, ex[j].y*H); }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  if(lastPt){ ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=Math.max(1.5,W/700); ctx.beginPath(); ctx.arc(lastPt[0],lastPt[1],Math.max(4,W/240),0,6.29); ctx.fill(); ctx.stroke(); }
+  var b0=tr[0]; if(b0){ ctx.fillStyle='#1F8A4D'; ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,W/500); ctx.beginPath(); ctx.arc(b0.x*W,b0.y*H,Math.max(5,W/200),0,6.29); ctx.fill(); ctx.stroke(); }
+}
+function RT_TRC_drawTracked(){
+  var c=RT_TRC.canvas; if(!c||!c.getContext) return; var ctx=c.getContext('2d'); var dpr=RT_TRC.dpr||1; var w=c.width/dpr,h=c.height/dpr;
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,c.width,c.height); ctx.scale(dpr,dpr);
+  var curT = RT_TRC.tracking ? null : (RT_TRC.video?RT_TRC.video.currentTime:null);
+  RT_TRC_renderTrackedInto(ctx,w,h,curT);
 }
 /* Video mit eingebrannter, live nachgezeichneter Flugbahn exportieren (Canvas-Aufnahme via
    MediaRecorder). Spielt das Video einmal durch, zeichnet je Bild Video + Flugbahn-Fortschritt
    auf ein Canvas und nimmt dessen Stream auf. Auf iOS/Safari geraetgeabhaengig - v1. */
 function RT_TRC_exportVideo(){
   var v=RT_TRC.video,m=RT_TRC.marks;
-  if(!v||!m.ball||!m.land||!RT_TRC.apex){ RT_TRC_toast('Bitte zuerst Ball, Landung und Flugkurve setzen.'); return; }
+  if(!v||(!(RT_TRC.track&&RT_TRC.track.length>1) && (!m.ball||!m.land||!RT_TRC.apex))){ RT_TRC_toast('Bitte zuerst den Ball verfolgen oder Ball + Landung markieren.'); return; }
   if(typeof MediaRecorder==='undefined'){ RT_TRC_toast('Video-Export wird auf diesem Gerät nicht unterstützt.'); return; }
   var vw=v.videoWidth||1280, vh=v.videoHeight||720;
   var sc=Math.min(1,1080/Math.max(vw,vh)); var W=Math.round(vw*sc), H=Math.round(vh*sc);
@@ -9946,7 +10043,9 @@ function RT_TRC_exportVideo(){
   function render(){
     if(!running) return;
     try{ ctx.drawImage(v,0,0,W,H); }catch(e){}
-    if(m.ball&&m.land&&RT_TRC.apex){
+    if(RT_TRC.track&&RT_TRC.track.length){
+      RT_TRC_renderTrackedInto(ctx,W,H,v.currentTime);
+    } else if(m.ball&&m.land&&RT_TRC.apex){
       var pr=RT_TRC_progForTime();
       RT_TRC_strokeTrace(ctx,W,H,pr,Math.max(6,W/110));
       var ph=RT_TRC_path(pr); ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=Math.max(1.5,W/700);

@@ -7726,6 +7726,7 @@ function RT_rPlay(){
  if(c<rd.cnt-1)h+='<button class="rt-btn2" style="width:100%;margin-bottom:12px;" onclick="RT_finish()">'+(RT_editingExisting?'Speichern':'Runde vorzeitig beenden &amp; speichern')+'</button>';
  else h+='<div style="margin-bottom:12px;"></div>';
  if(rd.cnt===18&&!rd.ownCards&&RT_amScorer(rd)) h+='<button class="rt-btn3" style="width:100%;margin-bottom:12px;color:#6b7d70;font-size:12px;border:1px solid #E6ECDF;" onclick="RT_askConvertNine()">Auf 9 Löcher umstellen (nur gespielte werten)</button>';
+ if(rd.cnt===9&&!rd.ownCards&&RT_amScorer(rd)) h+='<button class="rt-btn3" style="width:100%;margin-bottom:12px;color:#6b7d70;font-size:12px;border:1px solid #E6ECDF;" onclick="RT_askExpandEighteen()">Auf 18 Löcher erweitern (zweite Neun ergänzen)</button>';
  return h;
 }
 /* Prueft, ob fuer eine Bahn bei ALLEN Spielern ein Ergebnis erfasst ist (Schlagzahl gesetzt\n   oder Bahn gestrichen) - Grundlage fuer die automatische Cloud-Speicherung beim Bahnwechsel. */
@@ -7918,11 +7919,12 @@ function RT_cx(pi){
 /* Ganze 18-Loch-Runde waehrend des Spiels auf eine echte 9-Loch-Runde umstellen: die nicht
    gespielte Haelfte wird verworfen, CR/Slope/Spielvorgabe je Spieler auf die Neun umgerechnet,
    Front oder Back automatisch anhand der bereits erfassten Loecher erkannt. */
-function RT_convertRoundToNine(){
+function RT_convertRoundToNine(side){
  var rd=RT_round; if(!rd||rd.cnt!==18) return;
- var fCnt=0,bCnt=0;
- for(var i=0;i<18;i++){ var pl=false; for(var pj=0;pj<rd.players.length;pj++){ if(rd.players[pj].sc[i]!==null){pl=true;break;} } if(pl){ if(rd.nums[i]<=9)fCnt++; else bCnt++; } }
- var isFront=!(bCnt>fCnt);
+ RT_closeConv9();
+ var isFront;
+ if(side==='F') isFront=true; else if(side==='B') isFront=false;
+ else { var fCnt=0,bCnt=0; for(var i=0;i<18;i++){ var pl=false; for(var pj=0;pj<rd.players.length;pj++){ if(rd.players[pj].sc[i]!==null){pl=true;break;} } if(pl){ if(rd.nums[i]<=9)fCnt++; else bCnt++; } } isFront=!(bCnt>fCnt); }
  var sIdx=isFront?0:9;
  var half=rd.players.map(function(p){ return RT_halfCrSl(rd,p,isFront); });
  var newPar=rd.par.slice(sIdx,sIdx+9), newSi=rd.si.slice(sIdx,sIdx+9), newNums=rd.nums.slice(sIdx,sIdx+9);
@@ -7943,12 +7945,57 @@ function RT_convertRoundToNine(){
  rd.cur=Math.max(0,Math.min(8,rd.cur));
  rtSet(RT_ACT,rd); RT_syncActiveToSaved(); RT_render();
 }
+function RT_closeConv9(){ var o=document.getElementById('rt-conv9'); if(o&&o.parentNode) o.parentNode.removeChild(o); }
 function RT_askConvertNine(){
  var rd=RT_round; if(!rd||rd.cnt!==18) return;
- var fCnt=0,bCnt=0;
- for(var i=0;i<18;i++){ var pl=false; for(var pj=0;pj<rd.players.length;pj++){ if(rd.players[pj].sc[i]!==null){pl=true;break;} } if(pl){ if(rd.nums[i]<=9)fCnt++; else bCnt++; } }
- var isFront=!(bCnt>fCnt);
- RT_pageConfirm('Runde auf 9 Löcher umstellen? Die '+(isFront?'Back':'Front')+'-9 wird verworfen und die Runde als reine '+(isFront?'Front':'Back')+'-9-Runde gewertet.', function(){ RT_convertRoundToNine(); }, 'Umstellen', '#187040');
+ RT_closeConv9();
+ var ov=document.createElement('div'); ov.id='rt-conv9';
+ ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(8,20,12,.42);display:flex;align-items:flex-end;justify-content:center;';
+ ov.innerHTML='<div style="background:#fff;border-radius:18px 18px 0 0;max-width:480px;width:100%;padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 16px);box-shadow:0 -8px 32px rgba(0,0,0,.28);font-family:Inter,-apple-system,sans-serif;">'
+  +'<div style="font-size:15px;font-weight:800;color:#143522;margin-bottom:4px;">Auf 9 Löcher umstellen</div>'
+  +'<div style="font-size:12px;color:#6b7d70;margin-bottom:14px;">Welche Neun soll gewertet werden? Die jeweils andere Neun wird verworfen.</div>'
+  +'<div style="display:flex;gap:8px;margin-bottom:8px;">'
+   +'<button onclick="RT_convertRoundToNine(\'F\')" style="flex:1;padding:12px;border-radius:10px;border:none;background:#187040;color:#fff;font-weight:800;font-family:inherit;cursor:pointer;">Front 9 (1–9)</button>'
+   +'<button onclick="RT_convertRoundToNine(\'B\')" style="flex:1;padding:12px;border-radius:10px;border:none;background:#187040;color:#fff;font-weight:800;font-family:inherit;cursor:pointer;">Back 9 (10–18)</button>'
+  +'</div>'
+  +'<button onclick="RT_closeConv9()" style="width:100%;padding:11px;border-radius:10px;border:1px solid #DCE7D4;background:#fff;color:#143522;font-weight:700;font-family:inherit;cursor:pointer;">Abbrechen</button>'
+  +'</div>';
+ document.body.appendChild(ov);
+ ov.addEventListener('click',function(e){ if(e.target===ov) RT_closeConv9(); });
+}
+function RT_askExpandEighteen(){
+ var rd=RT_round; if(!rd||rd.cnt!==9) return;
+ var key=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(rd.courseName,rd):null;
+ var co=key&&RT_COURSES[key];
+ if(!co||!co.nines||!co.nines.F||!co.nines.B||co.nines.B.lbl==='–'){ RT_pageConfirm('Für diesen Platz ist keine zweite Neun hinterlegt – Erweiterung auf 18 nicht möglich.', function(){}, 'OK', '#187040'); return; }
+ RT_pageConfirm('Runde auf 18 Löcher erweitern? Die zweite Neun wird ergänzt (noch nicht gespielte Löcher bleiben leer).', function(){ RT_convertRoundToEighteen(); }, 'Erweitern', '#187040');
+}
+function RT_convertRoundToEighteen(){
+ var rd=RT_round; if(!rd||rd.cnt!==9) return;
+ var key=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(rd.courseName,rd):null;
+ var co=key&&RT_COURSES[key]; if(!co||!co.nines||!co.nines.F||!co.nines.B) return;
+ var curFront=rd.nums[0]<=9;
+ var parF=(co.nines.F.par||[]).slice(), parB=(co.nines.B.par||[]).slice();
+ var numsF=(co.nines.F.nums||[]).slice(), numsB=(co.nines.B.nums||[]).slice();
+ var siF=(co.nines.F.si18||co.nines.F.si), siB=(co.nines.B.si18||co.nines.B.si);
+ if(parF.length!==9||parB.length!==9||numsF.length!==9||numsB.length!==9) return;
+ var par=parF.concat(parB), nums=numsF.concat(numsB);
+ var si=(siF&&siB&&siF.length===9&&siB.length===9)?siF.concat(siB):null;
+ var parSum=par.reduce(function(a,b){return a+b;},0);
+ function nulls(){ return [null,null,null,null,null,null,null,null,null]; }
+ function emptyPins(){ return [[],[],[],[],[],[],[],[],[]]; }
+ rd.players.forEach(function(pp){
+  function ext(a){ a=a||[]; return curFront? a.concat(nulls()) : nulls().concat(a); }
+  pp.sc=ext(pp.sc); pp.pu=ext(pp.pu); pp.fw=ext(pp.fw); pp.pe=ext(pp.pe); pp.sa=ext(pp.sa); pp.cx=ext(pp.cx);
+  if(pp.pins){ pp.pins = curFront ? pp.pins.concat(emptyPins()) : emptyPins().concat(pp.pins); }
+  var t=co.tees&&(co.tees[pp.tee]); var cr=(t&&t.cr&&t.cr.A!=null)?t.cr.A:null, sl=(t&&t.sl&&t.sl.A!=null)?t.sl.A:null;
+  if(cr!=null) pp.cr=cr; if(sl!=null) pp.sl=sl;
+  var nph=RT_ph(pp.hi,pp.cr,pp.sl,parSum,18); if(nph!=null&&!isNaN(nph)) pp.ph=nph;
+  pp.only=null;
+ });
+ rd.par=par; rd.si=si; rd.nums=nums; rd.cnt=18; rd.parSum=parSum; rd.lbl='18 Loch · Par '+parSum;
+ if(!curFront) rd.cur=Math.min(17,rd.cur+9);
+ rtSet(RT_ACT,rd); RT_syncActiveToSaved(); RT_render();
 }
 /* Beim Runde-Beenden: pro (bearbeitbaren) Spieler festlegen, ob alle 18 / nur Front 9 /
    nur Back 9 gespielt wurden. Nicht gespielte Loecher werden als "-" dargestellt und nicht

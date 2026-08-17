@@ -2365,9 +2365,9 @@ function RT_rUser(){
   h+='<div class="rtc"><div class="rt-ct">Golfbag</div><div class="rt-cs" style="margin-bottom:8px;">'+(RT_bagCount()?(RT_bagCount()+' Schläger im Bag'):'Noch keine Schläger ausgewählt')+'</div><button class="rt-btn2" onclick="RT_go(\'bag\')">Schlägerauswahl &#8250;</button></div>';
  h+='<div class="rtc"><div class="rt-ct">Verbundene Dienste</div><div class="rt-cs" style="margin-bottom:8px;">'+RT_svcSummaryLine()+'</div><button class="rt-btn2" onclick="RT_go(\'services\')">Dienste verwalten &#8250;</button></div>';
  /* RSV2-TEST-TOGGLE (temporaer, spaeter entfernen) === */
- h+='<div class="rtc" style="border:1.5px dashed #C77D0A;background:#FFF8EC;"><div class="rt-ct" style="color:#B7791F;">\ud83d\udd27 [TEST \u00b7 vorl\u00e4ufig] Gemeinsames Scoring v2</div>'
-  +'<div class="rt-cs" style="margin-bottom:8px;">Interner Testschalter f\u00fcr die neue, server-erzwungene Scoring-Sync. Nur zum Testen \u2013 wird sp\u00e4ter wieder entfernt.</div>'
-  +'<button class="rt-btn2" style="width:auto;" onclick="RSV2_toggle()">'+(RSV2_ON()?'v2-Scoring ist AN \u2013 ausschalten':'v2-Scoring einschalten')+'</button></div>';
+ h+='<div class="rtc" style="border:1.5px dashed #C77D0A;background:#FFF8EC;"><div class="rt-ct" style="color:#B7791F;">\ud83d\udd27 [intern \u00b7 sp\u00e4ter entfernen] Gemeinsames Scoring v2</div>'
+  +'<div class="rt-cs" style="margin-bottom:8px;">Server-erzwungenes Scoring mit Per-Spieler-Zuweisung ist jetzt Standard. Dieser Notaus schaltet zur\u00fcck auf das alte Modell, falls unterwegs Probleme auftreten.</div>'
+  +'<button class="rt-btn2" style="width:auto;" onclick="RSV2_toggle()">'+(RSV2_ON()?'v2 ist AN (Standard) \u2013 Notaus: altes Modell':'v2 ist AUS \u2013 wieder einschalten')+'</button></div>';
  /* === /RSV2-TEST-TOGGLE */
  h+='<div class="rtc"><div class="rt-ct">Eigenes Handicap</div>'+
   '<div class="rt-cs">Wird bei einer neuen Runde als Standard-HI vorbelegt, statt jedes Mal 54 eintragen zu m\u00fcssen.</div>'+
@@ -6380,7 +6380,7 @@ if(cd){
      (RT_su.players.length>1?'<button class="rt-btn3" onclick="RT_suRm('+i+')">Entfernen</button>':'')+
     '</div>'+RT_setupInviteHtml(p.name)+'</div>';
   });
-  if(RT_su.players.length>1 && RSV2_ON()){
+  if(RT_su.players.length>1 && RSV2_ON() && sbUser){
    h+=RT_suScorerHtml();
   } else if(RT_su.players.length>1){
    var _oc=!!RT_su.ownCards;
@@ -11088,8 +11088,8 @@ var RSV2 = {
 
 
 /* ===== RSV2 Etappe 2b: Flag/Toggle, Scorer-Zuweisung im Setup, v2-Runde anlegen ===== */
-function RSV2_ON(){ try{ return !!rtGet('fp_rsv2_v1'); }catch(e){ return false; } }
-function RSV2_toggle(){ try{ rtSet('fp_rsv2_v1', !RSV2_ON()); }catch(e){} try{ RT_render(); }catch(e){} }
+function RSV2_ON(){ try{ return rtGet('fp_rsv2_off')?false:true; }catch(e){ return true; } }
+function RSV2_toggle(){ try{ rtSet('fp_rsv2_off', !rtGet('fp_rsv2_off')); }catch(e){} try{ RT_render(); }catch(e){} }
 function RT_v2Owner(){ return (sbUser&&sbUser.id)||null; }
 function RT_v2LinkedUid(name){ try{ var st=(typeof PL_statusFor==='function')?PL_statusFor(name):null; return (st&&st.linked_user_id)||null; }catch(e){ return null; } }
 function RT_v2ScorerFor(rd,i){ if(rd&&rd.scorerMap&&rd.scorerMap[i]) return rd.scorerMap[i]; return RT_v2Owner(); }

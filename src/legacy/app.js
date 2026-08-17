@@ -3279,7 +3279,7 @@ function RT_renderHoleFull(url,title){
  var _hbtn='background:#fff;border:1.5px solid #DCE7D4;border-radius:100px;padding:8px 14px;font-size:12px;font-weight:700;color:#3C5546;font-family:inherit;cursor:pointer;';
  var fsBtn='<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleFS(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(fs?'Standard':'Vollbild')+'</button>';
  var toggleBtn=holeKey?('<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?'🖼️ Birdiekarte':'🛰️ Satellitenkarte')+'</button>'):'';
- var topBar='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:'+(fs?'16px':'64px')+';z-index:4;display:flex;gap:8px;">'+fsBtn+toggleBtn+'</div>';
+ var topBar='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:'+(fs?'16px':'64px')+';z-index:3000;display:flex;gap:8px;">'+fsBtn+toggleBtn+'</div>';
  var body;
  if(mapMode){
   body='<div style="position:absolute;inset:0;overflow:hidden;"><div id="hole-full-map" style="position:absolute;width:160%;height:160%;left:-30%;top:-30%;transform-origin:center center;"></div></div>'+RT_grabberOverlayHtml();
@@ -5012,7 +5012,7 @@ function RT_hvPanel(title,closeFn,extra,grabBox){
  var grab=grabOn?'<div class="rt-hv-grab" style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:60px;height:18px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;pointer-events:auto;"><div style="width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);"></div></div>':'';
  var body=grabOn?('<div class="rt-hv-body" style="margin-top:'+(extra?'8px':'0')+';overflow:hidden;transition:max-height .28s ease,opacity .2s ease,margin-top .28s ease;">'+(extra||'')+'</div>'):(extra||'');
  var _col=(grabBox&&grabBox.indexOf('col:')===0)?grabBox.slice(4):''; var _bx=grabOn?(_col?(' data-hvcol="'+_col+'"'):(grabBox?' data-hvbox="'+grabBox+'"':'')):''; var attrs=grabOn?(' class="rt-hv-panel" data-hvgrab="1"'+_bx):'';
- return '<div'+attrs+' style="position:absolute;top:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 18px;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px '+(grabOn?'18px':'9px')+';box-shadow:0 5px 16px rgba(0,0,0,.55);z-index:6;">'
+ return '<div'+attrs+' style="position:absolute;top:0;left:0;right:64px;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 0;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px '+(grabOn?'18px':'9px')+';box-shadow:0 5px 16px rgba(0,0,0,.55);z-index:6;">'
   +'<div style="display:flex;align-items:center;justify-content:space-between;min-height:30px;'+((extra&&!grabOn)?'margin-bottom:8px;':'')+'">'
     +'<div style="font-size:15px;font-weight:800;color:#fff;">'+title+'</div>'+x
   +'</div>'+body+grab+'</div>';
@@ -5074,7 +5074,7 @@ function RT_spData(){
  var ux=pinXY.x/len, uy=pinXY.y/len;
  var rounds=(rtGet(RT_KEY)||[]).slice();
  if(rd&&!rounds.some(function(r){ return r.id===rd.id; })) rounds.push(rd);
- var shots=[];
+ var shots=[], lies=[];
  rounds.forEach(function(r){
   if(!r||!r.nums) return;
   var k2=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(r.courseName,r):null;
@@ -5090,13 +5090,13 @@ function RT_spData(){
   var s=xy(first);
   var along=s.x*ux+s.y*uy;
   var offR=-(ux*s.y-uy*s.x);
-  if(along<15) return;
-  shots.push({lat:first.lat,lng:first.lng,along:along,off:offR,frac:Math.max(0,Math.min(1.05,along/len)),date:r.date||''});
+  if(along>=15) shots.push({lat:first.lat,lng:first.lng,along:along,off:offR,frac:Math.max(0,Math.min(1.05,along/len)),date:r.date||''});
+  for(var q=0;q<pts.length;q++){ var pq=pts[q]; if(!pq||pq.lat==null) continue; var sq=xy(pq); var offq=-(ux*sq.y-uy*sq.x); lies.push({lat:pq.lat,lng:pq.lng,off:offq}); }
  });
  var TH=12, L=0,M=0,R=0;
  shots.forEach(function(s){ if(s.off>TH) R++; else if(s.off<-TH) L++; else M++; });
  var n=shots.length, avgLen=0; if(n){ shots.forEach(function(s){ avgLen+=s.along; }); avgLen=Math.round(avgLen/n); }
- return {noRef:false,tee:tee,pin:pin,len:len,shots:shots,n:n,L:L,M:M,R:R,avgLen:avgLen,TH:TH,num:num};
+ return {noRef:false,tee:tee,pin:pin,len:len,shots:shots,lies:lies,n:n,L:L,M:M,R:R,avgLen:avgLen,TH:TH,num:num};
 }
 function RT_spPct(x,n){ return n?Math.round(x*100/n):0; }
 function RT_spAdvice(d){
@@ -5144,11 +5144,19 @@ function RT_spPlot(d){
  if(RT_SP.layer){ try{map.removeLayer(RT_SP.layer);}catch(e){} RT_SP.layer=null; }
  if(!map.getPane('spdots')){ var p=map.createPane('spdots'); if(p){ p.style.zIndex=635; p.style.pointerEvents='none'; } }
  var lg=L.layerGroup().addTo(map); RT_SP.layer=lg;
- d.shots.forEach(function(s){
-  if(s.lat==null) return;
-  var mid=(s.off<=d.TH&&s.off>=-d.TH), col=mid?'#48e08a':'#ffce45';
-  L.marker([s.lat,s.lng],{pane:'spdots',interactive:false,icon:L.divIcon({className:'',iconSize:[16,16],iconAnchor:[8,8],html:'<div style="width:13px;height:13px;border-radius:50%;background:'+col+';border:2px solid #0b160f;box-shadow:0 1px 3px rgba(0,0,0,.6);"></div>'})}).addTo(lg);
- });
+ var lies=d.lies||d.shots||[];
+ if(lies.length>10){
+  lies.forEach(function(s){
+   if(s.lat==null) return;
+   L.marker([s.lat,s.lng],{pane:'spdots',interactive:false,icon:L.divIcon({className:'',iconSize:[54,54],iconAnchor:[27,27],html:'<div style="width:54px;height:54px;border-radius:50%;background:radial-gradient(circle,rgba(255,74,58,.34) 0%,rgba(255,170,30,.20) 46%,rgba(72,224,138,0) 72%);"></div>'})}).addTo(lg);
+  });
+ } else {
+  lies.forEach(function(s){
+   if(s.lat==null) return;
+   var mid=(s.off<=d.TH&&s.off>=-d.TH), col=mid?'#48e08a':'#ffce45';
+   L.marker([s.lat,s.lng],{pane:'spdots',interactive:false,icon:L.divIcon({className:'',iconSize:[16,16],iconAnchor:[8,8],html:'<div style="width:13px;height:13px;border-radius:50%;background:'+col+';border:2px solid #0b160f;box-shadow:0 1px 3px rgba(0,0,0,.6);"></div>'})}).addTo(lg);
+  });
+ }
 }
 function RT_closeShotPlan(){
  if(RT_SP.layer&&RT_holeFullMapInst){ try{RT_holeFullMapInst.removeLayer(RT_SP.layer);}catch(e){} }

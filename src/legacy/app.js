@@ -7634,7 +7634,7 @@ function RT_rPlay(){
   h+='<div class="rt-plc" style="margin-bottom:10px;">'+
    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
     '<div class="rt-pts" style="background:#EAF6EE;color:#187040;">'+tot.stbf+'</div>'+
-    '<div style="flex:1;text-align:left;"><span style="font-size:13.5px;font-weight:800;color:#143522;">'+rtEsc(p.name)+'</span>'+
+    '<div style="flex:1;text-align:left;padding-left:12px;"><span style="font-size:13.5px;font-weight:800;color:#143522;">'+rtEsc(p.name)+'</span>'+
     '<div style="font-size:10px;color:#8A9C8E;margin-top:1px;">SV '+p.ph+' &middot; Netto-Par '+np+' &middot; NDB-Max '+(np+2)+'</div>'+(p.sc[c]!==null&&!p.cx[c]&&p.sc[c]>np+2?'<div style="font-size:10px;font-weight:700;color:#B7791F;margin-top:2px;">'+p.sc[c]+' notiert &middot; gewertet mit '+(np+2)+'</div>':'')+'</div>'+
     '<div class="rt-pts" style="'+stCol+'">'+(st===null?'\u2013':st)+'</div></div>'+
    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">'+

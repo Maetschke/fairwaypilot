@@ -9936,16 +9936,16 @@ function RT_TRC_detect(now,prev,AW,AH,pred,rad){
   var y0=Math.max(0,Math.floor(cy-rad)), y1=Math.min(AH-1,Math.ceil(cy+rad));
   var nd=now.data, pd=prev.data, X,Y,I, mx=0;
   for(Y=y0;Y<=y1;Y++){ for(X=x0;X<=x1;X++){ I=(Y*AW+X)*4;
-    var lum=(nd[I]*0.299+nd[I+1]*0.587+nd[I+2]*0.114)/255;
+    var mn=Math.min(nd[I],nd[I+1],nd[I+2])/255;
     var d=(Math.abs(nd[I]-pd[I])+Math.abs(nd[I+1]-pd[I+1])+Math.abs(nd[I+2]-pd[I+2]))/765;
-    var sc=lum*d; if(sc>mx) mx=sc;
+    var sc=mn*d; if(sc>mx) mx=sc;
   } }
   if(mx<0.05) return null;
   var th=mx*0.55, sumX=0,sumY=0,sumW=0,cnt=0;
   for(Y=y0;Y<=y1;Y++){ for(X=x0;X<=x1;X++){ I=(Y*AW+X)*4;
-    var lu=(nd[I]*0.299+nd[I+1]*0.587+nd[I+2]*0.114)/255;
+    var mn2=Math.min(nd[I],nd[I+1],nd[I+2])/255;
     var dd=(Math.abs(nd[I]-pd[I])+Math.abs(nd[I+1]-pd[I+1])+Math.abs(nd[I+2]-pd[I+2]))/765;
-    var s2=lu*dd; if(s2>=th){ var w=s2*s2; sumX+=X*w; sumY+=Y*w; sumW+=w; cnt++; }
+    var s2=mn2*dd; if(s2>=th){ var w=s2*s2; sumX+=X*w; sumY+=Y*w; sumW+=w; cnt++; }
   } }
   if(sumW<=0) return null;
   return {x:(sumX/sumW)/AW, y:(sumY/sumW)/AH, conf:mx, cnt:cnt};

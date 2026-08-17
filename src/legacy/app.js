@@ -11508,19 +11508,47 @@ function RT_v2TakeCard(i){
   });
  }, 'Übernehmen', '#187040');
 }
+function RT_scPanelOpen(){ try{ return !!rtGet('fp_scPanelOpen'); }catch(e){ return false; } }
+function RT_toggleScPanel(){ try{ rtSet('fp_scPanelOpen', RT_scPanelOpen()?0:1); }catch(e){} try{ RT_render(); }catch(e){} }
 function RT_v2BannerHtml(rd){
  if(!rd||!rd.v2) return '';
- var h='<div class="rtc" style="padding:10px 12px;margin-bottom:10px;background:#F3F8F2;border:1px solid #CFE3D2;"><div class="rt-ct" style="margin:0 0 6px;font-size:12.5px;">Scoring-Karten</div>';
- rd.players.forEach(function(p,i){
-  var uid=RT_v2ScorerFor(rd,i);
-  var mine=!!(sbUser&&uid===sbUser.id);
-  var reach=mine||RT_v2Reachable(rd,uid);
-  var dot='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+(reach?'#2EA84F':'#C0392B')+';margin-right:6px;flex:none;"></span>';
-  h+='<div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#143522;padding:3px 0;">'+dot
-   +'<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><b>'+rtEsc(p.name)+'</b> · '+(mine?'Du führst':('führt: '+rtEsc(RT_v2ScorerName(rd,i))))+(!mine&&!reach?' (offline)':'')+'</div>'
-   +((!mine && !reach)?'<button class="rt-btn2" style="width:auto;flex:none;padding:5px 10px;font-size:11px;margin:0;" onclick="RT_v2TakeCard('+i+')">übernehmen</button>':'')
-   +'</div>';
- });
+ var open=RT_scPanelOpen();
+ var anyOffline=false;
+ rd.players.forEach(function(p,i){ var uid=RT_v2ScorerFor(rd,i); var mine=!!(sbUser&&uid===sbUser.id); if(!mine && !RT_v2Reachable(rd,uid)) anyOffline=true; });
+ var chev=open?'\u25B4':'\u25BE';
+ var h='<div class="rtc" style="padding:10px 12px;margin-bottom:10px;background:#F3F8F2;border:1px solid #CFE3D2;">';
+ h+='<div onclick="RT_toggleScPanel()" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;">'
+  +'<div class="rt-ct" style="margin:0;font-size:12.5px;flex:none;">Scoring-Karten</div>';
+ if(!open){
+  /* Eingeklappt: kompakte Statuszeile - farbiger Punkt + Name je Spieler. */
+  var comp='';
+  rd.players.forEach(function(p,i){
+   var uid=RT_v2ScorerFor(rd,i); var mine=!!(sbUser&&uid===sbUser.id); var reach=mine||RT_v2Reachable(rd,uid);
+   comp+='<span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px;">'
+    +'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+(reach?'#2EA84F':'#C0392B')+';flex:none;"></span>'
+    +'<span style="color:#143522;">'+rtEsc(p.name)+'</span></span>';
+  });
+  h+='<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;">'+comp+'</div>';
+ } else {
+  h+='<div style="flex:1;"></div>';
+ }
+ h+='<span style="flex:none;font-size:12px;color:#3C7A50;font-weight:700;">'+(open?'Einklappen':'Ausklappen')+' '+chev+'</span>'
+  +(anyOffline&&!open?'<span title="ein Spieler offline" style="flex:none;width:8px;height:8px;border-radius:50%;background:#C0392B;margin-left:4px;"></span>':'')
+  +'</div>';
+ if(open){
+  h+='<div style="margin-top:8px;">';
+  rd.players.forEach(function(p,i){
+   var uid=RT_v2ScorerFor(rd,i);
+   var mine=!!(sbUser&&uid===sbUser.id);
+   var reach=mine||RT_v2Reachable(rd,uid);
+   var dot='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+(reach?'#2EA84F':'#C0392B')+';margin-right:6px;flex:none;"></span>';
+   h+='<div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#143522;padding:3px 0;">'+dot
+    +'<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><b>'+rtEsc(p.name)+'</b> · '+(mine?'Du führst':('führt: '+rtEsc(RT_v2ScorerName(rd,i))))+(!mine&&!reach?' (offline)':'')+'</div>'
+    +((!mine && !reach)?'<button class="rt-btn2" style="width:auto;flex:none;padding:5px 10px;font-size:11px;margin:0;" onclick="event.stopPropagation();RT_v2TakeCard('+i+')">übernehmen</button>':'')
+    +'</div>';
+  });
+  h+='</div>';
+ }
  h+='</div>';
  return h;
 }

@@ -9693,9 +9693,9 @@ function RT_TRC_bind(){
   v.addEventListener('loadedmetadata',RT_TRC_onLoaded);
   v.addEventListener('timeupdate',RT_TRC_onTime);
   v.addEventListener('seeked',function(){RT_TRC_onTime();RT_TRC_draw();});
-  v.addEventListener('play',RT_TRC_syncPlay);
-  v.addEventListener('pause',RT_TRC_syncPlay);
-  v.addEventListener('ended',RT_TRC_syncPlay);
+  v.addEventListener('play',function(){RT_TRC_syncPlay();RT_TRC_startPlayLoop();});
+  v.addEventListener('pause',function(){RT_TRC_syncPlay();RT_TRC_stopPlayLoop();RT_TRC_draw();});
+  v.addEventListener('ended',function(){RT_TRC_syncPlay();RT_TRC_stopPlayLoop();RT_TRC_draw();});
   c.addEventListener('pointerdown',RT_TRC_ptrDown);
   c.addEventListener('pointermove',RT_TRC_ptrMove);
   c.addEventListener('pointerup',RT_TRC_ptrUp);
@@ -9836,6 +9836,7 @@ function RT_TRC_renderAnalysis(){
     +'<div style="font-size:12.5px;color:#3C5546;line-height:1.5;margin-top:7px;background:#f3f7f3;border-radius:10px;padding:9px 11px;">💡 '+info.opp+'</div>'
     +'<div class="trcrow"><button class="trcb pri" onclick="RT_TRC_playTraj()">▶︎ Flugbahn abspielen</button>'
     +'<button class="trcb" onclick="RT_TRC_shareImage()">Bild teilen</button></div>'
+    +'<div class="trcrow"><button class="trcb pri" id="trc-expv" onclick="RT_TRC_exportVideo()">🎥 Video exportieren</button></div>'
     +RT_TRC_m6Controls(r)
     +'<div style="font-size:11px;color:#8A9C8E;margin-top:8px;">Ballgeschwindigkeit und Apex-Höhe kommen nicht aus dem Video. Die <b>exakte Schlaglänge</b> gibt es über die auf der Bahn per GPS gemessene Balllage – oben verknüpfen.</div>';
 }
@@ -9896,6 +9897,75 @@ function RT_TRC_playTraj(){
   var start=null,dur=1500;
   function step(ts){if(start==null)start=ts;var p=Math.min(1,(ts-start)/dur);RT_TRC_draw(p);if(p<1)requestAnimationFrame(step);else RT_TRC_draw();}
   requestAnimationFrame(step);
+}
+/* Fortschritt der Flugbahn passend zur Videozeit: vor dem Ball 0, zwischen Ball- und
+   Landungszeitpunkt anwachsend, danach voll. So zeichnet sich die Kurve beim Abspielen live nach. */
+function RT_TRC_progForTime(){
+  var v=RT_TRC.video,m=RT_TRC.marks; if(!v||!m.ball||!m.land) return 1;
+  var t0=m.ball.t,t1=m.land.t; if(t1<=t0) return (v.currentTime>=t0)?1:0;
+  return Math.max(0,Math.min(1,(v.currentTime-t0)/(t1-t0)));
+}
+function RT_TRC_startPlayLoop(){ if(RT_TRC._loop) return; RT_TRC._loop=true; RT_TRC_playLoop(); }
+function RT_TRC_stopPlayLoop(){ RT_TRC._loop=false; }
+function RT_TRC_playLoop(){
+  if(!RT_TRC._loop) return;
+  var v=RT_TRC.video; if(!v||v.paused||v.ended){ RT_TRC._loop=false; return; }
+  if(RT_TRC.marks.ball&&RT_TRC.marks.land&&RT_TRC.apex) RT_TRC_draw(RT_TRC_progForTime());
+  if(v.requestVideoFrameCallback){ v.requestVideoFrameCallback(RT_TRC_playLoop); } else { requestAnimationFrame(RT_TRC_playLoop); }
+}
+/* Video mit eingebrannter, live nachgezeichneter Flugbahn exportieren (Canvas-Aufnahme via
+   MediaRecorder). Spielt das Video einmal durch, zeichnet je Bild Video + Flugbahn-Fortschritt
+   auf ein Canvas und nimmt dessen Stream auf. Auf iOS/Safari geraetgeabhaengig - v1. */
+function RT_TRC_exportVideo(){
+  var v=RT_TRC.video,m=RT_TRC.marks;
+  if(!v||!m.ball||!m.land||!RT_TRC.apex){ RT_TRC_toast('Bitte zuerst Ball, Landung und Flugkurve setzen.'); return; }
+  if(typeof MediaRecorder==='undefined'){ RT_TRC_toast('Video-Export wird auf diesem Gerät nicht unterstützt.'); return; }
+  var vw=v.videoWidth||1280, vh=v.videoHeight||720;
+  var sc=Math.min(1,1080/Math.max(vw,vh)); var W=Math.round(vw*sc), H=Math.round(vh*sc);
+  var cv=document.createElement('canvas'); cv.width=W; cv.height=H; var ctx=cv.getContext('2d');
+  if(!cv.captureStream){ RT_TRC_toast('Video-Export auf diesem Gerät nicht möglich.'); return; }
+  var stream; try{ stream=cv.captureStream(30); }catch(e){ RT_TRC_toast('Video-Export auf diesem Gerät nicht möglich.'); return; }
+  var mime='video/webm';
+  try{ if(MediaRecorder.isTypeSupported){ if(MediaRecorder.isTypeSupported('video/mp4')) mime='video/mp4'; else if(MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) mime='video/webm;codecs=vp9'; else if(MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) mime='video/webm;codecs=vp8'; } }catch(e){}
+  var mr; try{ mr=new MediaRecorder(stream,{mimeType:mime}); }catch(e){ try{ mr=new MediaRecorder(stream); }catch(e2){ RT_TRC_toast('Video-Export nicht möglich.'); return; } }
+  var chunks=[]; var prevRate=v.playbackRate; var running=true;
+  mr.ondataavailable=function(e){ if(e.data&&e.data.size) chunks.push(e.data); };
+  mr.onstop=function(){
+    running=false; try{ v.playbackRate=prevRate; }catch(e){}
+    var b=document.getElementById('trc-expv'); if(b){ b.className='trcb'; b.textContent='🎥 Video exportieren'; }
+    var blob=new Blob(chunks,{type:(chunks[0]&&chunks[0].type)||mime});
+    var ext=(blob.type.indexOf('mp4')>=0)?'mp4':'webm';
+    try{
+      var file=new File([blob],'shot-tracer.'+ext,{type:blob.type});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){ navigator.share({files:[file],title:'FairwayPilot Shot-Tracer'}).catch(function(){}); return; }
+    }catch(e){}
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='shot-tracer.'+ext; document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{URL.revokeObjectURL(a.href); a.remove();}catch(e){} },1500);
+  };
+  function endStop(){ v.removeEventListener('ended',endStop); try{ if(mr.state!=='inactive') mr.stop(); }catch(e){} }
+  function render(){
+    if(!running) return;
+    try{ ctx.drawImage(v,0,0,W,H); }catch(e){}
+    if(m.ball&&m.land&&RT_TRC.apex){
+      var pr=RT_TRC_progForTime();
+      RT_TRC_strokeTrace(ctx,W,H,pr,Math.max(6,W/110));
+      var ph=RT_TRC_path(pr); ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=Math.max(1.5,W/700);
+      ctx.beginPath(); ctx.arc(ph.x*W,ph.y*H,Math.max(4,W/240),0,6.29); ctx.fill(); ctx.stroke();
+    }
+    if(!v.paused&&!v.ended){ if(v.requestVideoFrameCallback){ v.requestVideoFrameCallback(render); } else { requestAnimationFrame(render); } }
+  }
+  var b0=document.getElementById('trc-expv'); if(b0){ b0.className='trcb on'; b0.textContent='● Nimmt auf …'; }
+  try{ v.playbackRate=0.5; }catch(e){}
+  v.addEventListener('ended',endStop);
+  var startRec=function(){
+    v.removeEventListener('seeked',startRec);
+    try{ mr.start(); }catch(e){ RT_TRC_toast('Aufnahme konnte nicht starten.'); running=false; return; }
+    var pp=v.play(); if(pp&&pp.catch) pp.catch(function(){});
+    if(v.requestVideoFrameCallback){ v.requestVideoFrameCallback(render); } else { requestAnimationFrame(render); }
+  };
+  v.addEventListener('seeked',startRec);
+  try{ v.currentTime=0; }catch(e){ startRec(); }
+  RT_TRC_toast('Video wird aufgezeichnet – einmal komplett abspielen lassen …');
 }
 function RT_TRC_toast(msg){
   var t=document.createElement('div');

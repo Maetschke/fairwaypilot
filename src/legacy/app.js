@@ -3298,7 +3298,7 @@ function RT_toggleHoleFS(url,title){ RT_state.holeFS=!RT_state.holeFS; RT_render
 function RT_closeHoleFull(){
  var el=document.getElementById('hole-full'); if(!el)return;
  if(RT_holeFullMapInst){ try{RT_holeFullMapInst.remove();}catch(e){} RT_holeFullMapInst=null; }
- RT_holeFullGpsMarker=null; RT_state.holeFS=false;
+ RT_holeFullGpsMarker=null; RT_state.holeFS=false; RT_state.spOn=false;
  el.style.display='none'; el.innerHTML='';
 }
 function RT_sizeRotatedMap(el,rotDeg){
@@ -3537,6 +3537,7 @@ async function RT_initHoleFullMap(){
   if(RT_state.grabberOn&&RT_state.grabberOn[RT_holeMapKey(rd,c)]) RT_setupFullGrabber();
   if(RT_state.radarOn&&RT_state.radarOn[RT_holeMapKey(rd,c)]){ RT_radarBuildOverlay(); RT_radarAttach(map); RT_wxFetch(false); RT_radarZoomOut(map); }
   if(RT_state.gvOn&&RT_state.gvOn[RT_holeMapKey(rd,c)]){ RT_gvBuildOverlay(); RT_gvAttach(); }
+  if(RT_state.spOn){ try{ RT_openShotPlan(); }catch(e){} }
  },80);
 }
 /* Die Birdiekarten-Quellbilder liegen im Querformat vor und werden in der Vollbild-
@@ -5111,7 +5112,7 @@ function RT_openShotPlan(){
  if(!document.getElementById('rt-sp') && !RT_requirePremium('map'))return;
  var host=document.getElementById('hole-full'); if(!host) return;
  if(document.getElementById('rt-sp')){ RT_closeShotPlan(); return; }
- RT_ovCloseOthers('sp'); RT_tileOp('rt-tile-sp',true);
+ RT_ovCloseOthers('sp'); RT_tileOp('rt-tile-sp',true); RT_state.spOn=true;
  var d=RT_spData();
  var o=document.createElement('div'); o.id='rt-sp';
  o.style.cssText='position:absolute;inset:0;z-index:2500;pointer-events:none;';
@@ -5166,7 +5167,7 @@ function RT_spPlot(d){
 }
 function RT_closeShotPlan(){
  if(RT_SP.layer&&RT_holeFullMapInst){ try{RT_holeFullMapInst.removeLayer(RT_SP.layer);}catch(e){} }
- RT_SP.layer=null; RT_tileOp('rt-tile-sp',false);
+ RT_SP.layer=null; RT_state.spOn=false; RT_tileOp('rt-tile-sp',false);
  var o=document.getElementById('rt-sp'); if(o&&o.parentNode) o.parentNode.removeChild(o);
 }
 /* ===== Ende Shot-Analyse ===== */
@@ -5631,7 +5632,7 @@ function RT_grabberOverlayHtml(){
  var btn='pointer-events:auto;width:48px;height:48px;border:none;border-radius:15px;cursor:pointer;'+
    'box-shadow:0 2px 8px rgba(0,0,0,.45);background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;';
  return '<div id="rt-grab-ui" style="position:absolute;inset:0;pointer-events:none;z-index:1150;">'+
-  '<div style="position:absolute;right:12px;top:calc(env(safe-area-inset-top,0px) + 12px);display:flex;flex-direction:column;gap:10px;">'+
+  '<div style="position:absolute;right:12px;top:calc(env(safe-area-inset-top,0px) + 64px);display:flex;flex-direction:column;gap:10px;">'+
    RT_hvBtn('wind','Wind','RT_toggleWind()',windOn,'rt-wind-toggle')+
    RT_hvBtn('wetterradar','Wetterradar','RT_toggleRadarHole()',radarOn,'rt-wxr-toggle')+
    RT_hvBtn('shotanalyse','Shot-Analyse','RT_openShotPlan()',!!document.getElementById('rt-sp'),'rt-tile-sp')+

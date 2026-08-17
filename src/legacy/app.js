@@ -5014,7 +5014,7 @@ function RT_hvPanel(title,closeFn,extra,grabBox){
  var grab=grabOn?'<div class="rt-hv-grab" style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:60px;height:18px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;pointer-events:auto;"><div style="width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);"></div></div>':'';
  var body=grabOn?('<div class="rt-hv-body" style="margin-top:'+(extra?'8px':'0')+';overflow:hidden;transition:max-height .28s ease,opacity .2s ease,margin-top .28s ease;">'+(extra||'')+'</div>'):(extra||'');
  var _col=(grabBox&&grabBox.indexOf('col:')===0)?grabBox.slice(4):''; var _bx=grabOn?(_col?(' data-hvcol="'+_col+'"'):(grabBox?' data-hvbox="'+grabBox+'"':'')):''; var attrs=grabOn?(' class="rt-hv-panel" data-hvgrab="1"'+_bx):'';
- return '<div'+attrs+' style="position:absolute;top:0;left:0;right:64px;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 0;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px '+(grabOn?'18px':'9px')+';box-shadow:0 5px 16px rgba(0,0,0,.55);z-index:6;">'
+ return '<div'+attrs+' style="position:absolute;top:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 18px;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px '+(grabOn?'18px':'9px')+';box-shadow:0 5px 16px rgba(0,0,0,.55);z-index:6;">'
   +'<div style="display:flex;align-items:center;justify-content:space-between;min-height:30px;'+((extra&&!grabOn)?'margin-bottom:8px;':'')+'">'
     +'<div style="font-size:15px;font-weight:800;color:#fff;">'+title+'</div>'+x
   +'</div>'+body+grab+'</div>';
@@ -5632,7 +5632,7 @@ function RT_grabberOverlayHtml(){
    'box-shadow:0 2px 8px rgba(0,0,0,.4);display:'+(on?'block':'none')+';';
  var btn='pointer-events:auto;width:48px;height:48px;border:none;border-radius:15px;cursor:pointer;'+
    'box-shadow:0 2px 8px rgba(0,0,0,.45);background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;';
- return '<div id="rt-grab-ui" style="position:absolute;inset:0;pointer-events:none;z-index:1150;">'+
+ return '<div id="rt-grab-ui" style="position:absolute;inset:0;pointer-events:none;z-index:2600;">'+
   '<div style="position:absolute;right:12px;top:calc(env(safe-area-inset-top,0px) + 64px);display:flex;flex-direction:column;gap:10px;">'+
    RT_hvBtn('wind','Wind','RT_toggleWind()',windOn,'rt-wind-toggle')+
    RT_hvBtn('wetterradar','Wetterradar','RT_toggleRadarHole()',radarOn,'rt-wxr-toggle')+

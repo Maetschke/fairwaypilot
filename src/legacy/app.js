@@ -4877,7 +4877,7 @@ var RT_radarPrevView=null;
    (Zoom 9) um den Platz herauszoomen. */
 function RT_radarZoomOut(map){
  if(!map) return;
- try{ var rc=RT_radarCenter(); map.setView([rc.lat,rc.lng],8,{animate:true}); }catch(e){}
+ try{ var rc=RT_radarCenter(); map.setView([rc.lat,rc.lng],7,{animate:false}); }catch(e){}
 }
 function RT_radarBuildOverlay(){
  var host=document.getElementById('hole-full'); if(!host) return;
@@ -4946,7 +4946,7 @@ function RT_radarLoad(){
    if(!all.length){ var tc=document.getElementById('rt-radar-time'); if(tc) tc.textContent='Kein Radarbild'; return; }
    RT_RADAR.frames=all.map(function(f){ return {path:host+f.path,time:f.time}; });
    RT_RADAR.layers=RT_RADAR.frames.map(function(f){
-    return L.tileLayer(f.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:0,pane:'wxradar',tileSize:256,maxNativeZoom:8,maxZoom:20,noWrap:true,errorTileUrl:RT_TRANSPX});
+    return L.tileLayer(f.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:0,pane:'wxradar',tileSize:256,maxNativeZoom:7,maxZoom:20,noWrap:true,errorTileUrl:RT_TRANSPX});
    });
    RT_RADAR.layers.forEach(function(l){ l.addTo(RT_RADAR.map); });
    /* Infrarot-Satelliten-Layer entfernt: unterstuetzt nur niedrige Zoomstufen und lieferte

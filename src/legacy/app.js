@@ -11403,6 +11403,11 @@ async function RT_v2OnRealtime(kind, payload){
   if(!res || !res.ok) return;
   if(RT_round!==rd) return;
   rd._cardRev=rd._cardRev||{};
+  if(!rd.scorerMap) rd.scorerMap={};
+  /* Zustand VOR dem Server-Abgleich merken, damit ein stiller 12s-Poll die Ansicht nur dann
+     neu rendert, wenn sich wirklich etwas geaendert hat (sonst "Seite laedt staendig neu"). */
+  var oldMapJson=JSON.stringify(rd.scorerMap||{});
+  var oldPresJson=JSON.stringify(rd._presence||{});
   if(res.meta && res.meta.data && res.meta.data.scorerMap) rd.scorerMap=res.meta.data.scorerMap;
   var changed=false;
   (res.cards||[]).forEach(function(c){
@@ -11412,17 +11417,24 @@ async function RT_v2OnRealtime(kind, payload){
    var mine=!!(sbUser && c.scorer_uid===sbUser.id);
    if(!mine){
     var d=c.data||{}, p=rd.players[i];
+    var before=JSON.stringify([p.sc,p.pu,p.fw,p.pe,p.sa,p.cx,p.pins,p.ph]);
     ['sc','pu','fw','pe','sa','cx','pins'].forEach(function(k){ if(d[k]!==undefined && d[k]!==null) p[k]=d[k]; });
     if(d.hi!==undefined) p.hi=d.hi; if(d.ph!==undefined) p.ph=d.ph; if(d.tee!==undefined) p.tee=d.tee;
-    rd._cardRev[i]=c.rev; changed=true;
+    rd._cardRev[i]=c.rev;
+    if(JSON.stringify([p.sc,p.pu,p.fw,p.pe,p.sa,p.cx,p.pins,p.ph])!==before) changed=true;
    }else{
     if(typeof c.rev==='number' && (!rd._cardRev[i] || c.rev>rd._cardRev[i])) rd._cardRev[i]=c.rev;
    }
   });
   if(res.meta && res.meta.done && !rd.done){ rd.done=true; changed=true; }
   try{ var prr=await RT_v2LoadPresenceRows(rd.id); rd._presence={}; (prr||[]).forEach(function(x){ rd._presence[x.uid]=Date.parse(x.last_seen)||0; }); }catch(e){}
+  if(JSON.stringify(rd.scorerMap||{})!==oldMapJson) changed=true;
+  if(JSON.stringify(rd._presence||{})!==oldPresJson) changed=true;
   try{ rtSet(RT_ACT,rd); RT_syncActiveToSavedLocalOnly(rd); }catch(e){}
-  try{ RT_render(); }catch(e){}
+  /* Nur neu zeichnen, wenn sich etwas geaendert hat ODER es ein direktes Ereignis war
+     (init/after-assign) - der reine 12s-Poll rendert sonst nicht mehr. */
+  var force=(kind==='init'||kind==='after-assign'||kind==='scores'||kind==='meta');
+  if(changed||force){ try{ RT_render(); }catch(e){} }
  }catch(e){}
 }
 /* Lokale Persistenz OHNE erneuten v2-Push (verhindert Schreib-Schleife beim Empfang). */
@@ -11439,9 +11451,21 @@ async function RT_v2PushMine(rd){
    var res=await RSV2.writeCard(rd.id, i, RT_v2CardData(rd.players[i]), rd._cardRev[i]||1);
    if(res.ok){ rd._cardRev[i]=res.rev; continue; }
    if(res.conflict){
-    var lr=await RSV2.load(rd.id);
-    if(lr.ok){ (lr.cards||[]).forEach(function(c){ if(c.player_idx===i){ rd._cardRev[i]=c.rev; if(rd.scorerMap) rd.scorerMap[i]=c.scorer_uid; } }); }
+    var lr=await RSV2.load(rd.id); var srvCard=null;
+    if(lr.ok){ (lr.cards||[]).forEach(function(c){ if(c.player_idx===i){ srvCard=c; rd._cardRev[i]=c.rev; if(rd.scorerMap) rd.scorerMap[i]=c.scorer_uid; } }); }
     if(RT_v2ScorerFor(rd,i)===sbUser.id){ var r2=await RSV2.writeCard(rd.id,i,RT_v2CardData(rd.players[i]),rd._cardRev[i]||1); if(r2.ok) rd._cardRev[i]=r2.rev; }
+    else if(srvCard){
+     /* Der Server hat die Aenderung abgelehnt (RLS: diese Karte fuehrt ein anderes Konto).
+        Lokale Eingabe zuruecknehmen, damit sie nicht kurz erscheint und wieder verschwindet,
+        und dem Nutzer klar sagen, warum. */
+     var d2=srvCard.data||{}, pp=rd.players[i];
+     ['sc','pu','fw','pe','sa','cx','pins'].forEach(function(k){ if(d2[k]!==undefined && d2[k]!==null) pp[k]=d2[k]; });
+     if(d2.ph!==undefined) pp.ph=d2.ph; if(d2.hi!==undefined) pp.hi=d2.hi; if(d2.tee!==undefined) pp.tee=d2.tee;
+     try{ RT_syncActiveToSavedLocalOnly(rd); }catch(e){}
+     var _pn=(rd.players[i]&&rd.players[i].name)||'Mitspieler'; var _sn=RT_v2ScorerName(rd,i);
+     try{ RT_toast('Eintrag bei '+_pn+' nicht gespeichert – diese Karte führt '+_sn+'. Über „Karte übernehmen" kannst du sie übernehmen.'); }catch(e){}
+     try{ RT_render(); }catch(e){}
+    }
    }
   }
  }catch(e){}

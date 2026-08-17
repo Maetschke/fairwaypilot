@@ -3119,7 +3119,7 @@ function RT_refPointRowHtml(kind,teeName,label,pt,hasImg){
    +'</div>';
  if((hasGps||hasPx)&&hasImg){
   h+='<button class="rt-btn3" style="width:100%;'+(active?'background:#BF5AF2;color:#fff;':(hasPx?'background:#EAF6EE;':'background:#F1F6EC;'))+'" onclick="RT_setActiveCalibPoint(\''+kind+'\',\''+teeArg+'\')">'
-    +(hasPx?'\u2705 ':'\ud83d\uddbc\ufe0f ')+'Bildposition '+(active?'aktiv \u2013 im Bild unten antippen':(hasPx?'gesetzt (neu setzen)':'setzen'))+'</button>';
+    +(hasPx?'\u2705 ':'')+'Bildposition '+(active?'aktiv \u2013 im Bild unten antippen':(hasPx?'gesetzt (neu setzen)':'setzen'))+'</button>';
  }
  h+='</div>';
  return h;
@@ -3279,7 +3279,7 @@ function RT_renderHoleFull(url,title){
  var fs=!!RT_state.holeFS;
  var _hbtn='background:#fff;border:1.5px solid #DCE7D4;border-radius:100px;padding:8px 14px;font-size:12px;font-weight:700;color:#3C5546;font-family:inherit;cursor:pointer;';
  var fsBtn='<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleFS(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(fs?'Standard':'Vollbild')+'</button>';
- var toggleBtn=holeKey?('<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?'🖼️ Birdiekarte':'🛰️ Satellitenkarte')+'</button>'):'';
+ var toggleBtn=holeKey?('<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?'Birdiekarte':'Satellitenkarte')+'</button>'):'';
  var topBar='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:'+(fs?'16px':'64px')+';z-index:3000;display:flex;gap:8px;">'+fsBtn+toggleBtn+'</div>';
  var body;
  if(mapMode){
@@ -3292,7 +3292,7 @@ function RT_renderHoleFull(url,title){
  var _ni=rd?rd.cur:0, _nn=(rd&&rd.nums)?rd.nums.length:0;
  function _navBtn(dir,dis,glyph){ return '<button onclick="RT_holeFullNav('+dir+')" '+(dis?'disabled ':'')+'style="width:40px;height:40px;border-radius:50%;background:#fff;border:1.5px solid #DCE7D4;font-size:20px;line-height:1;color:'+(dis?'#C2CFC0':'#3C5546')+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(20,53,34,.18);">'+glyph+'</button>'; }
  var navBar=rd?('<div style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 40px);display:flex;align-items:center;gap:16px;z-index:3;">'+_navBtn(-1,_ni<=0,'\u2039')+_navBtn(1,_ni>=_nn-1,'\u203a')+'</div>'):'';
- el.innerHTML=(fs?'':'<button class="rt-holefull-close" onclick="RT_closeHoleFull()">&#10005;</button>')+topBar+(fs?'':'<div class="rt-holefull-title">'+rtEsc(title)+'</div>')+'<div class="rt-holefull-card"'+(fs?' style="top:0;left:0;right:0;bottom:0;border-radius:0;"':'')+'><div class="rt-holefull-imgwrap">'+body+'</div></div>'+(fs?'':navBar);
+ el.innerHTML='<button class="rt-holefull-close" '+(fs?'style="left:16px;right:auto;z-index:3001;" ':'')+'onclick="RT_closeHoleFull()">&#10005;</button>'+topBar+(fs?'':'<div class="rt-holefull-title">'+rtEsc(title)+'</div>')+'<div class="rt-holefull-card"'+(fs?' style="top:0;left:0;right:0;bottom:0;border-radius:0;"':'')+'><div class="rt-holefull-imgwrap">'+body+'</div></div>'+(fs?'':navBar);
  if(mapMode) RT_initHoleFullMap();
 }
 function RT_toggleHoleFS(url,title){ RT_state.holeFS=!RT_state.holeFS; RT_renderHoleFull(url,title); }
@@ -7625,7 +7625,7 @@ function RT_rPlay(){
   '<div class="rt-ct" style="margin:0;">Bahn '+rd.nums[c]+'</div>'+
   '<div style="font-size:11px;color:#7B8E80;">Par '+rd.par[c]+' &middot; SI '+rd.si[c]+'</div></div>'+
   
-  (rtImg?('<div style="margin-bottom:10px;"><button class="rt-btn3" style="padding:6px 10px;background:#F1F6EC;border-radius:8px;" onclick="RT_toggleHoleView()">'+(mapMode?'\ud83d\uddbc\ufe0f Birdiekarte anzeigen':'\ud83d\udef0\ufe0f Satellitenkarte anzeigen')+'</button></div>'):'');
+  (rtImg?('<div style="margin-bottom:10px;"><button class="rt-btn3" style="padding:6px 10px;background:#F1F6EC;border-radius:8px;" onclick="RT_toggleHoleView()">'+(mapMode?'Birdiekarte anzeigen':'Satellitenkarte anzeigen')+'</button></div>'):'');
  rd.players.forEach(function(p,pi){
   var np=SC_netPar(rd.par[c],p.ph,rd.si[c],rd.cnt);
   var st=RT_stbfH(p,c);

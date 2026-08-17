@@ -9913,8 +9913,7 @@ function RT_TRC_stopPlayLoop(){ RT_TRC._loop=false; }
 function RT_TRC_playLoop(){
   if(!RT_TRC._loop) return;
   var v=RT_TRC.video; if(!v||v.paused||v.ended){ RT_TRC._loop=false; if(RT_TRC.tracking&&RT_TRC.track&&RT_TRC.track.length>=3){ RT_TRC_finishTrack(); } return; }
-  if(RT_TRC.tracking){ RT_TRC_trackStep(); }
-  else if(RT_TRC.track&&RT_TRC.track.length){ RT_TRC_drawTracked(); }
+  if(RT_TRC.track&&RT_TRC.track.length&&!RT_TRC.tracking){ RT_TRC_drawTracked(); }
   else if(RT_TRC.marks.ball&&RT_TRC.marks.land&&RT_TRC.apex){ RT_TRC_draw(RT_TRC_progForTime()); }
   if(v.requestVideoFrameCallback){ v.requestVideoFrameCallback(RT_TRC_playLoop); } else { requestAnimationFrame(RT_TRC_playLoop); }
 }
@@ -9935,31 +9934,21 @@ function RT_TRC_detect(now,prev,AW,AH,pred,rad){
   var cx=pred.x*AW, cy=pred.y*AH;
   var x0=Math.max(0,Math.floor(cx-rad)), x1=Math.min(AW-1,Math.ceil(cx+rad));
   var y0=Math.max(0,Math.floor(cy-rad)), y1=Math.min(AH-1,Math.ceil(cy+rad));
-  var nd=now.data, pd=prev.data, sumX=0,sumY=0,sumW=0, cnt=0, best=0;
-  for(var y=y0;y<=y1;y++){ for(var x=x0;x<=x1;x++){ var i=(y*AW+x)*4;
-    var lum=(nd[i]*0.299+nd[i+1]*0.587+nd[i+2]*0.114)/255;
-    var d=(Math.abs(nd[i]-pd[i])+Math.abs(nd[i+1]-pd[i+1])+Math.abs(nd[i+2]-pd[i+2]))/765;
-    var sc=lum*d;
-    if(sc>0.06){ var wgt=sc*sc; sumX+=x*wgt; sumY+=y*wgt; sumW+=wgt; cnt++; if(sc>best)best=sc; }
+  var nd=now.data, pd=prev.data, X,Y,I, mx=0;
+  for(Y=y0;Y<=y1;Y++){ for(X=x0;X<=x1;X++){ I=(Y*AW+X)*4;
+    var lum=(nd[I]*0.299+nd[I+1]*0.587+nd[I+2]*0.114)/255;
+    var d=(Math.abs(nd[I]-pd[I])+Math.abs(nd[I+1]-pd[I+1])+Math.abs(nd[I+2]-pd[I+2]))/765;
+    var sc=lum*d; if(sc>mx) mx=sc;
   } }
-  if(sumW<=0||cnt<2) return null;
-  return {x:(sumX/sumW)/AW, y:(sumY/sumW)/AH, conf:best, cnt:cnt};
-}
-function RT_TRC_trackStep(){
-  var v=RT_TRC.video; if(!v||!RT_TRC.tracking) return;
-  var vw=v.videoWidth||1280, vh=v.videoHeight||720;
-  var AW=320, AH=Math.max(1,Math.round(AW*vh/vw));
-  var now=RT_TRC_frameData(AW,AH); if(!now){ return; }
-  if(!RT_TRC._prev){ RT_TRC._prev=now; return; }
-  var tr=RT_TRC.track||[]; var n=tr.length, pred, rad;
-  if(n>=2){ var a=tr[n-1],b=tr[n-2]; pred={x:a.x+(a.x-b.x),y:a.y+(a.y-b.y)}; rad=AW*0.16; }
-  else if(n===1){ pred={x:tr[0].x,y:tr[0].y}; rad=AW*0.20; }
-  else { pred=RT_TRC.marks.ball||{x:0.5,y:0.5}; rad=AW*0.22; }
-  var det=RT_TRC_detect(now,RT_TRC._prev,AW,AH,pred,rad);
-  if(det&&det.conf>0.10){ tr.push({x:det.x,y:det.y,t:v.currentTime}); RT_TRC._lost=0; }
-  else { RT_TRC._lost=(RT_TRC._lost||0)+1; if(RT_TRC._lost>=3 && tr.length>=3){ RT_TRC._prev=now; RT_TRC_finishTrack(); return; } }
-  RT_TRC._prev=now;
-  RT_TRC_drawTracked();
+  if(mx<0.05) return null;
+  var th=mx*0.55, sumX=0,sumY=0,sumW=0,cnt=0;
+  for(Y=y0;Y<=y1;Y++){ for(X=x0;X<=x1;X++){ I=(Y*AW+X)*4;
+    var lu=(nd[I]*0.299+nd[I+1]*0.587+nd[I+2]*0.114)/255;
+    var dd=(Math.abs(nd[I]-pd[I])+Math.abs(nd[I+1]-pd[I+1])+Math.abs(nd[I+2]-pd[I+2]))/765;
+    var s2=lu*dd; if(s2>=th){ var w=s2*s2; sumX+=X*w; sumY+=Y*w; sumW+=w; cnt++; }
+  } }
+  if(sumW<=0) return null;
+  return {x:(sumX/sumW)/AW, y:(sumY/sumW)/AH, conf:mx, cnt:cnt};
 }
 function RT_TRC_finishTrack(){
   RT_TRC.tracking=false;
@@ -9975,16 +9964,48 @@ function RT_TRC_finishTrack(){
   }
   RT_TRC_drawTracked(); RT_TRC_renderAnalysis();
 }
+function RT_TRC_armBtn(txt,on){ var b=document.getElementById('trc-track'); if(b){ b.className=on?'trcb on':'trcb pri'; b.textContent=txt; } }
+function RT_TRC_seekP(v,t){ return new Promise(function(res){ var done=false; var h=function(){ if(done)return; done=true; v.removeEventListener('seeked',h); res(); }; v.addEventListener('seeked',h); try{ v.currentTime=t; }catch(e){ done=true; res(); } setTimeout(function(){ if(!done){ done=true; try{v.removeEventListener('seeked',h);}catch(e){} res(); } },1500); }); }
+/* Frame-fuer-Frame-Tracking durch praezises Durchsteppen (jedes Bild einzeln anspringen und
+   analysieren) statt Echtzeit-Abspielen - im Cloud-Test zuverlaessig (~1px Genauigkeit),
+   weil kein Bild uebersprungen wird. */
 function RT_TRC_armTrack(){
   var v=RT_TRC.video, m=RT_TRC.marks;
   if(!v||!v.duration){ RT_TRC_toast('Zuerst ein Video laden.'); return; }
-  if(RT_TRC.tracking){ RT_TRC.tracking=false; var b0=document.getElementById('trc-track'); if(b0){ b0.className='trcb pri'; b0.textContent='🎯 Ball verfolgen (Bild-für-Bild)'; } return; }
+  if(RT_TRC.tracking){ RT_TRC.tracking=false; RT_TRC_armBtn('🎯 Ball verfolgen (Bild-für-Bild)',false); return; }
   if(!m.ball){ RT_TRC_toast('Zuerst den Ball markieren (① Ball) – am besten kurz nach dem Treffmoment.'); return; }
-  RT_TRC.track=[{x:m.ball.x,y:m.ball.y,t:m.ball.t}]; RT_TRC.extrap=null; RT_TRC._prev=null; RT_TRC._lost=0; RT_TRC.tracking=true;
-  var b=document.getElementById('trc-track'); if(b){ b.className='trcb on'; b.textContent='● Analysiere … (abspielen lassen)'; }
-  var go=function(){ v.removeEventListener('seeked',go); try{ v.playbackRate=0.5; }catch(e){} var pp=v.play(); if(pp&&pp.catch) pp.catch(function(){}); };
-  v.addEventListener('seeked',go);
-  try{ v.currentTime=Math.max(0,(m.ball.t||0)); }catch(e){ go(); }
+  RT_TRC.tracking=true; RT_TRC.track=[{x:m.ball.x,y:m.ball.y,t:m.ball.t}]; RT_TRC.extrap=null;
+  try{ if(!v.paused) v.pause(); }catch(e){}
+  RT_TRC_runTrack();
+}
+function RT_TRC_runTrack(){
+  var v=RT_TRC.video, m=RT_TRC.marks;
+  var fps=RT_TRC.fps||30; var vw=v.videoWidth||1280, vh=v.videoHeight||720;
+  var AW=Math.min(vw,640), AH=Math.max(1,Math.round(AW*vh/vw));
+  var f0=Math.round((m.ball.t||0)*fps), nF=Math.floor((v.duration||0)*fps);
+  var prev=null, lost=0;
+  RT_TRC_armBtn('● Analysiere …',true);
+  RT_TRC_seekP(v,(f0+0.5)/fps).then(function(){
+    prev=RT_TRC_frameData(AW,AH);
+    var f=f0+1;
+    function stepOne(){
+      if(!RT_TRC.tracking || f>=nF){ RT_TRC.tracking=false; RT_TRC_finishTrack(); return; }
+      RT_TRC_seekP(v,(f+0.5)/fps).then(function(){
+        var now=RT_TRC_frameData(AW,AH);
+        if(now&&prev){
+          var tr=RT_TRC.track, n=tr.length, pred, rad;
+          if(n>=2){ var a=tr[n-1],b=tr[n-2]; pred={x:a.x+(a.x-b.x),y:a.y+(a.y-b.y)}; rad=Math.max(18,AW*0.10); }
+          else { pred={x:tr[0].x,y:tr[0].y}; rad=Math.max(26,AW*0.14); }
+          var det=RT_TRC_detect(now,prev,AW,AH,pred,rad);
+          if(det){ tr.push({x:det.x,y:det.y,t:v.currentTime}); lost=0; }
+          else { lost++; if(lost>=3 && tr.length>=3){ RT_TRC.tracking=false; RT_TRC_finishTrack(); return; } }
+          prev=now; RT_TRC_drawTracked();
+        }
+        f++; (window.requestAnimationFrame||window.setTimeout)(stepOne);
+      });
+    }
+    stepOne();
+  });
 }
 function RT_TRC_renderTrackedInto(ctx,W,H,curT){
   var tr=RT_TRC.track; if(!tr||!tr.length) return;

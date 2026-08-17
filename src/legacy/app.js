@@ -1152,7 +1152,7 @@ function renderRounds(filter){
     var fwPct=fw.length?Math.round(fwC/fw.length*100):0;
     var col=(HV_COURSE_META[sc.half]&&HV_COURSE_META[sc.half].color)||'#8E8E93';
     var scCourse=(HV_COURSE_META[sc.half]&&HV_COURSE_META[sc.half].label)||hn(sc.half); var scKey=(typeof RT_courseKeyFromName==='function')?RT_courseKeyFromName(scCourse):null; var scBg=RT_bgForKey(scKey,scCourse);
-    return '<div style="position:relative;overflow:hidden;border-radius:16px;padding:10px 10px;margin-bottom:4px;cursor:pointer;" onclick="RT_editFromDetail(\''+(sc.rtId||('hist-'+sc.id))+'\')">'+'<img src="'+scBg+'" alt="" loading="lazy" onerror="RT_imgErr(this)" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.12;z-index:0;pointer-events:none;">'+'<div style="position:relative;z-index:1;">'+
+    return '<div style="position:relative;overflow:hidden;border-radius:16px;padding:10px 10px;margin-bottom:6px;cursor:pointer;" onclick="RT_editFromDetail(\''+(sc.rtId||('hist-'+sc.id))+'\')">'+'<img src="'+scBg+'" alt="" loading="lazy" onerror="RT_imgErr(this)" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.12;z-index:0;pointer-events:none;">'+'<div style="position:relative;z-index:1;">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
       '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;">'+SC_label(sc)+'</div>'+
       '<div style="font-size:10px;color:'+col+';margin-top:1px;">'+hn(sc.half)+'</div></div>'+

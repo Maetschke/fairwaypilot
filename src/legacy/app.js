@@ -1592,7 +1592,7 @@ function RT_reclaimScoring(){
 }
 function RT_rtWantId(){
  var rd=RT_round;
- return (rd&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_roundIsShared(rd))?rd.id:null;
+ return (rd&&!rd.v2&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_roundIsShared(rd))?rd.id:null;
 }
 function RT_rtSync(){
  var want=RT_rtWantId();
@@ -1616,6 +1616,7 @@ function RT_rtBroadcastState(){
 }
 function RT_rtApplyState(nd,senderUid){
  if(!nd||!nd.id) return;
+ if(RT_round&&RT_round.v2) return; /* v2 nutzt round_scores; alten Vollstand nie anwenden */
  if(RT_round && RT_round.id===nd.id && RT_round.ownCards && senderUid){
   var _spi=RT_uidToPi(RT_round,senderUid), _mi=RT_myPlayerIndex(RT_round);
   if(_spi>=0 && _spi!==_mi && nd.players && nd.players[_spi] && RT_round.players[_spi]){
@@ -7735,6 +7736,7 @@ function RT_holeComplete(rd,idx){
 }
 /* Nach vollstaendiger Eingabe einer Bahn UND Wechsel zur naechsten Bahn automatisch in der\n   Cloud sichern (zusaetzlich zur ohnehin sofortigen lokalen Speicherung ueber rtSet). So geht\n   der Fortschritt auch bei Abbruch/Wechsel des Geraets mitten in der Runde nicht verloren. */
 function RT_autosaveHole(rd,prevIdx){
+ if(rd.v2) return; /* v2 speichert je Karte ueber RT_v2PushMine */
  if(rd.cur===prevIdx) return;
  if(!RT_holeComplete(rd,prevIdx)) return;
  if(!sb||!sbUser) return;
@@ -7804,6 +7806,7 @@ function RT_syncActiveToSaved(){
 var RT_liveDbTs=0, RT_liveDbPending=false;
 function RT_liveDbPush(){
  var rd=RT_round; if(!rd||rd.done||!sb||!sbUser) return;
+ if(rd.v2) return;
  if(rd.ownCards) return;
  if(!RT_roundIsShared(rd)||!RT_amScorer(rd)) return;
  var now=Date.now();
@@ -7816,7 +7819,7 @@ function RT_liveDbPush(){
 var RT_livePoll=null, RT_livePollId=null;
 function RT_livePollSync(){
  var rd=RT_round;
- var active=!!(rd&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_roundIsShared(rd)&&!rd.ownCards&&!RT_amScorer(rd));
+ var active=!!(rd&&!rd.v2&&!rd.done&&sb&&sbUser&&RT_state.screen==='play'&&RT_roundIsShared(rd)&&!rd.ownCards&&!RT_amScorer(rd));
  if(active){
   if(RT_livePollId!==rd.id){
    if(RT_livePoll){ clearInterval(RT_livePoll); RT_livePoll=null; }
@@ -7830,6 +7833,7 @@ function RT_livePollSync(){
 }
 function RT_livePollTick(){
  var rd=RT_round; if(!rd||rd.done||!sb||!sbUser||RT_state.screen!=='play'){ return; }
+ if(rd.v2) return;
  if(rd.ownCards) return;
  if(RT_amScorer(rd)) return;
  sb.from('rounds').select('data,user_id').eq('id',rd.id).then(function(res){

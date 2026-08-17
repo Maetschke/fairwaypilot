@@ -4877,7 +4877,7 @@ var RT_radarPrevView=null;
    (Zoom 9) um den Platz herauszoomen. */
 function RT_radarZoomOut(map){
  if(!map) return;
- try{ var rc=RT_radarCenter(); map.setView([rc.lat,rc.lng],9,{animate:true}); }catch(e){}
+ try{ var rc=RT_radarCenter(); map.setView([rc.lat,rc.lng],8,{animate:true}); }catch(e){}
 }
 function RT_radarBuildOverlay(){
  var host=document.getElementById('hole-full'); if(!host) return;
@@ -4946,11 +4946,11 @@ function RT_radarLoad(){
    if(!all.length){ var tc=document.getElementById('rt-radar-time'); if(tc) tc.textContent='Kein Radarbild'; return; }
    RT_RADAR.frames=all.map(function(f){ return {path:host+f.path,time:f.time}; });
    RT_RADAR.layers=RT_RADAR.frames.map(function(f){
-    return L.tileLayer(f.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:0,pane:'wxradar',tileSize:256,maxNativeZoom:10,maxZoom:20,noWrap:true,errorTileUrl:RT_TRANSPX});
+    return L.tileLayer(f.path+'/256/{z}/{x}/{y}/2/1_1.png',{opacity:0,pane:'wxradar',tileSize:256,maxNativeZoom:8,maxZoom:20,noWrap:true,errorTileUrl:RT_TRANSPX});
    });
    RT_RADAR.layers.forEach(function(l){ l.addTo(RT_RADAR.map); });
-   var sat=(j&&j.satellite&&j.satellite.infrared)?j.satellite.infrared:[];
-   if(sat.length){ var sf=sat[sat.length-1]; RT_RADAR.cloudLayer=L.tileLayer(host+sf.path+'/256/{z}/{x}/{y}/0/0_0.png',{opacity:0.5,pane:'wxclouds',tileSize:256,maxNativeZoom:10,maxZoom:20,noWrap:true,errorTileUrl:RT_TRANSPX}); try{ RT_RADAR.cloudLayer.addTo(RT_RADAR.map); }catch(e){} }
+   /* Infrarot-Satelliten-Layer entfernt: unterstuetzt nur niedrige Zoomstufen und lieferte
+      sonst die "Zoom Level Not Supported"-Kacheln. Das Niederschlagsradar reicht. */
    RT_RADAR.idx=Math.max(0,Math.min(RT_RADAR.frames.length-1,past.slice(-8).length-1));
    RT_radarShow(RT_RADAR.idx);
    RT_RADAR.playing=false; RT_radarToggle();
@@ -7104,16 +7104,23 @@ function RT_removeRoundPhoto(idx){
  arr.splice(idx,1);
  RT_persistPhotoField(key,'bgUrls',arr); RT_persistPhotoField(key,'bgUrl',arr.length?arr[0]:null); RT_render();
 }
+/* Ausgewaehltes Bild zum Hauptbild (Titelbild) machen: an den Anfang der Liste schieben. */
+function RT_setMainRoundPhoto(idx){
+ var key=RT_su&&RT_su.course; var co=key&&RT_COURSES[key]; if(!co)return;
+ var arr=RT_roundPhotoList(co); if(idx<=0||idx>=arr.length)return;
+ var sel=arr.splice(idx,1)[0]; arr.unshift(sel);
+ RT_persistPhotoField(key,'bgUrls',arr); RT_persistPhotoField(key,'bgUrl',arr[0]); RT_render();
+}
 function RT_applyUploadedPhoto(url,field){ if(field==='bgAdd') RT_addRoundPhoto(url); else RT_setPhoto(url,field); }
 function RT_roundPhotosBoxHtml(pc){
  var list=RT_roundPhotoList(pc);
- var h='<div class="rtc"><div class="rt-ct">Rundenbilder</div><div class="rt-cs">Fotos der Runde \u2013 erscheinen als Hintergrund der Rundenkarte. Du kannst mehrere hinterlegen; das erste wird als Hauptbild verwendet.</div>';
+ var h='<div class="rtc"><div class="rt-ct">Rundenbilder</div><div class="rt-cs">Fotos der Runde \u2013 erscheinen als Hintergrund der Rundenkarte. Du kannst mehrere hinterlegen; tippe \u201eAls Hauptbild\u201c, um das Titelbild zu w\u00e4hlen.</div>';
  h+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">';
  if(!list.length){
   h+='<div style="position:relative;width:104px;height:104px;border-radius:12px;overflow:hidden;border:1px solid #DCE7D4;"><img src="'+RT_bgForKey(RT_su.course,pc.name)+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)"><div style="position:absolute;left:6px;bottom:5px;color:#fff;font-size:10px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.6);">Standardbild</div></div>';
  }else{
   list.forEach(function(u,idx){
-   h+='<div style="position:relative;width:104px;height:104px;border-radius:12px;overflow:hidden;border:1px solid #DCE7D4;"><img src="'+u+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)">'+(idx===0?'<div style="position:absolute;left:6px;top:5px;background:rgba(31,138,77,.92);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:100px;">Hauptbild</div>':'')+'<button onclick="RT_removeRoundPhoto('+idx+')" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(176,58,58,.92);color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer;">\u2715</button></div>';
+   h+='<div style="position:relative;width:104px;height:104px;border-radius:12px;overflow:hidden;border:1px solid #DCE7D4;"><img src="'+u+'" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="RT_imgErr(this)">'+(idx===0?'<div style="position:absolute;left:6px;top:5px;background:rgba(31,138,77,.92);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:100px;">Hauptbild</div>':'<button onclick="RT_setMainRoundPhoto('+idx+')" style="position:absolute;left:5px;bottom:5px;background:rgba(20,53,34,.82);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:100px;border:none;cursor:pointer;">Als Hauptbild</button>')+'<button onclick="RT_removeRoundPhoto('+idx+')" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(176,58,58,.92);color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer;">\u2715</button></div>';
   });
  }
  h+='<label style="width:104px;height:104px;border-radius:12px;border:1.5px dashed #B9CDB0;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#1F8A4D;font-size:12px;font-weight:700;gap:2px;">'+(RT_state.photoBusy==='bgAdd'?'<span class="rt-spin"></span>':'<span style="font-size:26px;line-height:1;">+</span>Bild')+'<input type="file" accept="image/*" style="display:none;" onchange="RT_photoFile(event,\'bgAdd\')" '+(RT_state.photoBusy?'disabled':'')+'></label>';
@@ -7600,7 +7607,6 @@ function RT_rPlay(){
   '<div style="font-size:11px;color:#7B8E80;">Par '+rd.par[c]+' &middot; SI '+rd.si[c]+'</div></div>'+
   
   (rtImg?('<div style="margin-bottom:10px;"><button class="rt-btn3" style="padding:6px 10px;background:#F1F6EC;border-radius:8px;" onclick="RT_toggleHoleView()">'+(mapMode?'\ud83d\uddbc\ufe0f Birdiekarte anzeigen':'\ud83d\udef0\ufe0f Satellitenkarte anzeigen')+'</button></div>'):'');
- h+=RT_windCardHtml(rd,c);
  rd.players.forEach(function(p,pi){
   var np=SC_netPar(rd.par[c],p.ph,rd.si[c],rd.cnt);
   var st=RT_stbfH(p,c);
@@ -8551,7 +8557,6 @@ function RT_rView(){
   '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
  if(foreignLocked)h+='<div class="rt-note" style="margin-bottom:10px;">Diese Runde wurde von einem anderen Konto geteilt \u2013 hier nur ansehbar, nicht bearbeitbar.</div>';
  else if(foreign)h+='<div class="rt-note" style="margin-bottom:10px;">Gemeinsame laufende Runde \u2013 du kannst hier deine eigenen Schl\u00e4ge eintragen, solange die Runde noch nicht beendet ist.</div>';
- h+=RT_wxRoundLine(rd);
  h+=RT_fmtHtml(rd);
  rd.players.forEach(function(p){
   var t=RT_totals(p,rd);

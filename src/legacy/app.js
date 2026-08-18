@@ -2328,7 +2328,7 @@ function sbCard(){
 /* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
    Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
    sehen stattdessen das Anmelde-/Registrierungsformular. */
-var FP_BUILD='2026-08-18 · 10:25 · toggle-icon+pfeil';
+var FP_BUILD='2026-08-18 · 10:35 · kasten-slide';
 function RT_rUser(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
@@ -5025,25 +5025,27 @@ function RT_hvPanel(title,closeFn,extra,grabBox){
 function RT_hvGrabInit(){ var ps=document.querySelectorAll('.rt-hv-panel[data-hvgrab="1"]'); for(var i=0;i<ps.length;i++) RT_hvGrabWire(ps[i]); }
 function RT_hvGrabWire(panel){
  if(panel._grabWired) return; panel._grabWired=true;
- var body=panel.querySelector('.rt-hv-body');
  var grab=panel.querySelector('.rt-hv-grab');
  var boxId=panel.getAttribute('data-hvbox');
  var colId=panel.getAttribute('data-hvcol');
  var expanded=true;
- function setExpanded(on){
-  expanded=on;
-  if(body){
-   if(on){ body.style.maxHeight=body.scrollHeight+'px'; body.style.opacity='1'; body.style.marginTop='8px'; }
-   else { body.style.maxHeight=body.scrollHeight+'px'; void body.offsetHeight; body.style.maxHeight='0px'; body.style.opacity='0'; body.style.marginTop='0px'; }
-  }
+ function linked(on){
   if(boxId){ var b=document.getElementById(boxId); if(b){ b.style.transition='transform .30s ease'; b.style.transform=on?'translateY(0)':'translateY(135%)'; } }
   if(colId){ var cE=document.getElementById(colId); if(cE){ if(on){ cE.style.maxHeight=cE.scrollHeight+'px'; cE.style.opacity='1'; } else { cE.style.maxHeight=cE.scrollHeight+'px'; void cE.offsetHeight; cE.style.maxHeight='0px'; cE.style.opacity='0'; } } }
+ }
+ /* Unterer Kasten: nach 3 s komplett nach unten wegrutschen (nur Griff bleibt sichtbar),
+    per Swipe nach oben (oder Tippen auf den Griff) wieder hochziehen. */
+ function setExpanded(on){
+  expanded=on;
+  panel.style.transition='transform .30s ease';
+  panel.style.transform=on?'translateY(0)':'translateY(calc(100% - 30px))';
+  linked(on);
  }
  panel._grabTimer=setTimeout(function(){ if(document.body.contains(panel)) setExpanded(false); },3000);
  if(grab){
   var stt=null, sy=0, moved=false;
   grab.addEventListener('pointerdown',function(ev){ ev.preventDefault(); ev.stopPropagation(); try{grab.setPointerCapture(ev.pointerId);}catch(e){} if(panel._grabTimer){ clearTimeout(panel._grabTimer); panel._grabTimer=null; } stt=true; sy=ev.clientY; moved=false; });
-  grab.addEventListener('pointermove',function(ev){ if(!stt) return; ev.preventDefault(); ev.stopPropagation(); var dy=ev.clientY-sy; if(Math.abs(dy)>8){ moved=true; if(dy>0){ if(!expanded) setExpanded(true); } else { if(expanded) setExpanded(false); } } });
+  grab.addEventListener('pointermove',function(ev){ if(!stt) return; ev.preventDefault(); ev.stopPropagation(); var dy=ev.clientY-sy; if(Math.abs(dy)>8){ moved=true; if(dy<0){ if(!expanded) setExpanded(true); } else { if(expanded) setExpanded(false); } } });
   function endG(ev){ if(!stt) return; stt=null; ev.stopPropagation(); if(!moved) setExpanded(!expanded); }
   grab.addEventListener('pointerup',endG); grab.addEventListener('pointercancel',endG);
  }

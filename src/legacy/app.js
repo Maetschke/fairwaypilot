@@ -2328,7 +2328,7 @@ function sbCard(){
 /* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
    Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
    sehen stattdessen das Anmelde-/Registrierungsformular. */
-var FP_BUILD='2026-08-18 · 10:50 · gps-punkt';
+var FP_BUILD='2026-08-18 · 11:00 · fahnenradar-grabber';
 function RT_rUser(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
@@ -5267,8 +5267,9 @@ function RT_openFlagRadar(){
    +'</div>'
  +'</div>';
 
- o.innerHTML=RT_hvPanel('Fahnenradar','RT_closeFlagRadar()')+body;
+ o.innerHTML=RT_hvPanel('Fahnenradar','RT_closeFlagRadar()','Richtung und Distanz zur Fahne. „Kompass aktivieren" dreht die Kompassrose nach deiner Blickrichtung.','')+body;
  host.appendChild(o);
+ try{ RT_hvGrabInit(); }catch(e){}
  if(!(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function')) RT_frStart();
 }
 function RT_closeFlagRadar(){ RT_frStop(); RT_tileOp('rt-tile-fr',false); var o=document.getElementById('rt-fr'); if(o&&o.parentNode) o.parentNode.removeChild(o); }

@@ -4,7 +4,7 @@ import { handleWx } from './wx.js';
 import { handleElev } from './elev.js';
 import { handleDgm } from './dgm.js';
 import { handleCourses } from './courses.js';
-const FP_BUILD = '2026-08-18 · 08:45 · ed23d71';
+const FP_BUILD = '2026-08-18 · 09:05 · panels-unten';
 import { handleHoles } from './holes.js';
 import { handleResearch } from './research.js';
 import { handleAccountDelete } from './account.js';

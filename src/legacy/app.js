@@ -2328,7 +2328,7 @@ function sbCard(){
 /* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
    Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
    sehen stattdessen das Anmelde-/Registrierungsformular. */
-var FP_BUILD='2026-08-18 · 08:30 · c924177';
+var FP_BUILD='2026-08-18 · 09:05 · panels-unten';
 function RT_rUser(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
@@ -3276,8 +3276,8 @@ function RT_renderHoleFull(url,title){
  var fs=!!RT_state.holeFS;
  var _hbtn='background:#fff;border:1.5px solid #DCE7D4;border-radius:100px;padding:8px 14px;font-size:12px;font-weight:700;color:#3C5546;font-family:inherit;cursor:pointer;';
  var fsBtn='<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleFS(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(fs?'Standard':'Vollbild')+'</button>';
- var toggleBtn=holeKey?('<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?'Birdiekarte':'Satellitenkarte')+'</button>'):'';
- var topBar='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);right:'+(fs?'16px':'64px')+';z-index:3000;display:flex;gap:8px;">'+fsBtn+toggleBtn+'</div>';
+ var _bcIcon='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3C5546" stroke-width="2" stroke-linejoin="round" style="margin-right:6px;vertical-align:-2px;"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14m6-10v14"/></svg>';var _satIcon='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3C5546" stroke-width="2" style="margin-right:6px;vertical-align:-2px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>';var toggleBtn=holeKey?('<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?_bcIcon+'Birdiekarte':_satIcon+'Satellitenkarte')+'</button>'):'';
+ var topBar='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);z-index:3000;display:flex;gap:8px;">'+fsBtn+toggleBtn+'</div>';
  var body;
  if(mapMode){
   body='<div style="position:absolute;inset:0;overflow:hidden;"><div id="hole-full-map" style="position:absolute;width:160%;height:160%;left:-30%;top:-30%;transform-origin:center center;"></div></div>'+RT_grabberOverlayHtml();
@@ -4884,12 +4884,12 @@ function RT_radarBuildOverlay(){
  var o=document.createElement('div'); o.id='rt-wxradar-ui';
  o.style.cssText='position:absolute;inset:0;z-index:2400;pointer-events:none;';
  o.innerHTML=RT_hvPanel('Wetterradar','','<div id="rt-wx-body"></div>','')
-  +'<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);pointer-events:none;display:flex;align-items:center;gap:7px;background:rgba(8,20,13,.72);border-radius:100px;padding:5px 11px;">'
+  +'<div style="position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 66px);pointer-events:none;display:flex;align-items:center;gap:7px;background:rgba(8,20,13,.72);border-radius:100px;padding:5px 11px;">'
     +'<span style="font-size:10.5px;color:#cfe0d4;">leicht</span>'
     +'<span style="width:46px;height:7px;border-radius:4px;background:linear-gradient(90deg,#8fd1ff,#3a86ff,#33d17a,#f6d32d,#e01b24);display:inline-block;"></span>'
     +'<span style="font-size:10.5px;color:#cfe0d4;">stark</span>'
   +'</div>'
-  +'<div style="position:absolute;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);pointer-events:auto;display:flex;align-items:center;gap:8px;">'
+  +'<div style="position:absolute;left:12px;top:calc(env(safe-area-inset-top,0px) + 110px);pointer-events:auto;display:flex;align-items:center;gap:8px;">'
     +'<button id="rt-radar-play" onclick="RT_radarToggle()" style="border:none;width:44px;height:44px;border-radius:50%;background:#1F8A4D;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;">'+RT_radarPlayIcon(true)+'</button>'
     +'<span id="rt-radar-time" style="background:rgba(8,20,13,.78);color:#fff;font-size:12px;font-weight:700;border-radius:100px;padding:6px 12px;">–</span>'
   +'</div>';
@@ -5008,10 +5008,10 @@ function RT_hvToast(msg){
 function RT_hvPanel(title,closeFn,extra,grabBox){
  var x=closeFn?('<button onclick="'+closeFn+'" aria-label="Schließen" style="border:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:14px;cursor:pointer;">✕</button>'):'';
  var grabOn=(grabBox!==undefined&&grabBox!==null);
- var grab=grabOn?'<div class="rt-hv-grab" style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:60px;height:18px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;pointer-events:auto;"><div style="width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);"></div></div>':'';
+ var grab=grabOn?'<div class="rt-hv-grab" style="position:absolute;left:50%;top:2px;transform:translateX(-50%);width:60px;height:18px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;pointer-events:auto;"><div style="width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);"></div></div>':'';
  var body=grabOn?('<div class="rt-hv-body" style="margin-top:'+(extra?'8px':'0')+';overflow:hidden;transition:max-height .28s ease,opacity .2s ease,margin-top .28s ease;">'+(extra||'')+'</div>'):(extra||'');
  var _col=(grabBox&&grabBox.indexOf('col:')===0)?grabBox.slice(4):''; var _bx=grabOn?(_col?(' data-hvcol="'+_col+'"'):(grabBox?' data-hvbox="'+grabBox+'"':'')):''; var attrs=grabOn?(' class="rt-hv-panel" data-hvgrab="1"'+_bx):'';
- return '<div'+attrs+' style="position:absolute;top:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:0 0 18px 18px;padding:calc(env(safe-area-inset-top,0px) + 7px) 12px '+(grabOn?'18px':'9px')+';box-shadow:0 5px 16px rgba(0,0,0,.55);z-index:6;">'
+ return '<div'+attrs+' style="position:absolute;bottom:0;left:0;right:0;pointer-events:auto;background:rgba(10,22,15,.95);border-radius:18px 18px 0 0;padding:'+(grabOn?'18px':'9px')+' 12px calc(env(safe-area-inset-bottom,0px) + 9px);box-shadow:0 -5px 16px rgba(0,0,0,.55);z-index:6;">'
   +'<div style="display:flex;align-items:center;justify-content:space-between;min-height:30px;'+((extra&&!grabOn)?'margin-bottom:8px;':'')+'">'
     +'<div style="font-size:15px;font-weight:800;color:#fff;">'+title+'</div>'+x
   +'</div>'+body+grab+'</div>';

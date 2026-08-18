@@ -2328,7 +2328,7 @@ function sbCard(){
 /* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
    Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
    sehen stattdessen das Anmelde-/Registrierungsformular. */
-var FP_BUILD='2026-08-18 · 10:15 · discard-fix';
+var FP_BUILD='2026-08-18 · 10:25 · toggle-icon+pfeil';
 function RT_rUser(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
@@ -7639,7 +7639,7 @@ function RT_rPlay(){
   '<div class="rt-ct" style="margin:0;">Bahn '+rd.nums[c]+'</div>'+
   '<div style="font-size:11px;color:#7B8E80;">Par '+rd.par[c]+' &middot; SI '+rd.si[c]+'</div></div>'+
   
-  (rtImg?('<div style="margin-bottom:10px;text-align:center;"><button class="rt-btn3" style="padding:6px 10px;background:#F1F6EC;border-radius:8px;" onclick="RT_toggleHoleView()">'+(mapMode?'Birdiekarte anzeigen':'Satellitenkarte anzeigen')+'</button></div>'):'');
+  (rtImg?('<div style="margin-bottom:10px;text-align:center;"><button class="rt-btn3" style="padding:6px 10px;background:#F1F6EC;border-radius:8px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;" onclick="RT_toggleHoleView()">'+(mapMode?'<img src="/hv/birdiekarte.png" alt="" style="width:16px;height:16px;border-radius:3px;margin-right:6px;">Birdiekarte anzeigen':'<img src="/hv/landkarte.png" alt="" style="width:16px;height:16px;border-radius:3px;margin-right:6px;">Satellitenkarte anzeigen')+'</button></div>'):'');
  rd.players.forEach(function(p,pi){
   var np=SC_netPar(rd.par[c],p.ph,rd.si[c],rd.cnt);
   var st=RT_stbfH(p,c);
@@ -7682,7 +7682,7 @@ function RT_rPlay(){
    var rtScale=RT_HOLE_BIGGER[rd.nums[c]]||1;
    h+='<div class="rt-holemap" onclick="RT_openHoleFull(\''+rtImg.url+'\',\'Bahn '+rd.nums[c]+'\','+pi+')"><img src="'+rtImg.url+'" alt="Lochkarte" loading="lazy" style="width:100%;height:100%;object-fit:contain;display:block;transform:scale('+rtScale+');">'+RT_pinsOverlayHtml(rd,c,0,pi)+'<div class="rt-holemap-tap">&#8599;</div></div>';
   }else{
-   h+='<div class="rt-holemap" style="position:relative;"><div class="rt-holemap-inner" id="hole-map-'+pi+'"></div>'+'<div class="rt-holemap-tap" style="z-index:1200;pointer-events:auto;" onclick="event.stopPropagation();RT_openHoleFull(\''+(rtImg?rtImg.url:'')+'\',\'Bahn '+rd.nums[c]+'\','+pi+')">&#8599;</div>'+'</div>';
+   h+='<div class="rt-holemap" style="position:relative;"><div class="rt-holemap-inner" id="hole-map-'+pi+'"></div>'+'<div style="position:absolute;right:0;bottom:0;width:60px;height:60px;z-index:1200;pointer-events:auto;cursor:pointer;" onclick="event.stopPropagation();event.preventDefault();RT_openHoleFull(\''+(rtImg?rtImg.url:'')+'\',\'Bahn '+rd.nums[c]+'\','+pi+')"><div class="rt-holemap-tap" style="pointer-events:none;">&#8599;</div></div>'+'</div>';
    h+='<div id="map-ctrl-'+pi+'">'+RT_mapCtrlHtml(pi)+'</div>';
    h+='<div id="pin-hint-'+pi+'" style="font-size:9.5px;color:#8A9C8E;margin-top:4px;">'+((RT_pinMoveMode&&RT_pinMoveMode.pi===pi)?'Tippe die neue Position für die Markierung an.':'Karte antippen = neue Lage<br>Markierung antippen = Menü (verschieben/löschen/Typ ändern)')+'</div>';
   }

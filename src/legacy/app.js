@@ -2365,11 +2365,10 @@ function RT_rUser(){
   '</div>';
   h+='<div class="rtc"><div class="rt-ct">Golfbag</div><div class="rt-cs" style="margin-bottom:8px;">'+(RT_bagCount()?(RT_bagCount()+' Schläger im Bag'):'Noch keine Schläger ausgewählt')+'</div><button class="rt-btn2" onclick="RT_go(\'bag\')">Schlägerauswahl &#8250;</button></div>';
  h+='<div class="rtc"><div class="rt-ct">Verbundene Dienste</div><div class="rt-cs" style="margin-bottom:8px;">'+RT_svcSummaryLine()+'</div><button class="rt-btn2" onclick="RT_go(\'services\')">Dienste verwalten &#8250;</button></div>';
- /* RSV2-TEST-TOGGLE (temporaer, spaeter entfernen) === */
- h+='<div class="rtc" style="border:1.5px dashed #C77D0A;background:#FFF8EC;"><div class="rt-ct" style="color:#B7791F;">\ud83d\udd27 [intern \u00b7 sp\u00e4ter entfernen] Gemeinsames Scoring v2</div>'
-  +'<div class="rt-cs" style="margin-bottom:8px;">Server-erzwungenes Scoring mit Per-Spieler-Zuweisung ist jetzt Standard. Dieser Notaus schaltet zur\u00fcck auf das alte Modell, falls unterwegs Probleme auftreten.</div>'
-  +'<button class="rt-btn2" style="width:auto;" onclick="RSV2_toggle()">'+(RSV2_ON()?'v2 ist AN (Standard) \u2013 Notaus: altes Modell':'v2 ist AUS \u2013 wieder einschalten')+'</button></div>';
- /* === /RSV2-TEST-TOGGLE */
+ /* Gemeinsames Scoring: Notschalter auf altes Modell (Sicherheitsventil). */
+ h+='<div class="rtc"><div class="rt-ct">Gemeinsames Scoring</div>'
+  +'<div class="rt-cs" style="margin-bottom:8px;">Server-erzwungenes Scoring mit Per-Spieler-Zuweisung ist Standard. Nur bei Problemen unterwegs hier auf das alte Modell zur\u00fcckschalten.</div>'
+  +'<button class="rt-btn2" style="width:auto;" onclick="RSV2_toggle()">'+(RSV2_ON()?'Aktiv \u2013 Notschalter: altes Modell':'Altes Modell aktiv \u2013 wieder umschalten')+'</button></div>';
  h+='<div class="rtc"><div class="rt-ct">Eigenes Handicap</div>'+
   '<div class="rt-cs">Wird bei einer neuen Runde als Standard-HI vorbelegt, statt jedes Mal 54 eintragen zu m\u00fcssen.</div>'+
   '<input class="rt-inp" id="usr-hcp" type="number" step="0.1" min="-10" max="54" value="'+rtEsc(RT_ownHandicapStored())+'" placeholder="z.\u2009B. 24.5" style="margin-bottom:8px;">'+
@@ -7585,10 +7584,11 @@ function RT_totals(p,rd){
 
 function RT_rPlay(){
  var rd=RT_round; if(!rd)return RT_rHome();
+ var _nineSwap=!!(rd.cnt===18 && (function(){try{return rtGet('fp_nineSwap');}catch(e){return 0;}})());
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="'+(RT_editingExisting?'RT_cancelEdit()':'RT_go(\'home\')')+'">&#8249;</button>'+
   '<div style="flex:1;min-width:0;"><div class="rt-h1" style="font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+rtEsc(rd.courseName)+'</div>'+
-  '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
+  '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div>'+(rd.cnt===18?('<span class="rt-nine-grip" role="button" title="Reihenfolge der Neuner tauschen \u2013 nur Ansicht" onclick="RT_toggleNineSwap()" style="flex:none;align-self:center;"><span class="dots">\u21C5</span>'+(_nineSwap?'10\u201318 oben':'1\u20139 oben')+'</span>'):'')+'</div>';
  if(!rd.v2 && RT_roundIsShared(rd)){
   var _amSc=RT_amScorer(rd);
   var _amOwner=!!(RT_roundOwners[rd.id]&&sbUser&&RT_roundOwners[rd.id]===sbUser.id);
@@ -7605,10 +7605,6 @@ function RT_rPlay(){
   }
  }
  /* Bahnen-Leiste */
- var _nineSwap=!!(rd.cnt===18 && (function(){try{return rtGet('fp_nineSwap');}catch(e){return 0;}})());
- if(rd.cnt===18){
-  h+='<div class="rt-nine-bar"><span class="rt-nine-grip" role="button" title="Reihenfolge der Neuner tauschen – nur Ansicht, ohne Auswirkung auf die Wertung" onclick="RT_toggleNineSwap()"><span class="dots">\u21C5</span>'+(_nineSwap?'10\u201318 oben':'1\u20139 oben')+'</span></div>';
- }
  h+='<div class="rt-holes'+(_nineSwap?' swapped':'')+'">';
  for(var i=0;i<rd.cnt;i++){
   var done=rd.players.every(function(p){return p.sc[i]!==null||p.cx[i];});
@@ -8574,7 +8570,7 @@ function RT_fmtHtml(rd){
  var head='<div class="rtc" style="margin-bottom:12px;padding:12px 14px;">'
   +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;'+(RT_fmtOpen?'margin-bottom:12px;':'')+'">'
   +'<div><div class="rt-ct" style="margin:0;">Spielformate &amp; Auswertung</div>'
-  +'<div class="rt-cs" style="margin:0;">Zählspiel, Stableford, Skins, Lochspiel &amp; Nassau – aus den Scores berechnet</div></div>'
+  +'<div class="rt-cs" style="margin:0;">Live-Auswertung aus den eingetragenen Scores: Zählspiel und Stableford (Netto/Brutto), Skins mit Carry-over sowie Lochspiel und – bei 18 Loch – Nassau (Front 9, Back 9, Gesamt).</div></div>'
   +'<button class="rt-btn2" style="margin:0;padding:9px 14px;font-size:12px;white-space:nowrap;flex:none;width:auto;min-width:120px;text-align:center;" onclick="RT_fmtToggleOpen()">'+(RT_fmtOpen?'Zuklappen':'Anzeigen')+'</button>'
   +'</div>';
  if(!RT_fmtOpen) return head+'</div>';
@@ -8633,7 +8629,7 @@ function RT_rView(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
   '<div style="flex:1;min-width:0;"><div class="rt-h1" style="font-size:18px;">'+rtEsc(rd.courseName)+'</div>'+
-  '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
+  '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div>'+(rd.cnt===18?('<span class="rt-nine-grip" role="button" title="Reihenfolge der Neuner tauschen \u2013 nur Ansicht" onclick="RT_toggleNineSwap()" style="flex:none;align-self:center;"><span class="dots">\u21C5</span>'+(_nineSwap?'10\u201318 oben':'1\u20139 oben')+'</span>'):'')+'</div>';
  if(foreignLocked)h+='<div class="rt-note" style="margin-bottom:10px;">Diese Runde wurde von einem anderen Konto geteilt \u2013 hier nur ansehbar, nicht bearbeitbar.</div>';
  else if(foreign)h+='<div class="rt-note" style="margin-bottom:10px;">Gemeinsame laufende Runde \u2013 du kannst hier deine eigenen Schl\u00e4ge eintragen, solange die Runde noch nicht beendet ist.</div>';
  h+=RT_fmtHtml(rd);
@@ -11515,17 +11511,11 @@ function RT_toggleScPanel(){ try{ rtSet('fp_scPanelOpen', RT_scPanelOpen()?0:1);
 function RT_v2BannerHtml(rd){
  if(!rd||!rd.v2) return '';
  var open=RT_scPanelOpen();
- /* Kompakte Statuszeile (auch eingeklappt sichtbar): farbiger Punkt + Name je Spieler. */
- var sub='';
- rd.players.forEach(function(p,i){
-  var uid=RT_v2ScorerFor(rd,i); var mine=!!(sbUser&&uid===sbUser.id); var reach=mine||RT_v2Reachable(rd,uid);
-  sub+='<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;">'
-   +'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+(reach?'#2EA84F':'#C0392B')+';flex:none;"></span>'
-   +'<span>'+rtEsc(p.name)+'</span></span>';
- });
+ /* Eingeklappt: erklaerender Dreizeiler statt Namen. */
+ var sub='Zeigt, wer welche Scorecard führt. Jede und jeder trägt nur die eigene zugewiesene Karte ein – alle sehen die Ergebnisse live. Zum Ansehen oder Übernehmen einer Karte „Anzeigen“ tippen.';
  var h='<div class="rtc" style="padding:12px 14px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;'+(open?'margin-bottom:10px;':'')+'">'+
   '<div style="min-width:0;"><div class="rt-ct" style="margin:0;">Scoring-Karten</div>'+
-  '<div class="rt-cs" style="margin:0;display:flex;flex-wrap:wrap;align-items:center;">'+sub+'</div></div>'+
+  '<div class="rt-cs" style="margin:0;">'+sub+'</div></div>'+
   '<button class="rt-btn2" style="margin:0;padding:9px 14px;font-size:12px;white-space:nowrap;flex:none;width:auto;min-width:120px;text-align:center;" onclick="RT_toggleScPanel()">'+(open?'Zuklappen':'Anzeigen')+'</button>'+
   '</div>';
  if(open){

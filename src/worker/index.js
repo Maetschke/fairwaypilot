@@ -4,6 +4,7 @@ import { handleWx } from './wx.js';
 import { handleElev } from './elev.js';
 import { handleDgm } from './dgm.js';
 import { handleCourses } from './courses.js';
+const FP_BUILD = '2026-08-18 · 08:45 · ed23d71';
 import { handleHoles } from './holes.js';
 import { handleResearch } from './research.js';
 import { handleAccountDelete } from './account.js';
@@ -114,7 +115,8 @@ export default {
     return new Response(HTML, {
       headers: {
         "content-type": "text/html; charset=utf-8",
-        "cache-control": "no-cache",
+        "cache-control": "no-store, no-cache, must-revalidate",
+        "x-fp-build": FP_BUILD,
         "x-content-type-options": "nosniff",
         "referrer-policy": "strict-origin-when-cross-origin"
       }

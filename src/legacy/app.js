@@ -2328,7 +2328,7 @@ function sbCard(){
 /* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
    Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
    sehen stattdessen das Anmelde-/Registrierungsformular. */
-var FP_BUILD='2026-08-18 · 09:05 · panels-unten';
+var FP_BUILD='2026-08-18 · 07:15 · birdie-fit';
 function RT_rUser(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
@@ -3289,8 +3289,11 @@ function RT_renderHoleFull(url,title){
  var _ni=rd?rd.cur:0, _nn=(rd&&rd.nums)?rd.nums.length:0;
  function _navBtn(dir,dis,glyph){ return '<button onclick="RT_holeFullNav('+dir+')" '+(dis?'disabled ':'')+'style="width:40px;height:40px;border-radius:50%;background:#fff;border:1.5px solid #DCE7D4;font-size:20px;line-height:1;color:'+(dis?'#C2CFC0':'#3C5546')+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(20,53,34,.18);">'+glyph+'</button>'; }
  var navBar=rd?('<div style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 40px);display:flex;align-items:center;gap:16px;z-index:3;">'+_navBtn(-1,_ni<=0,'\u2039')+_navBtn(1,_ni>=_nn-1,'\u203a')+'</div>'):'';
- el.innerHTML='<button class="rt-holefull-close" '+(fs?'style="left:16px;right:auto;z-index:3001;" ':'')+'onclick="RT_closeHoleFull()">&#10005;</button>'+topBar+(fs?'':'<div class="rt-holefull-title">'+rtEsc(title)+'</div>')+'<div class="rt-holefull-card"'+(fs?' style="top:0;left:0;right:0;bottom:0;border-radius:0;"':'')+'><div class="rt-holefull-imgwrap">'+body+'</div></div>'+(fs?'':navBar);
+ el.innerHTML='<button class="rt-holefull-close" '+(fs?'style="z-index:3001;" ':'')+'onclick="RT_closeHoleFull()">&#10005;</button>'+topBar+(fs?'':'<div class="rt-holefull-title">'+rtEsc(title)+'</div>')+'<div class="rt-holefull-card"'+(fs?' style="top:0;left:0;right:0;bottom:0;border-radius:0;"':'')+'><div class="rt-holefull-imgwrap">'+body+'</div></div>'+(fs?'':navBar);
  if(mapMode) RT_initHoleFullMap();
+ else { /* Birdiekarte: nach Layout sicher neu einpassen (Cache-Bilder feuern onload evtl. nicht nach Vollbild-Wechsel) */
+  try{ var _im=el.querySelector('#hole-full-frame img'); if(_im){ requestAnimationFrame(function(){ try{ if(_im.complete && _im.naturalWidth) RT_fitRotatedImg(_im); }catch(e){} }); } }catch(e){}
+ }
 }
 function RT_toggleHoleFS(url,title){ RT_state.holeFS=!RT_state.holeFS; RT_renderHoleFull(url,title); }
 function RT_closeHoleFull(){
@@ -7710,7 +7713,7 @@ function RT_rPlay(){
  h+='<div class="rtc" style="padding:12px 14px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">'+
   '<div><div class="rt-ct" style="margin:0;">Wegpunkte (GPX)</div>'+
   '<div class="rt-cs" style="margin:0;">Ordnet die Wegpunkte zeitlich den Bahnen zu und zeigt sie als Pins auf der Lochkarte</div></div>'+
-  '<label class="rt-btn2" style="margin:0;padding:9px 14px;font-size:12px;white-space:nowrap;flex:none;width:auto;min-width:120px;text-align:center;cursor:pointer;">Importieren'+
+  '<label class="rt-btn2" style="margin:0;padding:9px 14px;font-size:12px;white-space:nowrap;flex:none;width:auto;min-width:120px;text-align:center;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">Importieren'+
    '<input id="rt-gpx-input" type="file" accept=".gpx" style="display:none;" onchange="RT_gpxFile(event)"></label>'+
   '</div></div>';
 
@@ -8569,7 +8572,7 @@ function RT_fmtHtml(rd){
  var head='<div class="rtc" style="margin-bottom:12px;padding:12px 14px;">'
   +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;'+(RT_fmtOpen?'margin-bottom:12px;':'')+'">'
   +'<div><div class="rt-ct" style="margin:0;">Spielformate &amp; Auswertung</div>'
-  +'<div class="rt-cs" style="margin:0;">Live-Auswertung aus den eingetragenen Scores: Zählspiel und Stableford (Netto/Brutto), Skins mit Carry-over sowie Lochspiel und – bei 18 Loch – Nassau (Front 9, Back 9, Gesamt).</div></div>'
+  +'<div class="rt-cs" style="margin:0;">Zählspiel, Stableford, Skins, Lochspiel und Nassau – live aus den eingetragenen Scores berechnet.</div></div>'
   +'<button class="rt-btn2" style="margin:0;padding:9px 14px;font-size:12px;white-space:nowrap;flex:none;width:auto;min-width:120px;text-align:center;" onclick="RT_fmtToggleOpen()">'+(RT_fmtOpen?'Zuklappen':'Anzeigen')+'</button>'
   +'</div>';
  if(!RT_fmtOpen) return head+'</div>';
@@ -11516,7 +11519,7 @@ function RT_v2BannerHtml(rd){
  if(!rd||!rd.v2) return '';
  var open=RT_scPanelOpen();
  /* Eingeklappt: erklaerender Dreizeiler statt Namen. */
- var sub='Zeigt, wer welche Scorecard führt. Jede und jeder trägt nur die eigene zugewiesene Karte ein – alle sehen die Ergebnisse live. Zum Ansehen oder Übernehmen einer Karte „Anzeigen“ tippen.';
+ var sub='Zeigt, wer welche Scorecard führt. Jeder trägt nur die eigene Karte ein – alle sehen live mit.';
  var h='<div class="rtc" style="padding:12px 14px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;'+(open?'margin-bottom:10px;':'')+'">'+
   '<div style="min-width:0;"><div class="rt-ct" style="margin:0;">Scoring-Karten</div>'+
   '<div class="rt-cs" style="margin:0;">'+sub+'</div></div>'+

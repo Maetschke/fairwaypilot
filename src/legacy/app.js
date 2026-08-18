@@ -2328,7 +2328,7 @@ function sbCard(){
 /* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
    Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
    sehen stattdessen das Anmelde-/Registrierungsformular. */
-var FP_BUILD='2026-08-18 · 07:15 · birdie-fit';
+var FP_BUILD='2026-08-18 · 07:25 · icons';
 function RT_rUser(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
@@ -2981,7 +2981,7 @@ function RT_markShotLabel(rd,c,pi){
  /* Vorschau der naechsten Positionsnummer: der naechste Marker landet an Position pins.length
     (0-basiert) und wird als pins.length+1 angezeigt; die allererste Markierung ist der Abschlag (A). */
  var _pl=RT_pinsOf(rd,(pi===undefined||pi===null)?0:pi,c).length;
- return '\ud83d\udccd Markieren'+(_pl===0?' (A)':' ('+(_pl+1)+')');
+ return '<img src="/hv/ortsmarkierung.png" alt="" style="width:18px;height:18px;border-radius:4px;vertical-align:-4px;margin-right:6px;">Markieren'+(_pl===0?' (A)':' ('+(_pl+1)+')');
 }
 function RT_markShot(pi){
  var rd=RT_round; if(!rd) return;
@@ -3276,7 +3276,7 @@ function RT_renderHoleFull(url,title){
  var fs=!!RT_state.holeFS;
  var _hbtn='background:#fff;border:1.5px solid #DCE7D4;border-radius:100px;padding:8px 14px;font-size:12px;font-weight:700;color:#3C5546;font-family:inherit;cursor:pointer;';
  var fsBtn='<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleFS(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(fs?'Standard':'Vollbild')+'</button>';
- var _bcIcon='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3C5546" stroke-width="2" stroke-linejoin="round" style="margin-right:6px;vertical-align:-2px;"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14m6-10v14"/></svg>';var _satIcon='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3C5546" stroke-width="2" style="margin-right:6px;vertical-align:-2px;"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>';var toggleBtn=holeKey?('<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?_bcIcon+'Birdiekarte':_satIcon+'Satellitenkarte')+'</button>'):'';
+ var _bcIcon='<img src="/hv/birdiekarte.png" alt="" style="width:18px;height:18px;border-radius:4px;margin-right:6px;vertical-align:-4px;">';var _satIcon='<img src="/hv/landkarte.png" alt="" style="width:18px;height:18px;border-radius:4px;margin-right:6px;vertical-align:-4px;">';var toggleBtn=holeKey?('<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?_bcIcon+'Birdiekarte':_satIcon+'Satellitenkarte')+'</button>'):'';
  var topBar='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);z-index:3000;display:flex;gap:8px;">'+fsBtn+toggleBtn+'</div>';
  var body;
  if(mapMode){
@@ -5642,7 +5642,7 @@ function RT_grabberOverlayHtml(){
    RT_hvBtn('gruen','Geländerelief','RT_openGreenView()',RT_gvActive(),'rt-tile-gv')+
    RT_hvBtn('entfernung','Entfernung','RT_toggleGrabber()',on,'rt-grab-toggle')+
   '</div>'+
-  '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
+  '<div id="rt-wind-ui" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 64px);left:12px;pointer-events:none;display:'+(windOn?'flex':'none')+';align-items:flex-start;gap:9px;background:rgba(14,30,21,.80);border-radius:16px;padding:7px 13px 7px 7px;box-shadow:0 4px 14px rgba(0,0,0,.45);">'+RT_windOverlayContent(rd,rd.cur)+'</div>'+
   '<div id="rt-grab-far" style="'+lbl+'top:32%;">–</div>'+
   '<div id="rt-grab-near" style="'+lbl+'top:60%;">–</div>'+
  '</div>';

@@ -10979,7 +10979,11 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(adjustFoote
 setTimeout(adjustFooterPadding,300);
 
 /* Service Worker (M0.5): App-Shell offline, HTML network-first. */
-if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }); }
+if('serviceWorker' in navigator){
+ var _fpHadCtrl=!!navigator.serviceWorker.controller, _fpReloaded=false;
+ navigator.serviceWorker.addEventListener('controllerchange',function(){ if(_fpReloaded)return; _fpReloaded=true; if(_fpHadCtrl){ try{ location.reload(); }catch(e){} } });
+ window.addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').then(function(reg){ try{ reg.update(); }catch(e){} setInterval(function(){ try{ reg.update(); }catch(e){} }, 60000); }).catch(function(){}); });
+}
 /* Sicherheitsnetz: aktive Runde vor dem Verlassen/Ausblenden sichern (iOS killt Tabs oft ohne
    beforeunload - pagehide/visibilitychange sind zuverlaessiger). Jeder Klick speichert bereits,
    das hier faengt zusaetzlich In-Memory-Zwischenstaende (z.B. laufendes Marker-Ziehen) ab. */

@@ -4,7 +4,7 @@
  * = gleiche URL, sonst App-Shell '/app'. Statische Assets: stale-while-revalidate.
  * WICHTIG: Cache-Version-Bump (v2) loescht beim Aktivieren automatisch alle alten Caches und
  * behebt damit haengende Alt-Staende (z.B. versehentlich gecachte Paywall-Version). */
-var FP_CACHE = 'fp-shell-v2';
+var FP_CACHE = 'fp-shell-v3';
 var SHELL = ['/app', '/', '/manifest.json', '/icon-192.png', '/icon-512.png', '/icon-32.png', '/logo-mark.png'];
 self.addEventListener('install', function(e){
   self.skipWaiting();

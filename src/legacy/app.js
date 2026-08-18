@@ -2456,11 +2456,6 @@ function RT_rUser(){
  });
  if(PL_msg)h+='<div class="rt-warn" style="margin-top:10px;margin-bottom:0;">'+rtEsc(PL_msg)+'</div>';
  h+='</div>';
- h+='<div class="rtc" style="margin-top:10px;"><div class="rt-ct">Einstellungen</div>'+
-  '<div style="font-size:12.5px;font-weight:600;">Putts/Straf/Sand zählen Schlag mit</div>'+
-  '<div class="rt-cs">Erhöht beim Zaehlen automatisch auch die Schlagzahl (und umgekehrt beim Verringern).</div>'+
-  '<button class="rt-btn2" style="width:100%;" onclick="RT_toggleAutoCount()">'+(RT_autoCountOn()?'An':'Aus')+'</button>'+
-  '</div>';
   h+='<div class="rtc" style="border-top-color:#B03A3A;margin-top:10px;">'+
  '<button class="rt-btn2" style="width:100%;color:#B03A3A;border-color:#E0BCBC;font-weight:700;" '+(RT_state.logoutBusy?'disabled':'')+' onclick="sbOut()">'+(RT_state.logoutBusy?'<span class="rt-spin"></span>Pr\u00fcft Sync\u2026':'Abmelden')+'</button></div>';
  if(RT_state.ask==='logout_unsynced'){
@@ -7772,8 +7767,9 @@ function RT_nav(d){
 /* Einstellung: Zaehlen von Putts/Strafschlaegen/Sandschlaegen automatisch als
    Schlag mitzaehlen. Default an (true), abschaltbar in den Kontoeinstellungen. */
 function RT_autoCountOn(){
- var v=rtGet(RT_AUTOCOUNT_KEY);
- return v===null?true:!!v;
+ /* Fest verdrahtet auf AN: Putt/Straf/Sand erhoehen immer die Schlagzahl.
+    (Frueherer globaler Schalter entfernt - vermeidet Balllage/Schlag-Inkonsistenzen.) */
+ return true;
 }
 function RT_toggleAutoCount(){
  rtSet(RT_AUTOCOUNT_KEY,!RT_autoCountOn());

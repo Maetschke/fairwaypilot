@@ -2328,7 +2328,7 @@ function sbCard(){
 /* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
    Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
    sehen stattdessen das Anmelde-/Registrierungsformular. */
-var FP_BUILD='2026-08-18 · 10:05 · icons6';
+var FP_BUILD='2026-08-18 · 10:15 · discard-fix';
 function RT_rUser(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
@@ -7536,7 +7536,23 @@ function RT_start(){
 }
 function RT_discard(){
  if(RT_state.ask!=='discard'){RT_state.ask='discard';RT_render();return;}
- RT_state.ask='';RT_round=null;rtDel(RT_ACT);RT_render();
+ RT_state.ask='';
+ /* Verwerfen = Runde wirklich entfernen (nicht nur den Aktiv-Zeiger loesen), sonst bleibt sie
+    als unfertige Runde in der gespeicherten Liste stehen und muesste dort erneut geloescht werden. */
+ var rd=RT_round;
+ if(rd){
+  try{
+   var saved=rtGet(RT_KEY)||[];
+   var ex=saved.find(function(r){return r.id===rd.id;});
+   if(ex && !(typeof RT_isForeignRound==='function' && RT_isForeignRound(ex))){
+    ex.hidden=true; rtSet(RT_KEY,saved);
+    try{ if(sb&&sbUser) sbPushRound(ex); }catch(e){}
+   }
+  }catch(e){}
+ }
+ RT_round=null;rtDel(RT_ACT);
+ try{ if(typeof RT_hydrateHistoricalData==='function') RT_hydrateHistoricalData(); }catch(e){}
+ RT_render();
 }
 
 /* Stableford je Loch (nutzt SC_netPar aus dem Bestand) */

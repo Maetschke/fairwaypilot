@@ -8626,7 +8626,7 @@ function RT_rView(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
   '<div style="flex:1;min-width:0;"><div class="rt-h1" style="font-size:18px;">'+rtEsc(rd.courseName)+'</div>'+
-  '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div>'+(rd.cnt===18?('<span class="rt-nine-grip" role="button" title="Reihenfolge der Neuner tauschen \u2013 nur Ansicht" onclick="RT_toggleNineSwap()" style="flex:none;align-self:center;"><span class="dots">\u21C5</span>'+(_nineSwap?'10\u201318 oben':'1\u20139 oben')+'</span>'):'')+'</div>';
+  '<div class="rt-sub">'+RT_fmtDT(rd)+' &middot; '+rd.lbl+'</div></div></div>';
  if(foreignLocked)h+='<div class="rt-note" style="margin-bottom:10px;">Diese Runde wurde von einem anderen Konto geteilt \u2013 hier nur ansehbar, nicht bearbeitbar.</div>';
  else if(foreign)h+='<div class="rt-note" style="margin-bottom:10px;">Gemeinsame laufende Runde \u2013 du kannst hier deine eigenen Schl\u00e4ge eintragen, solange die Runde noch nicht beendet ist.</div>';
  h+=RT_fmtHtml(rd);

@@ -2328,6 +2328,7 @@ function sbCard(){
 /* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
    Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
    sehen stattdessen das Anmelde-/Registrierungsformular. */
+var FP_BUILD='2026-08-18 · 08:30 · c924177';
 function RT_rUser(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
@@ -2469,6 +2470,7 @@ function RT_rUser(){
  (RT_state.delAccMsg?'<div class="rt-warn" style="margin-bottom:10px;">'+rtEsc(RT_state.delAccMsg)+'</div>':'')+
  '<button class="rt-btn2" style="color:#B03A3A;border-color:#E0BCBC;'+(RT_state.ask==='delaccount'?'background:#FBEAEA;font-weight:800;':'')+'" '+(RT_state.delAccBusy?'disabled':'')+' onclick="RT_deleteAccount()">'+(RT_state.delAccBusy?'<span class="rt-spin"></span>L\u00f6sche\u2026':(RT_state.ask==='delaccount'?'Wirklich unwiderruflich l\u00f6schen?':'Konto endg\u00fcltig l\u00f6schen'))+'</button>'+
  '</div>';
+ h+='<div style="text-align:center;margin-top:16px;font-size:11px;color:#9AAB9E;">Build '+FP_BUILD+'</div>';
  return h;
 }
 /* Liefert {url,bg} fuer ein eigenes Lochbild (statt Live-Karte), falls der Platz

@@ -1713,6 +1713,7 @@ function sbInit(){
    var firstEverLogin=!lastUid;
    try{ localStorage.setItem(RT_LAST_UID_KEY,sbUser.id); }catch(e){}
    sbPull(firstEverLogin); PL_load().then(RT_render); RT_loadConnections(); if(AG_joinCode) AG_claim(); AG_claimByEmail(); RT_LRN_cloudPull(); RT_bagCloudPull(); RT_loadEntitlement();
+   if(firstEverLogin){ setTimeout(function(){ try{ RT_onbMaybeShow(); }catch(e){} }, 1200); }
    try{ var _dn=sbUser.user_metadata&&sbUser.user_metadata.display_name; if(!_dn||!(''+_dn).trim()){ AG_needName=true; setTimeout(function(){ try{ AG_namePrompt(); }catch(e){} },0); } }catch(e){}
   }
   else RT_render();
@@ -11167,6 +11168,7 @@ function RT_onbHasData(){
 function RT_onbCloseEl(){ var e=document.getElementById('rt-onb'); if(e&&e.parentNode) e.parentNode.removeChild(e); }
 function RT_onbMaybeShow(){
  try{
+  if(!sbUser) return; /* Onboarding erst nach der Anmeldung */
   if(rtGet(RT_ONBOARD_KEY)) return;
   if(RT_round&&!RT_round.done) return;
   if(RT_state&&RT_state.screen&&RT_state.screen!=='home') return;

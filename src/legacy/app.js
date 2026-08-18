@@ -2328,7 +2328,7 @@ function sbCard(){
 /* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
    Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
    sehen stattdessen das Anmelde-/Registrierungsformular. */
-var FP_BUILD='2026-08-18 · 07:45 · icons3';
+var FP_BUILD='2026-08-18 · 09:50 · parallel+icons4';
 function RT_rUser(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
@@ -3274,7 +3274,7 @@ function RT_renderHoleFull(url,title){
  var holeKey=rd?RT_holeMapKey(rd,c):null;
  var mapMode=!!(holeKey&&(RT_mapSat()||(typeof RT_holeImgFor==='function'&&!RT_holeImgFor(rd,c))));
  var fs=!!RT_state.holeFS;
- var _hbtn='background:#fff;border:1.5px solid #DCE7D4;border-radius:100px;padding:8px 14px;font-size:12px;font-weight:700;color:#3C5546;font-family:inherit;cursor:pointer;';
+ var _hbtn='background:#fff;border:1.5px solid #DCE7D4;border-radius:100px;padding:8px 14px;font-size:12px;font-weight:700;color:#3C5546;font-family:inherit;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;';
  var fsBtn='<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleFS(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(fs?'Standard':'Vollbild')+'</button>';
  var _bcIcon='<img src="/hv/birdiekarte.png" alt="" style="width:18px;height:18px;border-radius:4px;margin-right:6px;vertical-align:-4px;">';var _satIcon='<img src="/hv/landkarte.png" alt="" style="width:18px;height:18px;border-radius:4px;margin-right:6px;vertical-align:-4px;">';var toggleBtn=holeKey?('<button class="rt-btn3" style="'+_hbtn+'" onclick="RT_toggleHoleView();RT_renderHoleFull(\''+rtJsEsc(url)+'\',\''+rtJsEsc(title)+'\')">'+(mapMode?_bcIcon+'Birdiekarte':_satIcon+'Satellitenkarte')+'</button>'):'';
  var topBar='<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);z-index:3000;display:flex;gap:8px;">'+fsBtn+toggleBtn+'</div>';
@@ -5050,6 +5050,7 @@ function RT_hvGrabWire(panel){
 }
 function RT_tileOp(id,on){ var b=document.getElementById(id); if(!b) return; if(on){ b.style.background='rgba(31,138,77,.24)'; b.style.boxShadow='0 0 0 3px #1F8A4D,0 3px 9px rgba(0,0,0,.5)'; b.style.transform='scale(1.06)'; } else { b.style.background='transparent'; b.style.boxShadow='none'; b.style.transform='scale(1)'; } }
 function RT_ovCloseOthers(keep){
+ return; /* Funktionen parallel aktiv – kein gegenseitiges Schliessen */
  if(keep!=='sp'&&document.getElementById('rt-sp')) RT_closeShotPlan();
  if(keep!=='fr'&&document.getElementById('rt-fr')) RT_closeFlagRadar();
  if(keep!=='dki'&&document.getElementById('rt-dki')) RT_closeDistKI();
@@ -7622,7 +7623,7 @@ function RT_rPlay(){
   '<div class="rt-ct" style="margin:0;">Bahn '+rd.nums[c]+'</div>'+
   '<div style="font-size:11px;color:#7B8E80;">Par '+rd.par[c]+' &middot; SI '+rd.si[c]+'</div></div>'+
   
-  (rtImg?('<div style="margin-bottom:10px;"><button class="rt-btn3" style="padding:6px 10px;background:#F1F6EC;border-radius:8px;" onclick="RT_toggleHoleView()">'+(mapMode?'Birdiekarte anzeigen':'Satellitenkarte anzeigen')+'</button></div>'):'');
+  (rtImg?('<div style="margin-bottom:10px;text-align:center;"><button class="rt-btn3" style="padding:6px 10px;background:#F1F6EC;border-radius:8px;" onclick="RT_toggleHoleView()">'+(mapMode?'Birdiekarte anzeigen':'Satellitenkarte anzeigen')+'</button></div>'):'');
  rd.players.forEach(function(p,pi){
   var np=SC_netPar(rd.par[c],p.ph,rd.si[c],rd.cnt);
   var st=RT_stbfH(p,c);

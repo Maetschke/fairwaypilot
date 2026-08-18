@@ -2328,7 +2328,7 @@ function sbCard(){
 /* Benutzermenue: Profilbild, Name, E-Mail, Passwort und Mitspieler-Einladungslinks an einem
    Ort, erreichbar ueber das Icon oben rechts auf der Startseite. Nicht angemeldete Nutzer
    sehen stattdessen das Anmelde-/Registrierungsformular. */
-var FP_BUILD='2026-08-18 · 10:35 · kasten-slide';
+var FP_BUILD='2026-08-18 · 10:50 · gps-punkt';
 function RT_rUser(){
  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+
   '<button class="rt-btn3" style="padding:4px 8px 4px 0;font-size:18px;" onclick="RT_go(\'home\')">&#8249;</button>'+
@@ -2583,6 +2583,7 @@ function RT_startGeoWatchNow(){
   RT_curPos={lat:pos.coords.latitude,lng:pos.coords.longitude,acc:pos.coords.accuracy};
   RT_updDistanceDisplays();
   if(typeof RT_hfUpdateGps==='function') RT_hfUpdateGps();
+  if(typeof RT_miniUpdateGps==='function') RT_miniUpdateGps();
  },function(err){},{enableHighAccuracy:true,maximumAge:2000,timeout:10000});
 }
 function RT_stopGeoWatch(){
@@ -3439,11 +3440,32 @@ function RT_redrawFullPins(){
 }
 var RT_holeFullGpsMarker=null;
 function RT_hfUpdateGps(){
- var map=RT_holeFullMapInst; if(!map||typeof L==='undefined'||!RT_curPos||RT_curPos.lat==null) return;
+ var map=RT_holeFullMapInst;
+ if(!map||typeof L==='undefined'||!RT_curPos||RT_curPos.lat==null){ if(RT_holeFullGpsMarker&&map){ try{ map.removeLayer(RT_holeFullGpsMarker); }catch(e){} RT_holeFullGpsMarker=null; } return; }
  try{
+  var ll=[RT_curPos.lat,RT_curPos.lng];
+  var inB=false; try{ inB=map.getBounds().contains(ll); }catch(e){}
+  /* Nur anzeigen, wenn der Nutzer im dargestellten Bahnausschnitt ist – Karte NICHT verschieben. */
+  if(!inB){ if(RT_holeFullGpsMarker){ try{ map.removeLayer(RT_holeFullGpsMarker); }catch(e){} RT_holeFullGpsMarker=null; } return; }
   if(!RT_holeFullGpsMarker){
-   RT_holeFullGpsMarker=L.marker([RT_curPos.lat,RT_curPos.lng],{interactive:false,keyboard:false,icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:'<div class="rt-gpspulse"></div>'})}).addTo(map);
-  } else { RT_holeFullGpsMarker.setLatLng([RT_curPos.lat,RT_curPos.lng]); }
+   RT_holeFullGpsMarker=L.marker(ll,{interactive:false,keyboard:false,icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:'<div class="rt-gpspulse"></div>'})}).addTo(map);
+  } else { RT_holeFullGpsMarker.setLatLng(ll); }
+ }catch(e){}
+}
+/* GPS-Punkt (blauer Punkt/weisser Ring) auch auf den Mini-Karten der Bahnansicht – nur wenn
+   der Standort im aktuellen Ausschnitt liegt, ohne die Karte zu verschieben. */
+function RT_miniUpdateGps(){
+ if(typeof L==='undefined'||!RT_curPos||RT_curPos.lat==null){ try{ for(var k in RT_holeMapInst){ var i0=RT_holeMapInst[k]; if(i0&&i0.gpsM){ try{ i0.map.removeLayer(i0.gpsM); }catch(e){} i0.gpsM=null; } } }catch(e){} return; }
+ try{
+  var ll=[RT_curPos.lat,RT_curPos.lng];
+  for(var pi in RT_holeMapInst){
+   var inst=RT_holeMapInst[pi]; if(!inst||!inst.map) continue;
+   var inB=false; try{ inB=inst.map.getBounds().contains(ll); }catch(e){}
+   if(inB){
+    if(!inst.gpsM){ inst.gpsM=L.marker(ll,{interactive:false,keyboard:false,icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],html:'<div class="rt-gpspulse"></div>'})}).addTo(inst.map); }
+    else { inst.gpsM.setLatLng(ll); }
+   } else if(inst.gpsM){ try{ inst.map.removeLayer(inst.gpsM); }catch(e){} inst.gpsM=null; }
+  }
  }catch(e){}
 }
 function RT_hfAddPinAt(cx,cy){
@@ -4412,12 +4434,14 @@ async function RT_initHoleMaps(){
   RT_applyMapLock(pi);
   RT_setupRotDrag('h'+pi,map,el,function(){ var i2=RT_holeMapInst[pi]; return i2?(i2.rot||0):0; },function(){ var i3=RT_holeMapInst[pi]; return !i3||i3.locked!==false; });
   RT_redrawPins(pi);
+  try{ RT_miniUpdateGps(); }catch(e){}
   /* Referenzpunkte werden waehrend des Spiels bewusst NICHT mehr eingeblendet - auf den
      Spielerkarten sollen nur die selbst gesetzten Markierungen zu sehen sein. Sichtbar
      sind sie weiterhin im Referenzpunkte-Editor (RT_calibMarkersHtml). */
   map.on('moveend zoomend', function(){
    var ctr=map.getCenter();
    RT_saveHoleView(rd,c,ctr.lat,ctr.lng,map.getZoom());
+   try{ RT_miniUpdateGps(); }catch(e){}
   });
   map.on('click', function(e){
    if(RT_suppressMapClick['h'+pi]) return;
